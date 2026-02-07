@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tawreedat/core/style/text_styles.dart';
+
+import '../style/text_styles.dart';
 
 class AppTextButton extends StatelessWidget {
   final String text;

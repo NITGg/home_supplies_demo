@@ -9,35 +9,6 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get onboardTitle1 => 'اكتشف كل احتياجاتك';
-
-  @override
-  String get onboardTitle2 => 'تسوّق بسهولة وأمان';
-
-  @override
-  String get onboardTitle3 => 'توصيل سريع وجودة مضمونة';
-
-  @override
-  String get onboardSubtitle1 => 'كل مستلزمات البناء في تطبيق واحد';
-
-  @override
-  String get onboardSubtitle2 => 'اختار وادفع بأمان';
-
-  @override
-  String get onboardSubtitle3 => 'توصيل أسرع… خامات أفضل';
-
-  @override
-  String get onboardBody1 =>
-      'من مواد البناء للدهانات والأدوات الصحية…\nكله متاح بسهولة';
-
-  @override
-  String get onboardBody2 =>
-      'خيارات دفع مرنة تشمل الدفع أونلاين أو عند الاستلام';
-
-  @override
-  String get onboardBody3 => 'منتجات معتمدة توصلك لباب موقعك بسرعة وأمان';
-
-  @override
   String get next => 'التالي';
 
   @override
@@ -48,18 +19,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get skip => 'تخطي';
-
-  @override
-  String get shop_now => 'تسوق الآن';
-
-  @override
-  String get home => 'الرئيسية';
-
-  @override
-  String get brands => 'العلامات التجارية';
-
-  @override
-  String get categories => 'الفئات';
 
   @override
   String get profile => 'الملف الشخصي';
@@ -78,9 +37,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settings => 'الإعدادات';
-
-  @override
-  String get favourites => 'المفضلة';
 
   @override
   String get support => 'الدعم';
@@ -131,9 +87,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get orRegisterwith => 'أو انشئ حساب عن طريق';
 
   @override
-  String get enterAsGuest => 'الدخول كزائر';
-
-  @override
   String get dontHaveAccount => 'ليس لديك حساب!';
 
   @override
@@ -144,9 +97,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get search => 'بحث';
-
-  @override
-  String get searchFor => 'ابحث عن منتج....';
 
   @override
   String get showAll => 'عرض الكل';
@@ -164,9 +114,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get groups => 'فئات';
 
   @override
-  String get myProducts => 'منتجاتي';
-
-  @override
   String get myPersonalInfo => 'بياناتي الشخصية';
 
   @override
@@ -177,6 +124,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paymentMethod => 'طريقة الدفع';
+
+  @override
+  String get payNow => 'إدفع الآن';
+
+  @override
+  String get cancelOrder => 'إلغاء الطلب';
 
   @override
   String get addWallet => 'إضافة المحفظة';
@@ -197,37 +150,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get all => 'الجميع';
 
   @override
-  String get discounts => 'الخصومات';
-
-  @override
-  String get bestSeller => 'أكثر مبيعا';
-
-  @override
-  String get featured => 'مميز';
-
-  @override
-  String get sellingUnit => 'وحدة البيع';
-
-  @override
   String get subtotal => 'المجموع الكلي:';
 
   @override
   String get sum => 'الإجمالي';
 
   @override
-  String get products => 'المنتجات';
-
-  @override
-  String get product => 'منتج';
-
-  @override
   String get quantity => 'الكمية';
-
-  @override
-  String get addToCart => 'أضف إلى العربة';
-
-  @override
-  String get cart => 'عربة التسوق';
 
   @override
   String get price => 'السعر:';
@@ -236,34 +165,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get info => 'معلومات';
 
   @override
-  String get productDescription => 'وصف المنتج';
-
-  @override
   String get deleteAll => 'حذف الكل';
 
   @override
-  String get completePurchase => 'إتمام عملية الشراء';
-
-  @override
-  String get continueShopping => 'الاستمرار في التسوق';
-
-  @override
   String get payment => 'الدفع';
-
-  @override
-  String get payNow => 'إدفع الآن';
-
-  @override
-  String get cancelOrder => 'إلغاء الطلب';
-
-  @override
-  String get requestRefund => 'طلب الإرجاع';
-
-  @override
-  String get requestRefundAll => 'إرجاع الطلب بالكامل';
-
-  @override
-  String get requestRefundPart => 'إرجاع المنتج';
 
   @override
   String get cancel => 'إلغاء';
@@ -284,22 +189,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get governate => 'المحافظة';
 
   @override
+  String get chooseGovernate => 'اختر المحافظة';
+
+  @override
   String get city => 'المدينة';
 
   @override
   String get state => 'المحافظة';
-
-  @override
-  String get postalCode => 'الكود البريدي';
-
-  @override
-  String get buildingNo => 'رقم المبنى';
-
-  @override
-  String get floorNo => 'الدور';
-
-  @override
-  String get apartmentNo => 'الشقة';
 
   @override
   String get gettingLocation => 'جاري البحث';
@@ -311,33 +207,46 @@ class AppLocalizationsAr extends AppLocalizations {
   String get locationObtained => 'حصلنا على الموقع';
 
   @override
-  String get detailedAddress => 'العنوان بالتفصيل';
+  String get postalCode => 'الكود البريدي';
+
+  @override
+  String get apartmentNo => 'الشقة';
+
+  @override
+  String get buildingNo => 'رقم المبنى';
+
+  @override
+  String get floorNo => 'الدور';
 
   @override
   String get updateAddress => 'تحديث العنوان';
 
   @override
-  String get saveAddress => 'حفظ العنوان';
+  String get permissionDenied => 'تم رفض الصلاحية';
 
   @override
   String get saveInvoice => 'احفظ الفاتورة';
 
   @override
-  String get permissionDenied => 'تم رفض الصلاحية';
+  String get chooseCity => 'اختر المدينة';
+
+  @override
+  String get detailedAddress => 'العنوان بالتفصيل';
+
+  @override
+  String get saveAddress => 'حفظ العنوان';
 
   @override
   String get addAddress => 'إضافة عنوان';
 
   @override
-  String get deletingAccountWill =>
-      'حذف الحساب سيؤدي الى حذف جميع البيانات الخاصة بك وتشمل المفضلة والطريقة الدفع وبيانات العنوان';
+  String get deletingAccountWill => 'حذف الحساب سيؤدي الى حذف جميع البيانات الخاصة بك وتشمل المفضلة وطرق الدفع وبيانات العنوان';
 
   @override
-  String get areYouSureDeleteAccount =>
-      'هل أنت متأكد من رغبتك في حذف الحساب ؟!';
+  String get areYouSureDeleteAccount => 'هل أنت متأكد من رغبتك في حذف الحساب؟';
 
   @override
-  String get areYouSureDelete => 'هل أنت متأكد من رغبتك في حذف';
+  String get areYouSureDelete => 'هل أنت متأكد من رغبتك في الحذف؟';
 
   @override
   String get closeApp => 'إغلاق التطبيق';
@@ -346,7 +255,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get accountDeletedSuccess => 'تم حذف الحساب بنجاح';
 
   @override
-  String get changePassword => 'تغير كلمة المرور';
+  String get changePassword => 'تغيير كلمة المرور';
 
   @override
   String get loginData => 'بيانات التسجيل';
@@ -361,16 +270,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get invalidPhoneNumber => 'رقم الهاتف غير صحيح';
 
   @override
-  String get enterPassword => 'ادخل كلمة الدخول';
+  String get enterPassword => 'أدخل كلمة المرور';
 
   @override
-  String get shortPassword => 'كلمة الدخول من ستة خانات على الأقل';
+  String get shortPassword => 'كلمة المرور من ثمان أحرف على الأقل';
 
   @override
   String get invalidEmail => 'بريد إلكتروني غير صحيح';
 
   @override
-  String get passwordMismatch => 'كلمات الدخول غير متطابقة';
+  String get passwordMismatch => 'كلمات المرور غير متطابقة';
 
   @override
   String get weNeedYourPhoneNumber => 'نحن بحاجة لرقم هاتفك';
@@ -403,63 +312,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cropImage => 'قص الصورة';
 
   @override
-  String get oldPassword => 'كلمة الدخول الحالية';
-
-  @override
-  String get createYourAccountNow =>
-      'أنشئ حسابك الآن، واحصل على نقاط مقابل كل عملية شراء يمكنك استخدامها لاحقًا كرصيد أو خصومات';
+  String get oldPassword => 'كلمة المرور الحالية';
 
   @override
   String get weight => 'الوزن';
 
   @override
-  String get dimensions => 'الأبعاد';
-
-  @override
   String get emptySearch => 'البحث فارغ';
 
   @override
-  String get nothingSearched => 'لم يتم البحث عن شئ ..... !';
+  String get nothingSearched => 'لم يتم البحث عن شيء';
 
   @override
-  String get noResultsFound => 'لم يتم العثور على شئ ..... !';
-
-  @override
-  String get cartIsEmpty => 'العربة فارغة';
-
-  @override
-  String get everyProjectStartsWith =>
-      'كل مشروع يبدأ بخطوة… أضف أول منتجاتك الآن';
+  String get noResultsFound => 'لم يتم العثور على نتائج';
 
   @override
   String get reviews => 'المراجعات';
 
   @override
-  String get addReview => 'مارأيك في المنتج؟';
+  String get addReview => 'ما رأيك في المنتج؟';
 
   @override
   String get reviewSubmitted => 'تم إرسال تقييمك';
 
   @override
-  String get reviewError => 'خطاً: لم يتم إرسال تقييمك حاول لاحقاً';
-
-  @override
-  String get theProductIs => 'هذا المنتج ...';
-
-  @override
-  String get pleaseEnterAComment => 'أخبرنا رأيك';
-
-  @override
-  String get latestOffers => 'أحدث العروض';
-
-  @override
-  String get noproductsfound => 'لم نعثر على منتجات';
-
-  @override
-  String get nobrandsfound => 'لم نعثر على علامات تجارية';
-
-  @override
-  String get nocategoriesfound => 'لم نعثر على فئات';
+  String get reviewError => 'خطأ: لم يتم إرسال تقييمك، حاول لاحقاً';
 
   @override
   String get googleSignin => 'حساب جوجل';
@@ -477,7 +354,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noFavourites => 'لا توجد مفضلة بعد';
 
   @override
-  String get addToFavourites => 'ابدأ في إضافة بعض المنتجات للمفضلة!';
+  String get addToFavourites => 'ابدأ في إضافة منتجات للمفضلة';
 
   @override
   String get signinToaddFavourites => 'سجل دخولك لإضافة مفضلة';
@@ -502,9 +379,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get required => 'مطلوب';
-
-  @override
-  String get invoice => 'الفاتورة';
 
   @override
   String get paymentDetails => 'تفاصيل الدفع';
@@ -532,6 +406,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get messaging => 'مراسلة';
+
+  @override
+  String get invoice => 'الفاتورة';
 
   @override
   String get notes => 'الملاحظات';
@@ -567,25 +444,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get delete => 'حذف';
 
   @override
-  String get selectDeliveryAddress => 'اختر عنوان التوصيل';
-
-  @override
-  String get addYourFirstAddressToGetStarted => 'أضف عنوانك لنبدأ';
-
-  @override
   String get reason => 'السبب';
-
-  @override
-  String get refundReasonDamaged => 'تالف';
-
-  @override
-  String get refundReasonWrongItem => 'منتج خاطئ';
-
-  @override
-  String get refundReasonNotAsDescribed => 'غير مطابق للوصف';
-
-  @override
-  String get refundReasonOther => 'أخرى';
 
   @override
   String get selectReason => 'اختر السبب:';
@@ -595,4 +454,79 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pleaseEnterReason => 'يرجى إدخال السبب';
+
+  @override
+  String get verifyPhone => 'تأكيد رقم الهاتف';
+
+  @override
+  String get enterOtpSent => 'أدخل رمز التحقق المرسل إلى';
+
+  @override
+  String get resendOtp => 'إعادة إرسال الرمز';
+
+  @override
+  String get resendOtpIn => 'إعادة الإرسال بعد';
+
+  @override
+  String get seconds => 'ثانية';
+
+  @override
+  String get verify => 'تأكيد';
+
+  @override
+  String get sendOtp => 'إرسال الرمز';
+
+  @override
+  String get enterCompleteOtp => 'يرجى إدخال رمز التحقق بالكامل';
+
+  @override
+  String get personalInformation => 'البيانات الشخصية';
+
+  @override
+  String get personalPhoto => 'الصورة الشخصية *';
+
+  @override
+  String get gender => 'النوع';
+
+  @override
+  String get courierInformation => 'بيانات المندوب';
+
+  @override
+  String get nationalIdPhoto => 'صورة البطاقة الشخصية *';
+
+  @override
+  String get vehicleType => 'نوع المركبة';
+
+  @override
+  String get vehiclePlate => 'رقم اللوحة';
+
+  @override
+  String get selectPersonalPhoto => 'يرجى اختيار صورة شخصية';
+
+  @override
+  String get selectNationalIdPhoto => 'يرجى اختيار صورة البطاقة';
+
+  @override
+  String get tapToSelectImage => 'اضغط لاختيار صورة';
+
+  @override
+  String get male => 'ذكر';
+
+  @override
+  String get female => 'أنثى';
+
+  @override
+  String get yourAccountWillBeVerified => 'سيتم التحقق من معلومات المندوب الخاصة بك من قبل فريقنا قبل التفعيل.';
+
+  @override
+  String get enterPhoneToResetPassword => 'ادخل رقم هاتفك لإعادة تعيين كلمة المرور';
+
+  @override
+  String get resetPassword => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get pleaseLoginWithNewPassword => 'سجل دخولك الآن  بكلمة المرور الجديدة';
+
+  @override
+  String get passwordResetSuccessful => 'تم تغيير كلمة المرور بنجاح';
 }

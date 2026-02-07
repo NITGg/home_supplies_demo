@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tawreedat/core/style/app_colors.dart';
+
+import '../style/app_colors.dart';
 
 class AppTextFormField extends StatefulWidget {
   final String label;

@@ -9,58 +9,16 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get onboardTitle1 => 'Discover Everything You Need';
-
-  @override
-  String get onboardTitle2 => 'Shop Easily and Safely';
-
-  @override
-  String get onboardTitle3 => 'Fast Delivery, Guaranteed Quality';
-
-  @override
-  String get onboardSubtitle1 => 'All your construction supplies in one app';
-
-  @override
-  String get onboardSubtitle2 => 'Choose and pay securely';
-
-  @override
-  String get onboardSubtitle3 => 'Faster delivery… better materials';
-
-  @override
-  String get onboardBody1 =>
-      'From building materials to paints and sanitary tools — everything you need is right here.';
-
-  @override
-  String get onboardBody2 =>
-      'Flexible payment options including online or cash on delivery.';
-
-  @override
-  String get onboardBody3 =>
-      'Certified products delivered quickly and safely to your site.';
-
-  @override
   String get next => 'Next';
 
   @override
-  String get prev => 'Prev';
+  String get prev => 'Previous';
 
   @override
   String get done => 'Done';
 
   @override
   String get skip => 'Skip';
-
-  @override
-  String get shop_now => 'Shop Now';
-
-  @override
-  String get home => 'Home';
-
-  @override
-  String get brands => 'Brands';
-
-  @override
-  String get categories => 'Categories';
 
   @override
   String get profile => 'Profile';
@@ -72,16 +30,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcome => 'Welcome';
 
   @override
-  String get tawreedatIsYourBestChoice => 'Tawreedat is your choice';
+  String get tawreedatIsYourBestChoice => 'Tawreedat Is Your Best Choice';
 
   @override
   String get lang => 'Language';
 
   @override
   String get settings => 'Settings';
-
-  @override
-  String get favourites => 'Favourites';
 
   @override
   String get support => 'Support';
@@ -99,7 +54,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logout => 'Logout';
 
   @override
-  String get signin => 'Sign in';
+  String get signin => 'Sign In';
 
   @override
   String get register => 'Register';
@@ -126,28 +81,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forgotPassword => 'Forgot Password?';
 
   @override
-  String get orSignInwith => 'Or SignIn With';
+  String get orSignInwith => 'Or sign in with';
 
   @override
-  String get orRegisterwith => 'Or Register With';
+  String get orRegisterwith => 'Or register with';
 
   @override
-  String get enterAsGuest => 'Enter As Guest';
+  String get dontHaveAccount => 'Don\'t have an account?';
 
   @override
-  String get dontHaveAccount => 'Don\'t have an account!';
-
-  @override
-  String get haveAccount => 'have an account!';
+  String get haveAccount => 'Already have an account?';
 
   @override
   String get points => 'Points';
 
   @override
   String get search => 'Search';
-
-  @override
-  String get searchFor => 'Search For....';
 
   @override
   String get showAll => 'Show All';
@@ -165,9 +114,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groups => 'Categories';
 
   @override
-  String get myProducts => 'My Products';
-
-  @override
   String get myPersonalInfo => 'My Personal Info';
 
   @override
@@ -180,13 +126,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentMethod => 'Payment Method';
 
   @override
+  String get payNow => 'Pay Now';
+
+  @override
+  String get cancelOrder => 'Cancel Order';
+
+  @override
   String get addWallet => 'Add Wallet';
 
   @override
   String get notifications => 'Notifications';
 
   @override
-  String get markAllAsRead => 'All marked as read';
+  String get markAllAsRead => 'Mark All as Read';
 
   @override
   String get clearAll => 'Clear All';
@@ -198,73 +150,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get all => 'All';
 
   @override
-  String get discounts => 'Discounts';
-
-  @override
-  String get bestSeller => 'Best Seller';
-
-  @override
-  String get featured => 'Featured';
-
-  @override
-  String get sellingUnit => 'Selling Unit';
-
-  @override
   String get subtotal => 'Subtotal:';
 
   @override
-  String get sum => 'Sum';
-
-  @override
-  String get products => 'Products';
-
-  @override
-  String get product => 'Product';
+  String get sum => 'Total';
 
   @override
   String get quantity => 'Quantity';
 
   @override
-  String get addToCart => 'Add to cart';
-
-  @override
-  String get cart => 'Cart';
-
-  @override
   String get price => 'Price:';
 
   @override
-  String get info => 'info';
-
-  @override
-  String get productDescription => 'Product Description';
+  String get info => 'Info';
 
   @override
   String get deleteAll => 'Delete All';
 
   @override
-  String get completePurchase => 'Complete Purchase';
-
-  @override
-  String get continueShopping => 'Continue Shopping';
-
-  @override
   String get payment => 'Payment';
-
-  @override
-  String get payNow => 'pay Now';
-
-  @override
-  String get cancelOrder => 'Cancel Order';
-
-  @override
-  String get requestRefund => 'Request Refund';
-
-  @override
-  String get requestRefundAll => 'refund whole order';
-
-  @override
-  String get requestRefundPart => 'refund product';
 
   @override
   String get cancel => 'Cancel';
@@ -276,69 +180,73 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continue_ => 'Continue';
 
   @override
-  String get detailsAndAddress => 'Details and address';
+  String get detailsAndAddress => 'Details and Address';
 
   @override
   String get name => 'Name';
 
   @override
-  String get governate => 'Governate';
+  String get governate => 'Governorate';
+
+  @override
+  String get chooseGovernate => 'Choose Governorate';
 
   @override
   String get city => 'City';
 
   @override
-  String get state => 'state';
+  String get state => 'State';
+
+  @override
+  String get gettingLocation => 'Getting location';
+
+  @override
+  String get useCurrentLocation => 'Use current location';
+
+  @override
+  String get locationObtained => 'Location obtained';
 
   @override
   String get postalCode => 'Postal Code';
 
   @override
-  String get buildingNo => 'Building Number';
+  String get apartmentNo => 'Apartment No';
 
   @override
-  String get floorNo => 'Floor';
+  String get buildingNo => 'Building No';
 
   @override
-  String get apartmentNo => 'Apartment';
-
-  @override
-  String get gettingLocation => 'Getting Location';
-
-  @override
-  String get useCurrentLocation => 'Use Current Location';
-
-  @override
-  String get locationObtained => 'Location Obtained';
-
-  @override
-  String get detailedAddress => 'Detailed Address';
+  String get floorNo => 'Floor No';
 
   @override
   String get updateAddress => 'Update Address';
 
   @override
-  String get saveAddress => 'Save Address';
+  String get permissionDenied => 'Permission Denied';
 
   @override
   String get saveInvoice => 'Save Invoice';
 
   @override
-  String get permissionDenied => 'Permission Denied';
+  String get chooseCity => 'Choose City';
+
+  @override
+  String get detailedAddress => 'Detailed Address';
+
+  @override
+  String get saveAddress => 'Save Address';
 
   @override
   String get addAddress => 'Add Address';
 
   @override
-  String get deletingAccountWill =>
-      'Deleting your account will remove all your personal data, including favorites, payment methods, and address information.';
+  String get deletingAccountWill => 'Deleting your account will remove all your data including favorites, payment methods, and addresses';
 
   @override
-  String get areYouSureDeleteAccount =>
-      'Are you sure you want to delete your account?!';
+  String get areYouSureDeleteAccount => 'Are you sure you want to delete your account?';
 
   @override
-  String get areYouSureDelete => 'Are you sure you want to delete';
+  String get areYouSureDelete => 'Are you sure you want to delete?';
 
   @override
   String get closeApp => 'Close App';
@@ -365,13 +273,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enterPassword => 'Enter password';
 
   @override
-  String get shortPassword => 'at least 6 characters';
+  String get shortPassword => 'Password must be at least 8 characters';
 
   @override
   String get invalidEmail => 'Invalid email';
 
   @override
-  String get passwordMismatch => 'Passwords mismatch';
+  String get passwordMismatch => 'Passwords do not match';
 
   @override
   String get weNeedYourPhoneNumber => 'We need your phone number';
@@ -386,7 +294,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateProfile => 'Update Profile';
 
   @override
-  String get chooseImageSource => 'Choose Image Source';
+  String get chooseImageSource => 'Choose image source';
 
   @override
   String get camera => 'Camera';
@@ -404,63 +312,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cropImage => 'Crop Image';
 
   @override
-  String get oldPassword => 'Current password';
-
-  @override
-  String get createYourAccountNow =>
-      'Create your account now and get points for every purchase you can use later as credit or discounts';
+  String get oldPassword => 'Current Password';
 
   @override
   String get weight => 'Weight';
 
   @override
-  String get dimensions => 'Dimensions';
+  String get emptySearch => 'Empty Search';
 
   @override
-  String get emptySearch => 'Search is empty';
+  String get nothingSearched => 'Nothing searched';
 
   @override
-  String get nothingSearched => 'Nothing searched yet .....!';
-
-  @override
-  String get noResultsFound => 'No results found ..... !';
-
-  @override
-  String get cartIsEmpty => 'Cart is empty.';
-
-  @override
-  String get everyProjectStartsWith =>
-      'Every project starts with a step... Add your first product now';
+  String get noResultsFound => 'No results found';
 
   @override
   String get reviews => 'Reviews';
 
   @override
-  String get addReview => 'What do you think?';
+  String get addReview => 'What do you think about this product?';
 
   @override
-  String get reviewSubmitted => 'Review Submitted';
+  String get reviewSubmitted => 'Review submitted';
 
   @override
-  String get reviewError => 'couldn\'t submit review, try again later';
-
-  @override
-  String get theProductIs => 'the product is ...';
-
-  @override
-  String get pleaseEnterAComment => 'tell us what you think';
-
-  @override
-  String get latestOffers => 'Latest Offers';
-
-  @override
-  String get noproductsfound => 'No products found';
-
-  @override
-  String get nobrandsfound => 'No brands found';
-
-  @override
-  String get nocategoriesfound => 'No categories found';
+  String get reviewError => 'Error: Review not submitted. Try again later';
 
   @override
   String get googleSignin => 'Google Account';
@@ -475,16 +351,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get upTo => 'Up to';
 
   @override
-  String get noFavourites => 'No favourites yet';
+  String get noFavourites => 'No favorites yet';
 
   @override
-  String get addToFavourites => 'Start adding products to your favorites!';
+  String get addToFavourites => 'Start adding products to favorites';
 
   @override
-  String get signinToaddFavourites => 'Sign in to add favourites';
+  String get signinToaddFavourites => 'Sign in to add favorites';
 
   @override
-  String get discount => 'off';
+  String get discount => 'Discount';
 
   @override
   String get color => 'Color';
@@ -496,22 +372,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weightRange => 'Weight Range';
 
   @override
-  String get options => 'options';
+  String get options => 'Options';
 
   @override
-  String get filtersApplied => 'filters applied';
+  String get filtersApplied => 'Filters Applied';
 
   @override
-  String get required => 'required';
-
-  @override
-  String get invoice => 'invoice';
+  String get required => 'Required';
 
   @override
   String get paymentDetails => 'Payment Details';
 
   @override
-  String get successfulPayment => 'Successful Payment';
+  String get successfulPayment => 'Payment Successful';
 
   @override
   String get unSuccessfulPayment => 'Payment Failed';
@@ -535,10 +408,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messaging => 'Messaging';
 
   @override
+  String get invoice => 'Invoice';
+
+  @override
   String get notes => 'Notes';
 
   @override
-  String get processing => 'processing...';
+  String get processing => 'Processing...';
 
   @override
   String get error => 'Error';
@@ -568,33 +444,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
-  String get selectDeliveryAddress => 'Select delivery address';
-
-  @override
-  String get addYourFirstAddressToGetStarted =>
-      'Add your first address to get started';
-
-  @override
   String get reason => 'Reason';
 
   @override
-  String get refundReasonDamaged => 'Damaged';
-
-  @override
-  String get refundReasonWrongItem => 'Wrong Item';
-
-  @override
-  String get refundReasonNotAsDescribed => 'Not as Described';
-
-  @override
-  String get refundReasonOther => 'Other';
-
-  @override
-  String get selectReason => 'Select Reason:';
+  String get selectReason => 'Select reason:';
 
   @override
   String get selectAtLeastOneItem => 'Please select at least one item';
 
   @override
-  String get pleaseEnterReason => 'Please enter a reason';
+  String get pleaseEnterReason => 'Please enter the reason';
+
+  @override
+  String get verifyPhone => 'Verify Phone';
+
+  @override
+  String get enterOtpSent => 'Enter the OTP sent to';
+
+  @override
+  String get resendOtp => 'Resend OTP';
+
+  @override
+  String get resendOtpIn => 'Resend OTP in';
+
+  @override
+  String get seconds => 'seconds';
+
+  @override
+  String get verify => 'Verify';
+
+  @override
+  String get sendOtp => 'إرسال الرمز';
+
+  @override
+  String get enterCompleteOtp => 'Please enter the complete OTP';
+
+  @override
+  String get personalInformation => 'Personal Information';
+
+  @override
+  String get personalPhoto => 'Personal Photo *';
+
+  @override
+  String get gender => 'Gender';
+
+  @override
+  String get courierInformation => 'Courier Information';
+
+  @override
+  String get nationalIdPhoto => 'National ID Photo *';
+
+  @override
+  String get vehicleType => 'Vehicle Type';
+
+  @override
+  String get vehiclePlate => 'Vehicle Plate';
+
+  @override
+  String get selectPersonalPhoto => 'Please select a personal photo';
+
+  @override
+  String get selectNationalIdPhoto => 'Please select a national ID photo';
+
+  @override
+  String get tapToSelectImage => 'Tap to select image';
+
+  @override
+  String get male => 'Male';
+
+  @override
+  String get female => 'Female';
+
+  @override
+  String get yourAccountWillBeVerified => 'Your courier information will be verified by our team before activation.';
+
+  @override
+  String get enterPhoneToResetPassword => 'Enter your phone number to reset your password';
+
+  @override
+  String get resetPassword => 'Reset Password';
+
+  @override
+  String get pleaseLoginWithNewPassword => 'please Login With New Password';
+
+  @override
+  String get passwordResetSuccessful => 'Password Reset Successful';
 }

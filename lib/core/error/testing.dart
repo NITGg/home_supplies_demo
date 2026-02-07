@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:tawreedat/core/error/restart_widget.dart';
+import 'package:tawreedat_courier/core/error/restart_widget.dart';
 
 class ErrorTestPage extends StatelessWidget {
   const ErrorTestPage({Key? key}) : super(key: key);

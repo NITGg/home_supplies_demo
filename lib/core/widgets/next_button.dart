@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tawreedat/core/style/text_styles.dart';
 import '../style/app_colors.dart';
+import '../style/text_styles.dart';
 
 class HalfButton extends StatelessWidget {
   final bool? flipBorderRadius;
