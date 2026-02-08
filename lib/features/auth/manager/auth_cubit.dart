@@ -5,9 +5,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/utils/secure_storage_service.dart';
 import '../../../core/utils/social_auth_service.dart';
-import '../data/models/auth_response_model.dart';
+
 import '../data/repositories/auth_repository.dart';
 import 'auth_state.dart';
 
@@ -42,17 +41,8 @@ class AuthCubit extends Cubit<AuthState> {
       );
 
       // Check if phone is verified
-      if (!result.data.user.isPhoneVerified) {
-        _pendingPhone = phone;
-        emit(AuthOtpRequired(
-          phone: phone,
-          authResponse: result,
-        ));
-        return;
-      }
-
-      await _initializeUserSession(result.data.user);
-      emit(AuthSuccess(message: result.message));
+      _pendingPhone = phone;
+      emit(AuthOtpRequired(phone: phone, authResponse: result));
     } on DioException catch (e) {
       emit(AuthFailure(_extractErrorMessage(e)));
     } catch (e) {
@@ -86,18 +76,8 @@ class AuthCubit extends Cubit<AuthState> {
         phone: phone,
       );
 
-      // Check if phone is verified
-      if (!result.data.user.isPhoneVerified) {
-        _pendingPhone = phone;
-        emit(AuthOtpRequired(
-          phone: phone,
-          authResponse: result,
-        ));
-        return;
-      }
-
-      await _initializeUserSession(result.data.user);
-      emit(AuthSuccess(message: result.message));
+      _pendingPhone = phone;
+      emit(AuthOtpRequired(phone: phone, authResponse: result));
     } on DioException catch (e) {
       emit(AuthFailure(_extractErrorMessage(e)));
     } catch (e) {
@@ -113,25 +93,18 @@ class AuthCubit extends Cubit<AuthState> {
       final result = await _repository.forgotPassword(phone: phone);
 
       // Success - OTP sent
-      emit(AuthForgotPasswordOtpSent(
-        message: result.message,
-        phone: phone,
-      ));
+      emit(AuthForgotPasswordOtpSent(message: result.message, phone: phone));
     } on DioException catch (e) {
       // Handle 400 error - OTP already sent (not expired)
       if (e.response?.statusCode == 400) {
         final message = _extractErrorMessage(e);
 
         // Check if error is about OTP already being sent
-        if (message.toLowerCase().contains('Your OTP not expired yet')){
-
+        if (message.toLowerCase().contains('Your OTP not expired yet')) {
           log('OTP already sent and not expired, navigating to OTP screen');
 
           // Treat this as success and navigate to OTP screen
-          emit(AuthForgotPasswordOtpSent(
-            message: message,
-            phone: phone,
-          ));
+          emit(AuthForgotPasswordOtpSent(message: message, phone: phone));
           return;
         }
       }
@@ -142,7 +115,6 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthFailure(_extractErrorMessage(e)));
     }
   }
-
 
   /// RESET PASSWORD with OTP
   Future<void> resetPassword({
@@ -175,6 +147,8 @@ class AuthCubit extends Cubit<AuthState> {
     required String vehiclePlate,
     required File personalPhoto,
     required File nationalIdPhoto,
+    required File vehicleLicense,
+    required File courierLicense,
   }) async {
     emit(AuthLoading());
     try {
@@ -188,6 +162,8 @@ class AuthCubit extends Cubit<AuthState> {
         vehiclePlate: vehiclePlate,
         personalPhoto: personalPhoto,
         nationalIdPhoto: nationalIdPhoto,
+        vehicleLicense: vehicleLicense,
+        courierLicense: courierLicense,
       );
 
       // Store phone for OTP verification
@@ -214,11 +190,7 @@ class AuthCubit extends Cubit<AuthState> {
 
       // Get the stored auth data from the previous registration/login
       final token = await _repository.getSavedToken();
-      final profile = await SecureStorageService().getUserProfile();
-
-      if (token != null && profile != null) {
-        final user = UserModel.fromJson(profile);
-        await _initializeUserSession(user);
+      if (token != null) {
         emit(AuthSuccess(message: result.message));
       } else {
         emit(AuthFailure('Authentication data not found. Please login again.'));
@@ -240,26 +212,14 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   /// LOGIN
-  Future<void> login({
-    required String phone,
-    required String password,
-  }) async {
+  Future<void> login({required String phone, required String password}) async {
     emit(AuthLoading());
     try {
-      final result = await _repository.login(
-        phone: phone,
-        password: password,
-      );
+      final result = await _repository.login(phone: phone, password: password);
 
       // Check if phone is verified
-      if (!result.data.user.isPhoneVerified) {
-        _pendingPhone = phone;
-        emit(AuthOtpRequired(phone: phone, authResponse: result));
-        return;
-      }
-
-      await _initializeUserSession(result.data.user);
-      emit(AuthSuccess(message: result.message));
+      _pendingPhone = phone;
+      emit(AuthOtpRequired(phone: phone, authResponse: result));
     } catch (e) {
       emit(AuthFailure(_extractErrorMessage(e)));
     }
@@ -288,51 +248,6 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (e) {
       emit(AuthFailure(_extractErrorMessage(e)));
     }
-  }
-
-  /// UPDATE PROFILE
-  Future<void> updateProfile({
-    String? fullName,
-    String? email,
-    String? gender,
-    File? imageUrl,
-    String? phone,
-  }) async {
-    emit(AuthLoading());
-    try {
-      final Map<String, dynamic> data = {};
-      if (fullName != null) data['full_name'] = fullName;
-      if (gender != null) data['gender'] = gender;
-      if (email != null) data['email'] = email;
-      if (phone != null) {
-        if (!phone.startsWith('+2')) {
-          data['phone'] = '+2$phone';
-        } else {
-          data['phone'] = phone;
-        }
-      }
-
-      final result = await _repository.updateProfile(
-        imageUrl: imageUrl,
-        data: data,
-      );
-      emit(AuthUpdateSuccess(user: result));
-    } catch (e) {
-      emit(AuthFailure(_extractErrorMessage(e)));
-    }
-  }
-
-  // Helper function to initialize user session
-  Future<void> _initializeUserSession(UserModel user) async {
-    kAuthtoken = await _repository.getSavedToken() ?? '';
-    kRefreshToken = await _repository.getSavedRefreshToken() ?? '';
-    kUserId = user.id;
-
-    var prof = await SecureStorageService().getUserProfile();
-    log('User profile loaded: $prof');
-
-    // Optionally register FCM token
-    // await _registerFCMToken();
   }
 
   /// LOGOUT
@@ -368,8 +283,34 @@ class AuthCubit extends Cubit<AuthState> {
     return message;
   }
 
+  Future<void> changePassword(
+      String oldPassword,
+      String newPassword,
+      var context,
+      ) async {
+    emit(AuthLoading());
+    try {
+      final token = await _repository.getSavedToken();
+      final result = await _repository.changePassword(
+        context: context,
+        token: token ?? '',
+        oldPassword: oldPassword,
+        newPassword: newPassword,
+      );
+      emit(AuthUpdateSuccess());
+    } catch (e) {
+      String message = e.toString();
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data is Map && data['message'] != null) {
+          message = data['message'];
+        }
+      }
+      emit(AuthFailure(message));
+    }
+  }
 
-  void reset(){
+  void reset() {
     emit(AuthInitial());
   }
 }

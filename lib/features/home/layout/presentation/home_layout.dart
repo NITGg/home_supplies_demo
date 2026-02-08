@@ -1,14 +1,12 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tawreedat_courier/features/stats/presentation/stats_screen.dart';
 import '../../../../core/utils/biometric_auth_service.dart';
-import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/loading_screen.dart';
-import '../../../../core/widgets/text_form.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/data/models/user_profile_model.dart';
 import '../../../../core/utils/secure_storage_service.dart';
@@ -17,8 +15,9 @@ import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/manager/auth_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
+import '../../../auth/manager/profile_cubit.dart';
+import '../../../delivery_areas/prenestation/delivery_areas_bottom_sheet.dart';
 import '../manager/home_cubit.dart';
-
 
 class HomeLayout extends StatefulWidget {
   const HomeLayout({super.key});
@@ -35,6 +34,8 @@ class _HomeLayoutState extends State<HomeLayout> {
   @override
   void initState() {
     super.initState();
+    context.read<ProfileCubit>().fetchProfile();
+    context.read<ProfileCubit>().fetchBadgeProgress();
     _userProfileFuture = _loadUserProfile();
 
     // Only check biometric once when the widget is first created
@@ -63,13 +64,6 @@ class _HomeLayoutState extends State<HomeLayout> {
   Future<UserProfileModel?> _loadUserProfile() async {
     final userProfileJson = await SecureStorageService().getUserProfile();
     if (userProfileJson != null) {
-      if (userProfileJson['phone'] == null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _showPhoneNumberBottomSheet(context);
-          }
-        });
-      }
       return UserProfileModel.fromJson(userProfileJson);
     }
     return null;
@@ -89,54 +83,33 @@ class _HomeLayoutState extends State<HomeLayout> {
     final screens = const [
       SizedBox.shrink(),
       SizedBox.shrink(),
-      SizedBox.shrink(),
+      StatsScreen(),
       SizedBox.shrink(),
     ];
 
     return MultiBlocProvider(
-      providers: [
-        BlocProvider<HomeCubit>(
-          create: (_) => HomeCubit(),
-        ),
-      ],
+      providers: [BlocProvider<HomeCubit>(create: (_) => HomeCubit())],
       child: BlocBuilder<HomeCubit, HomeState>(
         builder: (context, state) {
           final cubit = context.read<HomeCubit>();
           final itemsList = [
             BottomNavigationBarItem(
-              icon: _buildNavIcon(
-                index: 0,
-                cubitIndex: cubit.currentIndex,
-                icon: 'assets/images/navbar/menu.svg',
-                selectedIcon: 'assets/images/navbar/menu.svg',
-              ),
-              label: localizations.menu,
+              icon: Icon(Icons.receipt_long),
+              activeIcon: Icon(Icons.receipt),
+              label: localizations.orders,
             ),
             BottomNavigationBarItem(
-              icon: _buildNavIcon(
-                index: 1,
-                cubitIndex: cubit.currentIndex,
-                icon: 'assets/images/navbar/menu.svg',
-                selectedIcon: 'assets/images/navbar/menu.svg',
-              ),
-              label: localizations.menu,
+              icon: Icon(Icons.inventory_2_outlined),
+              activeIcon: Icon(Icons.inventory_2_rounded),
+              label: localizations.packages,
             ),
             BottomNavigationBarItem(
-              icon: _buildNavIcon(
-                index: 2,
-                cubitIndex: cubit.currentIndex,
-                icon: 'assets/images/navbar/menu.svg',
-                selectedIcon: 'assets/images/navbar/menu.svg',
-              ),
-              label: localizations.menu,
+              icon: Icon(Icons.analytics_outlined),
+              activeIcon: Icon(Icons.analytics_rounded),
+              label: localizations.statistics,
             ),
             BottomNavigationBarItem(
-              icon: _buildNavIcon(
-                index: 3,
-                cubitIndex: cubit.currentIndex,
-                icon: 'assets/images/navbar/menu.svg',
-                selectedIcon: 'assets/images/navbar/menu.svg',
-              ),
+              icon: Icon(Icons.menu),
               label: localizations.menu,
             ),
           ];
@@ -154,11 +127,8 @@ class _HomeLayoutState extends State<HomeLayout> {
                 },
                 child: Scaffold(
                   key: scaffoldKey,
-                  appBar: cubit.currentIndex != 1
-                      ? PreferredSize(
-                    preferredSize: Size.fromHeight(
-                      Platform.isIOS ? 60 : 60,
-                    ),
+                  appBar: PreferredSize(
+                    preferredSize: Size.fromHeight(Platform.isIOS ? 60 : 60),
                     child: Padding(
                       padding: Platform.isIOS
                           ? const EdgeInsets.only(top: 0.0)
@@ -168,8 +138,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                         localizations: localizations,
                       ),
                     ),
-                  )
-                      : null,
+                  ),
                   endDrawer: Drawer(
                     backgroundColor: AppColors.kBackgroundColor,
                     child: SafeArea(
@@ -188,43 +157,46 @@ class _HomeLayoutState extends State<HomeLayout> {
                                     child: GestureDetector(
                                       onTap: () {
                                         if (profile != null) {
-                                          context.push('/MyDataPage');
+                                          context.push('/ProfileScreen');
                                         }
                                       },
                                       child: Row(
                                         spacing: 10,
                                         children: [
-                                          profile?.imageUrl == null
+                                          profile?.personalPhoto == null
                                               ? SvgPicture.asset(
-                                            'assets/images/drawer/profile_placholder.svg',
-                                          )
+                                                  'assets/images/drawer/profile_placholder.svg',
+                                                )
                                               : CircleAvatar(
-                                            radius: 30,
-                                            backgroundImage: NetworkImage(
-                                              profile!.imageUrl!,
-                                            ),
-                                          ),
+                                                  radius: 30,
+                                                  backgroundImage: NetworkImage(
+                                                    profile!.personalPhoto!,
+                                                  ),
+                                                ),
                                           Column(
                                             mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                                MainAxisAlignment.center,
                                             crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                                CrossAxisAlignment.start,
                                             spacing: 10,
                                             children: [
                                               Text(
                                                 localizations.welcome,
                                                 style: AppTextStyles.bold16
                                                     .copyWith(
-                                                  color: Colors.white,
-                                                ),
+                                                      color: Colors.white,
+                                                    ),
                                               ),
                                               Text(
                                                 localizations
                                                     .tawreedatIsYourBestChoice,
                                                 style: AppTextStyles.regular14
                                                     .copyWith(
-                                                  color: Colors.white,
-                                                ),
+                                                      fontSize: 12,
+                                                      color: Colors.white,
+                                                    ),
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 2,
                                               ),
                                             ],
                                           ),
@@ -259,18 +231,18 @@ class _HomeLayoutState extends State<HomeLayout> {
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceBetween,
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
                                                 children: [
                                                   Text(
                                                     'EN',
                                                     style:
-                                                    AppTextStyles.regular14,
+                                                        AppTextStyles.regular14,
                                                   ),
                                                   Switch(
                                                     value:
-                                                    localizations
-                                                        .localeName ==
+                                                        localizations
+                                                            .localeName ==
                                                         'ar',
                                                     onChanged: (value) {
                                                       context
@@ -278,23 +250,23 @@ class _HomeLayoutState extends State<HomeLayout> {
                                                           .toggleLocale();
                                                     },
                                                     trackOutlineColor:
-                                                    WidgetStateProperty.resolveWith(
+                                                        WidgetStateProperty.resolveWith(
                                                           (states) => AppColors
-                                                          .kPrimaryColor,
-                                                    ),
+                                                              .kPrimaryColor,
+                                                        ),
                                                     activeThumbColor:
-                                                    AppColors.kPrimaryColor,
+                                                        AppColors.kPrimaryColor,
                                                     activeTrackColor:
-                                                    Colors.white,
+                                                        Colors.white,
                                                     inactiveTrackColor:
-                                                    Colors.white,
+                                                        Colors.white,
                                                     inactiveThumbColor:
-                                                    AppColors.kPrimaryColor,
+                                                        AppColors.kPrimaryColor,
                                                   ),
                                                   Text(
                                                     'AR',
                                                     style:
-                                                    AppTextStyles.regular14,
+                                                        AppTextStyles.regular14,
                                                   ),
                                                 ],
                                               ),
@@ -304,6 +276,79 @@ class _HomeLayoutState extends State<HomeLayout> {
                                                   .read<LocaleCubit>()
                                                   .toggleLocale();
                                             },
+                                          ),
+                                          Divider(),
+                                          ListTile(
+                                            onTap: () {
+                                              context.push('/ProfileScreen');
+                                            },
+                                            leading: const Icon(Icons.person),
+                                            title: Text(
+                                              localizations.profile,
+                                              style: AppTextStyles.bold16,
+                                            ),
+                                          ),
+                                          Divider(),
+                                          ListTile(
+                                            onTap: () async {
+                                              context.pop();
+                                              await SelectDeliveryAreasBottomSheet.show(context);
+                                            },
+                                            leading: const Icon(
+                                              Icons.pin_drop_rounded,
+                                            ),
+                                            title: Text(
+                                              localizations.deliveryAreas,
+                                              style: AppTextStyles.bold16,
+                                            ),
+                                          ),
+                                          Divider(),
+                                          ListTile(
+                                            leading: const Icon(
+                                              Icons.star_half,
+                                            ),
+                                            title: Text(
+                                              localizations.reviews,
+                                              style: AppTextStyles.bold16,
+                                            ),
+                                          ),
+                                          Divider(),
+                                          ListTile(
+                                            leading: const Icon(
+                                              Icons.question_mark,
+                                            ),
+                                            title: Text(
+                                              localizations.faq,
+                                              style: AppTextStyles.bold16,
+                                            ),
+                                          ),
+                                          Divider(),
+                                          ListTile(
+                                            leading: const Icon(
+                                              Icons.support_agent_rounded,
+                                            ),
+                                            title: Text(
+                                              localizations.support,
+                                              style: AppTextStyles.bold16,
+                                            ),
+                                          ),
+                                          Divider(),
+                                          ListTile(
+                                            leading: const Icon(
+                                              Icons.policy_rounded,
+                                            ),
+                                            title: Text(
+                                              localizations.privecyPolicy,
+                                              style: AppTextStyles.bold16,
+                                            ),
+                                          ),
+                                          Divider(),
+                                          ListTile(
+                                            leading: const Icon(Icons.lock),
+                                            title: Text(
+                                              localizations.termsAndConditions,
+                                              style: AppTextStyles.bold16,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -338,8 +383,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                                       clipBehavior: Clip.antiAlias,
                                       child: InkWell(
                                         onTap: () async {
-                                          await SecureStorageService()
-                                              .clearAll();
+                                          context.read<AuthCubit>().logout();
                                           if (context.mounted) {
                                             context.go('/auth/login');
                                           }
@@ -350,7 +394,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           width: double.infinity,
                                           child: Row(
                                             mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                                MainAxisAlignment.center,
                                             spacing: 10,
                                             children: [
                                               SvgPicture.asset(
@@ -360,9 +404,9 @@ class _HomeLayoutState extends State<HomeLayout> {
                                                 localizations.logout,
                                                 style: AppTextStyles.bold16
                                                     .copyWith(
-                                                  color: AppColors
-                                                      .kPrimaryColor,
-                                                ),
+                                                      color: AppColors
+                                                          .kPrimaryColor,
+                                                    ),
                                               ),
                                             ],
                                           ),
@@ -401,14 +445,14 @@ class _HomeLayoutState extends State<HomeLayout> {
 
                           final textDirection = Directionality.of(context);
                           final logicalIndex =
-                          textDirection == TextDirection.ltr
+                              textDirection == TextDirection.ltr
                               ? cubit.currentIndex
                               : (itemCount - 1 - cubit.currentIndex);
 
                           final indicatorWidth = 65.0;
                           final leftPos =
                               logicalIndex * itemWidth +
-                                  (itemWidth - indicatorWidth) / 2;
+                              (itemWidth - indicatorWidth) / 2;
 
                           return Container(
                             color: Colors.white,
@@ -426,7 +470,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                                       backgroundColor: Colors.white,
                                       currentIndex: cubit.currentIndex,
                                       onTap: (index) {
-                                        if (index == 4) {
+                                        if (index == 3) {
                                           scaffoldKey.currentState
                                               ?.openEndDrawer();
                                           return;
@@ -434,7 +478,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                                         cubit.changeTab(index);
                                       },
                                       selectedItemColor:
-                                      AppColors.kPrimaryColor,
+                                          AppColors.kPrimaryColor,
                                       unselectedItemColor: Colors.grey,
                                       type: BottomNavigationBarType.fixed,
                                       selectedLabelStyle: const TextStyle(
@@ -478,103 +522,14 @@ class _HomeLayoutState extends State<HomeLayout> {
       ),
     );
   }
-
-  Widget _buildNavIcon({
-    required int index,
-    required int cubitIndex,
-    required String icon,
-    required String selectedIcon,
-  }) {
-    final isSelected = index == cubitIndex;
-    return SvgPicture.asset(isSelected ? selectedIcon : icon);
-  }
-
-  void _showPhoneNumberBottomSheet(BuildContext context) {
-    // Create a unique key for THIS bottom sheet's form
-    final formKey = GlobalKey<FormState>();
-    final TextEditingController phoneController = TextEditingController();
-    final localizations = AppLocalizations.of(context)!;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 20,
-            right: 20,
-            top: 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(localizations.enterPhoneNumber, style: AppTextStyles.bold18),
-              const SizedBox(height: 8),
-              Text(
-                localizations.weNeedYourPhoneNumber,
-                style: AppTextStyles.regular14.copyWith(color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-              Form(
-                key: formKey,
-                child: AppTextFormField(
-                  label: AppLocalizations.of(context)!.phone,
-                  controller: phoneController,
-                  isPhone: true,
-                  validator: (v) {
-                    if (v!.isEmpty) {
-                      return AppLocalizations.of(context)!.enterPhoneNumber;
-                    } else if (v.length != 11) {
-                      return AppLocalizations.of(context)!.invalidPhoneNumber;
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-              AppCustomButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    context.read<AuthCubit>().updateProfile(
-                      phone: phoneController.text.toString(),
-                    );
-                    log(phoneController.text.toString());
-                    Navigator.pop(context);
-                  }
-                },
-                text: localizations.confirm,
-              ),
-              const SizedBox(height: 10),
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    localizations.maybeLater,
-                    style: AppTextStyles.bold16,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
-  }
 }
 
 class AppLayoutAppBar extends StatefulWidget {
-  const AppLayoutAppBar({super.key, required this.localizations, required this.isLoggedIn});
+  const AppLayoutAppBar({
+    super.key,
+    required this.localizations,
+    required this.isLoggedIn,
+  });
 
   final AppLocalizations localizations;
   final bool isLoggedIn;
@@ -758,7 +713,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
                                 scale: _companyLogoScale.value,
                                 child: SvgPicture.asset(
                                   'assets/images/appbar/company_logo.svg',
-                                  height: 50,
+                                  height: 30,
                                 ),
                               ),
                             ),
@@ -769,7 +724,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
                 },
                 child: SvgPicture.asset(
                   'assets/images/appbar/logo.svg',
-                  height: 40,
+                  height: 30,
                 ),
               ),
             ),

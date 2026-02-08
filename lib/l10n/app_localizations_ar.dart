@@ -228,7 +228,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get saveInvoice => 'احفظ الفاتورة';
 
   @override
-  String get chooseCity => 'اختر المدينة';
+  String get chooseArea => 'اختر المنطقة';
+
+  @override
+  String get areasSelected => 'المناطق المختارة';
+
+  @override
+  String get uploading => 'جاري الرفع';
 
   @override
   String get detailedAddress => 'العنوان بالتفصيل';
@@ -240,7 +246,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addAddress => 'إضافة عنوان';
 
   @override
-  String get deletingAccountWill => 'حذف الحساب سيؤدي الى حذف جميع البيانات الخاصة بك وتشمل المفضلة وطرق الدفع وبيانات العنوان';
+  String get deletingAccountWill => 'حذف الحساب سيؤدي الى حذف جميع البيانات الخاصة بك';
 
   @override
   String get areYouSureDeleteAccount => 'هل أنت متأكد من رغبتك في حذف الحساب؟';
@@ -495,6 +501,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nationalIdPhoto => 'صورة البطاقة الشخصية *';
 
   @override
+  String get vehicleLicense => 'صورة رخصة المركبة *';
+
+  @override
+  String get courierLicense => 'صورة رخصة القيادة *';
+
+  @override
   String get vehicleType => 'نوع المركبة';
 
   @override
@@ -528,5 +540,107 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pleaseLoginWithNewPassword => 'سجل دخولك الآن  بكلمة المرور الجديدة';
 
   @override
+  String get orders => 'الطلبات';
+
+  @override
+  String get packages => 'الشحنات';
+
+  @override
+  String get statistics => 'الإحصائيات';
+
+  @override
+  String get deliveryAreas => 'مناطق التوصيل';
+
+  @override
+  String get onFoot => 'سيراً';
+
+  @override
+  String get motorcycle => 'دراجة نارية';
+
+  @override
+  String get bike => 'دراجة';
+
+  @override
+  String get van => 'شاحنة';
+
+  @override
+  String get car => 'سيارة';
+
+  @override
+  String get tapToViewFullImage => 'اضغط لعرض الصورة الكاملة';
+
+  @override
   String get passwordResetSuccessful => 'تم تغيير كلمة المرور بنجاح';
+
+  @override
+  String get documents => 'الوثائق';
+
+  @override
+  String get licensePlate => 'رقم اللوحة';
+
+  @override
+  String get vehicleInformation => 'معلومات المركبة';
+
+  @override
+  String get performanceMetrics => 'مؤشرات الأداء';
+
+  @override
+  String get earnings => 'المكاسب';
+
+  @override
+  String get egp => 'ج';
+
+  @override
+  String get rating => 'التقييم';
+
+  @override
+  String get completionRate => 'نسبة الإتمام';
+
+  @override
+  String get acceptanceRate => 'نسبة القبول';
+
+  @override
+  String get avgDeliveryTime => 'متوسط وقت التوصيل';
+
+  @override
+  String get min => 'دقائق';
+
+  @override
+  String get totalReviews => 'مجموع المراجعات';
+
+  @override
+  String get cancelled => 'ملغاة';
+
+  @override
+  String get earn => 'اكسب';
+
+  @override
+  String get commissionRate => 'نسبة عمولة';
+
+  @override
+  String get deliveries => 'توصيلات';
+
+  @override
+  String get badgeProgress => 'تقدم الشارة';
+
+  @override
+  String get status => 'الحالة';
+
+  @override
+  String get pendingApproval => 'في انتظار الموافقة';
+
+  @override
+  String get phoneVerified => 'الرقم مؤكد';
+
+  @override
+  String get yes => 'نعم';
+
+  @override
+  String get no => 'لا';
+
+  @override
+  String get accountInformation => 'معلومات الحساب';
+
+  @override
+  String get approved => 'مففل';
 }

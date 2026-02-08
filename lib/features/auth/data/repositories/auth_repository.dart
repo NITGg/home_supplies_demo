@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import '../../../../core/utils/secure_storage_service.dart';
@@ -6,14 +5,12 @@ import '../data_sources/auth_remote_data_source.dart';
 import '../models/auth_response_model.dart';
 import 'package:flutter/material.dart';
 
+
 class AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final SecureStorageService _storageService;
 
-  AuthRepository(
-      this._remoteDataSource,
-      this._storageService,
-      );
+  AuthRepository(this._remoteDataSource, this._storageService);
 
   /// REGISTER
   Future<AuthResponseModel> register({
@@ -26,6 +23,8 @@ class AuthRepository {
     required String vehiclePlate,
     required File personalPhoto,
     required File nationalIdPhoto,
+    required File vehicleLicense,
+    required File courierLicense,
   }) async {
     final response = await _remoteDataSource.register(
       context: context,
@@ -37,6 +36,8 @@ class AuthRepository {
       vehiclePlate: vehiclePlate,
       personalPhoto: personalPhoto,
       nationalIdPhoto: nationalIdPhoto,
+      vehicleLicense: vehicleLicense,
+      courierLicense: courierLicense,
     );
 
     // Save tokens and user data
@@ -147,9 +148,7 @@ class AuthRepository {
   }
 
   /// FORGOT PASSWORD - Send OTP
-  Future<ForgotPasswordResponse> forgotPassword({
-    required String phone,
-  }) async {
+  Future<ForgotPasswordResponse> forgotPassword({required String phone}) async {
     return await _remoteDataSource.forgotPassword(phone: phone);
   }
 
@@ -166,28 +165,24 @@ class AuthRepository {
     );
   }
 
-  /// UPDATE PROFILE
-  Future<UserModel> updateProfile({
-    required Map<String, dynamic> data,
-    File? imageUrl,
+  /// CHANGE PASSWORD
+  Future<void> changePassword({
+    required String token,
+    required String oldPassword,
+    required String newPassword,
+    required var context,
   }) async {
-    final response = await _remoteDataSource.updateProfile(
-      data: data,
-      imageUrl: imageUrl,
+    await _remoteDataSource.changePassword(
+      context: context,
+      token: token,
+      oldPassword: oldPassword,
+      newPassword: newPassword,
     );
-
-    // Save updated profile
-    await _storageService.saveUserProfile(response.toJson());
-
-    final savedProfile = await _storageService.getUserProfile();
-    log('Updated and saved user profile: ${savedProfile.toString()}');
-
-    return response;
   }
-
 
   /// LOGOUT
   Future<void> logout() async {
+    await _remoteDataSource.logOut();
     await _storageService.deleteToken();
     await _storageService.deleteRefreshToken();
     await _storageService.deleteUserProfile();
@@ -197,6 +192,5 @@ class AuthRepository {
   Future<void> _saveAuthData(AuthData authData) async {
     await _storageService.saveToken(authData.accessToken);
     await _storageService.saveRefreshToken(authData.refreshToken);
-    await _storageService.saveUserProfile(authData.user.toJson());
   }
 }

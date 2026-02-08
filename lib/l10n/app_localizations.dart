@@ -533,11 +533,23 @@ abstract class AppLocalizations {
   /// **'Save Invoice'**
   String get saveInvoice;
 
-  /// No description provided for @chooseCity.
+  /// No description provided for @chooseArea.
   ///
   /// In en, this message translates to:
-  /// **'Choose City'**
-  String get chooseCity;
+  /// **'Choose Area'**
+  String get chooseArea;
+
+  /// No description provided for @areasSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Areas Selected'**
+  String get areasSelected;
+
+  /// No description provided for @uploading.
+  ///
+  /// In en, this message translates to:
+  /// **'uploading...'**
+  String get uploading;
 
   /// No description provided for @detailedAddress.
   ///
@@ -560,7 +572,7 @@ abstract class AppLocalizations {
   /// No description provided for @deletingAccountWill.
   ///
   /// In en, this message translates to:
-  /// **'Deleting your account will remove all your data including favorites, payment methods, and addresses'**
+  /// **'Deleting your account will remove all your data'**
   String get deletingAccountWill;
 
   /// No description provided for @areYouSureDeleteAccount.
@@ -1067,6 +1079,18 @@ abstract class AppLocalizations {
   /// **'National ID Photo *'**
   String get nationalIdPhoto;
 
+  /// No description provided for @vehicleLicense.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle License Photo *'**
+  String get vehicleLicense;
+
+  /// No description provided for @courierLicense.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver License Photo *'**
+  String get courierLicense;
+
   /// No description provided for @vehicleType.
   ///
   /// In en, this message translates to:
@@ -1133,11 +1157,215 @@ abstract class AppLocalizations {
   /// **'please Login With New Password'**
   String get pleaseLoginWithNewPassword;
 
+  /// No description provided for @orders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get orders;
+
+  /// No description provided for @packages.
+  ///
+  /// In en, this message translates to:
+  /// **'Packages'**
+  String get packages;
+
+  /// No description provided for @statistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get statistics;
+
+  /// No description provided for @deliveryAreas.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Areas'**
+  String get deliveryAreas;
+
+  /// No description provided for @onFoot.
+  ///
+  /// In en, this message translates to:
+  /// **'onFoot'**
+  String get onFoot;
+
+  /// No description provided for @motorcycle.
+  ///
+  /// In en, this message translates to:
+  /// **'motorcycle'**
+  String get motorcycle;
+
+  /// No description provided for @bike.
+  ///
+  /// In en, this message translates to:
+  /// **'bike'**
+  String get bike;
+
+  /// No description provided for @van.
+  ///
+  /// In en, this message translates to:
+  /// **'van'**
+  String get van;
+
+  /// No description provided for @car.
+  ///
+  /// In en, this message translates to:
+  /// **'car'**
+  String get car;
+
+  /// No description provided for @tapToViewFullImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap To View Full Image'**
+  String get tapToViewFullImage;
+
   /// No description provided for @passwordResetSuccessful.
   ///
   /// In en, this message translates to:
   /// **'Password Reset Successful'**
   String get passwordResetSuccessful;
+
+  /// No description provided for @documents.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get documents;
+
+  /// No description provided for @licensePlate.
+  ///
+  /// In en, this message translates to:
+  /// **'License Plate'**
+  String get licensePlate;
+
+  /// No description provided for @vehicleInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle Information'**
+  String get vehicleInformation;
+
+  /// No description provided for @performanceMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Performance Metrics'**
+  String get performanceMetrics;
+
+  /// No description provided for @earnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Earnings'**
+  String get earnings;
+
+  /// No description provided for @egp.
+  ///
+  /// In en, this message translates to:
+  /// **'EGP'**
+  String get egp;
+
+  /// No description provided for @rating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get rating;
+
+  /// No description provided for @completionRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Completion Rate'**
+  String get completionRate;
+
+  /// No description provided for @acceptanceRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Acceptance Rate'**
+  String get acceptanceRate;
+
+  /// No description provided for @avgDeliveryTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg Delivery Time'**
+  String get avgDeliveryTime;
+
+  /// No description provided for @min.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get min;
+
+  /// No description provided for @totalReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Reviews'**
+  String get totalReviews;
+
+  /// No description provided for @cancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get cancelled;
+
+  /// No description provided for @earn.
+  ///
+  /// In en, this message translates to:
+  /// **'Earn'**
+  String get earn;
+
+  /// No description provided for @commissionRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Commission Rate'**
+  String get commissionRate;
+
+  /// No description provided for @deliveries.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliveries'**
+  String get deliveries;
+
+  /// No description provided for @badgeProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Badge Progress'**
+  String get badgeProgress;
+
+  /// No description provided for @status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// No description provided for @pendingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Approval'**
+  String get pendingApproval;
+
+  /// No description provided for @phoneVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Verified'**
+  String get phoneVerified;
+
+  /// No description provided for @yes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get yes;
+
+  /// No description provided for @no.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get no;
+
+  /// No description provided for @accountInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Information'**
+  String get accountInformation;
+
+  /// No description provided for @approved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get approved;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

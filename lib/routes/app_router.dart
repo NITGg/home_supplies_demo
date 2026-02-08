@@ -6,6 +6,7 @@ import '../core/widgets/loading_screen.dart';
 import '../features/auth/presentation/pages/forgot_password.dart';
 import '../features/auth/presentation/pages/login_screen.dart';
 import '../features/auth/presentation/pages/otp_screen.dart';
+import '../features/auth/presentation/pages/profile_screen.dart';
 import '../features/auth/presentation/pages/register_screen.dart';
 import '../features/auth/presentation/pages/reset_password.dart';
 import '../features/home/layout/presentation/home_layout.dart';
@@ -56,6 +57,10 @@ Future<GoRouter> createAppRouter({
         path: '/onboarding',
         name: 'onboarding',
         builder: (context, state) => const OnboardingScreen(),
+      ),GoRoute(
+        path: '/ProfileScreen',
+        name: 'ProfileScreen',
+        builder: (context, state) => const ProfileScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) {

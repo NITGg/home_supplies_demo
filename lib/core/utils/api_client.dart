@@ -43,8 +43,7 @@ class ApiClient {
         },
 
         onError: (error, handler) async {
-          // Check if error is 401 (Unauthorized) and not from refresh endpoint
-          if (error.response?.statusCode == 401 &&
+          if (error.response?.statusCode == 500 && error.response?.data['message'].contains('jwt expired') &&
               !error.requestOptions.path.contains('/auth/refresh-token')) {
 
             // If already refreshing, queue this request

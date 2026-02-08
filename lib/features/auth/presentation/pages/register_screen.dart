@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:tawreedat_courier/features/auth/data/models/user_profile_model.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
@@ -23,11 +24,14 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   final _formKeyStep1 = GlobalKey<FormState>();
   final _formKeyStep2 = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
 
   int _currentStep = 0;
+  bool _isPeekingStep2 = false;
 
   // Step 1: Personal Information
   final TextEditingController firstNameController = TextEditingController();
@@ -42,16 +46,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // Step 2: Courier Information
   final TextEditingController vehiclePlateController = TextEditingController();
   File? nationalIdPhoto;
+  File? vehicleLicense;
+  File? courierLicense;
   String? selectedVehicleType;
 
   // Vehicle types with icons
-  final List<Map<String, dynamic>> vehicleTypes = [
-    {'name': 'Car', 'icon': Icons.directions_car},
-    {'name': 'Van', 'icon': Icons.airport_shuttle},
-    {'name': 'Bike', 'icon': Icons.pedal_bike},
-    {'name': 'Motorcycle', 'icon': Icons.two_wheeler},
-    {'name': 'Onfoot', 'icon': Icons.directions_walk},
-  ];
 
   @override
   void dispose() {
@@ -61,10 +60,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     passwordController.dispose();
     confirmPasswordController.dispose();
     vehiclePlateController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickImage(bool isPersonalPhoto) async {
+  Future<void> _pickImage(DocumentType documentType) async {
     final XFile? image = await _picker.pickImage(
       source: ImageSource.gallery,
       maxWidth: 1024,
@@ -75,12 +75,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (image != null) {
       if (context.mounted) {
         setState(() {
-        if (isPersonalPhoto) {
-          personalPhoto = File(image.path);
-        } else {
-          nationalIdPhoto = File(image.path);
-        }
-      });
+          switch (documentType) {
+            case DocumentType.personalPhoto:
+              personalPhoto = File(image.path);
+              break;
+            case DocumentType.nationalId:
+              nationalIdPhoto = File(image.path);
+              break;
+            case DocumentType.vehicleLicense:
+              vehicleLicense = File(image.path);
+              break;
+            case DocumentType.courierLicense:
+              courierLicense = File(image.path);
+              break;
+          }
+        });
       }
     }
   }
@@ -93,9 +102,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (personalPhoto == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.selectPersonalPhoto,
-          ),
+          content: Text(AppLocalizations.of(context)!.selectPersonalPhoto),
         ),
       );
       return false;
@@ -112,10 +119,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (nationalIdPhoto == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.selectNationalIdPhoto,
-          ),
+          content: Text(AppLocalizations.of(context)!.selectNationalIdPhoto),
         ),
+      );
+      return false;
+    }
+    if (vehicleLicense == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.documents)),
+      );
+      return false;
+    }
+    if (courierLicense == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.documents)),
       );
       return false;
     }
@@ -150,6 +167,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             : vehiclePlateController.text,
         personalPhoto: personalPhoto!,
         nationalIdPhoto: nationalIdPhoto!,
+        vehicleLicense: vehicleLicense!,
+        courierLicense: courierLicense!,
       );
     }
   }
@@ -157,6 +176,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final showStep2 = _currentStep == 1 || _isPeekingStep2;
 
     return Scaffold(
       body: BlocConsumer<AuthCubit, AuthState>(
@@ -197,10 +217,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               // Step Content
               Expanded(
                 child: SingleChildScrollView(
+                  controller: _scrollController,
                   padding: const EdgeInsets.all(16.0),
-                  child: _currentStep == 0
-                      ? _buildStep1PersonalInfo(loc)
-                      : _buildStep2CourierInfo(loc),
+                  child: showStep2
+                      ? _buildStep2CourierInfo(loc)
+                      : _buildStep1PersonalInfo(loc),
                 ),
               ),
 
@@ -230,8 +251,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         children: [
           _buildProgressStep(
             stepNumber: 1,
-            title:
-                AppLocalizations.of(context)!.personalInformation,
+            title: AppLocalizations.of(context)!.personalInformation,
             isActive: _currentStep == 0,
             isCompleted: _currentStep > 0,
           ),
@@ -244,12 +264,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   : Colors.grey.shade300,
             ),
           ),
-          _buildProgressStep(
-            stepNumber: 2,
-            title:
-                AppLocalizations.of(context)!.courierInformation ?? 'Courier',
-            isActive: _currentStep == 1,
-            isCompleted: false,
+          GestureDetector(
+            onLongPressStart: (_) {
+              setState(() => _isPeekingStep2 = true);
+              _scrollController.animateTo(
+                0,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            },
+            onLongPressEnd: (_) {
+              setState(() => _isPeekingStep2 = false);
+            },
+            onLongPressCancel: () {
+              setState(() => _isPeekingStep2 = false);
+            },
+            child: _buildProgressStep(
+              stepNumber: 2,
+              title:
+                  AppLocalizations.of(context)!.courierInformation,
+
+              isActive: (_currentStep == 1) || _isPeekingStep2,
+              isCompleted: false,
+            ),
           ),
         ],
       ),
@@ -309,7 +346,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _buildImagePicker(
             label: loc.personalPhoto,
             image: personalPhoto,
-            onTap: () => _pickImage(true),
+            onTap: () => _pickImage(DocumentType.personalPhoto),
           ),
           const SizedBox(height: 20),
 
@@ -395,9 +432,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             color: AppColors.kPrimaryColor,
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(loc.gender, style: AppTextStyles.regular14),
-          ),
+          Expanded(child: Text(loc.gender, style: AppTextStyles.regular14)),
           Row(
             children: [
               Text(
@@ -443,10 +478,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _buildImagePicker(
             label: loc.nationalIdPhoto,
             image: nationalIdPhoto,
-            onTap: () => _pickImage(false),
+            onTap: () => _pickImage(DocumentType.nationalId),
           ),
           const SizedBox(height: 20),
-
+          _buildImagePicker(
+            label: loc.vehicleLicense,
+            image: vehicleLicense,
+            onTap: () => _pickImage(DocumentType.vehicleLicense),
+          ),
+          const SizedBox(height: 20),
+          _buildImagePicker(
+            label: loc.courierLicense,
+            image: courierLicense,
+            onTap: () => _pickImage(DocumentType.courierLicense),
+          ),
+          const SizedBox(height: 20),
           // Vehicle Type Selection with Icon Chips
           Text(
             '${loc.vehicleType} *',
@@ -505,10 +551,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Wrap(
       spacing: 12,
       runSpacing: 12,
-      children: vehicleTypes.map((vehicle) {
+      children: getVehicleTypes(AppLocalizations.of(context)!).map((vehicle) {
         final isSelected = selectedVehicleType == vehicle['name'];
         return _buildVehicleChip(
-          name: vehicle['name'],
+          name: vehicle['label'],
           icon: vehicle['icon'],
           isSelected: isSelected,
           onTap: () {
@@ -595,6 +641,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 if (_validateStep1()) {
                   setState(() {
                     _currentStep = 1;
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                    );
                   });
                 }
               },
@@ -712,4 +763,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ],
     );
   }
+}
+
+List<Map<String, dynamic>> getVehicleTypes(AppLocalizations localizations) {
+  return [
+    {
+      'name': 'Car',
+      'icon': Icons.directions_car,
+      'label': localizations.car ,
+    },
+    {
+      'name': 'Van',
+      'icon': Icons.airport_shuttle,
+      'label': localizations.van ,
+    },
+    {
+      'name': 'Bike',
+      'icon': Icons.pedal_bike,
+      'label': localizations.bike ,
+    },
+    {
+      'name': 'Motorcycle',
+      'icon': Icons.two_wheeler,
+      'label': localizations.motorcycle ?? 'Motorcycle',
+    },
+    {
+      'name': 'Onfoot',
+      'icon': Icons.directions_walk,
+      'label': localizations.onFoot ?? 'On Foot',
+    },
+  ];
 }

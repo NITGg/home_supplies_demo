@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../core/utils/secure_storage_service.dart';
 import '../models/auth_response_model.dart';
+import '../models/user_profile_model.dart';
 
 class AuthRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
@@ -20,6 +22,8 @@ class AuthRemoteDataSource {
     required String vehiclePlate,
     required File personalPhoto,
     required File nationalIdPhoto,
+    required File vehicleLicense,
+    required File courierLicense,
   }) async {
     try {
       final formData = FormData.fromMap({
@@ -37,14 +41,20 @@ class AuthRemoteDataSource {
           nationalIdPhoto.path,
           filename: 'national_id.jpg',
         ),
+        'vehicle_license': await MultipartFile.fromFile(
+          vehicleLicense.path,
+          filename: 'vehicle_license.jpg',
+        ),
+        'courier_license': await MultipartFile.fromFile(
+          courierLicense.path,
+          filename: 'courier_license.jpg',
+        ),
       });
 
       final response = await _dio.post(
         '/auth/register',
         data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-        ),
+        options: Options(contentType: 'multipart/form-data'),
       );
 
       return AuthResponseModel.fromJson(response.data);
@@ -62,15 +72,26 @@ class AuthRemoteDataSource {
     try {
       final response = await _dio.post(
         '/auth/verify-phone',
-        data: {
-          'phone': phone,
-          'user_otp': userOtp,
-        },
+        data: {'phone': phone, 'user_otp': userOtp},
       );
 
       return OtpVerificationResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final message = e.response?.data?['message'];
+
+      // ✅ treat as success
+      if (status == 400 && message == 'Phone already verified') {
+        return OtpVerificationResponse.fromJson({
+          'status': 200,
+          'message': 'Phone already verified',
+          'data': {'phone': phone},
+        });
+      }
+
+      // ❌ real error → rethrow
+      rethrow;
     } catch (e) {
-      log('Verify OTP error: $e');
       rethrow;
     }
   }
@@ -100,10 +121,7 @@ class AuthRemoteDataSource {
     try {
       final response = await _dio.post(
         '/auth/login',
-        data: {
-          'phone': phone,
-          'password': password,
-        },
+        data: {'phone': phone, 'password': password},
       );
 
       return AuthResponseModel.fromJson(response.data);
@@ -120,9 +138,7 @@ class AuthRemoteDataSource {
     try {
       final response = await _dio.post(
         '/auth/refresh-token',
-        options: Options(
-          headers: {'Authorization': 'Bearer $refreshToken'},
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $refreshToken'}),
       );
 
       return RefreshTokenResponse.fromJson(response.data);
@@ -132,14 +148,10 @@ class AuthRemoteDataSource {
     }
   }
 
-
-
-  /// DELETE PROFILE (if still supported)
+  /// DELETE PROFILE
   Future<Map<String, dynamic>> deleteProfile() async {
     try {
-      final response = await _dio.delete(
-        '/profile',
-      );
+      final response = await _dio.delete('/profile/soft-delete');
       return response.data;
     } catch (e) {
       log('Delete profile error: $e');
@@ -147,8 +159,25 @@ class AuthRemoteDataSource {
     }
   }
 
-  /// UPDATE PROFILE (if still supported - update based on backend)
-  Future<UserModel> updateProfile({
+  Future<void> changePassword({
+    required BuildContext context,
+    required String token,
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    final response = await _dio.patch(
+      '/auth/update-password',
+      data: {'current_password': oldPassword, 'new_password': newPassword},
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(response.data['message'] ?? 'Failed to change password');
+    }
+  }
+
+  /// UPDATE PROFILE
+  Future<UserProfileModel> updateProfile({
     required Map<String, dynamic> data,
     File? imageUrl,
   }) async {
@@ -161,13 +190,12 @@ class AuthRemoteDataSource {
       }
       final formData = FormData.fromMap(data);
 
-      final response = await _dio.put(
-        '/profile',
-        data: formData,
-      );
+      final response = await _dio.put('/profile', data: formData);
 
       log(response.data.toString());
-      final updatedUser = UserModel.fromJson(response.data['updatedUser']);
+      final updatedUser = UserProfileModel.fromJson(
+        response.data['updatedUser'],
+      );
       log('Updated user profile: ${updatedUser.toString()}');
       return updatedUser;
     } catch (e, s) {
@@ -184,10 +212,7 @@ class AuthRemoteDataSource {
     try {
       final response = await _dio.post(
         '/auth/google-login',
-        data: {
-          'id_token': idToken,
-          'phone': phone,
-        },
+        data: {'id_token': idToken, 'phone': phone},
       );
 
       final authResponse = AuthResponseModel.fromJson(response.data);
@@ -206,18 +231,12 @@ class AuthRemoteDataSource {
     required String phone,
   }) async {
     try {
-      final data = {
-        'id_token': idToken,
-        'phone': phone,
-      };
+      final data = {'id_token': idToken, 'phone': phone};
       if (fullName != null) {
         data['fullname'] = fullName;
       }
 
-      final response = await _dio.post(
-        '/auth/apple-login',
-        data: data,
-      );
+      final response = await _dio.post('/auth/apple-login', data: data);
 
       final authResponse = AuthResponseModel.fromJson(response.data);
       log('Apple sign in user: ${authResponse.data.accessToken}');
@@ -229,9 +248,7 @@ class AuthRemoteDataSource {
   }
 
   /// FORGOT PASSWORD - Send OTP
-  Future<ForgotPasswordResponse> forgotPassword({
-    required String phone,
-  }) async {
+  Future<ForgotPasswordResponse> forgotPassword({required String phone}) async {
     try {
       final response = await _dio.post(
         '/auth/forget-password',
@@ -272,4 +289,20 @@ class AuthRemoteDataSource {
     }
   }
 
+  Future<void> logOut() async {
+    try {
+      final response = await _dio.post(
+        '/auth/logout',
+        options: Options(
+          headers: {
+            'Authorization':
+                'Bearer ${await SecureStorageService().getToken()}',
+          },
+        ),
+      );
+    } catch (e) {
+      log('Logout error: $e');
+      rethrow;
+    }
+  }
 }

@@ -90,13 +90,15 @@
   "permissionDenied": "Permission Denied",
 
   "saveInvoice": "Save Invoice",
-  "chooseCity": "Choose City",
+  "chooseArea": "Choose Area",
+  "areasSelected": "Areas Selected",
+  "uploading": "uploading...",
 
   "detailedAddress": "Detailed Address",
   "saveAddress": "Save Address",
   "addAddress": "Add Address",
 
-  "deletingAccountWill": "Deleting your account will remove all your data including favorites, payment methods, and addresses",
+  "deletingAccountWill": "Deleting your account will remove all your data",
 
   "areYouSureDeleteAccount": "Are you sure you want to delete your account?",
   "areYouSureDelete": "Are you sure you want to delete?",
@@ -213,6 +215,8 @@
 
   "courierInformation": "Courier Information",
   "nationalIdPhoto": "National ID Photo *",
+  "vehicleLicense": "Vehicle License Photo *",
+  "courierLicense": "Driver License Photo *",
 
   "vehicleType": "Vehicle Type",
   "vehiclePlate": "Vehicle Plate",
@@ -228,7 +232,43 @@
   "enterPhoneToResetPassword": "Enter your phone number to reset your password",
     "resetPassword": "Reset Password",
     "pleaseLoginWithNewPassword": "please Login With New Password",
-    "passwordResetSuccessful": "Password Reset Successful"
+    "orders": "Orders",
+    "packages": "Packages",
+    "statistics": "Statistics",
+    "deliveryAreas": "Delivery Areas",
+    "onFoot": "onFoot",
+    "motorcycle": "motorcycle",
+    "bike": "bike",
+    "van": "van",
+    "car": "car",
+    "tapToViewFullImage": "Tap To View Full Image",
+    "passwordResetSuccessful": "Password Reset Successful",
+    "documents": "Documents",
+    "licensePlate": "License Plate",
+              "vehicleInformation": "Vehicle Information",
+          "performanceMetrics": "Performance Metrics",
+          "earnings": "Earnings",
+          "egp": "EGP",
+                    "rating": "Rating",
+"completionRate": "Completion Rate",
+                    "acceptanceRate": "Acceptance Rate",
+                                        "avgDeliveryTime": "Avg Delivery Time",
+                    "min": "min",
+                    "totalReviews": "Total Reviews",
+                    "cancelled": "Cancelled",
+                    "earn": "Earn",
+                    "commissionRate": "Commission Rate",
+                    "deliveries": "Deliveries",
+                    "badgeProgress": "Badge Progress",
+                                        "status": "Status",
+                                        "pendingApproval": "Pending Approval",
+                                        "phoneVerified": "Phone Verified",
+                                        "yes": "Yes",
+                                        "no": "No",
+                                        "accountInformation": "Account Information",
+
+              "approved": "Approved"
+
 
 
 

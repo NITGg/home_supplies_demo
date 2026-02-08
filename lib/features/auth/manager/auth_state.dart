@@ -1,5 +1,6 @@
 // auth_state.dart
 import '../data/models/auth_response_model.dart';
+import '../data/models/user_profile_model.dart';
 
 abstract class AuthState {}
 
@@ -28,7 +29,7 @@ class AuthOtpResent extends AuthState {
 }
 
 class AuthUpdateSuccess extends AuthState {
-  final UserModel? user;
+  final UserProfileModel? user;
   AuthUpdateSuccess({this.user});
 }
 

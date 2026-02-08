@@ -227,6 +227,7 @@ class GlobalErrorHandler {
     if (message.contains('Failed host lookup')) return true;
     if (message.contains('Image provider')) return true;
     if (message.contains('HTTP request failed')) return true;
+    if (message.contains('Invalid argument(s): No host specified in URI')) return true;
 
     // You can add more harmless ones here
     return false;

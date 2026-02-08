@@ -91,13 +91,15 @@
   "permissionDenied": "تم رفض الصلاحية",
 
   "saveInvoice": "احفظ الفاتورة",
-  "chooseCity": "اختر المدينة",
+  "chooseArea": "اختر المنطقة",
+  "areasSelected": "المناطق المختارة",
+  "uploading": "جاري الرفع",
 
   "detailedAddress": "العنوان بالتفصيل",
   "saveAddress": "حفظ العنوان",
   "addAddress": "إضافة عنوان",
 
-  "deletingAccountWill": "حذف الحساب سيؤدي الى حذف جميع البيانات الخاصة بك وتشمل المفضلة وطرق الدفع وبيانات العنوان",
+  "deletingAccountWill": "حذف الحساب سيؤدي الى حذف جميع البيانات الخاصة بك",
 
   "areYouSureDeleteAccount": "هل أنت متأكد من رغبتك في حذف الحساب؟",
   "areYouSureDelete": "هل أنت متأكد من رغبتك في الحذف؟",
@@ -214,7 +216,8 @@
 
   "courierInformation": "بيانات المندوب",
   "nationalIdPhoto": "صورة البطاقة الشخصية *",
-
+  "vehicleLicense": "صورة رخصة المركبة *",
+  "courierLicense": "صورة رخصة القيادة *",
   "vehicleType": "نوع المركبة",
   "vehiclePlate": "رقم اللوحة",
 
@@ -228,7 +231,46 @@
   "enterPhoneToResetPassword": "ادخل رقم هاتفك لإعادة تعيين كلمة المرور",
   "resetPassword": "إعادة تعيين كلمة المرور",
   "pleaseLoginWithNewPassword": "سجل دخولك الآن  بكلمة المرور الجديدة",
-      "passwordResetSuccessful": "تم تغيير كلمة المرور بنجاح"
+  "orders": "الطلبات",
+      "packages": "الشحنات",
+      "statistics": "الإحصائيات",
+          "deliveryAreas": "مناطق التوصيل",
+ "onFoot": "سيراً",
+    "motorcycle": "دراجة نارية",
+    "bike": "دراجة",
+    "van": "شاحنة",
+    "car": "سيارة",
+        "tapToViewFullImage": "اضغط لعرض الصورة الكاملة",
+
+      "passwordResetSuccessful": "تم تغيير كلمة المرور بنجاح",
+          "documents": "الوثائق",
+          "licensePlate": "رقم اللوحة",
+          "vehicleInformation": "معلومات المركبة",
+          "performanceMetrics": "مؤشرات الأداء",
+          "earnings": "المكاسب",
+                    "egp": "ج",
+                    "rating": "التقييم",
+                    "completionRate": "نسبة الإتمام",
+                    "acceptanceRate": "نسبة القبول",
+                    "avgDeliveryTime": "متوسط وقت التوصيل",
+                    "min": "دقائق",
+                    "totalReviews": "مجموع المراجعات",
+                    "cancelled": "ملغاة",
+                    "earn": "اكسب",
+                    "status": "الحالة",
+            "pendingApproval": "في انتظار الموافقة",
+
+                "commissionRate": "نسبة عمولة",
+            "deliveries": "توصيلات",
+        "badgeProgress": "تقدم الشارة",
+
+
+"phoneVerified": "الرقم مؤكد",
+                "yes": "نعم",
+                "no": "لا",
+        "accountInformation": "معلومات الحساب",
+
+          "approved": "مففل"
 
 
 

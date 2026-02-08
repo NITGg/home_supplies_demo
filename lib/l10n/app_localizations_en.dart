@@ -228,7 +228,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saveInvoice => 'Save Invoice';
 
   @override
-  String get chooseCity => 'Choose City';
+  String get chooseArea => 'Choose Area';
+
+  @override
+  String get areasSelected => 'Areas Selected';
+
+  @override
+  String get uploading => 'uploading...';
 
   @override
   String get detailedAddress => 'Detailed Address';
@@ -240,7 +246,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addAddress => 'Add Address';
 
   @override
-  String get deletingAccountWill => 'Deleting your account will remove all your data including favorites, payment methods, and addresses';
+  String get deletingAccountWill => 'Deleting your account will remove all your data';
 
   @override
   String get areYouSureDeleteAccount => 'Are you sure you want to delete your account?';
@@ -495,6 +501,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nationalIdPhoto => 'National ID Photo *';
 
   @override
+  String get vehicleLicense => 'Vehicle License Photo *';
+
+  @override
+  String get courierLicense => 'Driver License Photo *';
+
+  @override
   String get vehicleType => 'Vehicle Type';
 
   @override
@@ -528,5 +540,107 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseLoginWithNewPassword => 'please Login With New Password';
 
   @override
+  String get orders => 'Orders';
+
+  @override
+  String get packages => 'Packages';
+
+  @override
+  String get statistics => 'Statistics';
+
+  @override
+  String get deliveryAreas => 'Delivery Areas';
+
+  @override
+  String get onFoot => 'onFoot';
+
+  @override
+  String get motorcycle => 'motorcycle';
+
+  @override
+  String get bike => 'bike';
+
+  @override
+  String get van => 'van';
+
+  @override
+  String get car => 'car';
+
+  @override
+  String get tapToViewFullImage => 'Tap To View Full Image';
+
+  @override
   String get passwordResetSuccessful => 'Password Reset Successful';
+
+  @override
+  String get documents => 'Documents';
+
+  @override
+  String get licensePlate => 'License Plate';
+
+  @override
+  String get vehicleInformation => 'Vehicle Information';
+
+  @override
+  String get performanceMetrics => 'Performance Metrics';
+
+  @override
+  String get earnings => 'Earnings';
+
+  @override
+  String get egp => 'EGP';
+
+  @override
+  String get rating => 'Rating';
+
+  @override
+  String get completionRate => 'Completion Rate';
+
+  @override
+  String get acceptanceRate => 'Acceptance Rate';
+
+  @override
+  String get avgDeliveryTime => 'Avg Delivery Time';
+
+  @override
+  String get min => 'min';
+
+  @override
+  String get totalReviews => 'Total Reviews';
+
+  @override
+  String get cancelled => 'Cancelled';
+
+  @override
+  String get earn => 'Earn';
+
+  @override
+  String get commissionRate => 'Commission Rate';
+
+  @override
+  String get deliveries => 'Deliveries';
+
+  @override
+  String get badgeProgress => 'Badge Progress';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get pendingApproval => 'Pending Approval';
+
+  @override
+  String get phoneVerified => 'Phone Verified';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get no => 'No';
+
+  @override
+  String get accountInformation => 'Account Information';
+
+  @override
+  String get approved => 'Approved';
 }
