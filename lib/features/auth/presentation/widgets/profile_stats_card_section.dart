@@ -14,116 +14,130 @@ class StatsCardsSection extends StatelessWidget {
 
     return Directionality(
       textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              localizations.performanceMetrics,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2D3436),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Main stats grid (4 cards)
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.5,
+      child: Center(
+        // prevents stretching too much on desktop
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1100),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildStatCard(
-                  title: localizations.completed,
-                  value: stats.totalCompletedOrders.toString(),
-                  icon: Icons.check_circle_outline,
-                  color: const Color(0xFF00B894),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF00B894), Color(0xFF55EFC4)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                Text(
+                  localizations.performanceMetrics,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2D3436),
                   ),
                 ),
-                _buildStatCard(
-                  title: localizations.earnings,
-                  value: '${stats.totalEarnings} ${localizations.egp}',
-                  icon: Icons.account_balance_wallet_outlined,
-                  color: const Color(0xFF6C5CE7),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                const SizedBox(height: 16),
+
+                /// ===== MAIN STATS GRID =====
+                GridView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate:
+                  const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 280, // 👈 card max width
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.6,
                   ),
+                  children: [
+                    _buildStatCard(
+                      title: localizations.completed,
+                      value: stats.totalCompletedOrders.toString(),
+                      icon: Icons.check_circle_outline,
+                      color: const Color(0xFF00B894),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF00B894), Color(0xFF55EFC4)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    _buildStatCard(
+                      title: localizations.earnings,
+                      value: '${stats.totalEarnings} ${localizations.egp}',
+                      icon: Icons.account_balance_wallet_outlined,
+                      color: const Color(0xFF6C5CE7),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    _buildStatCard(
+                      title: localizations.rating,
+                      value:
+                      double.parse(stats.averageRating).toStringAsFixed(1),
+                      icon: Icons.star_outline,
+                      color: const Color(0xFFFDCB6E),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFDCB6E), Color(0xFFF9CA24)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    _buildStatCard(
+                      title: localizations.completionRate,
+                      value: '${stats.completionRate}%',
+                      icon: Icons.pie_chart_outline,
+                      color: const Color(0xFF0984E3),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0984E3), Color(0xFF74B9FF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                  ],
                 ),
-                _buildStatCard(
-                  title: localizations.rating,
-                  value: double.parse(stats.averageRating).toStringAsFixed(1),
-                  icon: Icons.star_outline,
-                  color: const Color(0xFFFDCB6E),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFDCB6E), Color(0xFFF9CA24)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+
+                const SizedBox(height: 12),
+
+                /// ===== MINI STATS GRID =====
+                GridView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate:
+                  const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 250, // smaller width for mini cards
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 3.0, // wider row-style card
                   ),
-                  suffix: '⭐',
-                ),
-                _buildStatCard(
-                  title: localizations.completionRate,
-                  value: '${stats.completionRate}%',
-                  icon: Icons.pie_chart_outline,
-                  color: const Color(0xFF0984E3),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0984E3), Color(0xFF74B9FF)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  children: [
+                    _buildMiniStatCard(
+                      localizations.acceptanceRate,
+                      '${stats.acceptanceRate}%',
+                      Icons.thumb_up_outlined,
+                    ),
+                    _buildMiniStatCard(
+                      localizations.avgDeliveryTime,
+                      '${stats.avgDeliveryTime} ${localizations.min}',
+                      Icons.timer_outlined,
+                    ),
+                    _buildMiniStatCard(
+                      localizations.totalReviews,
+                      stats.totalReviews.toString(),
+                      Icons.rate_review_outlined,
+                    ),
+                    _buildMiniStatCard(
+                      localizations.cancelled,
+                      stats.totalCancelledOrders.toString(),
+                      Icons.cancel_outlined,
+                    ),
+                  ],
                 ),
               ],
             ),
-
-            const SizedBox(height: 12),
-
-            // Additional stats in grid (non-scrollable, all visible)
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 2.5,
-              children: [
-                _buildMiniStatCard(
-                  localizations.acceptanceRate,
-                  '${stats.acceptanceRate}%',
-                  Icons.thumb_up_outlined,
-                ),
-                _buildMiniStatCard(
-                  localizations.avgDeliveryTime,
-                  '${stats.avgDeliveryTime} ${localizations.min}',
-                  Icons.timer_outlined,
-                ),
-                _buildMiniStatCard(
-                  localizations.totalReviews,
-                  stats.totalReviews.toString(),
-                  Icons.rate_review_outlined,
-                ),
-                _buildMiniStatCard(
-                  localizations.cancelled,
-                  stats.totalCancelledOrders.toString(),
-                  Icons.cancel_outlined,
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  // ================= CARDS =================
 
   Widget _buildStatCard({
     required String title,
@@ -131,7 +145,6 @@ class StatsCardsSection extends StatelessWidget {
     required IconData icon,
     required Color color,
     required LinearGradient gradient,
-    String suffix = '',
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -150,14 +163,7 @@ class StatsCardsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: Colors.white, size: 24),
-          ),
+          Icon(icon, color: Colors.white, size: 24),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -166,34 +172,17 @@ class StatsCardsSection extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.white.withOpacity(0.9),
-                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 4),
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      value,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (suffix.isNotEmpty) ...[
-                    const SizedBox(width: 4),
-                    Text(
-                      suffix,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ],
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -204,7 +193,7 @@ class StatsCardsSection extends StatelessWidget {
 
   Widget _buildMiniStatCard(String title, String value, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -217,17 +206,18 @@ class StatsCardsSection extends StatelessWidget {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: const Color(0xFF6C5CE7).withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 20, color: const Color(0xFF6C5CE7)),
           ),
-          const SizedBox(width: 12),
-          Expanded(
+          const SizedBox(width: 8),
+          Flexible(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -235,12 +225,13 @@ class StatsCardsSection extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
+                    fontSize: 12,
+                    color: Colors.grey[700],
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 2),
                 Text(
                   value,
                   style: const TextStyle(

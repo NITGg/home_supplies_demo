@@ -148,3 +148,24 @@ class AreaSelectionRequest {
     };
   }
 }
+
+class SelectedAreaWithDetails {
+  final int governorateId;
+  final int areaId;
+  final String name;
+  final String nameAr;
+
+  SelectedAreaWithDetails({
+    required this.governorateId,
+    required this.areaId,
+    required this.name,
+    required this.nameAr,
+  });
+
+  AreaSelectionRequest toRequest() {
+    return AreaSelectionRequest(
+      governorateId: governorateId,
+      areaId: areaId,
+    );
+  }
+}

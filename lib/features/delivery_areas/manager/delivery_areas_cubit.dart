@@ -3,7 +3,6 @@ import '../data/models/delivery_areas_models.dart';
 import '../data/delivery_areas_service.dart';
 import 'dart:developer';
 
-// States
 abstract class DeliveryAreasState {
   const DeliveryAreasState();
 }
@@ -14,7 +13,7 @@ class DeliveryAreasLoading extends DeliveryAreasState {}
 
 class GovernoratesLoaded extends DeliveryAreasState {
   final List<Governorate> governorates;
-  final Map<String, AreaSelectionRequest> tempSelectedAreas;
+  final Map<String, SelectedAreaWithDetails> tempSelectedAreas; // ✅ Changed
   final List<SelectedArea> currentlySelectedAreas;
 
   const GovernoratesLoaded({
@@ -25,7 +24,7 @@ class GovernoratesLoaded extends DeliveryAreasState {
 
   GovernoratesLoaded copyWith({
     List<Governorate>? governorates,
-    Map<String, AreaSelectionRequest>? tempSelectedAreas,
+    Map<String, SelectedAreaWithDetails>? tempSelectedAreas, // ✅ Changed
     List<SelectedArea>? currentlySelectedAreas,
   }) {
     return GovernoratesLoaded(
@@ -39,7 +38,7 @@ class GovernoratesLoaded extends DeliveryAreasState {
 class AreasLoaded extends DeliveryAreasState {
   final Governorate governorate;
   final List<Area> areas;
-  final Map<String, AreaSelectionRequest> tempSelectedAreas;
+  final Map<String, SelectedAreaWithDetails> tempSelectedAreas; // ✅ Changed
 
   const AreasLoaded({
     required this.governorate,
@@ -50,7 +49,7 @@ class AreasLoaded extends DeliveryAreasState {
   AreasLoaded copyWith({
     Governorate? governorate,
     List<Area>? areas,
-    Map<String, AreaSelectionRequest>? tempSelectedAreas,
+    Map<String, SelectedAreaWithDetails>? tempSelectedAreas, // ✅ Changed
   }) {
     return AreasLoaded(
       governorate: governorate ?? this.governorate,
@@ -84,29 +83,38 @@ class DeliveryAreasError extends DeliveryAreasState {
 class DeliveryAreasCubit extends Cubit<DeliveryAreasState> {
   final DeliveryAreasService _service;
 
+  // ✅ Cache all areas for lookup
+  final Map<String, Area> _cachedAreas = {};
+
   DeliveryAreasCubit(this._service) : super(DeliveryAreasInitial());
 
   Future<void> loadGovernorates() async {
-    emit(DeliveryAreasLoading());
+    if (!isClosed) {
+      emit(DeliveryAreasLoading());
+    }
     try {
       final governorates = await _service.getGovernorates();
       final currentlySelected = await _service.getSelectedAreas();
 
-      // Initialize tempSelectedAreas with currently selected areas
-      final Map<String, AreaSelectionRequest> tempSelectedAreas = {};
+      // ✅ Initialize with full area details
+      final Map<String, SelectedAreaWithDetails> tempSelectedAreas = {};
       for (var selected in currentlySelected) {
         final key = '${selected.area.governorateId}_${selected.areaId}';
-        tempSelectedAreas[key] = AreaSelectionRequest(
+        tempSelectedAreas[key] = SelectedAreaWithDetails(
           governorateId: selected.area.governorateId,
           areaId: selected.areaId,
+          name: selected.area.name,
+          nameAr: selected.area.nameAr,
         );
       }
 
-      emit(GovernoratesLoaded(
-        governorates: governorates,
-        tempSelectedAreas: tempSelectedAreas,
-        currentlySelectedAreas: currentlySelected,
-      ));
+      if (!isClosed) {
+        emit(GovernoratesLoaded(
+          governorates: governorates,
+          tempSelectedAreas: tempSelectedAreas,
+          currentlySelectedAreas: currentlySelected,
+        ));
+      }
     } catch (e) {
       log('Error loading governorates: $e');
       emit(DeliveryAreasError('Failed to load governorates: ${e.toString()}'));
@@ -115,7 +123,7 @@ class DeliveryAreasCubit extends Cubit<DeliveryAreasState> {
 
   Future<void> loadAreasByGovernorate(int governorateId) async {
     final currentState = state;
-    Map<String, AreaSelectionRequest> tempSelectedAreas = {};
+    Map<String, SelectedAreaWithDetails> tempSelectedAreas = {};
 
     if (currentState is GovernoratesLoaded) {
       tempSelectedAreas = currentState.tempSelectedAreas;
@@ -123,34 +131,51 @@ class DeliveryAreasCubit extends Cubit<DeliveryAreasState> {
       tempSelectedAreas = currentState.tempSelectedAreas;
     }
 
-    // Clear selections that don't belong to this governorate (single governorate selection)
+    // Clear selections that don't belong to this governorate
     tempSelectedAreas.removeWhere((key, value) =>
-    value.governorateId != governorateId
-    );
+    value.governorateId != governorateId);
 
-    emit(DeliveryAreasLoading());
+    if (!isClosed) {
+      emit(DeliveryAreasLoading());
+    }
     try {
       final result = await _service.getAreasByGovernorate(governorateId);
+      final areas = result['areas'] as List<Area>;
 
-      emit(AreasLoaded(
-        governorate: result['governorate'] as Governorate,
-        areas: result['areas'] as List<Area>,
-        tempSelectedAreas: tempSelectedAreas,
-      ));
+      // ✅ Cache areas for quick lookup
+      for (var area in areas) {
+        _cachedAreas['${governorateId}_${area.id}'] = area;
+      }
+
+      if (!isClosed) {
+        emit(AreasLoaded(
+          governorate: result['governorate'] as Governorate,
+          areas: areas,
+          tempSelectedAreas: tempSelectedAreas,
+        ));
+      }
     } catch (e) {
       log('Error loading areas: $e');
-      emit(DeliveryAreasError('Failed to load areas: ${e.toString()}'));
+      if (!isClosed) {
+        emit(DeliveryAreasError('Failed to load areas: ${e.toString()}'));
+      }
     }
   }
 
   Future<void> loadSelectedAreas() async {
-    emit(DeliveryAreasLoading());
+    if (!isClosed) {
+      emit(DeliveryAreasLoading());
+    }
     try {
       final selectedAreas = await _service.getSelectedAreas();
-      emit(SelectedAreasLoaded(selectedAreas));
+      if (!isClosed) {
+        emit(SelectedAreasLoaded(selectedAreas));
+      }
     } catch (e) {
       log('Error loading selected areas: $e');
-      emit(DeliveryAreasError('Failed to load selected areas: ${e.toString()}'));
+      if (!isClosed) {
+        emit(DeliveryAreasError('Failed to load selected areas: ${e.toString()}'));
+      }
     }
   }
 
@@ -159,16 +184,24 @@ class DeliveryAreasCubit extends Cubit<DeliveryAreasState> {
 
     if (currentState is AreasLoaded) {
       final key = '${governorateId}_$areaId';
-      final updatedSelection = Map<String, AreaSelectionRequest>.from(
+      final updatedSelection = Map<String, SelectedAreaWithDetails>.from(
         currentState.tempSelectedAreas,
       );
 
       if (updatedSelection.containsKey(key)) {
         updatedSelection.remove(key);
       } else {
-        updatedSelection[key] = AreaSelectionRequest(
+        // ✅ Find the area from the current areas list
+        final area = currentState.areas.firstWhere(
+              (a) => a.id == areaId,
+          orElse: () => _cachedAreas[key]!, // Fallback to cache
+        );
+
+        updatedSelection[key] = SelectedAreaWithDetails(
           governorateId: governorateId,
           areaId: areaId,
+          name: area.name,
+          nameAr: area.nameAr,
         );
       }
 
@@ -179,7 +212,7 @@ class DeliveryAreasCubit extends Cubit<DeliveryAreasState> {
   Future<void> saveSelectedAreas() async {
     final currentState = state;
 
-    Map<String, AreaSelectionRequest> tempSelectedAreas = {};
+    Map<String, SelectedAreaWithDetails> tempSelectedAreas = {};
 
     if (currentState is AreasLoaded) {
       tempSelectedAreas = currentState.tempSelectedAreas;
@@ -187,14 +220,25 @@ class DeliveryAreasCubit extends Cubit<DeliveryAreasState> {
       tempSelectedAreas = currentState.tempSelectedAreas;
     }
 
-    emit(DeliveryAreasSaving());
+    if (!isClosed) {
+      emit(DeliveryAreasSaving());
+    }
     try {
-      final selectedAreasList = tempSelectedAreas.values.toList();
+      // ✅ Convert to AreaSelectionRequest for API
+      final selectedAreasList = tempSelectedAreas.values
+          .map((e) => e.toRequest())
+          .toList();
+
       final savedAreas = await _service.updateSelectedAreas(selectedAreasList);
-      emit(DeliveryAreasSaved(savedAreas));
+
+      if (!isClosed) {
+        emit(DeliveryAreasSaved(savedAreas));
+      }
     } catch (e) {
       log('Error saving selected areas: $e');
-      emit(DeliveryAreasError('Failed to save selected areas: ${e.toString()}'));
+      if (!isClosed) {
+        emit(DeliveryAreasError('Failed to save selected areas: ${e.toString()}'));
+      }
     }
   }
 }

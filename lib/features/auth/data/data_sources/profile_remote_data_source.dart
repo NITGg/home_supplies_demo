@@ -58,28 +58,40 @@ class ProfileRemoteDataSource {
       if (personalPhoto != null) {
         formData.files.add(MapEntry(
           'personal_photo',
-          await MultipartFile.fromFile(personalPhoto.path),
+          await MultipartFile.fromFile(
+            personalPhoto.path,
+            filename: 'personal_photo.jpg',
+          ),
         ));
       }
 
       if (nationalIdPhoto != null) {
         formData.files.add(MapEntry(
           'national_id_photo',
-          await MultipartFile.fromFile(nationalIdPhoto.path),
+          await MultipartFile.fromFile(
+            nationalIdPhoto.path,
+            filename: 'national_id.jpg',
+          ),
         ));
       }
 
       if (vehicleLicense != null) {
         formData.files.add(MapEntry(
           'vehicle_license',
-          await MultipartFile.fromFile(vehicleLicense.path),
+          await MultipartFile.fromFile(
+            vehicleLicense.path,
+            filename: 'vehicle_license.jpg',
+          ),
         ));
       }
 
       if (courierLicense != null) {
         formData.files.add(MapEntry(
           'courier_license',
-          await MultipartFile.fromFile(courierLicense.path),
+          await MultipartFile.fromFile(
+            courierLicense.path,
+            filename: 'courier_license.jpg',
+          ),
         ));
       }
 
@@ -88,7 +100,6 @@ class ProfileRemoteDataSource {
         data: formData,
       );
 
-      log('Update documents response: ${response.data}');
       return UpdateProfileResponseModel.fromJson(response.data);
     } catch (e) {
       log('Update documents error: $e');

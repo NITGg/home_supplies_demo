@@ -11,6 +11,9 @@ import '../features/auth/presentation/pages/register_screen.dart';
 import '../features/auth/presentation/pages/reset_password.dart';
 import '../features/home/layout/presentation/home_layout.dart';
 import '../features/onboarding/onboarding.dart';
+import '../features/orders/data/models/orders_model.dart';
+import '../features/orders/presentation/order_details_screen.dart';
+import '../features/orders/presentation/qr_code_screen.dart';
 import '../core/utils/secure_storage_service.dart';
 
 Future<GoRouter> createAppRouter({
@@ -57,7 +60,8 @@ Future<GoRouter> createAppRouter({
         path: '/onboarding',
         name: 'onboarding',
         builder: (context, state) => const OnboardingScreen(),
-      ),GoRoute(
+      ),
+      GoRoute(
         path: '/ProfileScreen',
         name: 'ProfileScreen',
         builder: (context, state) => const ProfileScreen(),
@@ -120,6 +124,24 @@ Future<GoRouter> createAppRouter({
         path: '/mainHome',
         name: 'mainHome',
         builder: (context, state) => const HomeLayout(),
+      ),
+
+      // ============== ORDER ROUTES ==============
+      GoRoute(
+        path: '/orders/details',
+        name: 'orderDetails',
+        builder: (context, state) {
+          final orderId = state.extra as int;
+          return OrderDetailsScreen(orderId: orderId);
+        },
+      ),
+      GoRoute(
+        path: '/orders/qr-code',
+        name: 'qrCode',
+        builder: (context, state) {
+          final qrCodeModel = state.extra as QrCodeModel;
+          return QrCodeScreen(qrCodeModel: qrCodeModel);
+        },
       ),
     ],
     errorBuilder: (context, state) {

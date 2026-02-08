@@ -63,7 +63,9 @@ class _AppCustomButtonState extends State<AppCustomButton> {
                       color:
                           (isSecondary
                                   ? AppColors.kSecondaryColor
-                                  : AppColors.kPrimaryColor)
+                                  :  isDelete
+                              ? Colors.redAccent
+                              : AppColors.kPrimaryColor)
                               .withOpacity(_isPressed ? 0.2 : 0.3),
                       blurRadius: _isPressed ? 8 : 12,
                       offset: Offset(0, _isPressed ? 2 : 4),

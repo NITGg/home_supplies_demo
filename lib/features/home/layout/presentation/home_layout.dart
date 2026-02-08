@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tawreedat_courier/features/orders/presentation/active_order_screen.dart';
+import 'package:tawreedat_courier/features/orders/presentation/available_orders_screen.dart';
 import 'package:tawreedat_courier/features/stats/presentation/stats_screen.dart';
 import '../../../../core/utils/biometric_auth_service.dart';
 import '../../../../core/widgets/loading_screen.dart';
@@ -81,8 +83,8 @@ class _HomeLayoutState extends State<HomeLayout> {
     final localizations = AppLocalizations.of(context)!;
 
     final screens = const [
-      SizedBox.shrink(),
-      SizedBox.shrink(),
+      AvailableOrdersScreen(),
+      ActiveOrderScreen(),
       StatsScreen(),
       SizedBox.shrink(),
     ];
@@ -152,7 +154,14 @@ class _HomeLayoutState extends State<HomeLayout> {
                                 children: [
                                   DrawerHeader(
                                     decoration: BoxDecoration(
-                                      color: AppColors.kSecondaryColor,
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFF2D3436),
+                                          Color(0xFF636E72),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
                                     ),
                                     child: GestureDetector(
                                       onTap: () {
@@ -292,7 +301,9 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           ListTile(
                                             onTap: () async {
                                               context.pop();
-                                              await SelectDeliveryAreasBottomSheet.show(context);
+                                              await SelectDeliveryAreasBottomSheet.show(
+                                                context,
+                                              );
                                             },
                                             leading: const Icon(
                                               Icons.pin_drop_rounded,
