@@ -351,7 +351,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appleSignin => 'حساب آبل';
 
   @override
-  String get offers => 'العروض';
+  String get offers => 'عروض';
 
   @override
   String get upTo => 'خصم حتى';
@@ -540,9 +540,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pleaseLoginWithNewPassword => 'سجل دخولك الآن  بكلمة المرور الجديدة';
 
   @override
-  String get orders => 'الطلبات';
-
-  @override
   String get packages => 'الشحنات';
 
   @override
@@ -588,7 +585,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get earnings => 'المكاسب';
 
   @override
-  String get egp => 'ج';
+  String get egp => 'جنيه';
 
   @override
   String get rating => 'التقييم';
@@ -643,4 +640,198 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get approved => 'مففل';
+
+  @override
+  String get orders => 'الطلبات';
+
+  @override
+  String get availableOrders => 'الطلبات المتاحة';
+
+  @override
+  String get noAvailableOrders => 'لا توجد طلبات متاحة';
+
+  @override
+  String get checkBackLater => 'تحقق لاحقًا للحصول على فرص توصيل جديدة';
+
+  @override
+  String get refresh => 'تحديث';
+
+  @override
+  String ordersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count طلبات',
+      one: 'طلب واحد',
+      zero: 'لا توجد طلبات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get orderDetails => 'تفاصيل الطلب';
+
+  @override
+  String get productDetails => 'تفاصيل المنتج';
+
+  @override
+  String get customerInformation => 'معلومات العميل';
+
+  @override
+  String get deliveryRoute => 'مسار التوصيل';
+
+  @override
+  String get orderInformation => 'معلومات الطلب';
+
+  @override
+  String get pickup => 'الاستلام';
+
+  @override
+  String get delivery => 'التوصيل';
+
+  @override
+  String get pickupLocation => 'موقع الاستلام';
+
+  @override
+  String get deliveryLocation => 'موقع التوصيل';
+
+  @override
+  String get budget => 'الميزانية';
+
+  @override
+  String get customerBudget => 'ميزانية العميل';
+
+  @override
+  String get offerSubmitted => 'تم تقديم العرض';
+
+  @override
+  String get offerSubmittedSuccessfully => 'تم تقديم العرض بنجاح!';
+
+  @override
+  String get offerAlreadySubmitted => 'تم تقديم العرض بالفعل';
+
+  @override
+  String get waitingForCustomerResponse => 'في انتظار مراجعة العميل لعرضك';
+
+  @override
+  String get submitYourOffer => 'قدم عرضك';
+
+  @override
+  String get submitOffer => 'تقديم العرض';
+
+  @override
+  String get submitting => 'جاري التقديم...';
+
+  @override
+  String get allowedFeeRange => 'نطاق الرسوم المسموح';
+
+  @override
+  String get yourDeliveryFee => 'رسوم التوصيل الخاصة بك (جنيه)';
+
+  @override
+  String get pleaseEnterDeliveryFee => 'يرجى إدخال رسوم التوصيل';
+
+  @override
+  String get pleaseEnterValidNumber => 'يرجى إدخال رقم صحيح';
+
+  @override
+  String feeMustBeBetween(String min, String max) {
+    return 'يجب أن تكون الرسوم بين $min و $max جنيه';
+  }
+
+  @override
+  String get created => 'تم الإنشاء';
+
+  @override
+  String get inProgress => 'قيد التنفيذ';
+
+  @override
+  String get delivered => 'تم التوصيل';
+
+  @override
+  String get justNow => 'الآن';
+
+  @override
+  String minutesAgo(int minutes) {
+    return 'منذ $minutes دقيقة';
+  }
+
+  @override
+  String hoursAgo(int hours) {
+    return 'منذ $hours ساعة';
+  }
+
+  @override
+  String daysAgo(int days) {
+    return 'منذ $days يوم';
+  }
+
+  @override
+  String get activeOrder => 'الطلب النشط';
+
+  @override
+  String get noActiveOrder => 'لا يوجد طلب نشط';
+
+  @override
+  String get noActiveDeliveries => 'ليس لديك أي عمليات توصيل نشطة';
+
+  @override
+  String get deliveryInProgress => 'التوصيل قيد التنفيذ';
+
+  @override
+  String get completeDelivery => 'إتمام التوصيل';
+
+  @override
+  String get generateQrCode => 'إنشاء رمز QR';
+
+  @override
+  String get actualProductPrice => 'السعر الفعلي للمنتج (جنيه)';
+
+  @override
+  String get pleaseEnterActualPrice => 'يرجى إدخال السعر الفعلي للمنتج';
+
+  @override
+  String get pleaseEnterValidPrice => 'يرجى إدخال سعر صحيح';
+
+  @override
+  String get enterActualPriceMessage => 'أدخل السعر الفعلي للمنتج لإنشاء رمز الاستجابة السريعة لتأكيد العميل';
+
+  @override
+  String get deliveryQrCode => 'رمز الاستجابة السريعة للتوصيل';
+
+  @override
+  String get deliveryReady => 'التوصيل جاهز!';
+
+  @override
+  String get showQrCodeMessage => 'اعرض رمز الاستجابة السريعة هذا للعميل للتأكيد';
+
+  @override
+  String get instructions => 'التعليمات';
+
+  @override
+  String get instructionStep1 => '1. اطلب من العميل فتح التطبيق الخاص به';
+
+  @override
+  String get instructionStep2 => '2. سيقوم بمسح رمز الاستجابة السريعة هذا';
+
+  @override
+  String get instructionStep3 => '3. انتظر التأكيد';
+
+  @override
+  String get instructionStep4 => '4. اكتمل التوصيل!';
+
+  @override
+  String get timeline => 'الجدول الزمني';
+
+  @override
+  String get orderCreated => 'تم إنشاء الطلب';
+
+  @override
+  String get offerAccepted => 'تم قبول العرض';
+
+  @override
+  String get customer => 'العميل';
+
+  @override
+  String get yourFee => 'رسومك';
 }

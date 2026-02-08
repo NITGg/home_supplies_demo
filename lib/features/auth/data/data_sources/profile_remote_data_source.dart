@@ -11,7 +11,7 @@ class ProfileRemoteDataSource {
   /// GET PROFILE
   Future<ProfileResponseModel> getProfile() async {
     try {
-      final response = await _dio.get('/profile/get-profile');
+      final response = await _dio.get('/profile/get-profile?lang=ar');
 
       log('Get profile response: ${response.data}');
       return ProfileResponseModel.fromJson(response.data);
@@ -35,7 +35,7 @@ class ProfileRemoteDataSource {
       if (vehicleType != null) data['vehicle_type'] = vehicleType;
       if (vehiclePlate != null) data['vehicle_plate'] = vehiclePlate;
 
-      final response = await _dio.patch('/profile/update-profile', data: data);
+      final response = await _dio.patch('/profile/update-profile?lang=ar', data: data);
 
       log('Update profile response: ${response.data}');
       return UpdateProfileResponseModel.fromJson(response.data);
@@ -96,7 +96,7 @@ class ProfileRemoteDataSource {
       }
 
       final response = await _dio.patch(
-        '/profile/update-documents',
+        '/profile/update-documents?lang=ar',
         data: formData,
       );
 
@@ -110,7 +110,7 @@ class ProfileRemoteDataSource {
   /// GET BADGE PROGRESS
   Future<BadgeProgressResponseModel> getBadgeProgress() async {
     try {
-      final response = await _dio.get('/profile/badge-progress');
+      final response = await _dio.get('/profile/badge-progress?lang=ar');
 
       log('Get badge progress response: ${response.data}');
       return BadgeProgressResponseModel.fromJson(response.data);

@@ -71,7 +71,7 @@ class AuthRemoteDataSource {
   }) async {
     try {
       final response = await _dio.post(
-        '/auth/verify-phone',
+        '/auth/verify-phone?lang=ar',
         data: {'phone': phone, 'user_otp': userOtp},
       );
 
@@ -102,7 +102,7 @@ class AuthRemoteDataSource {
   }) async {
     try {
       final response = await _dio.post(
-        '/auth/resend-phone-otp',
+        '/auth/resend-phone-otp?lang=ar',
         data: {'phone': phone},
       );
 
@@ -120,7 +120,7 @@ class AuthRemoteDataSource {
   }) async {
     try {
       final response = await _dio.post(
-        '/auth/login',
+        '/auth/login?lang=ar',
         data: {'phone': phone, 'password': password},
       );
 
@@ -137,7 +137,7 @@ class AuthRemoteDataSource {
   }) async {
     try {
       final response = await _dio.post(
-        '/auth/refresh-token',
+        '/auth/refresh-token?lang=ar',
         options: Options(headers: {'Authorization': 'Bearer $refreshToken'}),
       );
 
@@ -151,7 +151,7 @@ class AuthRemoteDataSource {
   /// DELETE PROFILE
   Future<Map<String, dynamic>> deleteProfile() async {
     try {
-      final response = await _dio.delete('/profile/soft-delete');
+      final response = await _dio.delete('/profile/soft-delete?lang=ar');
       return response.data;
     } catch (e) {
       log('Delete profile error: $e');
@@ -166,7 +166,7 @@ class AuthRemoteDataSource {
     required String newPassword,
   }) async {
     final response = await _dio.patch(
-      '/auth/update-password',
+      '/auth/update-password?lang=ar',
       data: {'current_password': oldPassword, 'new_password': newPassword},
       options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
@@ -190,7 +190,7 @@ class AuthRemoteDataSource {
       }
       final formData = FormData.fromMap(data);
 
-      final response = await _dio.put('/profile', data: formData);
+      final response = await _dio.put('/profile?lang=ar', data: formData);
 
       log(response.data.toString());
       final updatedUser = UserProfileModel.fromJson(
@@ -211,7 +211,7 @@ class AuthRemoteDataSource {
   }) async {
     try {
       final response = await _dio.post(
-        '/auth/google-login',
+        '/auth/google-login?lang=ar',
         data: {'id_token': idToken, 'phone': phone},
       );
 
@@ -236,7 +236,7 @@ class AuthRemoteDataSource {
         data['fullname'] = fullName;
       }
 
-      final response = await _dio.post('/auth/apple-login', data: data);
+      final response = await _dio.post('/auth/apple-login?lang=ar', data: data);
 
       final authResponse = AuthResponseModel.fromJson(response.data);
       log('Apple sign in user: ${authResponse.data.accessToken}');
@@ -251,7 +251,7 @@ class AuthRemoteDataSource {
   Future<ForgotPasswordResponse> forgotPassword({required String phone}) async {
     try {
       final response = await _dio.post(
-        '/auth/forget-password',
+        '/auth/forget-password?lang=ar',
         data: {'phone': phone},
         options: Options(
           validateStatus: (status) => status != null && status < 500,
@@ -274,7 +274,7 @@ class AuthRemoteDataSource {
   }) async {
     try {
       final response = await _dio.patch(
-        '/auth/change-password',
+        '/auth/change-password?lang=ar',
         data: {
           'phone': phone,
           'user_otp': userOtp,
@@ -292,7 +292,7 @@ class AuthRemoteDataSource {
   Future<void> logOut() async {
     try {
       final response = await _dio.post(
-        '/auth/logout',
+        '/auth/logout?lang=ar',
         options: Options(
           headers: {
             'Authorization':

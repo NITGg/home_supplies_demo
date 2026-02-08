@@ -231,7 +231,6 @@
   "enterPhoneToResetPassword": "ادخل رقم هاتفك لإعادة تعيين كلمة المرور",
   "resetPassword": "إعادة تعيين كلمة المرور",
   "pleaseLoginWithNewPassword": "سجل دخولك الآن  بكلمة المرور الجديدة",
-  "orders": "الطلبات",
       "packages": "الشحنات",
       "statistics": "الإحصائيات",
           "deliveryAreas": "مناطق التوصيل",
@@ -270,9 +269,125 @@
                 "no": "لا",
         "accountInformation": "معلومات الحساب",
 
-          "approved": "مففل"
+          "approved": "مففل",
 
 
+"orders": "الطلبات",
+  "availableOrders": "الطلبات المتاحة",
+  "noAvailableOrders": "لا توجد طلبات متاحة",
+  "checkBackLater": "تحقق لاحقًا للحصول على فرص توصيل جديدة",
+  "refresh": "تحديث",
+
+  "ordersCount": "{count, plural, =0{لا توجد طلبات} =1{طلب واحد} other{{count} طلبات}}",
+  "@ordersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "orderDetails": "تفاصيل الطلب",
+  "productDetails": "تفاصيل المنتج",
+  "customerInformation": "معلومات العميل",
+  "deliveryRoute": "مسار التوصيل",
+  "orderInformation": "معلومات الطلب",
+
+  "pickup": "الاستلام",
+  "delivery": "التوصيل",
+  "pickupLocation": "موقع الاستلام",
+  "deliveryLocation": "موقع التوصيل",
+
+  "budget": "الميزانية",
+  "egp": "جنيه",
+  "customerBudget": "ميزانية العميل",
+
+  "offers": "عروض",
+  "offerSubmitted": "تم تقديم العرض",
+  "offerSubmittedSuccessfully": "تم تقديم العرض بنجاح!",
+  "offerAlreadySubmitted": "تم تقديم العرض بالفعل",
+  "waitingForCustomerResponse": "في انتظار مراجعة العميل لعرضك",
+
+  "submitYourOffer": "قدم عرضك",
+  "submitOffer": "تقديم العرض",
+  "submitting": "جاري التقديم...",
+  "allowedFeeRange": "نطاق الرسوم المسموح",
+  "yourDeliveryFee": "رسوم التوصيل الخاصة بك (جنيه)",
+
+  "pleaseEnterDeliveryFee": "يرجى إدخال رسوم التوصيل",
+  "pleaseEnterValidNumber": "يرجى إدخال رقم صحيح",
+  "feeMustBeBetween": "يجب أن تكون الرسوم بين {min} و {max} جنيه",
+  "@feeMustBeBetween": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+
+  "paymentMethod": "طريقة الدفع",
+  "status": "الحالة",
+  "created": "تم الإنشاء",
+
+  "pending": "قيد الانتظار",
+  "inProgress": "قيد التنفيذ",
+  "delivered": "تم التوصيل",
+
+  "justNow": "الآن",
+  "minutesAgo": "منذ {minutes} دقيقة",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "منذ {hours} ساعة",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "منذ {days} يوم",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+
+  "activeOrder": "الطلب النشط",
+  "noActiveOrder": "لا يوجد طلب نشط",
+  "noActiveDeliveries": "ليس لديك أي عمليات توصيل نشطة",
+  "deliveryInProgress": "التوصيل قيد التنفيذ",
+  "completeDelivery": "إتمام التوصيل",
+  "generateQrCode": "إنشاء رمز QR",
+  "actualProductPrice": "السعر الفعلي للمنتج (جنيه)",
+  "pleaseEnterActualPrice": "يرجى إدخال السعر الفعلي للمنتج",
+  "pleaseEnterValidPrice": "يرجى إدخال سعر صحيح",
+  "enterActualPriceMessage": "أدخل السعر الفعلي للمنتج لإنشاء رمز الاستجابة السريعة لتأكيد العميل",
+
+  "deliveryQrCode": "رمز Qr",
+  "deliveryReady": "التوصيل جاهز!",
+  "showQrCodeMessage": "اعرض رمز الاستجابة السريعة هذا للعميل للتأكيد",
+  "instructions": "التعليمات",
+  "instructionStep1": "1. اطلب من العميل فتح التطبيق الخاص به",
+  "instructionStep2": "2. سيقوم بمسح رمز الاستجابة السريعة هذا",
+  "instructionStep3": "3. انتظر التأكيد",
+  "instructionStep4": "4. اكتمل التوصيل!",
+  "done": "تم",
+
+  "timeline": "الجدول الزمني",
+  "orderCreated": "تم إنشاء الطلب",
+  "offerAccepted": "تم قبول العرض",
+  "customer": "العميل",
+  "yourFee": "رسومك"
 
 
 }

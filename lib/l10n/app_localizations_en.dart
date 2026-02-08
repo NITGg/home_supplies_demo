@@ -351,7 +351,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appleSignin => 'Apple Account';
 
   @override
-  String get offers => 'Offers';
+  String get offers => 'offers';
 
   @override
   String get upTo => 'Up to';
@@ -540,9 +540,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseLoginWithNewPassword => 'please Login With New Password';
 
   @override
-  String get orders => 'Orders';
-
-  @override
   String get packages => 'Packages';
 
   @override
@@ -643,4 +640,198 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get approved => 'Approved';
+
+  @override
+  String get orders => 'Orders';
+
+  @override
+  String get availableOrders => 'Available Orders';
+
+  @override
+  String get noAvailableOrders => 'No Available Orders';
+
+  @override
+  String get checkBackLater => 'Check back later for new delivery opportunities';
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String ordersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count orders',
+      one: '1 order',
+      zero: 'No orders',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get orderDetails => 'Order Details';
+
+  @override
+  String get productDetails => 'Product Details';
+
+  @override
+  String get customerInformation => 'Customer Information';
+
+  @override
+  String get deliveryRoute => 'Delivery Route';
+
+  @override
+  String get orderInformation => 'Order Information';
+
+  @override
+  String get pickup => 'Pickup';
+
+  @override
+  String get delivery => 'Delivery';
+
+  @override
+  String get pickupLocation => 'Pickup Location';
+
+  @override
+  String get deliveryLocation => 'Delivery Location';
+
+  @override
+  String get budget => 'Budget';
+
+  @override
+  String get customerBudget => 'Customer Budget';
+
+  @override
+  String get offerSubmitted => 'Offer Submitted';
+
+  @override
+  String get offerSubmittedSuccessfully => 'Offer submitted successfully!';
+
+  @override
+  String get offerAlreadySubmitted => 'Offer Already Submitted';
+
+  @override
+  String get waitingForCustomerResponse => 'Waiting for customer to review your offer';
+
+  @override
+  String get submitYourOffer => 'Submit Your Offer';
+
+  @override
+  String get submitOffer => 'Submit Offer';
+
+  @override
+  String get submitting => 'Submitting...';
+
+  @override
+  String get allowedFeeRange => 'Allowed Fee Range';
+
+  @override
+  String get yourDeliveryFee => 'Your Delivery Fee (EGP)';
+
+  @override
+  String get pleaseEnterDeliveryFee => 'Please enter your delivery fee';
+
+  @override
+  String get pleaseEnterValidNumber => 'Please enter a valid number';
+
+  @override
+  String feeMustBeBetween(String min, String max) {
+    return 'Fee must be between $min and $max EGP';
+  }
+
+  @override
+  String get created => 'Created';
+
+  @override
+  String get inProgress => 'In Progress';
+
+  @override
+  String get delivered => 'Delivered';
+
+  @override
+  String get justNow => 'Just now';
+
+  @override
+  String minutesAgo(int minutes) {
+    return '${minutes}m ago';
+  }
+
+  @override
+  String hoursAgo(int hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String daysAgo(int days) {
+    return '${days}d ago';
+  }
+
+  @override
+  String get activeOrder => 'Active Order';
+
+  @override
+  String get noActiveOrder => 'No Active Order';
+
+  @override
+  String get noActiveDeliveries => 'You don\'t have any active deliveries';
+
+  @override
+  String get deliveryInProgress => 'Delivery In Progress';
+
+  @override
+  String get completeDelivery => 'Complete Delivery';
+
+  @override
+  String get generateQrCode => 'Generate QR Code';
+
+  @override
+  String get actualProductPrice => 'Actual Product Price (EGP)';
+
+  @override
+  String get pleaseEnterActualPrice => 'Please enter the actual product price';
+
+  @override
+  String get pleaseEnterValidPrice => 'Please enter a valid price';
+
+  @override
+  String get enterActualPriceMessage => 'Enter the actual product price to generate QR code for customer confirmation';
+
+  @override
+  String get deliveryQrCode => 'Delivery QR Code';
+
+  @override
+  String get deliveryReady => 'Delivery Ready!';
+
+  @override
+  String get showQrCodeMessage => 'Show this QR code to the customer for confirmation';
+
+  @override
+  String get instructions => 'Instructions';
+
+  @override
+  String get instructionStep1 => '1. Ask the customer to open their app';
+
+  @override
+  String get instructionStep2 => '2. They will scan this QR code';
+
+  @override
+  String get instructionStep3 => '3. Wait for confirmation';
+
+  @override
+  String get instructionStep4 => '4. Delivery complete!';
+
+  @override
+  String get timeline => 'Timeline';
+
+  @override
+  String get orderCreated => 'Order Created';
+
+  @override
+  String get offerAccepted => 'Offer Accepted';
+
+  @override
+  String get customer => 'Customer';
+
+  @override
+  String get yourFee => 'Your Fee';
 }

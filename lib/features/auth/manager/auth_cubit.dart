@@ -219,7 +219,13 @@ class AuthCubit extends Cubit<AuthState> {
 
       // Check if phone is verified
       _pendingPhone = phone;
-      emit(AuthOtpRequired(phone: phone, authResponse: result));
+      if(result.data.verfied == false){
+        emit(AuthOtpRequired(phone: phone, authResponse: result));
+
+      }else {
+        emit(AuthSuccess(message: result.message));
+      }
+
     } catch (e) {
       emit(AuthFailure(_extractErrorMessage(e)));
     }

@@ -28,9 +28,9 @@ class OrderCubit extends Cubit<OrderState> {
 
   // ============== Order Details ==============
   Future<void> fetchOrderDetails(
-    int orderId, {
-    bool fetchFeeRange = false,
-  }) async {
+      int orderId, {
+        bool fetchFeeRange = false,
+      }) async {
     emit(OrderDetailsLoading());
     try {
       final order = await _repository.getOrderDetails(orderId);
@@ -51,13 +51,20 @@ class OrderCubit extends Cubit<OrderState> {
     required int orderId,
     required double totalFee,
   }) async {
+    // Check for active order before submitting
+    final hasActive = await hasActiveOrder();
+    if (hasActive) {
+      emit(const OfferSubmitError('You already have an active order. Please complete it first.'));
+      return;
+    }
+
     emit(SubmittingOffer());
     try {
       final proposal = await _repository.submitOffer(
         orderId: orderId,
         totalFee: totalFee,
       );
-      emit(OfferSubmitted(proposal));
+      emit(OfferSubmitted(proposal, orderId));
     } catch (e) {
       emit(OfferSubmitError(_getErrorMessage(e)));
     }
@@ -95,12 +102,31 @@ class OrderCubit extends Cubit<OrderState> {
     }
   }
 
+  // ============== Helper Methods ==============
   Future<bool> hasActiveOrder() async {
     try {
       final order = await _repository.getActiveOrder();
       return order != null;
     } catch (e) {
       return false;
+    }
+  }
+
+  // Update order in the current state after offer submission
+  void markOrderAsOffered(int orderId) {
+    final currentState = state;
+    if (currentState is AvailableOrdersLoaded) {
+      final updatedOrders = currentState.orders.map((order) {
+        if (order.id == orderId) {
+          return order.copyWith(hasMyProposal: true);
+        }
+        return order;
+      }).toList();
+
+      emit(AvailableOrdersLoaded(
+        orders: updatedOrders,
+        pagination: currentState.pagination,
+      ));
     }
   }
 

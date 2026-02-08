@@ -782,7 +782,7 @@ abstract class AppLocalizations {
   /// No description provided for @offers.
   ///
   /// In en, this message translates to:
-  /// **'Offers'**
+  /// **'offers'**
   String get offers;
 
   /// No description provided for @upTo.
@@ -1157,12 +1157,6 @@ abstract class AppLocalizations {
   /// **'please Login With New Password'**
   String get pleaseLoginWithNewPassword;
 
-  /// No description provided for @orders.
-  ///
-  /// In en, this message translates to:
-  /// **'Orders'**
-  String get orders;
-
   /// No description provided for @packages.
   ///
   /// In en, this message translates to:
@@ -1366,6 +1360,360 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Approved'**
   String get approved;
+
+  /// No description provided for @orders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get orders;
+
+  /// No description provided for @availableOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Orders'**
+  String get availableOrders;
+
+  /// No description provided for @noAvailableOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'No Available Orders'**
+  String get noAvailableOrders;
+
+  /// No description provided for @checkBackLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Check back later for new delivery opportunities'**
+  String get checkBackLater;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// No description provided for @ordersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No orders} =1{1 order} other{{count} orders}}'**
+  String ordersCount(int count);
+
+  /// No description provided for @orderDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Details'**
+  String get orderDetails;
+
+  /// No description provided for @productDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Details'**
+  String get productDetails;
+
+  /// No description provided for @customerInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Information'**
+  String get customerInformation;
+
+  /// No description provided for @deliveryRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Route'**
+  String get deliveryRoute;
+
+  /// No description provided for @orderInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Information'**
+  String get orderInformation;
+
+  /// No description provided for @pickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup'**
+  String get pickup;
+
+  /// No description provided for @delivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get delivery;
+
+  /// No description provided for @pickupLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup Location'**
+  String get pickupLocation;
+
+  /// No description provided for @deliveryLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Location'**
+  String get deliveryLocation;
+
+  /// No description provided for @budget.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get budget;
+
+  /// No description provided for @customerBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Budget'**
+  String get customerBudget;
+
+  /// No description provided for @offerSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer Submitted'**
+  String get offerSubmitted;
+
+  /// No description provided for @offerSubmittedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer submitted successfully!'**
+  String get offerSubmittedSuccessfully;
+
+  /// No description provided for @offerAlreadySubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer Already Submitted'**
+  String get offerAlreadySubmitted;
+
+  /// No description provided for @waitingForCustomerResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for customer to review your offer'**
+  String get waitingForCustomerResponse;
+
+  /// No description provided for @submitYourOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Your Offer'**
+  String get submitYourOffer;
+
+  /// No description provided for @submitOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Offer'**
+  String get submitOffer;
+
+  /// No description provided for @submitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting...'**
+  String get submitting;
+
+  /// No description provided for @allowedFeeRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed Fee Range'**
+  String get allowedFeeRange;
+
+  /// No description provided for @yourDeliveryFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Delivery Fee (EGP)'**
+  String get yourDeliveryFee;
+
+  /// No description provided for @pleaseEnterDeliveryFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your delivery fee'**
+  String get pleaseEnterDeliveryFee;
+
+  /// No description provided for @pleaseEnterValidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid number'**
+  String get pleaseEnterValidNumber;
+
+  /// No description provided for @feeMustBeBetween.
+  ///
+  /// In en, this message translates to:
+  /// **'Fee must be between {min} and {max} EGP'**
+  String feeMustBeBetween(String min, String max);
+
+  /// No description provided for @created.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get created;
+
+  /// No description provided for @inProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress'**
+  String get inProgress;
+
+  /// No description provided for @delivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get delivered;
+
+  /// No description provided for @justNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get justNow;
+
+  /// No description provided for @minutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m ago'**
+  String minutesAgo(int minutes);
+
+  /// No description provided for @hoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h ago'**
+  String hoursAgo(int hours);
+
+  /// No description provided for @daysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d ago'**
+  String daysAgo(int days);
+
+  /// No description provided for @activeOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Order'**
+  String get activeOrder;
+
+  /// No description provided for @noActiveOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'No Active Order'**
+  String get noActiveOrder;
+
+  /// No description provided for @noActiveDeliveries.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have any active deliveries'**
+  String get noActiveDeliveries;
+
+  /// No description provided for @deliveryInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery In Progress'**
+  String get deliveryInProgress;
+
+  /// No description provided for @completeDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Delivery'**
+  String get completeDelivery;
+
+  /// No description provided for @generateQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate QR Code'**
+  String get generateQrCode;
+
+  /// No description provided for @actualProductPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual Product Price (EGP)'**
+  String get actualProductPrice;
+
+  /// No description provided for @pleaseEnterActualPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the actual product price'**
+  String get pleaseEnterActualPrice;
+
+  /// No description provided for @pleaseEnterValidPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid price'**
+  String get pleaseEnterValidPrice;
+
+  /// No description provided for @enterActualPriceMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the actual product price to generate QR code for customer confirmation'**
+  String get enterActualPriceMessage;
+
+  /// No description provided for @deliveryQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery QR Code'**
+  String get deliveryQrCode;
+
+  /// No description provided for @deliveryReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Ready!'**
+  String get deliveryReady;
+
+  /// No description provided for @showQrCodeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Show this QR code to the customer for confirmation'**
+  String get showQrCodeMessage;
+
+  /// No description provided for @instructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions'**
+  String get instructions;
+
+  /// No description provided for @instructionStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Ask the customer to open their app'**
+  String get instructionStep1;
+
+  /// No description provided for @instructionStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'2. They will scan this QR code'**
+  String get instructionStep2;
+
+  /// No description provided for @instructionStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'3. Wait for confirmation'**
+  String get instructionStep3;
+
+  /// No description provided for @instructionStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'4. Delivery complete!'**
+  String get instructionStep4;
+
+  /// No description provided for @timeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get timeline;
+
+  /// No description provided for @orderCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Created'**
+  String get orderCreated;
+
+  /// No description provided for @offerAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer Accepted'**
+  String get offerAccepted;
+
+  /// No description provided for @customer.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get customer;
+
+  /// No description provided for @yourFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Fee'**
+  String get yourFee;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

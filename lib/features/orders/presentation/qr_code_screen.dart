@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/models/orders_model.dart';
 
 class QrCodeScreen extends StatelessWidget {
@@ -14,6 +15,8 @@ class QrCodeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: AppColors.kBackgroundColor,
       appBar: AppBar(
@@ -21,10 +24,10 @@ class QrCodeScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close, color: AppColors.kSecondaryColor),
-          onPressed: () => context.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: Text(
-          'Delivery QR Code',
+          l10n.deliveryQrCode,
           style: AppTextStyles.bold18.copyWith(
             color: AppColors.kSecondaryColor,
           ),
@@ -46,11 +49,23 @@ class QrCodeScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.green.shade50,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.green.shade50,
+                              Colors.green.shade100,
+                            ],
+                          ),
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.green.withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
                         child: Icon(
-                          Icons.check_circle,
+                          Icons.check_circle_rounded,
                           size: 64,
                           color: Colors.green.shade600,
                         ),
@@ -59,7 +74,7 @@ class QrCodeScreen extends StatelessWidget {
                       const SizedBox(height: 24),
 
                       Text(
-                        'Delivery Ready!',
+                        l10n.deliveryReady,
                         style: AppTextStyles.bold25.copyWith(
                           color: AppColors.kSecondaryColor,
                         ),
@@ -68,10 +83,11 @@ class QrCodeScreen extends StatelessWidget {
                       const SizedBox(height: 12),
 
                       Text(
-                        'Show this QR code to the customer for confirmation',
+                        l10n.showQrCodeMessage,
                         textAlign: TextAlign.center,
                         style: AppTextStyles.regular14.copyWith(
                           color: Colors.grey.shade600,
+                          height: 1.5,
                         ),
                       ),
 
@@ -85,41 +101,82 @@ class QrCodeScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.kPrimaryColor.withOpacity(0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
+                              color: AppColors.kPrimaryColor.withOpacity(0.15),
+                              blurRadius: 30,
+                              offset: const Offset(0, 15),
                             ),
                           ],
                         ),
                         child: Column(
                           children: [
-                            // QR Code Image
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.memory(
-                                base64Decode(qrCodeModel.qrCode.split(',')[1]),
-                                width: 250,
-                                height: 250,
-                                fit: BoxFit.contain,
+                            // QR Code Image with decoration
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    AppColors.kSecondaryLightColor,
+                                    AppColors.kSecondaryLightColor.withOpacity(0.5),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  color: Colors.white,
+                                  padding: const EdgeInsets.all(16),
+                                  child: Image.memory(
+                                    base64Decode(qrCodeModel.qrCode.split(',')[1]),
+                                    width: 250,
+                                    height: 250,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
                               ),
                             ),
 
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 20),
 
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
+                                horizontal: 20,
+                                vertical: 10,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.kSecondaryLightColor,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'Order #${qrCodeModel.orderId}',
-                                style: AppTextStyles.bold14.copyWith(
-                                  color: AppColors.kSecondaryColor,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.kPrimaryColor,
+                                    AppColors.kPrimaryColor.withOpacity(0.8),
+                                  ],
                                 ),
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.kPrimaryColor.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.receipt_long,
+                                    size: 18,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${l10n.orders} #${qrCodeModel.orderId}',
+                                    style: AppTextStyles.bold14.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -130,48 +187,62 @@ class QrCodeScreen extends StatelessWidget {
 
                       // Instructions
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
                           color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: Colors.blue.shade200,
-                            width: 1,
+                            width: 1.5,
                           ),
                         ),
-                        child: Row(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: Colors.blue.shade700,
-                              size: 24,
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.info_outline,
+                                    color: Colors.blue.shade700,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  l10n.instructions,
+                                  style: AppTextStyles.bold16.copyWith(
+                                    color: Colors.blue.shade900,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Instructions',
-                                    style: AppTextStyles.bold14.copyWith(
-                                      color: Colors.blue.shade900,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '1. Ask the customer to open their app\n'
-                                    '2. They will scan this QR code\n'
-                                    '3. Wait for confirmation\n'
-                                    '4. Delivery complete!',
-                                    style: AppTextStyles.regular14.copyWith(
-                                      fontSize: 13,
-                                      color: Colors.blue.shade800,
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            const SizedBox(height: 16),
+                            _buildInstructionStep(
+                              context,
+                              l10n.instructionStep1,
+                              Icons.phone_android,
+                            ),
+                            _buildInstructionStep(
+                              context,
+                              l10n.instructionStep2,
+                              Icons.qr_code_scanner,
+                            ),
+                            _buildInstructionStep(
+                              context,
+                              l10n.instructionStep3,
+                              Icons.schedule,
+                            ),
+                            _buildInstructionStep(
+                              context,
+                              l10n.instructionStep4,
+                              Icons.check_circle,
+                              isLast: true,
                             ),
                           ],
                         ),
@@ -196,12 +267,50 @@ class QrCodeScreen extends StatelessWidget {
                 ],
               ),
               child: AppCustomButton(
-                onPressed: () => context.pop(context),
-                text: 'Done',
+                onPressed: () => context.pop(),
+                text: l10n.done,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInstructionStep(
+      BuildContext context,
+      String text,
+      IconData icon, {
+        bool isLast = false,
+      }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 16,
+              color: Colors.blue.shade700,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyles.regular14.copyWith(
+                color: Colors.blue.shade800,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -232,7 +232,6 @@
   "enterPhoneToResetPassword": "Enter your phone number to reset your password",
     "resetPassword": "Reset Password",
     "pleaseLoginWithNewPassword": "please Login With New Password",
-    "orders": "Orders",
     "packages": "Packages",
     "statistics": "Statistics",
     "deliveryAreas": "Delivery Areas",
@@ -267,9 +266,126 @@
                                         "no": "No",
                                         "accountInformation": "Account Information",
 
-              "approved": "Approved"
+              "approved": "Approved",
 
 
+
+  "orders": "Orders",
+  "availableOrders": "Available Orders",
+  "noAvailableOrders": "No Available Orders",
+  "checkBackLater": "Check back later for new delivery opportunities",
+  "refresh": "Refresh",
+
+  "ordersCount": "{count, plural, =0{No orders} =1{1 order} other{{count} orders}}",
+  "@ordersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "orderDetails": "Order Details",
+  "productDetails": "Product Details",
+  "customerInformation": "Customer Information",
+  "deliveryRoute": "Delivery Route",
+  "orderInformation": "Order Information",
+
+  "pickup": "Pickup",
+  "delivery": "Delivery",
+  "pickupLocation": "Pickup Location",
+  "deliveryLocation": "Delivery Location",
+
+  "budget": "Budget",
+  "egp": "EGP",
+  "customerBudget": "Customer Budget",
+
+  "offers": "offers",
+  "offerSubmitted": "Offer Submitted",
+  "offerSubmittedSuccessfully": "Offer submitted successfully!",
+  "offerAlreadySubmitted": "Offer Already Submitted",
+  "waitingForCustomerResponse": "Waiting for customer to review your offer",
+
+  "submitYourOffer": "Submit Your Offer",
+  "submitOffer": "Submit Offer",
+  "submitting": "Submitting...",
+  "allowedFeeRange": "Allowed Fee Range",
+  "yourDeliveryFee": "Your Delivery Fee (EGP)",
+
+  "pleaseEnterDeliveryFee": "Please enter your delivery fee",
+  "pleaseEnterValidNumber": "Please enter a valid number",
+  "feeMustBeBetween": "Fee must be between {min} and {max} EGP",
+  "@feeMustBeBetween": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+
+  "paymentMethod": "Payment Method",
+  "status": "Status",
+  "created": "Created",
+
+  "pending": "Pending",
+  "inProgress": "In Progress",
+  "delivered": "Delivered",
+
+  "justNow": "Just now",
+  "minutesAgo": "{minutes}m ago",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{hours}h ago",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{days}d ago",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+
+  "activeOrder": "Active Order",
+  "noActiveOrder": "No Active Order",
+  "noActiveDeliveries": "You don't have any active deliveries",
+  "deliveryInProgress": "Delivery In Progress",
+  "completeDelivery": "Complete Delivery",
+  "generateQrCode": "Generate QR Code",
+  "actualProductPrice": "Actual Product Price (EGP)",
+  "pleaseEnterActualPrice": "Please enter the actual product price",
+  "pleaseEnterValidPrice": "Please enter a valid price",
+  "enterActualPriceMessage": "Enter the actual product price to generate QR code for customer confirmation",
+
+  "deliveryQrCode": "Delivery QR Code",
+  "deliveryReady": "Delivery Ready!",
+  "showQrCodeMessage": "Show this QR code to the customer for confirmation",
+  "instructions": "Instructions",
+  "instructionStep1": "1. Ask the customer to open their app",
+  "instructionStep2": "2. They will scan this QR code",
+  "instructionStep3": "3. Wait for confirmation",
+  "instructionStep4": "4. Delivery complete!",
+  "done": "Done",
+
+  "timeline": "Timeline",
+  "orderCreated": "Order Created",
+  "offerAccepted": "Offer Accepted",
+  "customer": "Customer",
+  "yourFee": "Your Fee"
 
 
 }

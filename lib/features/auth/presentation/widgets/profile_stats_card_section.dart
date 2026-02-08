@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tawreedat_courier/core/style/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/user_profile_model.dart';
 
@@ -211,10 +212,10 @@ class StatsCardsSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: const Color(0xFF6C5CE7).withOpacity(0.1),
+              color: AppColors.kPrimaryColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 20, color: const Color(0xFF6C5CE7)),
+            child: Icon(icon, size: 20, color: AppColors.kPrimaryColor),
           ),
           const SizedBox(width: 8),
           Flexible(

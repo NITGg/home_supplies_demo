@@ -23,8 +23,10 @@ class AuthResponseModel {
 class AuthData {
   final String accessToken;
   final String refreshToken;
+  final bool verfied;
 
   AuthData({
+    required this.verfied,
     required this.accessToken,
     required this.refreshToken,
   });
@@ -33,6 +35,7 @@ class AuthData {
     return AuthData(
       accessToken: json['accessToken'] as String,
       refreshToken: json['refreshToken'] as String,
+      verfied: json['user']['isPhoneVerified'] == true,
     );
   }
 }

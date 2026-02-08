@@ -21,6 +21,7 @@ class OrderModel {
   final AreaModel deliveryArea;
   final CustomerModel customer;
   final int? proposalsCount;
+  final bool? hasMyProposal; // New field to track if current courier has submitted an offer
 
   OrderModel({
     required this.id,
@@ -45,6 +46,7 @@ class OrderModel {
     required this.deliveryArea,
     required this.customer,
     this.proposalsCount,
+    this.hasMyProposal,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -75,6 +77,60 @@ class OrderModel {
       deliveryArea: AreaModel.fromJson(json['delivery_area']),
       customer: CustomerModel.fromJson(json['customer']),
       proposalsCount: json['_count'] != null ? json['_count']['proposals'] : null,
+      hasMyProposal: json['has_my_proposal'],
+    );
+  }
+
+  // Copy with method to update hasMyProposal locally
+  OrderModel copyWith({
+    int? id,
+    String? orderNumber,
+    String? productDescription,
+    String? productImage,
+    String? budget,
+    String? actualPrice,
+    String? pickupAddressDescription,
+    double? pickupLat,
+    double? pickupLong,
+    String? deliveryAddressDescription,
+    double? deliveryLat,
+    double? deliveryLong,
+    String? totalFee,
+    String? paymentMethod,
+    String? status,
+    DateTime? createdAt,
+    DateTime? offerAcceptedAt,
+    DateTime? deliveredAt,
+    AreaModel? pickupArea,
+    AreaModel? deliveryArea,
+    CustomerModel? customer,
+    int? proposalsCount,
+    bool? hasMyProposal,
+  }) {
+    return OrderModel(
+      id: id ?? this.id,
+      orderNumber: orderNumber ?? this.orderNumber,
+      productDescription: productDescription ?? this.productDescription,
+      productImage: productImage ?? this.productImage,
+      budget: budget ?? this.budget,
+      actualPrice: actualPrice ?? this.actualPrice,
+      pickupAddressDescription: pickupAddressDescription ?? this.pickupAddressDescription,
+      pickupLat: pickupLat ?? this.pickupLat,
+      pickupLong: pickupLong ?? this.pickupLong,
+      deliveryAddressDescription: deliveryAddressDescription ?? this.deliveryAddressDescription,
+      deliveryLat: deliveryLat ?? this.deliveryLat,
+      deliveryLong: deliveryLong ?? this.deliveryLong,
+      totalFee: totalFee ?? this.totalFee,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      offerAcceptedAt: offerAcceptedAt ?? this.offerAcceptedAt,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
+      pickupArea: pickupArea ?? this.pickupArea,
+      deliveryArea: deliveryArea ?? this.deliveryArea,
+      customer: customer ?? this.customer,
+      proposalsCount: proposalsCount ?? this.proposalsCount,
+      hasMyProposal: hasMyProposal ?? this.hasMyProposal,
     );
   }
 }

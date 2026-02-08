@@ -49,8 +49,9 @@ class SubmittingOffer extends OrderState {}
 
 class OfferSubmitted extends OrderState {
   final ProposalModel proposal;
+  final int orderId; // Added to track which order the offer was submitted for
 
-  const OfferSubmitted(this.proposal);
+  const OfferSubmitted(this.proposal, this.orderId);
 }
 
 class OfferSubmitError extends OrderState {
