@@ -191,7 +191,7 @@ class _StatsScreenState extends State<StatsScreen> {
                                 return const Padding(
                                   padding: EdgeInsets.all(16.0),
                                   child: Center(
-                                    child: CircularProgressIndicator(),
+                                    child: LoadingScreen(asWidget: true,),
                                   ),
                                 );
                               }

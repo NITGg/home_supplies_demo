@@ -42,7 +42,7 @@ class EarningsSummarySection extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
-                    Icons.monetization_on,
+                    Icons.payments_rounded,
                     color: Color(0xFF4CAF50),
                     size: 24,
                   ),
