@@ -18,7 +18,9 @@ class StatsCubit extends Cubit<StatsState> {
 
   // Getters for current data
   EarningsSummaryData? get earningsSummary => _earningsSummary;
+
   EarningsHistoryData? get earningsHistory => _earningsHistory;
+
   PerformanceData? get performance => _performance;
 
   /// FETCH EARNINGS SUMMARY
@@ -70,10 +72,7 @@ class StatsCubit extends Cubit<StatsState> {
   }
 
   /// FETCH PERFORMANCE
-  Future<void> fetchPerformance({
-    String? startDate,
-    String? endDate,
-  }) async {
+  Future<void> fetchPerformance({String? startDate, String? endDate}) async {
     emit(PerformanceLoading());
     try {
       final result = await _repository.getPerformance(
@@ -95,17 +94,11 @@ class StatsCubit extends Cubit<StatsState> {
 
   /// FETCH ALL STATS
   /// Convenience method to fetch all stats at once
-  Future<void> fetchAllStats({
-    String? startDate,
-    String? endDate,
-  }) async {
+  Future<void> fetchAllStats({String? startDate, String? endDate}) async {
     try {
       await Future.wait([
         fetchEarningsSummary(),
-        fetchPerformance(
-          startDate: startDate,
-          endDate: endDate,
-        ),
+        fetchPerformance(startDate: startDate, endDate: endDate),
       ]);
     } catch (e) {
       log('StatsCubit fetchAllStats error: $e');

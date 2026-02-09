@@ -141,104 +141,58 @@ class _StatsScreenState extends State<StatsScreen> {
                 color: AppColors.kPrimaryColor,
                 child: CustomScrollView(
                   slivers: [
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                    if (badgeProgress != null)
+                      SliverToBoxAdapter(
+                        child: BadgeProgressSection(
+                          badgeProgress: badgeProgress,
+                        ),
+                      ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                    /// Earnings
                     SliverToBoxAdapter(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 24),
+                      child: BlocBuilder<StatsCubit, StatsState>(
+                        builder: (context, state) {
+                          final earningsSummary = context
+                              .read<StatsCubit>()
+                              .earningsSummary;
 
-                          // Badge Progress Section (existing)
-                          if (badgeProgress != null)
-                            BadgeProgressSection(badgeProgress: badgeProgress),
-
-                          const SizedBox(height: 24),
-
-                          // Earnings Summary Section
-                          BlocBuilder<StatsCubit, StatsState>(
-                            builder: (context, state) {
-                              final earningsSummary =
-                                  context.read<StatsCubit>().earningsSummary;
-
-                              if (state is EarningsSummaryLoading &&
-                                  earningsSummary == null) {
-                                return const Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                );
-                              }
-
-                              if (earningsSummary != null) {
-                                return EarningsSummarySection(
-                                  earningsSummary: earningsSummary,
-                                );
-                              }
-
-                              return const SizedBox.shrink();
-                            },
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Performance Section
-                          BlocBuilder<StatsCubit, StatsState>(
-                            builder: (context, state) {
-                              final performance =
-                                  context.read<StatsCubit>().performance;
-
-                              if (state is PerformanceLoading &&
-                                  performance == null) {
-                                return const Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: Center(
-                                    child: LoadingScreen(asWidget: true,),
-                                  ),
-                                );
-                              }
-
-                              if (performance != null) {
-                                return Column(
-                                  children: [
-                                    PerformanceSection(
-                                      performance: performance,
-                                    ),
-                                    // Show selected date range if custom
-                                    if (_startDate != null ||
-                                        _endDate != null) ...[
-                                      const SizedBox(height: 12),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 16),
-                                        child: Text(
-                                          '${isArabic ? 'الفترة' : 'Period'}: ${performance.dateRange.startDate} ${isArabic ? 'إلى' : 'to'} ${performance.dateRange.endDate}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF666666),
-                                            fontStyle: FontStyle.italic,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                );
-                              }
-
-                              return const SizedBox.shrink();
-                            },
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Date Range Selector
-                          DateRangeSelector(
-                            onDateRangeChanged: _onDateRangeChanged,
-                            isArabic: isArabic,
-                          ),
-
-                          const SizedBox(height: 24),
-                          const SizedBox(height: 100),
-                        ],
+                          if (earningsSummary != null) {
+                            return EarningsSummarySection(
+                              earningsSummary: earningsSummary,
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
                       ),
                     ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                    /// Performance
+                    SliverToBoxAdapter(
+                      child: BlocBuilder<StatsCubit, StatsState>(
+                        builder: (context, state) {
+                          final performance = context
+                              .read<StatsCubit>()
+                              .performance;
+
+                          if (performance != null) {
+                            return PerformanceSection(
+                              performance: performance,
+                              onDateRangeChanged: _onDateRangeChanged,
+                              isArabic: isArabic,
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 100)),
                   ],
                 ),
               );

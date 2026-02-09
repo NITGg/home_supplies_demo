@@ -79,8 +79,8 @@ class StatsRemoteDataSource {
 
       log('Get performance response: ${response.data}');
       return PerformanceResponseModel.fromJson(response.data);
-    } catch (e) {
-      log('Get performance error: $e');
+    } catch (e,s) {
+      log('Get performance error: $e, $s');
       rethrow;
     }
   }

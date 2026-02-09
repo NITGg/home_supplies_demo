@@ -122,7 +122,8 @@ class BadgeProgressSection extends StatelessWidget {
                   ),
                   // Progress bar
                   FractionallySizedBox(
-                    // widthFactor: progress.clamp(0.0, 1.0),
+                    //todo dummy
+                    widthFactor: 0.5.clamp(0.0, 1.0),
                     child: Container(
                       height: 12,
                       decoration: BoxDecoration(
@@ -150,7 +151,7 @@ class BadgeProgressSection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '0 / ${currentBadge.maxCount} ${localizations.deliveries}',
+                    '50 / ${currentBadge.maxCount} ${localizations.deliveries}',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.white.withOpacity(0.9),
@@ -158,7 +159,7 @@ class BadgeProgressSection extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${(0 * 100).toStringAsFixed(0)}%',
+                    '${(0.5 * 100).toStringAsFixed(0)}%',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFFFDCB6E),

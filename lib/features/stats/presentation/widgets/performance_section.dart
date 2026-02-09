@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/stats_models.dart';
+import 'earnings_chart_widget.dart';
+import 'date_range_selector.dart';
 
 class PerformanceSection extends StatelessWidget {
   final PerformanceData performance;
+  final Function(String?, String?) onDateRangeChanged;
+  final bool isArabic;
 
   const PerformanceSection({
     super.key,
     required this.performance,
+    required this.onDateRangeChanged,
+    required this.isArabic,
   });
 
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -29,6 +34,7 @@ class PerformanceSection extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
@@ -63,6 +69,7 @@ class PerformanceSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Overall Statistics
@@ -81,6 +88,14 @@ class PerformanceSection extends StatelessWidget {
                 const Divider(),
                 const SizedBox(height: 16),
 
+                // Date Range Selector - Added here, just above Period Stats
+                DateRangeSelector(
+                  onDateRangeChanged: onDateRangeChanged,
+                  isArabic: isArabic,
+                ),
+
+                const SizedBox(height: 16),
+
                 // Period Stats
                 Text(
                   isArabic ? 'إحصائيات الفترة' : 'Period Statistics',
@@ -92,7 +107,14 @@ class PerformanceSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _buildPeriodStatsGrid(context, performance.periodStats),
-
+                if (performance.analytics.earningsChart.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  EarningsChartWidget(
+                    chartData: performance.analytics.earningsChart,
+                  ),
+                ],
                 // Best Performing Areas
                 if (performance.analytics.bestPerformingAreas.isNotEmpty) ...[
                   const SizedBox(height: 24),
@@ -337,6 +359,7 @@ class PerformanceSection extends StatelessWidget {
 
   Widget _buildAreaCard(BuildContext context, PerformingArea area) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final areaDisplayName = isArabic ? area.areaNameAr : area.areaName;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -365,7 +388,7 @@ class PerformanceSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  area.area,
+                  areaDisplayName,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -374,7 +397,7 @@ class PerformanceSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${area.deliveries} ${isArabic ? 'توصيلة' : 'deliveries'} • ${area.earnings.toStringAsFixed(0)} ${isArabic ? 'ج.م' : 'EGP'}',
+                  '${area.ordersCount} ${isArabic ? 'توصيلة' : 'deliveries'} • ${area.earnings.toStringAsFixed(0)} ${isArabic ? 'ج.م' : 'EGP'}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFF666666),

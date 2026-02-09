@@ -320,38 +320,44 @@ class PerformanceAnalytics {
 class EarningsChartData {
   final String date;
   final num earnings;
-  final int deliveries;
+  final int ordersCount;
 
   EarningsChartData({
     required this.date,
     required this.earnings,
-    required this.deliveries,
+    required this.ordersCount,
   });
 
   factory EarningsChartData.fromJson(Map<String, dynamic> json) {
     return EarningsChartData(
       date: json['date'] as String,
       earnings: json['earnings'] as num,
-      deliveries: json['deliveries'] as int,
+      ordersCount: json['orders_count'] as int,
     );
   }
 }
 
 class PerformingArea {
-  final String area;
-  final int deliveries;
+  final int areaId;
+  final String areaName;
+  final String areaNameAr;
+  final int ordersCount;
   final num earnings;
 
   PerformingArea({
-    required this.area,
-    required this.deliveries,
+    required this.areaId,
+    required this.areaName,
+    required this.areaNameAr,
+    required this.ordersCount,
     required this.earnings,
   });
 
   factory PerformingArea.fromJson(Map<String, dynamic> json) {
     return PerformingArea(
-      area: json['area'] as String,
-      deliveries: json['deliveries'] as int,
+      areaId: json['area_id'] as int,
+      areaName: json['area_name'] as String,
+      areaNameAr: json['area_name_ar'] as String,
+      ordersCount: json['orders_count'] as int,
       earnings: json['earnings'] as num,
     );
   }
