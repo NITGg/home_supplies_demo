@@ -834,4 +834,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yourFee => 'Your Fee';
+
+  @override
+  String get totalFee => 'Total Fee';
+
+  @override
+  String get otherReason => 'Other Reason';
+
+  @override
+  String get productUnAvailable => 'Product Unavailable';
+
+  @override
+  String get budgetNotEnough => 'Budget Is Not Enough';
+
+  @override
+  String get askCustomer => 'Tell Customer';
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get orderCancelled => 'Order Cancelled';
+
+  @override
+  String get actualPriceMustBeHigher => 'Actual Price Must Be Higher';
+
+  @override
+  String get reportActualPrice => 'Report Actual Price';
+
+  @override
+  String get tooShort => 'too short';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get actualPriceIsHigher => 'Actual Price Is Higher';
+
+  @override
+  String get cancelOrderWarning => 'Are you sure you want to cancel this order? This action cannot be undone.';
 }

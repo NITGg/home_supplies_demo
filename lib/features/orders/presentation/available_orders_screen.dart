@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_courier/features/orders/presentation/widgets/order_card.dart';
+import 'package:tawreedat_courier/features/orders/presentation/widgets/orders_shimmers.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
-import '../../../core/widgets/loading_screen.dart';
 import '../../../l10n/app_localizations.dart';
 import '../manager/orders_cubit.dart';
 import '../manager/orders_states.dart';
@@ -17,14 +17,35 @@ class AvailableOrdersScreen extends StatefulWidget {
 }
 
 class _AvailableOrdersScreenState extends State<AvailableOrdersScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  Future<void> reload() async {
+    await context.read<OrderCubit>().fetchAvailableOrders(refresh: true);
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadOrders();
+    reload();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.9) {
+      // Load more when 90% scrolled
+      context.read<OrderCubit>().loadMoreAvailableOrders();
+    }
   }
 
   Future<void> _loadOrders() async {
-    context.read<OrderCubit>().fetchAvailableOrders();
+    await context.read<OrderCubit>().fetchAvailableOrders(refresh: true);
   }
 
   @override
@@ -53,7 +74,6 @@ class _AvailableOrdersScreenState extends State<AvailableOrdersScreen> {
               ),
             );
           } else if (state is OfferSubmitted) {
-            // Mark the order as offered in the UI
             context.read<OrderCubit>().markOrderAsOffered(state.orderId);
 
             ScaffoldMessenger.of(context).showSnackBar(
@@ -75,8 +95,9 @@ class _AvailableOrdersScreenState extends State<AvailableOrdersScreen> {
           }
         },
         builder: (context, state) {
-          if (state is AvailableOrdersLoading) {
-            return const LoadingScreen(isOne: true);
+          // Initial loading
+          if (state is AvailableOrdersLoading && !state.isLoadingMore) {
+            return OrderShimmers.availableOrdersListShimmer();
           }
 
           if (state is AvailableOrdersLoaded) {
@@ -87,95 +108,42 @@ class _AvailableOrdersScreenState extends State<AvailableOrdersScreen> {
             return RefreshIndicator(
               onRefresh: _loadOrders,
               color: AppColors.kPrimaryColor,
-              child: Column(
-                children: [
-                  // Header with stats
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.kPrimaryColor,
-                          AppColors.kSecondaryColor.withOpacity(0.8),
-                        ],
-                      ),
-                    ),
-                    child: SafeArea(
-                      bottom: false,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  Icons.local_shipping,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      l10n.availableOrders,
-                                      style: AppTextStyles.bold18.copyWith(
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    Text(
-                                      l10n.ordersCount(state.orders.length),
-                                      style: AppTextStyles.regular14.copyWith(
-                                        color: Colors.white.withOpacity(0.9),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: state.orders.length + (state.hasMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index >= state.orders.length) {
+                    // Load more indicator
+                    return const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
 
-                  // Orders list
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: state.orders.length,
-                      itemBuilder: (context, index) {
-                        final order = state.orders[index];
-                        return OrderCardWidget(
-                          order: order,
-                          onTap: () async {
-                            final result = await context.push(
-                              '/orders/details',
-                              extra: order.id,
-                            );
+                  final order = state.orders[index];
+                  return OrderCardWidget(
+                    order: order,
+                    onTap: () async {
+                      // Navigate and only refresh if offer was submitted
+                      final result = await context.push(
+                        '/orders/details',
+                        extra: order.id,
+                      );
 
-                            // Refresh orders if returned from details
-                            if (result == true) {
-                              _loadOrders();
-                            }
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                      if (result == true && mounted) {
+                        _loadOrders();
+                      }
+                    },
+                  );
+                },
               ),
             );
+          }
+
+          // Handle error state with empty list
+          if (state is AvailableOrdersError) {
+            return _buildEmptyState(context, isError: true);
           }
 
           return const SizedBox.shrink();
@@ -184,7 +152,7 @@ class _AvailableOrdersScreenState extends State<AvailableOrdersScreen> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, {bool isError = false}) {
     final l10n = AppLocalizations.of(context)!;
 
     return RefreshIndicator(
@@ -204,14 +172,16 @@ class _AvailableOrdersScreenState extends State<AvailableOrdersScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.shopping_bag_outlined,
+                      isError
+                          ? Icons.error_outline
+                          : Icons.shopping_bag_outlined,
                       size: 80,
                       color: AppColors.kPrimaryColor.withOpacity(0.6),
                     ),
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    l10n.noAvailableOrders,
+                    isError ? l10n.error : l10n.noAvailableOrders,
                     style: AppTextStyles.bold18.copyWith(
                       color: Colors.grey.shade700,
                     ),
@@ -220,7 +190,7 @@ class _AvailableOrdersScreenState extends State<AvailableOrdersScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Text(
-                      l10n.checkBackLater,
+                      isError ? l10n.retry : l10n.checkBackLater,
                       textAlign: TextAlign.center,
                       style: AppTextStyles.regular14.copyWith(
                         color: Colors.grey.shade500,

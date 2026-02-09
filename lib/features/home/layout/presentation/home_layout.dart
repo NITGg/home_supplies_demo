@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_courier/features/orders/presentation/active_order_screen.dart';
-import 'package:tawreedat_courier/features/orders/presentation/available_orders_screen.dart';
 import 'package:tawreedat_courier/features/stats/presentation/stats_screen.dart';
 import '../../../../core/utils/biometric_auth_service.dart';
 import '../../../../core/widgets/loading_screen.dart';
@@ -19,6 +18,7 @@ import '../../../auth/manager/auth_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
 import '../../../auth/manager/profile_cubit.dart';
 import '../../../delivery_areas/prenestation/delivery_areas_bottom_sheet.dart';
+import '../../../orders/presentation/orders_main_screen.dart';
 import '../manager/home_cubit.dart';
 
 class HomeLayout extends StatefulWidget {
@@ -83,8 +83,8 @@ class _HomeLayoutState extends State<HomeLayout> {
     final localizations = AppLocalizations.of(context)!;
 
     final screens = const [
-      AvailableOrdersScreen(),
       ActiveOrderScreen(),
+      OrdersMainScreen(),
       StatsScreen(),
       SizedBox.shrink(),
     ];
@@ -96,14 +96,14 @@ class _HomeLayoutState extends State<HomeLayout> {
           final cubit = context.read<HomeCubit>();
           final itemsList = [
             BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long),
-              activeIcon: Icon(Icons.receipt),
-              label: localizations.orders,
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.inventory_2_outlined),
               activeIcon: Icon(Icons.inventory_2_rounded),
               label: localizations.packages,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long),
+              activeIcon: Icon(Icons.receipt),
+              label: localizations.orders,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.analytics_outlined),

@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -194,7 +196,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 ),
                 const SizedBox(height: 20),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.kPrimaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -209,9 +214,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 const SizedBox(height: 12),
                 Text(
                   order.productDescription,
-                  style: AppTextStyles.bold18.copyWith(
-                    height: 1.4,
-                  ),
+                  style: AppTextStyles.bold18.copyWith(height: 1.4),
                 ),
                 const SizedBox(height: 16),
                 Container(
@@ -297,18 +300,18 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                         backgroundColor: AppColors.kSecondaryLightColor,
                         child: order.customer.personalPhoto != null
                             ? ClipOval(
-                          child: ImageWithIconFallback(
-                            imageUrl: order.customer.personalPhoto,
-                            width: 56,
-                            height: 56,
-                            fit: BoxFit.cover,
-                          ),
-                        )
+                                child: ImageWithIconFallback(
+                                  imageUrl: order.customer.personalPhoto,
+                                  width: 56,
+                                  height: 56,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
                             : const Icon(
-                          Icons.person,
-                          color: AppColors.kPrimaryColor,
-                          size: 30,
-                        ),
+                                Icons.person,
+                                color: AppColors.kPrimaryColor,
+                                size: 30,
+                              ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -323,6 +326,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 order.customer.phone!,
+                                textDirection: ui.TextDirection.ltr,
                                 style: AppTextStyles.regular14.copyWith(
                                   color: Colors.grey.shade600,
                                 ),
@@ -373,7 +377,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   icon: Icons.store_outlined,
                   title: l10n.pickupLocation,
                   area:
-                  '${order.pickupArea.name}, ${order.pickupArea.governorate?.name ?? ""}',
+                      '${order.pickupArea.name}, ${order.pickupArea.governorate?.name ?? ""}',
                   address: order.pickupAddressDescription,
                   color: AppColors.kPrimaryColor,
                 ),
@@ -385,7 +389,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       Column(
                         children: List.generate(
                           4,
-                              (index) => Container(
+                          (index) => Container(
                             width: 2,
                             height: 6,
                             margin: const EdgeInsets.symmetric(vertical: 2),
@@ -420,11 +424,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   ),
                 ),
                 _buildLocationDetail(
-                  context:context,
+                  context: context,
                   icon: Icons.location_on_outlined,
                   title: l10n.deliveryLocation,
                   area:
-                  '${order.deliveryArea.name}, ${order.deliveryArea.governorate?.name ?? ""}',
+                      '${order.deliveryArea.name}, ${order.deliveryArea.governorate?.name ?? ""}',
                   address: order.deliveryAddressDescription,
                   color: Colors.green,
                 ),
@@ -552,10 +556,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       const SizedBox(height: 16),
                     ],
                     AppTextFormField(
-                      label: l10n.yourDeliveryFee,
+                      label: l10n.totalFee,
                       controller: _feeController,
                       keyboardType: TextInputType.number,
-                      prefixIcon: const Icon(Icons.attach_money),
+                      prefixIcon: const Icon(Icons.payments_rounded),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return l10n.pleaseEnterDeliveryFee;
@@ -577,7 +581,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       },
                     ),
                     AppCustomButton(
-                      onPressed:  _submitOffer,
+                      onPressed: _submitOffer,
                       text: _isSubmitting ? l10n.submitting : l10n.submitOffer,
                       isLoading: _isSubmitting,
                     ),
@@ -592,16 +596,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Colors.green.shade50,
-                    Colors.green.shade100,
-                  ],
+                  colors: [Colors.green.shade50, Colors.green.shade100],
                 ),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.green.shade300,
-                  width: 2,
-                ),
+                border: Border.all(color: Colors.green.shade300, width: 2),
               ),
               child: Column(
                 children: [
@@ -663,10 +661,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       decoration: BoxDecoration(
         color: color.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -676,10 +671,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: color.withOpacity(0.3),
-                width: 1,
-              ),
+              border: Border.all(color: color.withOpacity(0.3), width: 1),
             ),
             child: Icon(icon, color: color, size: 22),
           ),
@@ -688,18 +680,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: AppTextStyles.bold14.copyWith(
-                    color: color,
-                  ),
-                ),
+                Text(title, style: AppTextStyles.bold14.copyWith(color: color)),
                 const SizedBox(height: 6),
                 Text(
                   area,
                   style: AppTextStyles.medium18.copyWith(
                     color: AppColors.kSecondaryColor,
-                    fontSize: 14
+                    fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -720,11 +707,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   }
 
   Widget _buildInfoRow(
-      BuildContext context,
-      String label,
-      String value,
-      IconData icon,
-      ) {
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -735,11 +722,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               color: AppColors.kSecondaryLightColor,
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Icon(
-              icon,
-              size: 16,
-              color: AppColors.kPrimaryColor,
-            ),
+            child: Icon(icon, size: 16, color: AppColors.kPrimaryColor),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -754,10 +737,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: AppTextStyles.bold14,
-                ),
+                Text(value, style: AppTextStyles.bold14),
               ],
             ),
           ),

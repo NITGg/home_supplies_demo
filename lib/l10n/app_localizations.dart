@@ -1714,6 +1714,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your Fee'**
   String get yourFee;
+
+  /// No description provided for @totalFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Fee'**
+  String get totalFee;
+
+  /// No description provided for @otherReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Other Reason'**
+  String get otherReason;
+
+  /// No description provided for @productUnAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Unavailable'**
+  String get productUnAvailable;
+
+  /// No description provided for @budgetNotEnough.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget Is Not Enough'**
+  String get budgetNotEnough;
+
+  /// No description provided for @askCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell Customer'**
+  String get askCustomer;
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @orderCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Cancelled'**
+  String get orderCancelled;
+
+  /// No description provided for @actualPriceMustBeHigher.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual Price Must Be Higher'**
+  String get actualPriceMustBeHigher;
+
+  /// No description provided for @reportActualPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Actual Price'**
+  String get reportActualPrice;
+
+  /// No description provided for @tooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'too short'**
+  String get tooShort;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @actualPriceIsHigher.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual Price Is Higher'**
+  String get actualPriceIsHigher;
+
+  /// No description provided for @cancelOrderWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel this order? This action cannot be undone.'**
+  String get cancelOrderWarning;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

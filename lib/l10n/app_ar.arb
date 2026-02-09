@@ -387,7 +387,22 @@
   "orderCreated": "تم إنشاء الطلب",
   "offerAccepted": "تم قبول العرض",
   "customer": "العميل",
-  "yourFee": "رسومك"
+  "yourFee": "رسومك",
+  "totalFee": "رسوم التوصيل",
+  "otherReason": "سبب أخر",
+  "productUnAvailable": "المنتج غير متاح",
+  "budgetNotEnough": "الميزانية لا تكفي",
+  "actualPriceIsHigher": "السعر الفعلي أكبر",
+
+  "askCustomer": "أبلغ العميل",
+  "history": "السجل",
+  "orderCancelled": "تم الغاء الطلب",
+        "actualPriceMustBeHigher": "يجب أن يكون السعر الفعلي أكبر",
+        "reportActualPrice": "بلغ السعر الفعلي",
+        "tooShort": "قصير للغاية",
+        "back": "الرجوع",
+        "cancelOrderWarning": "هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها"
+
 
 
 }

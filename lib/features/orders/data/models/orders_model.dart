@@ -17,11 +17,14 @@ class OrderModel {
   final DateTime createdAt;
   final DateTime? offerAcceptedAt;
   final DateTime? deliveredAt;
+  final DateTime? canceledAt;
+  final String? cancelledReason;
+  final int? cancelledBy;
   final AreaModel pickupArea;
   final AreaModel deliveryArea;
   final CustomerModel customer;
   final int? proposalsCount;
-  final bool? hasMyProposal; // New field to track if current courier has submitted an offer
+  final bool? hasMyProposal;
 
   OrderModel({
     required this.id,
@@ -42,6 +45,9 @@ class OrderModel {
     required this.createdAt,
     this.offerAcceptedAt,
     this.deliveredAt,
+    this.canceledAt,
+    this.cancelledReason,
+    this.cancelledBy,
     required this.pickupArea,
     required this.deliveryArea,
     required this.customer,
@@ -58,11 +64,11 @@ class OrderModel {
       budget: json['budget'],
       actualPrice: json['actual_price'],
       pickupAddressDescription: json['pickup_address_description'],
-      pickupLat: double.parse(json['pickup_lat']),
-      pickupLong: double.parse(json['pickup_long']),
+      pickupLat: double.parse(json['pickup_lat'].toString()),
+      pickupLong: double.parse(json['pickup_long'].toString()),
       deliveryAddressDescription: json['delivery_address_description'],
-      deliveryLat: double.parse(json['delivery_lat']),
-      deliveryLong: double.parse(json['delivery_long']),
+      deliveryLat: double.parse(json['delivery_lat'].toString()),
+      deliveryLong: double.parse(json['delivery_long'].toString()),
       totalFee: json['total_fee'],
       paymentMethod: json['payment_method'],
       status: json['status'],
@@ -73,15 +79,20 @@ class OrderModel {
       deliveredAt: json['delivered_at'] != null
           ? DateTime.parse(json['delivered_at'])
           : null,
+      canceledAt: json['canceled_at'] != null
+          ? DateTime.parse(json['canceled_at'])
+          : null,
+      cancelledReason: json['cancelled_reason'],
+      cancelledBy: json['cancelled_by'],
       pickupArea: AreaModel.fromJson(json['pickup_area']),
       deliveryArea: AreaModel.fromJson(json['delivery_area']),
       customer: CustomerModel.fromJson(json['customer']),
-      proposalsCount: json['_count'] != null ? json['_count']['proposals'] : null,
-      hasMyProposal: json['has_my_proposal'],
+      proposalsCount: json['_count'] != null
+          ? json['_count']['proposals']
+          : null,
     );
   }
 
-  // Copy with method to update hasMyProposal locally
   OrderModel copyWith({
     int? id,
     String? orderNumber,
@@ -101,6 +112,9 @@ class OrderModel {
     DateTime? createdAt,
     DateTime? offerAcceptedAt,
     DateTime? deliveredAt,
+    DateTime? canceledAt,
+    String? cancelledReason,
+    int? cancelledBy,
     AreaModel? pickupArea,
     AreaModel? deliveryArea,
     CustomerModel? customer,
@@ -114,10 +128,12 @@ class OrderModel {
       productImage: productImage ?? this.productImage,
       budget: budget ?? this.budget,
       actualPrice: actualPrice ?? this.actualPrice,
-      pickupAddressDescription: pickupAddressDescription ?? this.pickupAddressDescription,
+      pickupAddressDescription:
+          pickupAddressDescription ?? this.pickupAddressDescription,
       pickupLat: pickupLat ?? this.pickupLat,
       pickupLong: pickupLong ?? this.pickupLong,
-      deliveryAddressDescription: deliveryAddressDescription ?? this.deliveryAddressDescription,
+      deliveryAddressDescription:
+          deliveryAddressDescription ?? this.deliveryAddressDescription,
       deliveryLat: deliveryLat ?? this.deliveryLat,
       deliveryLong: deliveryLong ?? this.deliveryLong,
       totalFee: totalFee ?? this.totalFee,
@@ -126,6 +142,9 @@ class OrderModel {
       createdAt: createdAt ?? this.createdAt,
       offerAcceptedAt: offerAcceptedAt ?? this.offerAcceptedAt,
       deliveredAt: deliveredAt ?? this.deliveredAt,
+      canceledAt: canceledAt ?? this.canceledAt,
+      cancelledReason: cancelledReason ?? this.cancelledReason,
+      cancelledBy: cancelledBy ?? this.cancelledBy,
       pickupArea: pickupArea ?? this.pickupArea,
       deliveryArea: deliveryArea ?? this.deliveryArea,
       customer: customer ?? this.customer,
@@ -133,6 +152,15 @@ class OrderModel {
       hasMyProposal: hasMyProposal ?? this.hasMyProposal,
     );
   }
+
+  // Helper method to check if order is cancelled
+  bool get isCancelled => status == 'CANCELLED';
+
+  // Helper method to check if order is delivered
+  bool get isDelivered => status == 'DELIVERED';
+
+  // Helper method to check if order is in progress
+  bool get isInProgress => status == 'IN_PROGRESS';
 }
 
 class AreaModel {
@@ -207,10 +235,7 @@ class FeeRangeModel {
   final double minDeliveryFee;
   final double maxDeliveryFee;
 
-  FeeRangeModel({
-    required this.minDeliveryFee,
-    required this.maxDeliveryFee,
-  });
+  FeeRangeModel({required this.minDeliveryFee, required this.maxDeliveryFee});
 
   factory FeeRangeModel.fromJson(Map<String, dynamic> json) {
     return FeeRangeModel(
@@ -253,15 +278,9 @@ class QrCodeModel {
   final String qrCode;
   final int orderId;
 
-  QrCodeModel({
-    required this.qrCode,
-    required this.orderId,
-  });
+  QrCodeModel({required this.qrCode, required this.orderId});
 
   factory QrCodeModel.fromJson(Map<String, dynamic> json) {
-    return QrCodeModel(
-      qrCode: json['qr_code'],
-      orderId: json['order_id'],
-    );
+    return QrCodeModel(qrCode: json['qr_code'], orderId: json['order_id']);
   }
 }

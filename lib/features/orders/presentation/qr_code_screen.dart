@@ -118,7 +118,9 @@ class QrCodeScreen extends StatelessWidget {
                                   end: Alignment.bottomRight,
                                   colors: [
                                     AppColors.kSecondaryLightColor,
-                                    AppColors.kSecondaryLightColor.withOpacity(0.5),
+                                    AppColors.kSecondaryLightColor.withOpacity(
+                                      0.5,
+                                    ),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(16),
@@ -129,7 +131,9 @@ class QrCodeScreen extends StatelessWidget {
                                   color: Colors.white,
                                   padding: const EdgeInsets.all(16),
                                   child: Image.memory(
-                                    base64Decode(qrCodeModel.qrCode.split(',')[1]),
+                                    base64Decode(
+                                      qrCodeModel.qrCode.split(',')[1],
+                                    ),
                                     width: 250,
                                     height: 250,
                                     fit: BoxFit.contain,
@@ -155,7 +159,9 @@ class QrCodeScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.kPrimaryColor.withOpacity(0.3),
+                                    color: AppColors.kPrimaryColor.withOpacity(
+                                      0.3,
+                                    ),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -278,11 +284,11 @@ class QrCodeScreen extends StatelessWidget {
   }
 
   Widget _buildInstructionStep(
-      BuildContext context,
-      String text,
-      IconData icon, {
-        bool isLast = false,
-      }) {
+    BuildContext context,
+    String text,
+    IconData icon, {
+    bool isLast = false,
+  }) {
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: Row(
@@ -294,11 +300,7 @@ class QrCodeScreen extends StatelessWidget {
               color: Colors.blue.shade100,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              size: 16,
-              color: Colors.blue.shade700,
-            ),
+            child: Icon(icon, size: 16, color: Colors.blue.shade700),
           ),
           const SizedBox(width: 12),
           Expanded(

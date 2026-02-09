@@ -797,7 +797,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get enterActualPriceMessage => 'أدخل السعر الفعلي للمنتج لإنشاء رمز الاستجابة السريعة لتأكيد العميل';
 
   @override
-  String get deliveryQrCode => 'رمز الاستجابة السريعة للتوصيل';
+  String get deliveryQrCode => 'رمز Qr';
 
   @override
   String get deliveryReady => 'التوصيل جاهز!';
@@ -834,4 +834,43 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get yourFee => 'رسومك';
+
+  @override
+  String get totalFee => 'رسوم التوصيل';
+
+  @override
+  String get otherReason => 'سبب أخر';
+
+  @override
+  String get productUnAvailable => 'المنتج غير متاح';
+
+  @override
+  String get budgetNotEnough => 'الميزانية لا تكفي';
+
+  @override
+  String get askCustomer => 'أبلغ العميل';
+
+  @override
+  String get history => 'السجل';
+
+  @override
+  String get orderCancelled => 'تم الغاء الطلب';
+
+  @override
+  String get actualPriceMustBeHigher => 'يجب أن يكون السعر الفعلي أكبر';
+
+  @override
+  String get reportActualPrice => 'بلغ السعر الفعلي';
+
+  @override
+  String get tooShort => 'قصير للغاية';
+
+  @override
+  String get back => 'الرجوع';
+
+  @override
+  String get actualPriceIsHigher => 'السعر الفعلي أكبر';
+
+  @override
+  String get cancelOrderWarning => 'هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها';
 }

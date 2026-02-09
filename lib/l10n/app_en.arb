@@ -385,7 +385,22 @@
   "orderCreated": "Order Created",
   "offerAccepted": "Offer Accepted",
   "customer": "Customer",
-  "yourFee": "Your Fee"
+  "yourFee": "Your Fee",
+    "totalFee": "Total Fee",
+  "otherReason": "Other Reason",
+  "productUnAvailable": "Product Unavailable",
+ "budgetNotEnough": "Budget Is Not Enough",
+  "askCustomer": "Tell Customer",
+    "history": "History",
+      "orderCancelled": "Order Cancelled",
+      "actualPriceMustBeHigher": "Actual Price Must Be Higher",
+      "reportActualPrice": "Report Actual Price",
+      "tooShort": "too short",
+        "back": "Back",
+          "actualPriceIsHigher": "Actual Price Is Higher",
+
+      "cancelOrderWarning": "Are you sure you want to cancel this order? This action cannot be undone."
+
 
 
 }
