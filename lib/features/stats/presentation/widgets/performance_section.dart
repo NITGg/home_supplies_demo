@@ -271,7 +271,7 @@ class PerformanceSection extends StatelessWidget {
             Expanded(
               child: _buildStatCard(
                 context: context,
-                title: isArabic ? 'العروض' : 'Proposals',
+                title: isArabic ? 'العروض المقبولة' : 'Accepted Proposals',
                 value: '${stats.acceptedProposals}/${stats.totalProposals}',
                 icon: Icons.local_offer,
                 color: const Color(0xFF9C27B0),
