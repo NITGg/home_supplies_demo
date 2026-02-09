@@ -62,13 +62,6 @@ class _HomeLayoutState extends State<HomeLayout> {
     }
   }
 
-  Future<UserProfileModel?> _loadUserProfile() async {
-    final userProfileJson = await SecureStorageService().getUserProfile();
-    if (userProfileJson != null) {
-      return UserProfileModel.fromJson(userProfileJson);
-    }
-    return null;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -431,7 +424,7 @@ class _HomeLayoutState extends State<HomeLayout> {
               bottomNavigationBar: Directionality(
                 textDirection: Directionality.of(context),
                 child: Container(
-                  height: 100,
+                  height: 90,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     boxShadow: [

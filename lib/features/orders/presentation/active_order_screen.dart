@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tawreedat_courier/features/orders/presentation/widgets/orders_shimmers.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
+import '../../../core/utils/biometric_auth_service.dart';
 import '../../../core/utils/phone_dialer.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/image_with_fallback.dart';
@@ -871,13 +872,19 @@ class _ActiveOrderScreenState extends State<ActiveOrderScreen> {
     );
   }
 
-  void _completeDelivery(OrderModel order) {
+  Future<void> _completeDelivery(OrderModel order) async {
     if (_formKey.currentState!.validate()) {
-      final actualPrice = double.parse(_actualPriceController.text);
-      context.read<OrderCubit>().completeDelivery(
-        orderId: order.id,
-        actualPrice: actualPrice,
+      final success = await BiometricManager().verifyBiometric(
+        context: context,
       );
+      if (!success) return;
+      final actualPrice = double.parse(_actualPriceController.text);
+      if (context.mounted) {
+        context.read<OrderCubit>().completeDelivery(
+          orderId: order.id,
+          actualPrice: actualPrice,
+        );
+      }
     }
   }
 
