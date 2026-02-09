@@ -200,66 +200,66 @@ class OrderCardWidget extends StatelessWidget {
   }
 
   Widget _buildDeliveryRoute(BuildContext context, AppLocalizations l10n) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.kSecondaryLightColor.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          _buildLocationRow(
-            context: context,
-            icon: Icons.store_outlined,
-            label: l10n.pickup,
-            location: order.pickupArea.name,
-            address: order.pickupAddressDescription,
-            color: AppColors.kPrimaryColor,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              children: [
-                const SizedBox(width: 20),
-                ...List.generate(
-                  3,
-                  (index) => Container(
-                    width: 4,
-                    height: 4,
-                    margin: const EdgeInsets.symmetric(vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.kPrimaryColor.withOpacity(0.4),
-                      shape: BoxShape.circle,
+    return order.pickupArea == null || order.deliveryArea == null
+        ? SizedBox.shrink():Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.kSecondaryLightColor.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            _buildLocationRow(
+              context: context,
+              icon: Icons.store_outlined,
+              label: l10n.pickup,
+              location: order.pickupArea!.name,
+              address: order.pickupAddressDescription,
+              color: AppColors.kPrimaryColor,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  const SizedBox(width: 20),
+                  ...List.generate(
+                    3,
+                        (index) => Container(
+                      width: 4,
+                      height: 4,
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.kPrimaryColor.withOpacity(0.4),
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    color: AppColors.kPrimaryColor.withOpacity(0.2),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      color: AppColors.kPrimaryColor.withOpacity(0.2),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.arrow_forward,
-                  size: 16,
-                  color: AppColors.kPrimaryColor.withOpacity(0.6),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward,
+                    size: 16,
+                    color: AppColors.kPrimaryColor.withOpacity(0.6),
+                  ),
+                ],
+              ),
             ),
-          ),
-          _buildLocationRow(
-            context: context,
-            icon: Icons.location_on_outlined,
-            label: l10n.delivery,
-            location: order.deliveryArea.name,
-            address: order.deliveryAddressDescription,
-            color: Colors.green,
-          ),
-        ],
-      ),
-    );
+            _buildLocationRow(
+              context: context,
+              icon: Icons.location_on_outlined,
+              label: l10n.delivery,
+              location: order.deliveryArea!.name,
+              address: order.deliveryAddressDescription,
+              color: Colors.green,
+            ),
+          ],
+        ));
   }
 
   Widget _buildFooter(BuildContext context, AppLocalizations l10n) {
@@ -279,9 +279,10 @@ class OrderCardWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
+              if (order.customer != null)
               Expanded(
                 child: Text(
-                  order.customer.fullName,
+                  order.customer!.fullName,
                   style: AppTextStyles.medium18.copyWith(
                     fontSize: 13,
                     color: Colors.grey.shade700,

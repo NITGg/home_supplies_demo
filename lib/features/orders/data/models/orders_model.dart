@@ -20,9 +20,9 @@ class OrderModel {
   final DateTime? canceledAt;
   final String? cancelledReason;
   final int? cancelledBy;
-  final AreaModel pickupArea;
-  final AreaModel deliveryArea;
-  final CustomerModel customer;
+  final AreaModel? pickupArea;
+  final AreaModel? deliveryArea;
+  final CustomerModel? customer;
   final int? proposalsCount;
   final bool? hasMyProposal;
 
@@ -48,9 +48,9 @@ class OrderModel {
     this.canceledAt,
     this.cancelledReason,
     this.cancelledBy,
-    required this.pickupArea,
-    required this.deliveryArea,
-    required this.customer,
+     this.pickupArea,
+     this.deliveryArea,
+     this.customer,
     this.proposalsCount,
     this.hasMyProposal,
   });
@@ -84,12 +84,20 @@ class OrderModel {
           : null,
       cancelledReason: json['cancelled_reason'],
       cancelledBy: json['cancelled_by'],
-      pickupArea: AreaModel.fromJson(json['pickup_area']),
-      deliveryArea: AreaModel.fromJson(json['delivery_area']),
-      customer: CustomerModel.fromJson(json['customer']),
-      proposalsCount: json['_count'] != null
-          ? json['_count']['proposals']
+      pickupArea: json['pickup_area'] != null
+          ? AreaModel.fromJson(json['pickup_area'])
           : null,
+
+      deliveryArea: json['delivery_area'] != null
+          ? AreaModel.fromJson(json['delivery_area'])
+          : null,
+
+      customer: json['customer'] != null
+          ? CustomerModel.fromJson(json['customer'])
+          : null,
+
+      proposalsCount: json['_count']?['proposals'],
+
     );
   }
 

@@ -44,6 +44,7 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
           Navigator.pop(context, true);
         } else if (state is OrderCancelError) {
           // Error - show snackbar but keep sheet open for retry
+          Navigator.pop(context, true);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
@@ -270,7 +271,7 @@ class _ReportHighPriceBottomSheetState
           // Success - close bottom sheet
           Navigator.pop(context, true);
         } else if (state is HighPriceReportError) {
-          // Error - show snackbar but keep sheet open for retry
+          Navigator.pop(context, true);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(

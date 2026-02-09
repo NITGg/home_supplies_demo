@@ -77,6 +77,22 @@ class _ActiveOrderScreenState extends State<ActiveOrderScreen> {
               return const LoadingScreen(isOne: true);
             }
 
+            if (state is ActiveOrderError && state.order != null) {
+              return _buildActiveOrder(context, state.order!);
+            }
+
+            if (state is DeliveryCompleteError && state.order != null) {
+              return _buildActiveOrder(context, state.order!);
+            }
+
+            if (state is HighPriceReportError && state.order != null) {
+              return _buildActiveOrder(context, state.order!);
+            }
+
+            if (state is OrderCancelError && state.order != null) {
+              return _buildActiveOrder(context, state.order!);
+            }
+
             return const SizedBox.shrink();
           },
         ),
@@ -92,12 +108,6 @@ class _ActiveOrderScreenState extends State<ActiveOrderScreen> {
     // Handle order cancellation - navigation handled by bottom sheet
     if (state is OrderCancelled) {
       _showSuccessSnackBar(context, l10n.orderCancelled, Colors.orange);
-      // Navigate after a short delay to show the snackbar
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (context.mounted) {
-          context.go('/orders');
-        }
-      });
     }
 
     // Handle high price report - reload handled by bottom sheet
@@ -376,87 +386,89 @@ class _ActiveOrderScreenState extends State<ActiveOrderScreen> {
     AppLocalizations l10n,
     OrderModel order,
   ) {
-    return Container(
-      width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.customer, style: AppTextStyles.bold16),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.kSecondaryLightColor.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
+    return order.customer == null
+        ? SizedBox.shrink()
+        : Container(
+            width: double.infinity,
+            color: Colors.white,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: AppColors.kSecondaryLightColor,
-                  child: order.customer.personalPhoto != null
-                      ? ClipOval(
-                          child: ImageWithIconFallback(
-                            imageUrl: order.customer.personalPhoto,
-                            width: 56,
-                            height: 56,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.person,
-                          color: AppColors.kPrimaryColor,
-                          size: 32,
-                        ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                Text(l10n.customer, style: AppTextStyles.bold16),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.kSecondaryLightColor.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
                     children: [
-                      Text(
-                        order.customer.fullName,
-                        style: AppTextStyles.bold16,
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: AppColors.kSecondaryLightColor,
+                        child: order.customer?.personalPhoto != null
+                            ? ClipOval(
+                                child: ImageWithIconFallback(
+                                  imageUrl: order.customer?.personalPhoto,
+                                  width: 56,
+                                  height: 56,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.person,
+                                color: AppColors.kPrimaryColor,
+                                size: 32,
+                              ),
                       ),
-                      if (order.customer.phone != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          textDirection: ui.TextDirection.ltr,
-                          order.customer.phone!,
-                          style: AppTextStyles.regular14.copyWith(
-                            color: Colors.grey.shade600,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              order.customer!.fullName,
+                              style: AppTextStyles.bold16,
+                            ),
+                            if (order.customer?.phone != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                textDirection: ui.TextDirection.ltr,
+                                order.customer!.phone!,
+                                style: AppTextStyles.regular14.copyWith(
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (order.customer?.phone != null)
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.kPrimaryColor,
+                                AppColors.kPrimaryColor.withOpacity(0.8),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.phone, color: Colors.white),
+                            onPressed: () {
+                              openPhoneApp(order.customer?.phone ?? '');
+                            },
                           ),
                         ),
-                      ],
                     ],
                   ),
                 ),
-                if (order.customer.phone != null)
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.kPrimaryColor,
-                          AppColors.kPrimaryColor.withOpacity(0.8),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.phone, color: Colors.white),
-                      onPressed: () {
-                        openPhoneApp(order.customer.phone ?? '');
-                      },
-                    ),
-                  ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
   }
 
   Widget _buildDeliveryRoute(
@@ -477,7 +489,7 @@ class _ActiveOrderScreenState extends State<ActiveOrderScreen> {
             icon: Icons.store_outlined,
             title: l10n.pickup,
             area:
-                '${order.pickupArea.name}${order.pickupArea.governorate != null ? ", ${order.pickupArea.governorate!.name}" : ""}',
+                '${order.pickupArea?.name}${order.pickupArea?.governorate != null ? ", ${order.pickupArea?.governorate!.name}" : ""}',
             address: order.pickupAddressDescription,
             isPrimary: true,
             context: context,
@@ -526,7 +538,7 @@ class _ActiveOrderScreenState extends State<ActiveOrderScreen> {
             icon: Icons.location_on_outlined,
             title: l10n.delivery,
             area:
-                '${order.deliveryArea.name}${order.deliveryArea.governorate != null ? ", ${order.deliveryArea.governorate!.name}" : ""}',
+                '${order.deliveryArea?.name}${order.deliveryArea?.governorate != null ? ", ${order.deliveryArea?.governorate!.name}" : ""}',
             address: order.deliveryAddressDescription,
             isPrimary: false,
           ),

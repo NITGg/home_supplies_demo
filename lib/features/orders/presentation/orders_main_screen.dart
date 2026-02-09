@@ -52,7 +52,7 @@ class _OrdersMainScreenState extends State<OrdersMainScreen>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [AvailableOrdersScreen(), OrderHistoryScreen()],
+              children: [AvailableOrdersScreen(), OrderHistoryScreen()],
             ),
           ),
         ],

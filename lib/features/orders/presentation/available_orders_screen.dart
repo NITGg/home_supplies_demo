@@ -55,6 +55,10 @@ class _AvailableOrdersScreenState extends State<AvailableOrdersScreen> {
     return Scaffold(
       backgroundColor: AppColors.kBackgroundColor,
       body: BlocConsumer<OrderCubit, OrderState>(
+        buildWhen: (previous, current) {
+          // Only rebuild when orders change
+          return current is AvailableOrdersLoaded || current is AvailableOrdersError;
+        },
         listener: (context, state) {
           if (state is AvailableOrdersError) {
             ScaffoldMessenger.of(context).showSnackBar(

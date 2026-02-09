@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/models/orders_model.dart';
 import '../data/repositories/orders_repo.dart';
@@ -74,7 +75,7 @@ class OrderCubit extends Cubit<OrderState> {
       _isLoadingMoreAvailable = false;
     } catch (e) {
       _isLoadingMoreAvailable = false;
-      emit(AvailableOrdersError(_getErrorMessage(e)));
+      emit(AvailableOrdersError(_extractErrorMessage(e)));
     }
   }
 
@@ -144,7 +145,7 @@ class OrderCubit extends Cubit<OrderState> {
       _isLoadingMoreHistory = false;
     } catch (e) {
       _isLoadingMoreHistory = false;
-      emit(OrderHistoryError(_getErrorMessage(e)));
+      emit(OrderHistoryError(_extractErrorMessage(e)));
     }
   }
 
@@ -175,7 +176,7 @@ class OrderCubit extends Cubit<OrderState> {
         emit(OrderDetailsLoaded(order: updatedOrder));
       }
     } catch (e) {
-      emit(OrderDetailsError(_getErrorMessage(e)));
+      emit(OrderDetailsError(_extractErrorMessage(e)));
     }
   }
 
@@ -184,15 +185,14 @@ class OrderCubit extends Cubit<OrderState> {
     required int orderId,
     required double totalFee,
   }) async {
-    // Check for active order before submitting
-    final hasActive = await hasActiveOrder();
-    if (hasActive) {
-      emit(
-        const OfferSubmitError(
-          'You already have an active order. Please complete it first.',
-        ),
-      );
-      return;
+    // Get current order data before submitting
+    OrderModel? currentOrder;
+    FeeRangeModel? currentFeeRange;
+
+    final currentState = state;
+    if (currentState is OrderDetailsLoaded) {
+      currentOrder = currentState.order;
+      currentFeeRange = currentState.feeRange;
     }
 
     emit(SubmittingOffer());
@@ -207,7 +207,13 @@ class OrderCubit extends Cubit<OrderState> {
 
       emit(OfferSubmitted(proposal, orderId));
     } catch (e) {
-      emit(OfferSubmitError(_getErrorMessage(e)));
+      emit(
+        OfferSubmitError(
+          _extractErrorMessage(e),
+          order: currentOrder,
+          feeRange: currentFeeRange,
+        ),
+      );
     }
   }
 
@@ -222,7 +228,7 @@ class OrderCubit extends Cubit<OrderState> {
         emit(ActiveOrderLoaded(order));
       }
     } catch (e) {
-      emit(ActiveOrderError(_getErrorMessage(e)));
+      emit(ActiveOrderError(_extractErrorMessage(e)));
     }
   }
 
@@ -231,6 +237,13 @@ class OrderCubit extends Cubit<OrderState> {
     required int orderId,
     required double actualPrice,
   }) async {
+    // Get current order data
+    OrderModel? currentOrder;
+    final currentState = state;
+    if (currentState is ActiveOrderLoaded) {
+      currentOrder = currentState.order;
+    }
+
     emit(CompletingDelivery());
     try {
       final qrCode = await _repository.completeDelivery(
@@ -239,7 +252,7 @@ class OrderCubit extends Cubit<OrderState> {
       );
       emit(DeliveryCompleted(qrCode));
     } catch (e) {
-      emit(DeliveryCompleteError(_getErrorMessage(e)));
+      emit(DeliveryCompleteError(_extractErrorMessage(e), order: currentOrder));
     }
   }
 
@@ -248,15 +261,22 @@ class OrderCubit extends Cubit<OrderState> {
     required int orderId,
     required double actualPrice,
   }) async {
+    // Get current order data
+    OrderModel? currentOrder;
+    final currentState = state;
+    if (currentState is ActiveOrderLoaded) {
+      currentOrder = currentState.order;
+    }
+
     emit(ReportingHighPrice());
     try {
-      final order = await _repository.reportHighPrice(
+      await _repository.reportHighPrice(
         orderId: orderId,
         actualPrice: actualPrice,
       );
-      emit(HighPriceReported(order));
+      emit(HighPriceReported());
     } catch (e) {
-      emit(HighPriceReportError(_getErrorMessage(e)));
+      emit(HighPriceReportError(_extractErrorMessage(e), order: currentOrder));
     }
   }
 
@@ -265,6 +285,13 @@ class OrderCubit extends Cubit<OrderState> {
     required int orderId,
     String note = 'unavailable',
   }) async {
+    // Get current order data
+    OrderModel? currentOrder;
+    final currentState = state;
+    if (currentState is ActiveOrderLoaded) {
+      currentOrder = currentState.order;
+    }
+
     emit(CancelingOrder());
     try {
       final order = await _repository.cancelOrderUnavailable(
@@ -273,7 +300,7 @@ class OrderCubit extends Cubit<OrderState> {
       );
       emit(OrderCancelled(order));
     } catch (e) {
-      emit(OrderCancelError(_getErrorMessage(e)));
+      emit(OrderCancelError(_extractErrorMessage(e), order: currentOrder));
     }
   }
 
@@ -281,6 +308,13 @@ class OrderCubit extends Cubit<OrderState> {
     required int orderId,
     required String note,
   }) async {
+    // Get current order data
+    OrderModel? currentOrder;
+    final currentState = state;
+    if (currentState is ActiveOrderLoaded) {
+      currentOrder = currentState.order;
+    }
+
     emit(CancelingOrder());
     try {
       final order = await _repository.cancelOrderOther(
@@ -289,7 +323,7 @@ class OrderCubit extends Cubit<OrderState> {
       );
       emit(OrderCancelled(order));
     } catch (e) {
-      emit(OrderCancelError(_getErrorMessage(e)));
+      emit(OrderCancelError(_extractErrorMessage(e), order: currentOrder));
     }
   }
 
@@ -361,7 +395,22 @@ class OrderCubit extends Cubit<OrderState> {
   }
 
   // Helper method to extract error messages
-  String _getErrorMessage(dynamic error) {
-    return error.toString().replaceAll('Exception:', '').trim();
+  String _extractErrorMessage(dynamic e) {
+    String message = 'حدث خطأ غير متوقع';
+
+    if (e is DioException) {
+      try {
+        final data = e.response?.data;
+        if (data is Map && data['message'] != null) {
+          message = data['message'];
+        } else if (data is String) {
+          message = data;
+        }
+      } catch (_) {}
+    } else {
+      message = e.toString();
+    }
+
+    return message;
   }
 }

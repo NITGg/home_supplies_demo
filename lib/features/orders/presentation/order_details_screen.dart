@@ -68,6 +68,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         centerTitle: true,
       ),
       body: BlocConsumer<OrderCubit, OrderState>(
+        buildWhen: (previous, current) {
+          // Only rebuild when orders change
+          return current is OrderDetailsLoaded || current is OrderDetailsError || current is OfferSubmitted || current is OfferSubmitError;
+        },
         listener: (context, state) {
           if (state is OrderDetailsError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -145,6 +149,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
           if (state is SubmittingOffer) {
             return const LoadingScreen(isOne: true);
+          }
+
+          // Handle error state while preserving the order view
+          if (state is OfferSubmitError && state.order != null) {
+            _feeRange = state.feeRange;
+            return _buildOrderDetails(context, state.order!);
           }
 
           return const SizedBox.shrink();
@@ -278,6 +288,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           const SizedBox(height: 12),
 
           // Customer Info
+          if(order.customer != null)
           Container(
             width: double.infinity,
             color: Colors.white,
@@ -298,10 +309,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       CircleAvatar(
                         radius: 28,
                         backgroundColor: AppColors.kSecondaryLightColor,
-                        child: order.customer.personalPhoto != null
+                        child: order.customer?.personalPhoto != null
                             ? ClipOval(
                                 child: ImageWithIconFallback(
-                                  imageUrl: order.customer.personalPhoto,
+                                  imageUrl: order.customer?.personalPhoto,
                                   width: 56,
                                   height: 56,
                                   fit: BoxFit.cover,
@@ -319,13 +330,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              order.customer.fullName,
+                              order.customer!.fullName,
                               style: AppTextStyles.bold16,
                             ),
-                            if (order.customer.phone != null) ...[
+                            if (order.customer?.phone != null) ...[
                               const SizedBox(height: 4),
                               Text(
-                                order.customer.phone!,
+                                order.customer!.phone!,
                                 textDirection: ui.TextDirection.ltr,
                                 style: AppTextStyles.regular14.copyWith(
                                   color: Colors.grey.shade600,
@@ -335,7 +346,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                           ],
                         ),
                       ),
-                      if (order.customer.phone != null)
+                      if (order.customer?.phone != null)
                         Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -349,7 +360,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                           child: IconButton(
                             icon: const Icon(Icons.phone, color: Colors.white),
                             onPressed: () {
-                              openPhoneApp(order.customer.phone ?? '');
+                              openPhoneApp(order.customer?.phone ?? '');
                             },
                           ),
                         ),
@@ -377,7 +388,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   icon: Icons.store_outlined,
                   title: l10n.pickupLocation,
                   area:
-                      '${order.pickupArea.name}, ${order.pickupArea.governorate?.name ?? ""}',
+                      '${order.pickupArea?.name}, ${order.pickupArea?.governorate?.name ?? ""}',
                   address: order.pickupAddressDescription,
                   color: AppColors.kPrimaryColor,
                 ),
@@ -428,7 +439,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   icon: Icons.location_on_outlined,
                   title: l10n.deliveryLocation,
                   area:
-                      '${order.deliveryArea.name}, ${order.deliveryArea.governorate?.name ?? ""}',
+                      '${order.deliveryArea?.name}, ${order.deliveryArea?.governorate?.name ?? ""}',
                   address: order.deliveryAddressDescription,
                   color: Colors.green,
                 ),

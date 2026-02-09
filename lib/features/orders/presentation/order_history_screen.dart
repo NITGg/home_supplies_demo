@@ -65,6 +65,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           // Orders list
           Expanded(
             child: BlocConsumer<OrderCubit, OrderState>(
+              buildWhen: (previous, current) {
+                // Only rebuild when orders change
+                return current is OrderHistoryLoaded || current is OrderHistoryError;
+              },
               listener: (context, state) {
                 if (state is OrderHistoryError) {
                   ScaffoldMessenger.of(context).showSnackBar(

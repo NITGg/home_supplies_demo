@@ -88,8 +88,10 @@ class OfferSubmitted extends OrderState {
 
 class OfferSubmitError extends OrderState {
   final String message;
+  final OrderModel? order;
+  final FeeRangeModel? feeRange;
 
-  const OfferSubmitError(this.message);
+  const OfferSubmitError(this.message, {this.order, this.feeRange});
 }
 
 // ============== Active Order States ==============
@@ -107,8 +109,9 @@ class NoActiveOrder extends OrderState {}
 
 class ActiveOrderError extends OrderState {
   final String message;
+  final OrderModel? order;
 
-  const ActiveOrderError(this.message);
+  const ActiveOrderError(this.message, {this.order});
 }
 
 // ============== Complete Delivery States ==============
@@ -122,23 +125,22 @@ class DeliveryCompleted extends OrderState {
 
 class DeliveryCompleteError extends OrderState {
   final String message;
+  final OrderModel? order;
 
-  const DeliveryCompleteError(this.message);
+  const DeliveryCompleteError(this.message, {this.order});
 }
 
 // ============== Report High Price States ==============
 class ReportingHighPrice extends OrderState {}
 
 class HighPriceReported extends OrderState {
-  final OrderModel order;
-
-  const HighPriceReported(this.order);
 }
 
 class HighPriceReportError extends OrderState {
   final String message;
+  final OrderModel? order;
 
-  const HighPriceReportError(this.message);
+  const HighPriceReportError(this.message, {this.order});
 }
 
 // ============== Cancel Order States ==============
@@ -152,6 +154,7 @@ class OrderCancelled extends OrderState {
 
 class OrderCancelError extends OrderState {
   final String message;
+  final OrderModel? order;
 
-  const OrderCancelError(this.message);
+  const OrderCancelError(this.message, {this.order});
 }
