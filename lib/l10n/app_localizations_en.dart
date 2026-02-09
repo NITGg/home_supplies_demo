@@ -872,5 +872,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actualPriceIsHigher => 'Actual Price Is Higher';
 
   @override
+  String get wallet => 'Wallet';
+
+  @override
   String get cancelOrderWarning => 'Are you sure you want to cancel this order? This action cannot be undone.';
 }

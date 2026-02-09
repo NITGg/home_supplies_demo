@@ -1787,6 +1787,12 @@ abstract class AppLocalizations {
   /// **'Actual Price Is Higher'**
   String get actualPriceIsHigher;
 
+  /// No description provided for @wallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get wallet;
+
   /// No description provided for @cancelOrderWarning.
   ///
   /// In en, this message translates to:

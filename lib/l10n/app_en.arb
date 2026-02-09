@@ -398,7 +398,7 @@
       "tooShort": "too short",
         "back": "Back",
           "actualPriceIsHigher": "Actual Price Is Higher",
-
+        "wallet": "Wallet",
       "cancelOrderWarning": "Are you sure you want to cancel this order? This action cannot be undone."
 
 

@@ -872,5 +872,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get actualPriceIsHigher => 'السعر الفعلي أكبر';
 
   @override
+  String get wallet => 'المحفظة';
+
+  @override
   String get cancelOrderWarning => 'هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها';
 }
