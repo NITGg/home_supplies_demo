@@ -13,9 +13,7 @@ class BadgeProgressSection extends StatelessWidget {
     final localizations = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final currentBadge = badgeProgress.currentBadge;
-    final stats = badgeProgress.stats;
-    final completedOrders = stats.totalCompletedOrders;
-    final progress = completedOrders / currentBadge.maxCount;
+
 
     // Use Arabic name if available and locale is Arabic
     final badgeName = isArabic && currentBadge.nameAr.isNotEmpty
@@ -93,7 +91,7 @@ class BadgeProgressSection extends StatelessWidget {
                 ),
                 // Progress bar
                 FractionallySizedBox(
-                  widthFactor: progress.clamp(0.0, 1.0),
+                  // widthFactor: progress.clamp(0.0, 1.0),
                   child: Container(
                     height: 12,
                     decoration: BoxDecoration(
@@ -121,7 +119,7 @@ class BadgeProgressSection extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '$completedOrders / ${currentBadge.maxCount} ${localizations.deliveries}',
+                  '0 / ${currentBadge.maxCount} ${localizations.deliveries}',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.white.withOpacity(0.9),
@@ -129,7 +127,7 @@ class BadgeProgressSection extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${(progress * 100).toStringAsFixed(0)}%',
+                  '${(0 * 100).toStringAsFixed(0)}%',
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFFFDCB6E),

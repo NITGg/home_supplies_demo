@@ -23,6 +23,9 @@ import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/manager/profile_cubit.dart';
 import 'features/orders/data/data_source/orders_remote_data_source.dart';
 import 'features/orders/manager/orders_cubit.dart';
+import 'features/stats/data/data_source/stats_remote_data_source.dart';
+import 'features/stats/data/repository/stats_repo.dart';
+import 'features/stats/manager/stats_cubit.dart';
 import 'routes/app_router.dart';
 import 'features/auth/data/data_sources/auth_remote_data_source.dart';
 import 'features/auth/manager/auth_cubit.dart';
@@ -383,6 +386,11 @@ class _MyAppState extends State<MyApp> {
           create: (_) => OrderCubit(
             OrderRepository(
             ),
+          ),
+        ),
+        BlocProvider<StatsCubit>(
+          create: (context) => StatsCubit(
+            StatsRepository(StatsRemoteDataSource()),
           ),
         ),
       ],

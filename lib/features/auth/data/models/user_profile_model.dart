@@ -170,7 +170,6 @@ class CourierModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
-  final CourierStatsModel stat;
 
   CourierModel({
     required this.id,
@@ -184,7 +183,6 @@ class CourierModel {
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
-    required this.stat,
   });
 
   factory CourierModel.fromJson(Map<String, dynamic> json) {
@@ -202,51 +200,6 @@ class CourierModel {
       deletedAt: json['deleted_at'] != null
           ? DateTime.parse(json['deleted_at'] as String)
           : null,
-      stat: CourierStatsModel.fromJson(json['stat'] as Map<String, dynamic>),
-    );
-  }
-}
-
-class CourierStatsModel {
-  final int id;
-  final int courierId;
-  final int totalCompletedOrders;
-  final int totalCancelledOrders;
-  final String totalEarnings;
-  final String averageRating;
-  final int totalReviews;
-  final String acceptanceRate;
-  final String completionRate;
-  final int avgDeliveryTime;
-  final DateTime updatedAt;
-
-  CourierStatsModel({
-    required this.id,
-    required this.courierId,
-    required this.totalCompletedOrders,
-    required this.totalCancelledOrders,
-    required this.totalEarnings,
-    required this.averageRating,
-    required this.totalReviews,
-    required this.acceptanceRate,
-    required this.completionRate,
-    required this.avgDeliveryTime,
-    required this.updatedAt,
-  });
-
-  factory CourierStatsModel.fromJson(Map<String, dynamic> json) {
-    return CourierStatsModel(
-      id: json['id'] as int,
-      courierId: json['courier_id'] as int,
-      totalCompletedOrders: json['total_completed_orders'] as int,
-      totalCancelledOrders: json['total_cancelled_orders'] as int,
-      totalEarnings: json['total_earnings'] as String,
-      averageRating: json['average_rating'] as String,
-      totalReviews: json['total_reviews'] as int,
-      acceptanceRate: json['acceptance_rate'] as String,
-      completionRate: json['completion_rate'] as String,
-      avgDeliveryTime: json['avg_delivery_time'] as int,
-      updatedAt: DateTime.parse(json['updated_at'] as String),
     );
   }
 }
@@ -271,17 +224,20 @@ class BadgeProgressResponseModel {
 
 class BadgeProgressData {
   final BadgeModel currentBadge;
-  final CourierStatsModel stats;
+  final List<BadgeModel> allBadges;
 
   BadgeProgressData({
     required this.currentBadge,
-    required this.stats,
+    required this.allBadges,
+
   });
 
   factory BadgeProgressData.fromJson(Map<String, dynamic> json) {
     return BadgeProgressData(
       currentBadge: BadgeModel.fromJson(json['current_badge'] as Map<String, dynamic>),
-      stats: CourierStatsModel.fromJson(json['stats'] as Map<String, dynamic>),
+      allBadges: (json['all_badges'] as List)
+          .map((badge) => BadgeModel.fromJson(badge as Map<String, dynamic>))
+          .toList(),
     );
   }
 }
