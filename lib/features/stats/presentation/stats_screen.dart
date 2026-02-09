@@ -5,7 +5,7 @@ import '../../../../core/style/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../auth/manager/profile_cubit.dart';
 import '../../auth/manager/profile_states.dart';
-import '../../auth/presentation/widgets/profile_badge_section.dart';
+import 'widgets/profile_badge_section.dart';
 import '../../stats/manager/stats_cubit.dart';
 import '../../stats/manager/stats_states.dart';
 import '../../stats/presentation/widgets/earnings_summary_section.dart';
