@@ -473,7 +473,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           const SizedBox(height: 12),
 
           // Submit Offer Section (only if user hasn't submitted an offer yet)
-          if (order.hasMyProposal != true)
+          if (order.hasMyProposal != true && order.status == 'PENDING')
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -590,6 +590,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               ),
             )
           else
+            if (order.hasMyProposal == true)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
