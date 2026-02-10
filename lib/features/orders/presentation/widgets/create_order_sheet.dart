@@ -2,19 +2,19 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../core/widgets/custom_button.dart';
-import '../../../core/widgets/text_form.dart';
-import '../../../core/style/app_colors.dart';
-import '../../../core/style/text_styles.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../addresses/data/models/address_model.dart';
-import '../../addresses/manager/address_cubit.dart';
-import '../../addresses/manager/address_states.dart';
-import '../../addresses/manager/location_cubit.dart';
-import '../../addresses/presentation/address_form_sheet.dart';
-import '../data/models/order_model.dart';
-import '../manager/order_cubit.dart';
-import '../manager/order_states.dart';
+
+import '../../../../core/style/app_colors.dart';
+import '../../../../core/style/text_styles.dart';
+import '../../../../core/widgets/custom_button.dart';
+import '../../../../core/widgets/text_form.dart';
+import '../../../addresses/data/models/address_model.dart';
+import '../../../addresses/manager/address_cubit.dart';
+import '../../../addresses/manager/address_states.dart';
+import '../../../addresses/manager/location_cubit.dart';
+import '../../../addresses/presentation/address_form_sheet.dart';
+import '../../data/models/order_model.dart';
+import '../../manager/order_cubit.dart';
+import '../../manager/order_states.dart';
 
 class CreateOrderBottomSheet extends StatefulWidget {
   const CreateOrderBottomSheet({super.key});
@@ -321,8 +321,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                             return null;
                           },
                         ),
-                        // const SizedBox(height: 16),
-                        // _buildImagePicker(),
+                        const SizedBox(height: 16),
+                        _buildImagePicker(),
                         const SizedBox(height: 24),
                         // Pickup Address
                         const Text(
@@ -444,7 +444,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       builder: (context, state) {
                         final isLoading = state is OrderLoading;
                         return AppCustomButton(
-                          onPressed: isLoading ? () {} : _submit,
+                          onPressed: _submit,
                           text: 'Create Order',
                           isLoading: isLoading,
                         );

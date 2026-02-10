@@ -70,6 +70,7 @@ dependencies:
 #  flutter_local_notifications: ^19.5.0
   pinput: ^6.0.1
   geolocator: ^14.0.2
+  mobile_scanner: ^7.1.4
 
 dev_dependencies:
   flutter_test:

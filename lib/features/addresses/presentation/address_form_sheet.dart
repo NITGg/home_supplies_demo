@@ -7,6 +7,8 @@ import '../../../l10n/app_localizations.dart';
 import '../data/models/address_model.dart';
 import '../manager/address_cubit.dart';
 import '../manager/address_states.dart';
+import '../manager/governorate_cubit.dart';
+import '../manager/governorate_states.dart';
 import '../manager/location_cubit.dart';
 
 class AddressFormBottomSheet extends StatefulWidget {
@@ -25,34 +27,35 @@ class AddressFormBottomSheet extends StatefulWidget {
 
 class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
   final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
   late TextEditingController _detailedAddressController;
   late TextEditingController _latController;
   late TextEditingController _longController;
-  late TextEditingController _areaIdController;
-  late TextEditingController name;
 
+  int? _selectedAreaId;
+  bool _isDefault = false;
   bool _hasLocation = false;
 
   @override
   void initState() {
     super.initState();
+    _nameController = TextEditingController(text: widget.address?.name);
     _detailedAddressController =
         TextEditingController(text: widget.address?.detailedAddress);
     _latController = TextEditingController(text: widget.address?.addressLat);
     _longController = TextEditingController(text: widget.address?.addressLong);
-    _areaIdController = TextEditingController(
-      text: widget.address?.areaId.toString() ?? '1',
-    );
+    _selectedAreaId = widget.address?.areaId;
+    _isDefault = widget.address?.isDefault ?? false;
     _hasLocation =
     (_latController.text.isNotEmpty && _longController.text.isNotEmpty);
   }
 
   @override
   void dispose() {
+    _nameController.dispose();
     _detailedAddressController.dispose();
     _latController.dispose();
     _longController.dispose();
-    _areaIdController.dispose();
     super.dispose();
   }
 
@@ -62,18 +65,26 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      if (_selectedAreaId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select an area')),
+        );
+        return;
+      }
+
       final address = Address(
-        name: widget.address?.name,
-        isDefault: widget.address?.isDefault ?? false,
         id: widget.address?.id,
-        areaId: int.tryParse(_areaIdController.text.trim()) ?? 1,
+        areaId: _selectedAreaId!,
+        name: _nameController.text.trim().isEmpty
+            ? null
+            : _nameController.text.trim(),
         addressLat: _latController.text.trim(),
         addressLong: _longController.text.trim(),
         detailedAddress: _detailedAddressController.text.trim(),
+        isDefault: _isDefault,
       );
 
       if (widget.saveAddress) {
-        // Save to backend
         if (widget.address != null) {
           context.read<AddressCubit>().updateAddress(
             widget.address!.id!,
@@ -83,7 +94,6 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
           context.read<AddressCubit>().createAddress(address);
         }
       } else {
-        // Just return the address without saving
         Navigator.pop(context, address);
       }
     }
@@ -91,9 +101,10 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = AppLocalizations.of(context)!.localeName == 'ar';
+
     return MultiBlocListener(
       listeners: [
-        // Listen to LocationCubit for location updates
         BlocListener<LocationCubit, LocationState>(
           listener: (context, state) {
             if (state is LocationLoaded) {
@@ -105,7 +116,6 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
             }
           },
         ),
-        // Listen to AddressCubit for address operations
         if (widget.saveAddress)
           BlocListener<AddressCubit, AddressState>(
             listener: (context, state) {
@@ -123,9 +133,9 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
           ),
       ],
       child: DraggableScrollableSheet(
-        initialChildSize: 0.7,
+        initialChildSize: 0.75,
         minChildSize: 0.6,
-        maxChildSize: 0.9,
+        maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) {
           return Container(
@@ -145,6 +155,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
+
                 // Header
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -169,6 +180,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                   ),
                 ),
                 const Divider(height: 1),
+
                 // Form
                 Expanded(
                   child: Form(
@@ -177,6 +189,111 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                       controller: scrollController,
                       padding: const EdgeInsets.all(16),
                       children: [
+                        // Address Name (Optional)
+                        AppTextFormField(
+                          controller: _nameController,
+                          label: 'Address Name (Optional)',
+                          hintText: 'e.g., Home, Work, Office',
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Area Selection
+                        BlocProvider(
+                          create: (_) =>
+                          GovernorateCubit()..loadGovernorates(),
+                          child:
+                          BlocBuilder<GovernorateCubit, GovernorateState>(
+                            builder: (context, state) {
+                              if (state is GovernorateLoading) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+
+                              if (state is GovernorateError) {
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.red.shade200,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.error_outline,
+                                          color: Colors.red.shade700),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          state.message,
+                                          style: TextStyle(
+                                            color: Colors.red.shade900,
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => context
+                                            .read<GovernorateCubit>()
+                                            .loadGovernorates(),
+                                        child: const Text('Retry'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+
+                              if (state is GovernoratesLoaded) {
+                                final areas = state.response.allAreas;
+
+                                if (areas.isEmpty) {
+                                  return const Text(
+                                    'No areas available',
+                                    style: TextStyle(color: Colors.grey),
+                                  );
+                                }
+
+                                return DropdownButtonFormField<int>(
+                                  value: _selectedAreaId,
+                                  decoration: InputDecoration(
+                                    labelText: 'Select Area *',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    prefixIcon: const Icon(Icons.location_city),
+                                  ),
+                                  items: areas.map((area) {
+                                    final governorate =
+                                    state.response.getGovernorateForArea(
+                                      area.id,
+                                    );
+                                    return DropdownMenuItem(
+                                      value: area.id,
+                                      child: Text(
+                                        '${governorate?.getLocalizedName(isArabic) ?? ''} - ${area.getLocalizedName(isArabic)}',
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    setState(() => _selectedAreaId = value);
+                                  },
+                                  validator: (value) {
+                                    if (value == null) {
+                                      return 'Please select an area';
+                                    }
+                                    return null;
+                                  },
+                                );
+                              }
+
+                              return const SizedBox();
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Detailed Address
                         AppTextFormField(
                           controller: _detailedAddressController,
                           label: AppLocalizations.of(context)!.detailedAddress,
@@ -188,21 +305,19 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        AppTextFormField(
-                          controller: _areaIdController,
-                          label: 'Area ID',
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return AppLocalizations.of(context)!.required;
-                            }
-                            if (int.tryParse(value) == null) {
-                              return 'Please enter a valid number';
-                            }
-                            return null;
+
+                        // Set as Default Checkbox
+                        CheckboxListTile(
+                          title: const Text('Set as default address'),
+                          value: _isDefault,
+                          onChanged: (value) {
+                            setState(() => _isDefault = value ?? false);
                           },
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
                         ),
                         const SizedBox(height: 16),
+
                         // Location Error & Status
                         BlocBuilder<LocationCubit, LocationState>(
                           builder: (context, locationState) {
@@ -280,6 +395,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                             return const SizedBox.shrink();
                           },
                         ),
+
                         // Location Status and Button
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
@@ -355,6 +471,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                           ),
                         ),
                         const SizedBox(height: 16),
+
                         // Debug: Show coordinates
                         if (_hasLocation)
                           Container(
@@ -376,11 +493,13 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                 const SizedBox(height: 4),
                                 Text(
                                   'Lat: ${_latController.text}',
-                                  style: TextStyle(color: Colors.grey.shade600),
+                                  style:
+                                  TextStyle(color: Colors.grey.shade600),
                                 ),
                                 Text(
                                   'Long: ${_longController.text}',
-                                  style: TextStyle(color: Colors.grey.shade600),
+                                  style:
+                                  TextStyle(color: Colors.grey.shade600),
                                 ),
                               ],
                             ),
@@ -389,6 +508,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                     ),
                   ),
                 ),
+
                 SafeArea(
                   child: widget.saveAddress
                       ? BlocBuilder<AddressCubit, AddressState>(

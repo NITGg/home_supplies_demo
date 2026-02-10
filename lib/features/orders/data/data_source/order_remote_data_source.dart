@@ -1,20 +1,21 @@
 import 'dart:developer';
-import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
 import '../../../auth/manager/auth_cubit.dart';
 import '../models/order_model.dart';
+import '../models/proposal_model.dart';
+import '../models/qr_model.dart';
 
 class OrderRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
 
+  // Create Order
   Future<OrderResponse> createOrder(Order order) async {
     try {
       log('Creating order: ${order.toJson()}');
 
       FormData formData;
 
-      // If there's an image file, use FormData for multipart upload
       if (order.productImageFile != null) {
         formData = FormData.fromMap({
           'product_description': order.productDescription,
@@ -33,13 +34,12 @@ class OrderRemoteDataSource {
           ),
         });
       } else {
-        // If no image file, send regular JSON
         formData = FormData.fromMap(order.toJson());
       }
 
       final response = await _dio.post(
         '/orders',
-        data: order.toJson(),
+        data: formData,
       );
 
       log('Create order response: ${response.data}');
@@ -51,6 +51,140 @@ class OrderRemoteDataSource {
       }
     } on DioException catch (e) {
       log('Create order error: $e');
+      throw _handleError(e);
+    }
+  }
+
+  // Get All Orders
+  Future<OrdersListResponse> getOrders({int page = 1, int limit = 20}) async {
+    try {
+      log('Fetching orders - page: $page, limit: $limit');
+
+      final response = await _dio.get(
+        '/orders',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        },
+      );
+
+      log('Get orders response: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return OrdersListResponse.fromJson(response.data);
+      } else {
+        throw Exception('Failed to load orders');
+      }
+    } on DioException catch (e) {
+      log('Get orders error: $e');
+      throw _handleError(e);
+    }
+  }
+
+  // Cancel Order
+  Future<void> cancelOrder(int orderId, String reason) async {
+    try {
+      log('Cancelling order $orderId with reason: $reason');
+
+      final response = await _dio.post(
+        '/orders/$orderId/cancel',
+        data: {
+          'cancelled_reason': reason,
+        },
+      );
+
+      log('Cancel order response: ${response.data}');
+
+      if (response.statusCode == 200) {
+      } else {
+        throw Exception('Failed to cancel order');
+      }
+    } on DioException catch (e) {
+      log('Cancel order error: $e');
+      throw _handleError(e);
+    }
+  }
+
+  // Get Proposals for an Order
+  Future<ProposalsResponse> getOrderProposals(int orderId) async {
+    try {
+      log('Fetching proposals for order $orderId');
+
+      final response = await _dio.get(
+        '/orders/$orderId/proposals',
+
+      );
+
+      log('Get proposals response: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return ProposalsResponse.fromJson(response.data);
+      } else {
+        throw Exception('Failed to load proposals');
+      }
+    } on DioException catch (e) {
+      log('Get proposals error: $e');
+      throw _handleError(e);
+    }
+  }
+
+  // Accept or Reject Proposal
+  Future<Map<String, dynamic>> updateProposalStatus({
+    required int orderId,
+    required int proposalId,
+    required String status, // ACCEPTED or REJECTED
+  }) async {
+    try {
+      log('Updating proposal $proposalId status to $status');
+
+      final response = await _dio.put(
+        '/orders/$orderId/proposals/$proposalId',
+        data: {
+          'status': status,
+        },
+
+      );
+
+      log('Update proposal response: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Failed to update proposal');
+      }
+    } on DioException catch (e) {
+      log('Update proposal error: $e');
+      throw _handleError(e);
+    }
+  }
+
+  // Confirm Delivery (from QR Code scan)
+  Future<Map<String, dynamic>> confirmDelivery({
+    required int orderId,
+    required int courierId,
+  }) async {
+    try {
+      log('Confirming delivery for order $orderId by courier $courierId');
+
+      final request = ConfirmDeliveryRequest(
+        orderId: orderId,
+        courierId: courierId,
+      );
+
+      final response = await _dio.post(
+        '/orders/confirm-delivery',
+        data: request.toJson(),
+      );
+
+      log('Confirm delivery response: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Failed to confirm delivery');
+      }
+    } on DioException catch (e) {
+      log('Confirm delivery error: $e');
       throw _handleError(e);
     }
   }

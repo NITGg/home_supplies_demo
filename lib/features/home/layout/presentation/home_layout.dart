@@ -18,7 +18,8 @@ import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
-import '../../../orders/presentation/create_order_sheet.dart';
+import '../../../orders/presentation/orders_list_screen.dart';
+import '../../../orders/presentation/widgets/create_order_sheet.dart';
 import '../manager/home_cubit.dart';
 
 class HomeLayout extends StatefulWidget {
@@ -72,7 +73,7 @@ class _HomeLayoutState extends State<HomeLayout> {
     // It was previously in a separate method but build context should not be passed around.
     final localizations = AppLocalizations.of(context)!;
 
-    final screens = const [SizedBox.shrink(), SizedBox.shrink()];
+    final screens = const [OrdersListScreen(), SizedBox.shrink()];
 
     return MultiBlocProvider(
       providers: [
@@ -883,7 +884,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
                                 scale: _companyLogoScale.value,
                                 child: SvgPicture.asset(
                                   'assets/images/appbar/company_logo.svg',
-                                  height: 50,
+                                  height: 30,
                                 ),
                               ),
                             ),

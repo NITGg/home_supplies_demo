@@ -7,7 +7,7 @@ class Order {
   final String? orderNumber;
   final String productDescription;
   final String? productImage;
-  final File? productImageFile; // New field for local image file
+  final File? productImageFile;
   final String budget;
   final String? actualPrice;
   final int pickupAreaId;
@@ -27,7 +27,7 @@ class Order {
   final String? status;
   final String? cancelledReason;
   final String? cancellationFee;
-  final String? cancelledBy;
+  final int? cancelledBy;
   final DateTime? createdAt;
   final DateTime? offerAcceptedAt;
   final DateTime? deliveredAt;
@@ -94,7 +94,7 @@ class Order {
       status: json['status'] as String?,
       cancelledReason: json['cancelled_reason'] as String?,
       cancellationFee: json['cancellation_fee']?.toString(),
-      cancelledBy: json['cancelled_by'] as String?,
+      cancelledBy: json['cancelled_by'] as int?,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : null,
@@ -125,6 +125,13 @@ class Order {
       'delivery_long': deliveryLong,
     };
   }
+
+  // Helper getters
+  bool get isPending => status == 'PENDING';
+  bool get isAccepted => status == 'ACCEPTED';
+  bool get isDelivered => status == 'DELIVERED';
+  bool get isCancelled => status == 'CANCELLED';
+  bool get hasProposals => status == 'PENDING'; // Can receive proposals when pending
 }
 
 class OrderResponse {
@@ -140,6 +147,28 @@ class OrderResponse {
     return OrderResponse(
       message: json['message'] as String,
       order: Order.fromJson(json['order'] as Map<String, dynamic>),
+    );
+  }
+}
+
+class OrdersListResponse {
+  final List<Order> orders;
+  final int totalOrders;
+  final int totalPages;
+
+  OrdersListResponse({
+    required this.orders,
+    required this.totalOrders,
+    required this.totalPages,
+  });
+
+  factory OrdersListResponse.fromJson(Map<String, dynamic> json) {
+    return OrdersListResponse(
+      orders: (json['orders'] as List<dynamic>)
+          .map((e) => Order.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      totalOrders: json['totalOrders'] as int,
+      totalPages: json['totalPages'] as int,
     );
   }
 }

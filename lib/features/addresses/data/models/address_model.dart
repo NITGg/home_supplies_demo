@@ -52,7 +52,7 @@ class Address {
       if (id != null) 'id': id,
       if (customerId != null) 'customer_id': customerId,
       'area_id': areaId,
-      'name': name,
+      if (name != null) 'name': name,
       'is_default': isDefault,
       'address_lat': addressLat,
       'address_long': addressLong,
@@ -89,6 +89,9 @@ class Address {
   }
 
   String get displayAddress {
+    if (name != null && name!.isNotEmpty) {
+      return '$name - $detailedAddress';
+    }
     return detailedAddress;
   }
 
