@@ -848,10 +848,10 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
             // ),
             CircleAvatar(
               radius: 20,
-              backgroundColor: Colors.grey.shade300,
+              backgroundColor: Colors.grey.shade200,
               child: IconButton(
                 icon: Icon(Icons.menu),
-                color: Colors.grey,
+                color: Colors.grey.shade700,
                 onPressed: () {
                   widget.scaffoldKey.currentState?.openEndDrawer();
                 },

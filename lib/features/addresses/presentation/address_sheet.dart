@@ -13,12 +13,15 @@ import 'address_form_sheet.dart';
 
 class AddressSelectionBottomSheet extends StatefulWidget {
   final Address? selectedAddress;
-  final bool? noSelection;
+
+  /// When true: sheet is purely for management (no selection / continue button).
+  /// When false (default): sheet is for picking an address and returning it.
+  final bool managementMode;
 
   const AddressSelectionBottomSheet({
     super.key,
     this.selectedAddress,
-    this.noSelection,
+    this.managementMode = false,
   });
 
   @override
@@ -37,7 +40,7 @@ class _AddressSelectionBottomSheetState
     context.read<AddressCubit>().loadAddresses();
   }
 
-  void _showAddAddressSheet() async {
+  Future<void> _showAddSheet() async {
     final addressCubit = context.read<AddressCubit>();
 
     final result = await showModalBottomSheet<Address>(
@@ -48,18 +51,17 @@ class _AddressSelectionBottomSheetState
         providers: [
           BlocProvider.value(value: addressCubit),
           BlocProvider(create: (_) => LocationCubit()),
-          // Create new LocationCubit
         ],
         child: const AddressFormBottomSheet(),
       ),
     );
 
-    if (result != null) {
+    if (result != null && mounted) {
       setState(() => _selectedAddress = result);
     }
   }
 
-  void _showEditAddressSheet(Address address) async {
+  Future<void> _showEditSheet(Address address) async {
     final addressCubit = context.read<AddressCubit>();
 
     final result = await showModalBottomSheet<Address>(
@@ -75,14 +77,13 @@ class _AddressSelectionBottomSheetState
       ),
     );
 
-    if (result != null) {
+    if (result != null && mounted) {
       setState(() => _selectedAddress = result);
     }
   }
 
-  void _confirmDelete(BuildContext sheetContext, Address address) {
-    // Store the cubit reference before showing the dialog
-    final addressCubit = sheetContext.read<AddressCubit>();
+  void _confirmDelete(Address address) {
+    final addressCubit = context.read<AddressCubit>();
 
     showDialog(
       context: context,
@@ -91,7 +92,7 @@ class _AddressSelectionBottomSheetState
           '${AppLocalizations.of(context)!.delete} ${AppLocalizations.of(context)!.address}',
         ),
         content: Text(
-          '${AppLocalizations.of(context)!.areYouSureDelete} \n "${address.detailedAddress.split(' ').first}"',
+          '${AppLocalizations.of(context)!.areYouSureDelete}\n"${address.detailedAddress.split(' ').first}"',
         ),
         actions: [
           TextButton(
@@ -101,7 +102,6 @@ class _AddressSelectionBottomSheetState
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
-              // Use the stored cubit reference instead of trying to read from dialog context
               addressCubit.deleteAddress(address.id!);
               if (_selectedAddress?.id == address.id) {
                 setState(() => _selectedAddress = null);
@@ -115,10 +115,6 @@ class _AddressSelectionBottomSheetState
     );
   }
 
-  // void _setAsDefault(Address address) {
-  //   context.read<AddressCubit>().setDefaultAddress(address.id!, address);
-  // }
-
   void _selectAndReturn() {
     if (_selectedAddress != null) {
       Navigator.pop(context, [
@@ -128,24 +124,12 @@ class _AddressSelectionBottomSheetState
     }
   }
 
-  // Auto-select default address when addresses are loaded
-  // void _autoSelectDefaultAddress(List<Address> addresses) {
-  //   if (_selectedAddress == null && addresses.isNotEmpty) {
-  //     final defaultAddress = addresses.firstWhere(
-  //       (addr) => addr.isDefault ?? false,
-  //       orElse: () => addresses.first,
-  //     );
-  //     // Set directly without setState to avoid calling setState during build
-  //     _selectedAddress = defaultAddress;
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.sizeOf(context).height * 0.6,
+      height: MediaQuery.sizeOf(context).height * 0.65,
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.7,
+        maxHeight: MediaQuery.sizeOf(context).height * 0.75,
       ),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -163,6 +147,7 @@ class _AddressSelectionBottomSheetState
               borderRadius: BorderRadius.circular(2),
             ),
           ),
+
           // Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -185,15 +170,17 @@ class _AddressSelectionBottomSheetState
             ),
           ),
           const Divider(height: 1),
+
           // Add Address Button
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: AppCustomButton(
-              onPressed: _showAddAddressSheet,
+              onPressed: _showAddSheet,
               text: AppLocalizations.of(context)!.addAddress,
               isSecondary: true,
             ),
           ),
+
           // Address List
           Expanded(
             child: BlocBuilder<AddressCubit, AddressState>(
@@ -228,9 +215,6 @@ class _AddressSelectionBottomSheetState
                 }
 
                 if (state is AddressesLoaded) {
-                  // Auto-select default address
-                  // _autoSelectDefaultAddress(state.addresses);
-
                   if (state.addresses.isEmpty) {
                     return Center(
                       child: Column(
@@ -243,9 +227,7 @@ class _AddressSelectionBottomSheetState
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            AppLocalizations.of(
-                              context,
-                            )!.addAddress,
+                            AppLocalizations.of(context)!.addAddress,
                             style: const TextStyle(color: Colors.grey),
                           ),
                         ],
@@ -254,10 +236,9 @@ class _AddressSelectionBottomSheetState
                   }
 
                   return ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                     itemCount: state.addresses.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final address = state.addresses[index];
                       final isSelected = _selectedAddress?.id == address.id;
@@ -275,131 +256,157 @@ class _AddressSelectionBottomSheetState
                           ),
                         ),
                         child: InkWell(
-                          onTap: () =>
-                              setState(() => _selectedAddress = address),
+                          onTap: widget.managementMode
+                              ? null
+                              : () => setState(
+                                () => _selectedAddress = address,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                           child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
+                            padding: const EdgeInsets.all(14),
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Expanded(
+                                // Selection indicator or icon
+                                if (!widget.managementMode)
+                                  AnimatedContainer(
+                                    duration:
+                                    const Duration(milliseconds: 200),
+                                    margin: const EdgeInsets.only(
+                                        top: 2, right: 10),
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? Theme.of(context).primaryColor
+                                            : Colors.grey.shade400,
+                                        width: 2,
+                                      ),
+                                      color: isSelected
+                                          ? Theme.of(context).primaryColor
+                                          : Colors.transparent,
+                                    ),
+                                    child: isSelected
+                                        ? const Icon(Icons.check,
+                                        size: 12, color: Colors.white)
+                                        : null,
+                                  )
+                                else
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 2, right: 10),
+                                    child: Icon(
+                                      Icons.location_on_outlined,
+                                      size: 20,
+                                      color:
+                                      Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+
+                                // Address details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          if (address.name != null &&
+                                              address.name!.isNotEmpty)
+                                            Text(
+                                              address.name!,
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          if (address.isDefault) ...[
+                                            const SizedBox(width: 6),
+                                            Container(
+                                              padding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 6,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.green.shade100,
+                                                borderRadius:
+                                                BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                AppLocalizations.of(
+                                                  context,
+                                                )!.default_,
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  color:
+                                                  Colors.green.shade700,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        address.detailedAddress,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Always show edit/delete popup
+                                PopupMenuButton<String>(
+                                  onSelected: (value) {
+                                    if (value == 'edit') {
+                                      _showEditSheet(address);
+                                    } else if (value == 'delete') {
+                                      _confirmDelete(address);
+                                    }
+                                  },
+                                  itemBuilder: (_) => [
+                                    PopupMenuItem(
+                                      value: 'edit',
                                       child: Row(
                                         children: [
+                                          const Icon(Icons.edit, size: 18),
+                                          const SizedBox(width: 8),
                                           Text(
-                                            address.detailedAddress.split(' ').first,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                            AppLocalizations.of(context)!
+                                                .edit,
                                           ),
-                                          // if (address.isDefault ?? false) ...[
-                                          //   const SizedBox(width: 8),
-                                          //   Container(
-                                          //     padding:
-                                          //         const EdgeInsets.symmetric(
-                                          //           horizontal: 8,
-                                          //           vertical: 2,
-                                          //         ),
-                                          //     decoration: BoxDecoration(
-                                          //       color: Colors.green,
-                                          //       borderRadius:
-                                          //           BorderRadius.circular(4),
-                                          //     ),
-                                          //     child: Text(
-                                          //       AppLocalizations.of(
-                                          //         context,
-                                          //       )!.default_,
-                                          //       style: const TextStyle(
-                                          //         color: Colors.white,
-                                          //         fontSize: 10,
-                                          //       ),
-                                          //     ),
-                                          //   ),
-                                          // ],
                                         ],
                                       ),
                                     ),
-                                    if (widget.noSelection ?? false)
-                                      PopupMenuButton(
-                                        itemBuilder: (popupContext) => [
-                                          PopupMenuItem(
-                                            onTap: () =>
-                                                _showEditAddressSheet(address),
-                                            child: Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.edit,
-                                                  size: 20,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  AppLocalizations.of(
-                                                    context,
-                                                  )!.edit,
-                                                ),
-                                              ],
-                                            ),
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.delete,
+                                            size: 18,
+                                            color: Colors.red,
                                           ),
-                                          // if (!(address.isDefault ?? false))
-                                            PopupMenuItem(
-                                              // onTap: () =>
-                                              //     _setAsDefault(address),
-                                              child: Row(
-                                                children: [
-                                                  const Icon(
-                                                    Icons.star,
-                                                    size: 20,
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    AppLocalizations.of(
-                                                      context,
-                                                    )!.default_,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          PopupMenuItem(
-                                            onTap: () => _confirmDelete(
-                                              context,
-                                              address,
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.delete,
-                                                  size: 20,
-                                                  color: Colors.red,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  AppLocalizations.of(
-                                                    context,
-                                                  )!.delete,
-                                                  style: const TextStyle(
-                                                    color: Colors.red,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            AppLocalizations.of(context)!
+                                                .delete,
+                                            style: const TextStyle(
+                                                color: Colors.red),
                                           ),
                                         ],
                                       ),
+                                    ),
                                   ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  textDirection: TextDirection.ltr,
-                                  address.detailedAddress,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 14,
-                                  ),
                                 ),
                               ],
                             ),
@@ -414,8 +421,9 @@ class _AddressSelectionBottomSheetState
               },
             ),
           ),
-          // Select Button
-          if (_selectedAddress != null && (widget.noSelection == null))
+
+          // Continue button (only in selection mode)
+          if (!widget.managementMode && _selectedAddress != null)
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),

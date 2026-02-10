@@ -1,7 +1,6 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
-import '../../../auth/manager/auth_cubit.dart';
 import '../models/address_model.dart';
 
 class AddressRemoteDataSource {
@@ -9,10 +8,7 @@ class AddressRemoteDataSource {
 
   Future<AddressesResponse> getAddresses() async {
     try {
-      final response = await _dio.get(
-        '/profile/addresses',
-      );
-
+      final response = await _dio.get('/profile/addresses');
       log('Get addresses response: ${response.data}');
 
       if (response.statusCode == 200) {
@@ -28,11 +24,13 @@ class AddressRemoteDataSource {
 
   Future<AddressOperationResponse> createAddress(Address address) async {
     try {
-      log('Creating address: ${address.toJson()}');
+      final body = address.toJson();
+      log('Creating address: $body');
 
+      // Send as raw Map (Dio will serialize to JSON with correct Content-Type)
       final response = await _dio.post(
         '/profile/addresses',
-        data: address.toJson(),
+        data: body,
       );
 
       log('Create address response: ${response.data}');
@@ -53,11 +51,12 @@ class AddressRemoteDataSource {
       Address address,
       ) async {
     try {
-      log('Updating address $addressId: ${address.toJson()}');
+      final body = address.toJson();
+      log('Updating address $addressId: $body');
 
       final response = await _dio.put(
         '/profile/addresses/$addressId',
-        data: address.toJson(),
+        data: body,
       );
 
       log('Update address response: ${response.data}');
@@ -77,10 +76,7 @@ class AddressRemoteDataSource {
     try {
       log('Deleting address $addressId');
 
-      final response = await _dio.delete(
-        '/profile/addresses/$addressId',
-      );
-
+      final response = await _dio.delete('/profile/addresses/$addressId');
       log('Delete address response: ${response.statusCode}');
 
       if (response.statusCode != 200 && response.statusCode != 204) {

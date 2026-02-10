@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
@@ -15,6 +13,8 @@ import '../../../addresses/presentation/address_form_sheet.dart';
 import '../../data/models/order_model.dart';
 import '../../manager/order_cubit.dart';
 import '../../manager/order_states.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class CreateOrderBottomSheet extends StatefulWidget {
   const CreateOrderBottomSheet({super.key});
@@ -25,7 +25,8 @@ class CreateOrderBottomSheet extends StatefulWidget {
 
 class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _productDescriptionController = TextEditingController();
+  final TextEditingController _productDescriptionController =
+  TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
@@ -56,9 +57,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 
   Future<void> _selectPickupAddress() async {
-    final result = await _showAddressOptions(
-      context,
-      'Select Pickup Address',
+    final result = await _showAddressSheet(
+      title: 'Select Pickup Address',
       isPickup: true,
     );
     if (result != null && mounted) {
@@ -67,9 +67,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 
   Future<void> _selectDeliveryAddress() async {
-    final result = await _showAddressOptions(
-      context,
-      'Select Delivery Address',
+    final result = await _showAddressSheet(
+      title: 'Select Delivery Address',
       isPickup: false,
     );
     if (result != null && mounted) {
@@ -77,11 +76,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     }
   }
 
-  Future<Address?> _showAddressOptions(
-      BuildContext context,
-      String title, {
-        required bool isPickup,
-      }) async {
+  Future<Address?> _showAddressSheet({
+    required String title,
+    required bool isPickup,
+  }) async {
     return await showModalBottomSheet<Address>(
       context: context,
       isScrollControlled: true,
@@ -134,10 +132,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Product Image (Optional)',
-          style: AppTextStyles.regular14,
-        ),
+        Text('Product Image (Optional)', style: AppTextStyles.regular14),
         const SizedBox(height: 8),
         InkWell(
           onTap: _pickImage,
@@ -153,7 +148,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                 width: _productImage != null ? 2 : 1,
               ),
               borderRadius: BorderRadius.circular(12),
-              color: _productImage != null ? Colors.white : Colors.grey.shade50,
+              color: _productImage != null
+                  ? Colors.white
+                  : Colors.grey.shade50,
             ),
             child: _productImage != null
                 ? Stack(
@@ -222,6 +219,62 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
   }
 
+  Widget _buildAddressTile({
+    required String label,
+    required Address? address,
+    required VoidCallback onTap,
+    required bool isPickup,
+  }) {
+    final color = isPickup ? Colors.green : Colors.blue;
+    final icon = isPickup ? Icons.my_location : Icons.location_on;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: address == null
+                    ? Colors.red.shade200
+                    : color.withOpacity(0.4),
+              ),
+              borderRadius: BorderRadius.circular(8),
+              color: address == null ? null : color.withOpacity(0.05),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: address == null ? Colors.grey : color,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    address?.displayAddress ?? 'Select $label',
+                    style: TextStyle(
+                      color: address == null ? Colors.grey : Colors.black87,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<OrderCubit, OrderState>(
@@ -256,7 +309,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             ),
             child: Column(
               children: [
-                // Handle
                 Container(
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   width: 40,
@@ -266,7 +318,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                // Header
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
@@ -288,7 +339,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   ),
                 ),
                 const Divider(height: 1),
-                // Form
                 Expanded(
                   child: Form(
                     key: _formKey,
@@ -324,115 +374,20 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                         const SizedBox(height: 16),
                         _buildImagePicker(),
                         const SizedBox(height: 24),
-                        // Pickup Address
-                        const Text(
-                          'Pickup Address',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        InkWell(
+                        _buildAddressTile(
+                          label: 'Pickup Address',
+                          address: _pickupAddress,
                           onTap: _selectPickupAddress,
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: _pickupAddress == null
-                                    ? Colors.red.shade200
-                                    : Colors.green.shade300,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                              color: _pickupAddress == null
-                                  ? null
-                                  : Colors.green.shade50,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.my_location,
-                                  color: _pickupAddress == null
-                                      ? Colors.grey
-                                      : Colors.green,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    _pickupAddress?.displayAddress ??
-                                        'Select pickup address',
-                                    style: TextStyle(
-                                      color: _pickupAddress == null
-                                          ? Colors.grey
-                                          : Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
-                              ],
-                            ),
-                          ),
+                          isPickup: true,
                         ),
                         const SizedBox(height: 24),
-                        // Delivery Address
-                        const Text(
-                          'Delivery Address',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        InkWell(
+                        _buildAddressTile(
+                          label: 'Delivery Address',
+                          address: _deliveryAddress,
                           onTap: _selectDeliveryAddress,
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: _deliveryAddress == null
-                                    ? Colors.red.shade200
-                                    : Colors.blue.shade300,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                              color: _deliveryAddress == null
-                                  ? null
-                                  : Colors.blue.shade50,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on,
-                                  color: _deliveryAddress == null
-                                      ? Colors.grey
-                                      : Colors.blue,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    _deliveryAddress?.displayAddress ??
-                                        'Select delivery address',
-                                    style: TextStyle(
-                                      color: _deliveryAddress == null
-                                          ? Colors.grey
-                                          : Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
-                              ],
-                            ),
-                          ),
+                          isPickup: false,
                         ),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
@@ -461,7 +416,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 }
 
-// Simple address selection sheet
+// ─────────────────────────────────────────────────────────────────────────────
+// Inner address-selection sheet used only by CreateOrderBottomSheet
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _AddressSelectionSheet extends StatefulWidget {
   final String title;
   final bool isPickup;
@@ -482,6 +440,9 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
     context.read<AddressCubit>().loadAddresses();
   }
 
+  /// Opens the form sheet.
+  /// [saveAddress] = true  → address is persisted to the server and returned.
+  /// [saveAddress] = false → address object is returned without saving.
   Future<void> _showAddAddressSheet({bool saveAddress = true}) async {
     final addressCubit = context.read<AddressCubit>();
 
@@ -506,7 +467,7 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.6,
+      height: MediaQuery.of(context).size.height * 0.65,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -545,7 +506,8 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
             ),
           ),
           const Divider(height: 1),
-          // Add new address buttons
+
+          // Buttons
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -558,14 +520,15 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
                 const SizedBox(height: 8),
                 AppCustomButton(
                   onPressed: () => _showAddAddressSheet(saveAddress: false),
-                  text: 'Use Address (Don\'t Save)',
+                  text: "Use Address (Don't Save)",
                   isSecondary: true,
                 ),
               ],
             ),
           ),
           const Divider(height: 1),
-          // Saved addresses list
+
+          // Saved addresses
           Expanded(
             child: BlocBuilder<AddressCubit, AddressState>(
               builder: (context, state) {
@@ -584,22 +547,50 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
                     );
                   }
 
+                  // Auto-highlight the default address
+                  final defaultAddress = state.addresses.firstWhere(
+                        (a) => a.isDefault,
+                    orElse: () => state.addresses.first,
+                  );
+
                   return ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: state.addresses.length,
                     itemBuilder: (context, index) {
                       final address = state.addresses[index];
+                      final isDefault = address.id == defaultAddress.id;
+
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: isDefault
+                              ? BorderSide(
+                            color: Theme.of(context).primaryColor,
+                            width: 1.5,
+                          )
+                              : BorderSide.none,
+                        ),
                         child: ListTile(
                           leading: Icon(
                             widget.isPickup
                                 ? Icons.my_location
                                 : Icons.location_on,
-                            color: widget.isPickup ? Colors.green : Colors.blue,
+                            color:
+                            widget.isPickup ? Colors.green : Colors.blue,
                           ),
                           title: Text(address.displayAddress),
-                          subtitle: Text('Area ID: ${address.areaId}'),
+                          subtitle: isDefault
+                              ? Text(
+                            'Default',
+                            style: TextStyle(
+                              color:
+                              Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          )
+                              : null,
                           onTap: () => Navigator.pop(context, address),
                         ),
                       );

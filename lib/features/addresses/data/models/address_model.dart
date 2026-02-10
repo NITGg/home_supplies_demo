@@ -49,10 +49,8 @@ class Address {
 
   Map<String, dynamic> toJson() {
     return {
-      if (id != null) 'id': id,
-      if (customerId != null) 'customer_id': customerId,
       'area_id': areaId,
-      if (name != null) 'name': name,
+      'name': name,
       'is_default': isDefault,
       'address_lat': addressLat,
       'address_long': addressLong,
