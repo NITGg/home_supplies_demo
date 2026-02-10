@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tawreedat_courier/core/widgets/change_password_sheet.dart';
-import 'package:tawreedat_courier/core/widgets/loading_screen.dart';
+import 'package:tawreedat_go/core/widgets/change_password_sheet.dart';
+import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/delete_account_dialog.dart';
@@ -11,11 +11,24 @@ import '../../manager/auth_state.dart';
 import '../../manager/profile_cubit.dart';
 import '../../manager/profile_states.dart';
 import '../widgets/profile_header_section.dart';
-import '../widgets/vehicle_info_card.dart';
 import '../widgets/edit_profile_bottom_sheet.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch profile after the widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProfileCubit>().fetchProfile();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,15 +59,15 @@ class ProfileScreen extends StatelessWidget {
             }
           },
           builder: (context, state) {
-            if (state is ProfileLoading &&
-                context.read<ProfileCubit>().currentProfile == null) {
+            final profile = context.read<ProfileCubit>().currentProfile;
+
+            // Show loading only if we don't have cached data
+            if (state is ProfileLoading && profile == null) {
               return const Center(child: LoadingScreen(isOne: true));
             }
 
-            final profile = context.read<ProfileCubit>().currentProfile;
-            final badgeProgress = context.read<ProfileCubit>().badgeProgress;
-
-            if (profile == null) {
+            // Show error state only if we have no profile data at all
+            if (profile == null && state is ProfileFailure) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -65,12 +78,39 @@ class ProfileScreen extends StatelessWidget {
                       color: Colors.grey,
                     ),
                     const SizedBox(height: 16),
-                    Text(localizations.error),
+                    Text(state.message),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
                         context.read<ProfileCubit>().fetchProfile();
-                        context.read<ProfileCubit>().fetchBadgeProgress();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.kPrimaryColor,
+                      ),
+                      child: Text(localizations.retry),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // If we still don't have profile data and not loading, show retry button
+            if (profile == null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.person_outline,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(height: 16),
+                    Text('...'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.read<ProfileCubit>().fetchProfile();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.kPrimaryColor,
@@ -84,10 +124,7 @@ class ProfileScreen extends StatelessWidget {
 
             return RefreshIndicator(
               onRefresh: () async {
-                Future.wait([
-                  context.read<ProfileCubit>().fetchProfile(),
-                  context.read<ProfileCubit>().fetchBadgeProgress(),
-                ]);
+                await context.read<ProfileCubit>().fetchProfile();
               },
               color: AppColors.kPrimaryColor,
               child: CustomScrollView(
@@ -98,7 +135,7 @@ class ProfileScreen extends StatelessWidget {
                     floating: false,
                     pinned: true,
                     elevation: 0,
-                    leading: BackButton(color: Colors.white,),
+                    leading: const BackButton(color: Colors.white),
                     backgroundColor: AppColors.kPrimaryColor,
                     flexibleSpace: FlexibleSpaceBar(
                       background: Container(
@@ -141,11 +178,10 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   SliverToBoxAdapter(
                     child: Column(
-                      spacing: 24,
                       children: [
-                        SizedBox(height: 24),
-                        VehicleInfoCard(courier: profile.courier),
+                        const SizedBox(height: 24),
                         _buildAccountInfoCard(context, profile),
+                        const SizedBox(height: 24),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: Column(
@@ -156,9 +192,8 @@ class ProfileScreen extends StatelessWidget {
                                 },
                                 text: localizations.changePassword,
                                 isSecondary: true,
-                                isLoading:
-                                    context.read<AuthCubit>().state
-                                        is AuthLoading,
+                                isLoading: context.read<AuthCubit>().state
+                                is AuthLoading,
                               ),
                               AppCustomButton(
                                 onPressed: () {
@@ -171,9 +206,8 @@ class ProfileScreen extends StatelessWidget {
                                 },
                                 text: localizations.deleteAccount,
                                 isDelete: true,
-                                isLoading:
-                                    context.read<AuthCubit>().state
-                                        is AuthLoading,
+                                isLoading: context.read<AuthCubit>().state
+                                is AuthLoading,
                               ),
                             ],
                           ),
@@ -224,10 +258,10 @@ class ProfileScreen extends StatelessWidget {
             context,
             Icons.phone_outlined,
             localizations.phone,
-            profile.phone,
+            profile.phone ?? 'N/A',
             textDirection: TextDirection.ltr,
           ),
-          if (profile.email != null) ...[
+          if (profile.email != null && profile.email!.isNotEmpty) ...[
             const SizedBox(height: 12),
             _buildInfoRow(
               context,
@@ -236,39 +270,19 @@ class ProfileScreen extends StatelessWidget {
               profile.email!,
             ),
           ],
-          const SizedBox(height: 12),
-          _buildInfoRow(
-            context,
-            Icons.shield_outlined,
-            localizations.status,
-            profile.courier.isApproved
-                ? (localizations.approved)
-                : (localizations.pendingApproval),
-            valueColor: profile.courier.isApproved
-                ? Colors.green
-                : Colors.orange,
-          ),
-          const SizedBox(height: 12),
-          _buildInfoRow(
-            context,
-            Icons.verified_user_outlined,
-            localizations.phoneVerified,
-            profile.isPhoneVerified ? (localizations.yes) : (localizations.no),
-            valueColor: profile.isPhoneVerified ? Colors.green : Colors.red,
-          ),
         ],
       ),
     );
   }
 
   Widget _buildInfoRow(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String value, {
-    Color? valueColor,
-    TextDirection? textDirection,
-  }) {
+      BuildContext context,
+      IconData icon,
+      String label,
+      String value, {
+        Color? valueColor,
+        TextDirection? textDirection,
+      }) {
     return Row(
       children: [
         Container(

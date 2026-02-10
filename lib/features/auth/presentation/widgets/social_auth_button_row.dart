@@ -2,7 +2,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tawreedat_courier/features/auth/presentation/widgets/social_button.dart';
+import 'package:tawreedat_go/features/auth/presentation/widgets/social_button.dart';
 
 import '../../../../core/style/text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -114,9 +114,9 @@ class SocialAuthButtons extends StatelessWidget {
 
                     // Call appropriate social auth method with phone
                     if (provider == 'google') {
-                      context.read<AuthCubit>().signInWithGoogle(phone: phone);
+                      context.read<AuthCubit>().signInWithGoogle();
                     } else if (provider == 'apple') {
-                      context.read<AuthCubit>().signInWithApple(phone: phone);
+                      context.read<AuthCubit>().signInWithApple();
                     }
                   }
                 },

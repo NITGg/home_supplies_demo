@@ -1,6 +1,6 @@
 {
-    "name": "tawreedat_courier",
-    "short_name": "tawreedat_courier",
+    "name": "tawreedat_go",
+    "short_name": "tawreedat_go",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

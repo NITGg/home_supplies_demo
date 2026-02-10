@@ -9,42 +9,39 @@ class ProfileRepository {
   ProfileRepository(this._remoteDataSource);
 
   /// GET PROFILE
-  Future<ProfileResponseModel> getProfile() async {
-    return await _remoteDataSource.getProfile();
+  Future<ProfileResponseModel> getProfile(String token) async {
+    return await _remoteDataSource.getProfile(token);
   }
 
-  /// UPDATE PROFILE
+  /// UPDATE PROFILE (basic info without photo)
   Future<UpdateProfileResponseModel> updateProfile({
+    required String token,
     String? fullName,
     String? gender,
-    String? vehicleType,
-    String? vehiclePlate,
+    String? lang,
   }) async {
     return await _remoteDataSource.updateProfile(
+      token: token,
       fullName: fullName,
       gender: gender,
-      vehicleType: vehicleType,
-      vehiclePlate: vehiclePlate,
+      lang: lang,
     );
   }
 
-  /// UPDATE DOCUMENTS
-  Future<UpdateProfileResponseModel> updateDocuments({
+  /// UPDATE PROFILE WITH PHOTO
+  Future<UpdateProfileResponseModel> updateProfileWithPhoto({
+    required String token,
+    String? fullName,
+    String? gender,
+    String? lang,
     File? personalPhoto,
-    File? nationalIdPhoto,
-    File? vehicleLicense,
-    File? courierLicense,
   }) async {
-    return await _remoteDataSource.updateDocuments(
+    return await _remoteDataSource.updateProfileWithPhoto(
+      token: token,
+      fullName: fullName,
+      gender: gender,
+      lang: lang,
       personalPhoto: personalPhoto,
-      nationalIdPhoto: nationalIdPhoto,
-      vehicleLicense: vehicleLicense,
-      courierLicense: courierLicense,
     );
-  }
-
-  /// GET BADGE PROGRESS
-  Future<BadgeProgressResponseModel> getBadgeProgress() async {
-    return await _remoteDataSource.getBadgeProgress();
   }
 }

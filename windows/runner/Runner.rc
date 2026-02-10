@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.nit.tawreedat.courier" "\0"
-            VALUE "FileDescription", "tawreedat_courier" "\0"
+            VALUE "CompanyName", "com.nit.tawreedat.go" "\0"
+            VALUE "FileDescription", "tawreedat_go" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "tawreedat_courier" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.nit.tawreedat.courier. All rights reserved." "\0"
-            VALUE "OriginalFilename", "tawreedat_courier.exe" "\0"
-            VALUE "ProductName", "tawreedat_courier" "\0"
+            VALUE "InternalName", "tawreedat_go" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.nit.tawreedat.go. All rights reserved." "\0"
+            VALUE "OriginalFilename", "tawreedat_go.exe" "\0"
+            VALUE "ProductName", "tawreedat_go" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

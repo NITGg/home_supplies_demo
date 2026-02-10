@@ -3,55 +3,100 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tawreedat_courier/features/auth/manager/profile_states.dart';
+import 'package:tawreedat_go/features/auth/manager/profile_states.dart';
+import 'package:tawreedat_go/core/utils/secure_storage_service.dart';
 
 import '../data/models/user_profile_model.dart';
 import '../data/repositories/profile_repository.dart';
+import '../data/repositories/auth_repository.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
-  final ProfileRepository _repository;
+  final ProfileRepository _profileRepository;
+  final AuthRepository _authRepository;
   UserProfileModel? _currentProfile;
-  BadgeProgressData? _badgeProgress;
 
-  ProfileCubit(this._repository) : super(ProfileInitial());
+  ProfileCubit(this._profileRepository, this._authRepository)
+      : super(ProfileInitial()) {
+    _loadCachedProfile();
+  }
 
   // Getters for current data
   UserProfileModel? get currentProfile => _currentProfile;
-  BadgeProgressData? get badgeProgress => _badgeProgress;
+
+  /// Load cached profile from storage on initialization
+  Future<void> _loadCachedProfile() async {
+    try {
+      final profileData = await _authRepository.getSavedToken();
+      if (profileData != null) {
+        final secureStorage = SecureStorageService();
+        final cachedProfile = await secureStorage.getUserProfile();
+        if (cachedProfile != null) {
+          _currentProfile = UserProfileModel.fromJson(cachedProfile);
+          emit(ProfileLoaded(profile: _currentProfile!));
+          log('ProfileCubit: Loaded cached profile');
+        }
+      }
+    } catch (e) {
+      log('ProfileCubit: Error loading cached profile: $e');
+      // Don't emit error state, just continue without cached data
+    }
+  }
 
   /// FETCH PROFILE
   Future<void> fetchProfile() async {
-    emit(ProfileLoading());
+    // Don't show loading if we already have a profile (for refresh)
+    if (_currentProfile == null) {
+      emit(ProfileLoading());
+    }
+
     try {
-      final result = await _repository.getProfile();
-      _currentProfile = result.data.user;
-      emit(ProfileLoaded(profile: result.data.user));
+      final token = await _authRepository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        log('ProfileCubit: No token found');
+        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+
+      log('ProfileCubit: Fetching profile with token');
+      final result = await _authRepository.getProfile(token);
+      _currentProfile = result.user;
+      emit(ProfileLoaded(profile: result.user));
+      log('ProfileCubit: Profile loaded successfully');
     } on DioException catch (e) {
       log('ProfileCubit fetchProfile DioException: $e');
       log('Response data: ${e.response?.data}');
       log('Status code: ${e.response?.statusCode}');
       emit(ProfileFailure(_extractErrorMessage(e)));
-    } catch (e) {
+    } catch (e, stackTrace) {
       log('ProfileCubit fetchProfile error: $e');
+      log('Stack trace: $stackTrace');
       emit(ProfileFailure(_extractErrorMessage(e)));
     }
   }
 
-  /// UPDATE PROFILE
+  /// UPDATE PROFILE (without photo)
   Future<void> updateProfile({
     String? fullName,
     String? gender,
-    String? vehicleType,
-    String? vehiclePlate,
+    String? lang,
   }) async {
     emit(ProfileLoading());
     try {
-      final result = await _repository.updateProfile(
+      final token = await _authRepository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+
+      final result = await _profileRepository.updateProfile(
+        token: token,
         fullName: fullName,
         gender: gender,
-        vehicleType: vehicleType,
-        vehiclePlate: vehiclePlate,
+        lang: lang,
       );
+
+      // Update local profile
+      _currentProfile = result.user;
 
       // Refresh profile data after update
       await fetchProfile();
@@ -68,30 +113,40 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  /// UPDATE DOCUMENTS
-  Future<void> updateDocuments({
+  /// UPDATE PROFILE WITH PHOTO
+  Future<void> updateProfileWithPhoto({
+    String? fullName,
+    String? gender,
+    String? lang,
     File? personalPhoto,
-    File? nationalIdPhoto,
-    File? vehicleLicense,
-    File? courierLicense,
   }) async {
-    log('ProfileCubit updateDocuments called');
+    log('ProfileCubit updateProfileWithPhoto called');
+    log('fullName: $fullName');
+    log('gender: $gender');
+    log('lang: $lang');
     log('personalPhoto: ${personalPhoto?.path}');
-    log('nationalIdPhoto: ${nationalIdPhoto?.path}');
-    log('vehicleLicense: ${vehicleLicense?.path}');
-    log('courierLicense: ${courierLicense?.path}');
 
     emit(ProfileLoading());
     try {
-      log('Calling repository.updateDocuments...');
-      final result = await _repository.updateDocuments(
+      final token = await _authRepository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+
+      log('Calling repository.updateProfileWithPhoto...');
+      final result = await _profileRepository.updateProfileWithPhoto(
+        token: token,
+        fullName: fullName,
+        gender: gender,
+        lang: lang,
         personalPhoto: personalPhoto,
-        nationalIdPhoto: nationalIdPhoto,
-        vehicleLicense: vehicleLicense,
-        courierLicense: courierLicense,
       );
 
-      log('Update documents successful: ${result.message}');
+      log('Update profile with photo successful: ${result.message}');
+
+      // Update local profile
+      _currentProfile = result.user;
 
       // Refresh profile data after update
       log('Fetching updated profile...');
@@ -99,7 +154,7 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       emit(ProfileUpdateSuccess(message: result.message));
     } on DioException catch (e) {
-      log('ProfileCubit updateDocuments DioException: $e');
+      log('ProfileCubit updateProfileWithPhoto DioException: $e');
       log('DioException type: ${e.type}');
       log('Response data: ${e.response?.data}');
       log('Status code: ${e.response?.statusCode}');
@@ -107,26 +162,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       log('Request headers: ${e.requestOptions.headers}');
       emit(ProfileFailure(_extractErrorMessage(e)));
     } catch (e, stackTrace) {
-      log('ProfileCubit updateDocuments error: $e');
+      log('ProfileCubit updateProfileWithPhoto error: $e');
       log('Stack trace: $stackTrace');
-      emit(ProfileFailure(_extractErrorMessage(e)));
-    }
-  }
-
-  /// FETCH BADGE PROGRESS
-  Future<void> fetchBadgeProgress() async {
-    emit(BadgeProgressLoading());
-    try {
-      final result = await _repository.getBadgeProgress();
-      _badgeProgress = result.data;
-      emit(BadgeProgressLoaded(badgeProgress: result.data));
-    } on DioException catch (e) {
-      log('ProfileCubit fetchBadgeProgress DioException: $e');
-      log('Response data: ${e.response?.data}');
-      log('Status code: ${e.response?.statusCode}');
-      emit(ProfileFailure(_extractErrorMessage(e)));
-    } catch (e) {
-      log('ProfileCubit fetchBadgeProgress error: $e');
       emit(ProfileFailure(_extractErrorMessage(e)));
     }
   }
@@ -152,6 +189,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   }
 
   void reset() {
+    _currentProfile = null;
     emit(ProfileInitial());
   }
 }

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:tawreedat_courier/core/error/screen.dart';
+import 'package:tawreedat_go/core/error/screen.dart';
 import 'config.dart';
 import 'restart_widget.dart';
 

@@ -6,9 +6,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:tawreedat_courier/features/auth/data/data_sources/profile_remote_data_source.dart';
-import 'package:tawreedat_courier/features/auth/data/repositories/profile_repository.dart';
-import 'package:tawreedat_courier/features/orders/data/repositories/orders_repo.dart';
+import 'package:tawreedat_go/features/addresses/data/repo/address_repo.dart';
+import 'package:tawreedat_go/features/orders/data/data_source/order_remote_data_source.dart';
+import 'package:tawreedat_go/features/orders/manager/order_cubit.dart';
 import 'core/connectivity/connectivity_manager.dart';
 import 'core/connectivity/network_aware_widget.dart';
 import 'core/connectivity/offline_screen.dart';
@@ -19,13 +19,13 @@ import 'core/utils/api_client.dart';
 import 'core/utils/secure_storage_service.dart';
 import 'core/style/app_colors.dart';
 import 'core/widgets/loading_screen.dart';
+import 'features/addresses/data/data_source/address_remote_data_source.dart';
+import 'features/addresses/manager/address_cubit.dart';
+import 'features/auth/data/data_sources/profile_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
+import 'features/auth/data/repositories/profile_repository.dart';
 import 'features/auth/manager/profile_cubit.dart';
-import 'features/orders/data/data_source/orders_remote_data_source.dart';
-import 'features/orders/manager/orders_cubit.dart';
-import 'features/stats/data/data_source/stats_remote_data_source.dart';
-import 'features/stats/data/repository/stats_repo.dart';
-import 'features/stats/manager/stats_cubit.dart';
+import 'features/orders/data/repositories/order_repo.dart';
 import 'routes/app_router.dart';
 import 'features/auth/data/data_sources/auth_remote_data_source.dart';
 import 'features/auth/manager/auth_cubit.dart';
@@ -376,21 +376,26 @@ class _MyAppState extends State<MyApp> {
               SecureStorageService(),
             ),
           ),
-        ), BlocProvider<ProfileCubit>(
+        ),
+        BlocProvider<ProfileCubit>(
           create: (_) => ProfileCubit(
             ProfileRepository(
               ProfileRemoteDataSource(),
+            ),AuthRepository(
+            AuthRemoteDataSource(),
+            SecureStorageService(),)
+
+        )),
+
+        BlocProvider<OrderCubit>(
+            create: (_) => OrderCubit(
+            )),
+
+        BlocProvider<AddressCubit>(
+          create: (_) => AddressCubit(
+            repository: AddressRepository(
+              remoteDataSource: AddressRemoteDataSource(),
             ),
-          ),
-        ), BlocProvider<OrderCubit>(
-          create: (_) => OrderCubit(
-            OrderRepository(
-            ),
-          ),
-        ),
-        BlocProvider<StatsCubit>(
-          create: (context) => StatsCubit(
-            StatsRepository(StatsRemoteDataSource()),
           ),
         ),
       ],

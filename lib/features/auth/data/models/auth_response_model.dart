@@ -1,135 +1,180 @@
-// auth_response_model.dart
-
-class AuthResponseModel {
-  // final int status;
+class ShortAuthResponseModel {
   final String message;
-  final AuthData data;
+  final String token;
+  final AuthUserModel user;
 
-  AuthResponseModel({
-    // required this.status,
+  ShortAuthResponseModel({
     required this.message,
-    required this.data,
+    required this.token,
+    required this.user,
   });
 
-  factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
-    return AuthResponseModel(
-      // status: json['status'] as int,
+  factory ShortAuthResponseModel.fromJson(Map<String, dynamic> json) {
+    return ShortAuthResponseModel(
       message: json['message'] as String,
-      data: AuthData.fromJson(json['data'] as Map<String, dynamic>),
+      token: json['token'] as String,
+      user: AuthUserModel.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
 }
 
-class AuthData {
-  final String accessToken;
-  final String refreshToken;
-  final bool verfied;
+class AuthUserModel {
+  final int id;
+  final String fullName;
+  final String? email;
+  final String phone;
+  final String? role;
+  final bool? isActive;
 
-  AuthData({
-    required this.verfied,
-    required this.accessToken,
-    required this.refreshToken,
+  AuthUserModel({
+    required this.id,
+    required this.fullName,
+    this.email,
+    required this.phone,
+    this.role,
+    this.isActive,
   });
 
-  factory AuthData.fromJson(Map<String, dynamic> json) {
-    return AuthData(
-      accessToken: json['accessToken'] as String,
-      refreshToken: json['refreshToken'] as String,
-      verfied: json['user']['isPhoneVerified'] == true,
+  factory AuthUserModel.fromJson(Map<String, dynamic> json) {
+    return AuthUserModel(
+      id: json['id'] as int,
+      fullName: json['full_name'] as String,
+      email: json['email'] as String?,
+      phone: json['phone'] as String,
+      role: json['role'] as String?,
+      isActive: json['is_active'] as bool?,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'full_name': fullName,
+      'email': email,
+      'phone': phone,
+      'role': role,
+      'is_active': isActive,
+    };
   }
 }
 
-
-// OTP Verification Response
-class OtpVerificationResponse {
+// Keep for Google/Apple sign-in (if they still use the old response format)
+class LongAuthResponseModel {
   final String message;
-  final Map<String, dynamic> data;
+  final String token;
+  final LongUserModel user;
 
-  OtpVerificationResponse({
+  LongAuthResponseModel({
     required this.message,
-    required this.data,
+    required this.token,
+    required this.user,
   });
 
-  factory OtpVerificationResponse.fromJson(Map<String, dynamic> json) {
-    return OtpVerificationResponse(
+  factory LongAuthResponseModel.fromJson(Map<String, dynamic> json) {
+    return LongAuthResponseModel(
       message: json['message'] as String,
-      data: json['data'] as Map<String, dynamic>,
+      token: json['token'] as String,
+      user: LongUserModel.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
 }
 
-// Refresh Token Response
-class RefreshTokenResponse {
-  final int status;
-  final String message;
-  final RefreshTokenData data;
+class LongUserModel {
+  final int id;
+  final String? email;
+  final String fullName;
+  final String? phone;
+  final String? imageUrl;
+  final String? lang;
+  final DateTime? lastLoginAt;
+  final bool? isActive;
+  final bool? isConfirmed;
+  final DateTime? passwordLastUpdated;
+  final DateTime? updatedAt;
+  final DateTime? createdAt;
+  final DateTime? deletedAt;
+  final DateTime? birthDate;
+  final String? gender;
+  final String? fcmToken;
+  final String? role;
+  final String? loginType;
 
-  RefreshTokenResponse({
-    required this.status,
-    required this.message,
-    required this.data,
+  LongUserModel({
+    required this.id,
+    this.email,
+    required this.fullName,
+    this.phone,
+    this.imageUrl,
+    this.lang,
+    this.lastLoginAt,
+    this.isActive,
+    this.isConfirmed,
+    this.passwordLastUpdated,
+    this.updatedAt,
+    this.createdAt,
+    this.deletedAt,
+    this.birthDate,
+    this.gender,
+    this.fcmToken,
+    this.role,
+    this.loginType,
   });
 
-  factory RefreshTokenResponse.fromJson(Map<String, dynamic> json) {
-    return RefreshTokenResponse(
-      status: json['status'] as int,
-      message: json['message'] as String,
-      data: RefreshTokenData.fromJson(json['data'] as Map<String, dynamic>),
+  factory LongUserModel.fromJson(Map<String, dynamic> json) {
+    return LongUserModel(
+      id: json['id'] as int,
+      email: json['email'] as String?,
+      fullName: json['full_name'] as String,
+      phone: json['phone'] as String?,
+      imageUrl: json['image_url'] as String?,
+      lang: json['lang'] as String?,
+      lastLoginAt: json['last_login_at'] != null
+          ? DateTime.parse(json['last_login_at'])
+          : null,
+      isActive: json['is_Active'] as bool?,
+      isConfirmed: json['is_confirmed'] as bool?,
+      passwordLastUpdated: json['password_last_updated'] != null
+          ? DateTime.parse(json['password_last_updated'])
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
+      deletedAt: json['deleted_at'] != null
+          ? DateTime.parse(json['deleted_at'])
+          : null,
+      birthDate: json['birth_date'] != null
+          ? DateTime.parse(json['birth_date'])
+          : null,
+      gender: json['gender'] as String?,
+      fcmToken: json['fcm_token'] as String?,
+      role: json['role'] as String?,
+      loginType: json['login_type'] as String?,
     );
   }
-}
 
-class RefreshTokenData {
-  final String accessToken;
-
-  RefreshTokenData({required this.accessToken});
-
-  factory RefreshTokenData.fromJson(Map<String, dynamic> json) {
-    return RefreshTokenData(
-      accessToken: json['accessToken'] as String,
-    );
-  }
-}
-
-// Forgot Password Response
-class ForgotPasswordResponse {
-  final int status;
-  final String message;
-  final Map<String, dynamic> data;
-
-  ForgotPasswordResponse({
-    required this.status,
-    required this.message,
-    required this.data,
-  });
-
-  factory ForgotPasswordResponse.fromJson(Map<String, dynamic> json) {
-    return ForgotPasswordResponse(
-      status: json['status'] as int,
-      message: json['message'] as String,
-      data: json['data'] as Map<String, dynamic>? ?? {},
-    );
-  }
-}
-
-// Reset Password Response
-class ResetPasswordResponse {
-  final int status;
-  final String message;
-  final Map<String, dynamic> data;
-
-  ResetPasswordResponse({
-    required this.status,
-    required this.message,
-    required this.data,
-  });
-
-  factory ResetPasswordResponse.fromJson(Map<String, dynamic> json) {
-    return ResetPasswordResponse(
-      status: json['status'] as int,
-      message: json['message'] as String,
-      data: json['data'] as Map<String, dynamic>,
-    );
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'email': email,
+      'full_name': fullName,
+      'phone': phone,
+      'image_url': imageUrl,
+      'lang': lang,
+      'last_login_at': lastLoginAt?.toIso8601String(),
+      'is_Active': isActive,
+      'is_confirmed': isConfirmed,
+      'password_last_updated': passwordLastUpdated?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
+      'deleted_at': deletedAt?.toIso8601String(),
+      'birth_date': birthDate?.toIso8601String(),
+      'gender': gender,
+      'fcm_token': fcmToken,
+      'role': role,
+      'login_type': loginType,
+    };
   }
 }

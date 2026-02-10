@@ -6,20 +6,22 @@ class AuthHeaderImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Image.asset(
-          'assets/images/login/login_header_background.png',
-          fit: BoxFit.cover,
-          width: double.infinity,
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 20.0),
-          child: Center(
-            child: SvgPicture.asset('assets/images/login/login_header.svg'),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.black,
+      ),
+      child: AspectRatio(
+        aspectRatio: 3,
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: SvgPicture.asset(
+            'assets/images/logo_go.svg',
+            fit: BoxFit.scaleDown,
           ),
         ),
-      ],
+      ),
     );
   }
 }

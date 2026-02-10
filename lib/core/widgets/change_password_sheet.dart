@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tawreedat_courier/core/widgets/text_form.dart';
+import 'package:tawreedat_go/core/widgets/text_form.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../l10n/app_localizations.dart';

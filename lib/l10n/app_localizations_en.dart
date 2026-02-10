@@ -528,7 +528,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get female => 'Female';
 
   @override
-  String get yourAccountWillBeVerified => 'Your courier information will be verified by our team before activation.';
+  String get yourAccountWillBeVerified => 'Your go information will be verified by our team before activation.';
 
   @override
   String get enterPhoneToResetPassword => 'Enter your phone number to reset your password';

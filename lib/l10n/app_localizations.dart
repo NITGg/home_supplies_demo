@@ -1136,7 +1136,7 @@ abstract class AppLocalizations {
   /// No description provided for @yourAccountWillBeVerified.
   ///
   /// In en, this message translates to:
-  /// **'Your courier information will be verified by our team before activation.'**
+  /// **'Your go information will be verified by our team before activation.'**
   String get yourAccountWillBeVerified;
 
   /// No description provided for @enterPhoneToResetPassword.

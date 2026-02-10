@@ -1,168 +1,141 @@
+import 'dart:developer';
 import 'dart:io';
 
 import '../../../../core/utils/secure_storage_service.dart';
 import '../data_sources/auth_remote_data_source.dart';
 import '../models/auth_response_model.dart';
-import 'package:flutter/material.dart';
-
+import '../models/user_profile_model.dart';
 
 class AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final SecureStorageService _storageService;
 
-  AuthRepository(this._remoteDataSource, this._storageService);
+  AuthRepository(
+      this._remoteDataSource,
+      this._storageService,
+      );
 
   /// REGISTER
-  Future<AuthResponseModel> register({
-    required BuildContext context,
+  Future<ShortAuthResponseModel> register({
+    required var context,
     required String fullName,
     required String phone,
     required String password,
-    required String gender,
-    required String vehicleType,
-    required String vehiclePlate,
-    required File personalPhoto,
-    required File nationalIdPhoto,
-    required File vehicleLicense,
-    required File courierLicense,
+    String? email,
   }) async {
     final response = await _remoteDataSource.register(
       context: context,
       fullName: fullName,
       phone: phone,
       password: password,
-      gender: gender,
-      vehicleType: vehicleType,
-      vehiclePlate: vehiclePlate,
-      personalPhoto: personalPhoto,
-      nationalIdPhoto: nationalIdPhoto,
-      vehicleLicense: vehicleLicense,
-      courierLicense: courierLicense,
+      email: email,
     );
 
-    // Save tokens and user data
-    await _saveAuthData(response.data);
+    // Save token and user data
+    await _storageService.saveToken(response.token);
+    await _storageService.saveUserProfile(response.user.toJson());
 
     return response;
   }
 
-  /// VERIFY PHONE OTP
-  Future<OtpVerificationResponse> verifyPhoneOtp({
-    required String phone,
-    required String userOtp,
-  }) async {
-    return await _remoteDataSource.verifyPhoneOtp(
-      phone: phone,
-      userOtp: userOtp,
-    );
-  }
-
-  /// RESEND PHONE OTP
-  Future<OtpVerificationResponse> resendPhoneOtp({
-    required String phone,
-  }) async {
-    return await _remoteDataSource.resendPhoneOtp(phone: phone);
-  }
-
   /// LOGIN
-  Future<AuthResponseModel> login({
+  Future<ShortAuthResponseModel> login({
     required String phone,
     required String password,
+    String locale = 'en',
   }) async {
     final response = await _remoteDataSource.login(
       phone: phone,
       password: password,
+      locale: locale,
     );
 
-    // Save tokens and user data
-    await _saveAuthData(response.data);
+    // Save token and user data
+    await _storageService.saveToken(response.token);
+    await _storageService.saveUserProfile(response.user.toJson());
 
     return response;
   }
 
-  /// REFRESH TOKEN
-  Future<String> refreshAccessToken() async {
-    final refreshToken = await _storageService.getRefreshToken();
-    if (refreshToken == null || refreshToken.isEmpty) {
-      throw Exception('No refresh token available');
-    }
-
-    final response = await _remoteDataSource.refreshToken(
-      refreshToken: refreshToken,
-    );
-
-    // Save new access token
-    await _storageService.saveToken(response.data.accessToken);
-
-    return response.data.accessToken;
-  }
-
-  /// GET saved access token
+  /// GET saved token
   Future<String?> getSavedToken() async => await _storageService.getToken();
 
-  /// GET saved refresh token
-  Future<String?> getSavedRefreshToken() async =>
-      await _storageService.getRefreshToken();
+  /// GET PROFILE
+  Future<ProfileResponseModel> getProfile(String token) async {
+    final response = await _remoteDataSource.getProfile(token);
+
+    // Update saved profile
+    await _storageService.saveUserProfile(response.user.toJson());
+
+    return response;
+  }
 
   /// DELETE profile
-  Future<Map<String, dynamic>> deleteProfile() async {
+  Future<DeleteProfileResponseModel> deleteProfile(String token) async {
     try {
-      return await _remoteDataSource.deleteProfile();
+      final response = await _remoteDataSource.deleteProfile(token);
+
+      // Clear stored data
+      await _storageService.deleteToken();
+      await _storageService.deleteUserProfile();
+
+      return response;
     } catch (e) {
       rethrow;
     }
   }
 
-  /// VERIFY GOOGLE TOKEN - phone is now REQUIRED
-  Future<AuthResponseModel> verifyGoogleToken({
-    required String idToken,
-    required String phone,
-  }) async {
-    final response = await _remoteDataSource.verifyGoogleToken(
-      idToken: idToken,
-      phone: phone,
-    );
+  /// VERIFY GOOGLE TOKEN
+  Future<LongAuthResponseModel> verifyGoogleToken(String idToken) async {
+    final response = await _remoteDataSource.verifyGoogleToken(idToken);
 
-    // Save tokens and user data
-    await _saveAuthData(response.data);
+    // Save token & profile
+    await _storageService.saveToken(response.token);
+    await _storageService.saveUserProfile(response.user.toJson());
 
     return response;
   }
 
-  /// VERIFY APPLE TOKEN - phone is now REQUIRED
-  Future<AuthResponseModel> verifyAppleToken({
-    required String idToken,
-    String? fullName,
-    required String phone,
-  }) async {
+  /// VERIFY APPLE TOKEN
+  Future<LongAuthResponseModel> verifyAppleToken(
+      String idToken,
+      String? fullName,
+      ) async {
     final response = await _remoteDataSource.verifyAppleToken(
-      idToken: idToken,
-      fullName: fullName,
-      phone: phone,
+      idToken,
+      fullName,
     );
 
-    // Save tokens and user data
-    await _saveAuthData(response.data);
+    // Save token & profile
+    await _storageService.saveToken(response.token);
+    await _storageService.saveUserProfile(response.user.toJson());
 
     return response;
   }
 
-  /// FORGOT PASSWORD - Send OTP
-  Future<ForgotPasswordResponse> forgotPassword({required String phone}) async {
-    return await _remoteDataSource.forgotPassword(phone: phone);
-  }
-
-  /// RESET PASSWORD with OTP
-  Future<ResetPasswordResponse> resetPassword({
-    required String phone,
-    required String userOtp,
-    required String newPassword,
+  /// UPDATE PROFILE
+  Future<UpdateProfileResponseModel> updateProfile({
+    required String token,
+    String? fullName,
+    String? gender,
+    String? lang,
+    File? personalPhoto,
   }) async {
-    return await _remoteDataSource.resetPassword(
-      phone: phone,
-      userOtp: userOtp,
-      newPassword: newPassword,
+    final response = await _remoteDataSource.updateProfile(
+      token: token,
+      fullName: fullName,
+      gender: gender,
+      lang: lang,
+      personalPhoto: personalPhoto,
     );
+
+    // Save updated profile
+    await _storageService.saveUserProfile(response.user.toJson());
+
+    final savedProfile = await _storageService.getUserProfile();
+    log('Updated and saved user profile: ${savedProfile.toString()}');
+
+    return response;
   }
 
   /// CHANGE PASSWORD
@@ -178,19 +151,5 @@ class AuthRepository {
       oldPassword: oldPassword,
       newPassword: newPassword,
     );
-  }
-
-  /// LOGOUT
-  Future<void> logout() async {
-    await _remoteDataSource.logOut();
-    await _storageService.deleteToken();
-    await _storageService.deleteRefreshToken();
-    await _storageService.deleteUserProfile();
-  }
-
-  /// Helper method to save auth data
-  Future<void> _saveAuthData(AuthData authData) async {
-    await _storageService.saveToken(authData.accessToken);
-    await _storageService.saveRefreshToken(authData.refreshToken);
   }
 }

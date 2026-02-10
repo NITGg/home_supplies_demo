@@ -1,268 +1,121 @@
-// profile_model.dart
+class UserProfileModel {
+  final int id;
+  final String? email;
+  final String fullName;
+  final String? phone;
+  final String? personalPhoto;
+  final String? gender;
+  final String? lang;
+  final bool? isActive;
+  final DateTime? deletedAt;
+  final RoleModel? role;
+
+  UserProfileModel({
+    required this.id,
+    this.email,
+    required this.fullName,
+    this.phone,
+    this.personalPhoto,
+    this.gender,
+    this.lang,
+    this.isActive,
+    this.deletedAt,
+    this.role,
+  });
+
+  factory UserProfileModel.fromJson(Map<String, dynamic> json) {
+    final user = json['user'] ?? json; // handle both {user:{...}} or {...}
+    return UserProfileModel(
+      id: user['id'] as int,
+      email: user['email'] as String?,
+      fullName: user['full_name'] as String,
+      phone: user['phone'] as String?,
+      personalPhoto: user['personal_photo'] as String?,
+      gender: user['gender'] as String?,
+      lang: user['lang'] as String?,
+      isActive: user['is_active'] as bool?,
+      deletedAt: user['deleted_at'] != null
+          ? DateTime.parse(user['deleted_at'])
+          : null,
+      role: user['role'] != null
+          ? RoleModel.fromJson(user['role'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "email": email,
+      "full_name": fullName,
+      "phone": phone,
+      "personal_photo": personalPhoto,
+      "gender": gender,
+      "lang": lang,
+      "is_active": isActive,
+      "deleted_at": deletedAt?.toIso8601String(),
+      "role": role?.toJson(),
+    };
+  }
+}
+
+class RoleModel {
+  final String name;
+
+  RoleModel({required this.name});
+
+  factory RoleModel.fromJson(Map<String, dynamic> json) {
+    return RoleModel(
+      name: json['name'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "name": name,
+    };
+  }
+}
 
 class ProfileResponseModel {
-  final String message;
-  final ProfileData data;
+  final UserProfileModel user;
 
   ProfileResponseModel({
-    required this.message,
-    required this.data,
+    required this.user,
   });
 
   factory ProfileResponseModel.fromJson(Map<String, dynamic> json) {
     return ProfileResponseModel(
-      message: json['message'] as String,
-      data: ProfileData.fromJson(json['data'] as Map<String, dynamic>),
-    );
-  }
-}
-
-class ProfileData {
-  final UserProfileModel user;
-
-  ProfileData({required this.user});
-
-  factory ProfileData.fromJson(Map<String, dynamic> json) {
-    return ProfileData(
       user: UserProfileModel.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
 }
 
-class UserProfileModel {
-  final int id;
-  final int roleId;
-  final int badgeId;
-  final String fullName;
-  final String? email;
-  final String phone;
-  final String? extraPhones;
-  final String personalPhoto;
-  final bool isEmailVerified;
-  final bool isPhoneVerified;
-  final bool isActive;
-  final String? fcmToken;
-  final String lang;
-  final String? googleId;
-  final String? appleId;
-  final String? lastLoginAt;
-  final String loginType;
-  final String? passwordLastUpdated;
-  final String gender;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final DateTime? deletedAt;
-  final CourierModel courier;
-
-  UserProfileModel({
-    required this.id,
-    required this.roleId,
-    required this.badgeId,
-    required this.fullName,
-    this.email,
-    required this.phone,
-    this.extraPhones,
-    required this.personalPhoto,
-    required this.isEmailVerified,
-    required this.isPhoneVerified,
-    required this.isActive,
-    this.fcmToken,
-    required this.lang,
-    this.googleId,
-    this.appleId,
-    this.lastLoginAt,
-    required this.loginType,
-    this.passwordLastUpdated,
-    required this.gender,
-    required this.createdAt,
-    required this.updatedAt,
-    this.deletedAt,
-    required this.courier,
-  });
-
-  factory UserProfileModel.fromJson(Map<String, dynamic> json) {
-    return UserProfileModel(
-      id: json['id'] as int,
-      roleId: json['role_id'] as int,
-      badgeId: json['badge_id'] as int,
-      fullName: json['full_name'] as String,
-      email: json['email'] as String?,
-      phone: json['phone'] as String,
-      extraPhones: json['extra_phones'] as String?,
-      personalPhoto: json['personal_photo'] as String,
-      isEmailVerified: json['is_email_verified'] as bool,
-      isPhoneVerified: json['is_phone_verified'] as bool,
-      isActive: json['is_active'] as bool,
-      fcmToken: json['fcm_token'] as String?,
-      lang: json['lang'] as String,
-      googleId: json['google_id'] as String?,
-      appleId: json['apple_id'] as String?,
-      lastLoginAt: json['last_login_at'] as String?,
-      loginType: json['login_type'] as String,
-      passwordLastUpdated: json['password_last_updated'] as String?,
-      gender: json['gender'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
-      deletedAt: json['deleted_at'] != null
-          ? DateTime.parse(json['deleted_at'] as String)
-          : null,
-      courier: CourierModel.fromJson(json['courier'] as Map<String, dynamic>),
-    );
-  }
-}
-
-class BadgeModel {
-  final int id;
-  final int roleId;
-  final String name;
-  final String nameAr;
-  final String image;
-  final String description;
-  final String descriptionAr;
-  final int minCount;
-  final int maxCount;
-  final int ratio;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
-  BadgeModel({
-    required this.id,
-    required this.roleId,
-    required this.name,
-    required this.nameAr,
-    required this.image,
-    required this.description,
-    required this.descriptionAr,
-    required this.minCount,
-    required this.maxCount,
-    required this.ratio,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-
-  factory BadgeModel.fromJson(Map<String, dynamic> json) {
-    return BadgeModel(
-      id: json['id'] as int,
-      roleId: json['role_id'] as int,
-      name: json['name'] as String,
-      nameAr: json['name_ar'] as String,
-      image: json['image'] as String,
-      description: json['description'] as String,
-      descriptionAr: json['description_ar'] as String,
-      minCount: json['min_count'] as int,
-      maxCount: json['max_count'] as int,
-      ratio: json['ratio'] as int,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
-    );
-  }
-}
-
-class CourierModel {
-  final int id;
-  final int userId;
-  final String nationalIdPhoto;
-  final String vehicleType;
-  final String vehiclePlate;
-  final String? vehicleLicense;
-  final String? courierLicense;
-  final bool isApproved;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final DateTime? deletedAt;
-
-  CourierModel({
-    required this.id,
-    required this.userId,
-    required this.nationalIdPhoto,
-    required this.vehicleType,
-    required this.vehiclePlate,
-    this.vehicleLicense,
-    this.courierLicense,
-    required this.isApproved,
-    required this.createdAt,
-    required this.updatedAt,
-    this.deletedAt,
-  });
-
-  factory CourierModel.fromJson(Map<String, dynamic> json) {
-    return CourierModel(
-      id: json['id'] as int,
-      userId: json['user_id'] as int,
-      nationalIdPhoto: json['national_id_photo'] as String,
-      vehicleType: json['vehicle_type'] as String,
-      vehiclePlate: json['vehicle_plate'] as String,
-      vehicleLicense: json['vehicle_license'] as String?,
-      courierLicense: json['courier_license'] as String?,
-      isApproved: json['is_approved'] as bool,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
-      deletedAt: json['deleted_at'] != null
-          ? DateTime.parse(json['deleted_at'] as String)
-          : null,
-    );
-  }
-}
-
-// Badge Progress Models
-class BadgeProgressResponseModel {
-  final String message;
-  final BadgeProgressData data;
-
-  BadgeProgressResponseModel({
-    required this.message,
-    required this.data,
-  });
-
-  factory BadgeProgressResponseModel.fromJson(Map<String, dynamic> json) {
-    return BadgeProgressResponseModel(
-      message: json['message'] as String,
-      data: BadgeProgressData.fromJson(json['data'] as Map<String, dynamic>),
-    );
-  }
-}
-
-class BadgeProgressData {
-  final BadgeModel currentBadge;
-  final List<BadgeModel> allBadges;
-
-  BadgeProgressData({
-    required this.currentBadge,
-    required this.allBadges,
-
-  });
-
-  factory BadgeProgressData.fromJson(Map<String, dynamic> json) {
-    return BadgeProgressData(
-      currentBadge: BadgeModel.fromJson(json['current_badge'] as Map<String, dynamic>),
-      allBadges: (json['all_badges'] as List)
-          .map((badge) => BadgeModel.fromJson(badge as Map<String, dynamic>))
-          .toList(),
-    );
-  }
-}
-
-// Update Profile Response
 class UpdateProfileResponseModel {
   final String message;
-  final Map<String, dynamic> data;
+  final UserProfileModel user;
 
   UpdateProfileResponseModel({
     required this.message,
-    required this.data,
+    required this.user,
   });
 
   factory UpdateProfileResponseModel.fromJson(Map<String, dynamic> json) {
     return UpdateProfileResponseModel(
       message: json['message'] as String,
-      data: json['data'] as Map<String, dynamic>,
+      user: UserProfileModel.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
 }
 
-enum DocumentType {
-  nationalId,
-  vehicleLicense,
-  courierLicense,
-  personalPhoto,
+class DeleteProfileResponseModel {
+  final String message;
+
+  DeleteProfileResponseModel({required this.message});
+
+  factory DeleteProfileResponseModel.fromJson(Map<String, dynamic> json) {
+    return DeleteProfileResponseModel(
+      message: json['message'] as String,
+    );
+  }
 }

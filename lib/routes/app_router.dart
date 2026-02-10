@@ -3,17 +3,11 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../core/widgets/loading_screen.dart';
-import '../features/auth/presentation/pages/forgot_password.dart';
 import '../features/auth/presentation/pages/login_screen.dart';
-import '../features/auth/presentation/pages/otp_screen.dart';
 import '../features/auth/presentation/pages/profile_screen.dart';
 import '../features/auth/presentation/pages/register_screen.dart';
-import '../features/auth/presentation/pages/reset_password.dart';
 import '../features/home/layout/presentation/home_layout.dart';
 import '../features/onboarding/onboarding.dart';
-import '../features/orders/data/models/orders_model.dart';
-import '../features/orders/presentation/order_details_screen.dart';
-import '../features/orders/presentation/qr_code_screen.dart';
 import '../core/utils/secure_storage_service.dart';
 
 Future<GoRouter> createAppRouter({
@@ -76,37 +70,23 @@ Future<GoRouter> createAppRouter({
             name: 'login',
             builder: (context, state) => const LoginScreen(),
           ),
-          GoRoute(
-            path: '/auth/verify-otp',
-            builder: (context, state) {
-              final phone = state.extra as String;
-              return OtpVerificationScreen(
-                phone: phone,
-                isPasswordReset: false,
-              );
-            },
-          ),
-          GoRoute(
-            path: '/auth/verify-otp-password-reset',
-            builder: (context, state) {
-              final phone = state.extra as String;
-              return OtpVerificationScreen(phone: phone, isPasswordReset: true);
-            },
-          ),
-          GoRoute(
-            path: '/auth/forgot-password',
-            builder: (context, state) => const ForgotPasswordScreen(),
-          ),
-          GoRoute(
-            path: '/auth/new-password',
-            builder: (context, state) {
-              final data = state.extra as Map<String, String>;
-              return NewPasswordScreen(
-                phone: data['phone']!,
-                otp: data['otp']!,
-              );
-            },
-          ),
+          // GoRoute(
+          //   path: '/auth/verify-otp',
+          //   builder: (context, state) {
+          //     final phone = state.extra as String;
+          //     return OtpVerificationScreen(
+          //       phone: phone,
+          //       isPasswordReset: false,
+          //     );
+          //   },
+          // ),
+          // GoRoute(
+          //   path: '/auth/verify-otp-password-reset',
+          //   builder: (context, state) {
+          //     final phone = state.extra as String;
+          //     return OtpVerificationScreen(phone: phone, isPasswordReset: true);
+          //   },
+          // ),
           GoRoute(
             path: '/auth/register',
             name: 'register',
@@ -124,24 +104,6 @@ Future<GoRouter> createAppRouter({
         path: '/mainHome',
         name: 'mainHome',
         builder: (context, state) => const HomeLayout(),
-      ),
-
-      // ============== ORDER ROUTES ==============
-      GoRoute(
-        path: '/orders/details',
-        name: 'orderDetails',
-        builder: (context, state) {
-          final orderId = state.extra as int;
-          return OrderDetailsScreen(orderId: orderId);
-        },
-      ),
-      GoRoute(
-        path: '/orders/qr-code',
-        name: 'qrCode',
-        builder: (context, state) {
-          final qrCodeModel = state.extra as QrCodeModel;
-          return QrCodeScreen(qrCodeModel: qrCodeModel);
-        },
       ),
     ],
     errorBuilder: (context, state) {

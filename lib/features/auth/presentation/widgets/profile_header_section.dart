@@ -42,9 +42,9 @@ class ProfileHeaderSection extends StatelessWidget {
                       ],
                     ),
                     child: ClipOval(
-                      child: profile.personalPhoto.isNotEmpty
+                      child: profile.personalPhoto != null
                           ? Image.network(
-                        profile.personalPhoto,
+                        profile.personalPhoto??'',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return SvgPicture.asset(
@@ -168,7 +168,7 @@ class ProfileHeaderSection extends StatelessWidget {
     if (pickedFile != null) {
       final file = File(pickedFile.path);
       if (context.mounted) {
-        context.read<ProfileCubit>().updateDocuments(personalPhoto: file);
+        // context.read<ProfileCubit>().updateDocuments(personalPhoto: file);
       }
     }
   }

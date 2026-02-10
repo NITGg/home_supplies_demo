@@ -1,4 +1,4 @@
-# tawreedat_courier
+# tawreedat_go
 
 A new Flutter project.
 

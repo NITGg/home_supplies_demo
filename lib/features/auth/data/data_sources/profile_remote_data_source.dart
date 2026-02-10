@@ -9,9 +9,14 @@ class ProfileRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
 
   /// GET PROFILE
-  Future<ProfileResponseModel> getProfile() async {
+  Future<ProfileResponseModel> getProfile(String token) async {
     try {
-      final response = await _dio.get('/profile/get-profile?lang=ar');
+      final response = await _dio.get(
+        '/profile',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
 
       log('Get profile response: ${response.data}');
       return ProfileResponseModel.fromJson(response.data);
@@ -21,21 +26,27 @@ class ProfileRemoteDataSource {
     }
   }
 
-  /// UPDATE PROFILE
+  /// UPDATE PROFILE (basic info)
   Future<UpdateProfileResponseModel> updateProfile({
+    required String token,
     String? fullName,
     String? gender,
-    String? vehicleType,
-    String? vehiclePlate,
+    String? lang,
   }) async {
     try {
       final Map<String, dynamic> data = {};
+
       if (fullName != null) data['full_name'] = fullName;
       if (gender != null) data['gender'] = gender;
-      if (vehicleType != null) data['vehicle_type'] = vehicleType;
-      if (vehiclePlate != null) data['vehicle_plate'] = vehiclePlate;
+      if (lang != null) data['lang'] = lang;
 
-      final response = await _dio.patch('/profile/update-profile?lang=ar', data: data);
+      final response = await _dio.put(
+        '/profile',
+        data: data,
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
 
       log('Update profile response: ${response.data}');
       return UpdateProfileResponseModel.fromJson(response.data);
@@ -45,16 +56,26 @@ class ProfileRemoteDataSource {
     }
   }
 
-  /// UPDATE DOCUMENTS (personal photo and national ID)
-  Future<UpdateProfileResponseModel> updateDocuments({
+  /// UPDATE PROFILE WITH PHOTO
+  Future<UpdateProfileResponseModel> updateProfileWithPhoto({
+    required String token,
+    String? fullName,
+    String? gender,
+    String? lang,
     File? personalPhoto,
-    File? nationalIdPhoto,
-    File? vehicleLicense,
-    File? courierLicense,
   }) async {
     try {
       final formData = FormData();
 
+      if (fullName != null) {
+        formData.fields.add(MapEntry('full_name', fullName));
+      }
+      if (gender != null) {
+        formData.fields.add(MapEntry('gender', gender));
+      }
+      if (lang != null) {
+        formData.fields.add(MapEntry('lang', lang));
+      }
       if (personalPhoto != null) {
         formData.files.add(MapEntry(
           'personal_photo',
@@ -65,57 +86,18 @@ class ProfileRemoteDataSource {
         ));
       }
 
-      if (nationalIdPhoto != null) {
-        formData.files.add(MapEntry(
-          'national_id_photo',
-          await MultipartFile.fromFile(
-            nationalIdPhoto.path,
-            filename: 'national_id.jpg',
-          ),
-        ));
-      }
-
-      if (vehicleLicense != null) {
-        formData.files.add(MapEntry(
-          'vehicle_license',
-          await MultipartFile.fromFile(
-            vehicleLicense.path,
-            filename: 'vehicle_license.jpg',
-          ),
-        ));
-      }
-
-      if (courierLicense != null) {
-        formData.files.add(MapEntry(
-          'courier_license',
-          await MultipartFile.fromFile(
-            courierLicense.path,
-            filename: 'courier_license.jpg',
-          ),
-        ));
-      }
-
-      final response = await _dio.patch(
-        '/profile/update-documents?lang=ar',
+      final response = await _dio.put(
+        '/profile',
         data: formData,
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
       );
 
+      log('Update profile with photo response: ${response.data}');
       return UpdateProfileResponseModel.fromJson(response.data);
     } catch (e) {
-      log('Update documents error: $e');
-      rethrow;
-    }
-  }
-
-  /// GET BADGE PROGRESS
-  Future<BadgeProgressResponseModel> getBadgeProgress() async {
-    try {
-      final response = await _dio.get('/profile/badge-progress?lang=ar');
-
-      log('Get badge progress response: ${response.data}');
-      return BadgeProgressResponseModel.fromJson(response.data);
-    } catch (e) {
-      log('Get badge progress error: $e');
+      log('Update profile with photo error: $e');
       rethrow;
     }
   }

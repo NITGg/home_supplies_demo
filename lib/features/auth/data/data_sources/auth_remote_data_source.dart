@@ -4,157 +4,155 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/utils/api_client.dart';
-import '../../../../core/utils/secure_storage_service.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../models/auth_response_model.dart';
 import '../models/user_profile_model.dart';
 
 class AuthRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
 
-  /// REGISTER - New endpoint with courier data
-  Future<AuthResponseModel> register({
+  Future<ShortAuthResponseModel> register({
     required BuildContext context,
     required String fullName,
     required String phone,
     required String password,
-    required String gender,
-    required String vehicleType,
-    required String vehiclePlate,
-    required File personalPhoto,
-    required File nationalIdPhoto,
-    required File vehicleLicense,
-    required File courierLicense,
+    String? email,
   }) async {
-    try {
-      final formData = FormData.fromMap({
-        'full_name': fullName,
+    final locale = AppLocalizations.of(context)?.localeName ?? 'en';
+
+    final Map<String, dynamic> data = {
+      'full_name': fullName,
+      'phone': phone,
+      'password': password,
+    };
+
+    if (email != null && email.isNotEmpty) {
+      data['email'] = email;
+    }
+
+    final response = await _dio.post(
+      '/auth/register',
+      data: data,
+      options: Options(
+        headers: {'Accept-Language': locale},
+      ),
+    );
+
+    return ShortAuthResponseModel.fromJson(response.data);
+  }
+
+  Future<ShortAuthResponseModel> login({
+    required String phone,
+    required String password,
+    String locale = 'en',
+  }) async {
+    final response = await _dio.post(
+      '/auth/login',
+      data: {
         'phone': phone,
         'password': password,
-        'gender': gender,
-        'vehicle_type': vehicleType,
-        'vehicle_plate': vehiclePlate,
-        'personal_photo': await MultipartFile.fromFile(
+      },
+      options: Options(
+        headers: {'Accept-Language': locale},
+      ),
+    );
+
+    return ShortAuthResponseModel.fromJson(response.data);
+  }
+
+  Future<ProfileResponseModel> getProfile(String token) async {
+    final response = await _dio.get(
+      '/profile',
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+    );
+
+    return ProfileResponseModel.fromJson(response.data);
+  }
+
+  Future<DeleteProfileResponseModel> deleteProfile(String token) async {
+    final response = await _dio.delete(
+      '/profile',
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+    );
+
+    return DeleteProfileResponseModel.fromJson(response.data);
+  }
+
+  Future<LongAuthResponseModel> verifyGoogleToken(String idToken) async {
+    final response = await _dio.post(
+      '/api/auth/google/verify', // Keep old endpoint if Google auth unchanged
+      data: {'idToken': idToken},
+    );
+
+    final authResponse = LongAuthResponseModel.fromJson(response.data);
+    log('Google sign in user: ${authResponse.token}');
+    return authResponse;
+  }
+
+  Future<LongAuthResponseModel> verifyAppleToken(
+      String idToken,
+      String? fullName,
+      ) async {
+    final response = await _dio.post(
+      '/api/auth/apple/verify', // Keep old endpoint if Apple auth unchanged
+      data: {
+        'idToken': idToken,
+        'fullname': fullName,
+      },
+    );
+
+    final authResponse = LongAuthResponseModel.fromJson(response.data);
+    log('Apple sign in user: ${authResponse.token}');
+    return authResponse;
+  }
+
+  Future<UpdateProfileResponseModel> updateProfile({
+    required String token,
+    String? fullName,
+    String? gender,
+    String? lang,
+    File? personalPhoto,
+  }) async {
+    final formData = FormData();
+
+    if (fullName != null) {
+      formData.fields.add(MapEntry('full_name', fullName));
+    }
+    if (gender != null) {
+      formData.fields.add(MapEntry('gender', gender));
+    }
+    if (lang != null) {
+      formData.fields.add(MapEntry('lang', lang));
+    }
+    if (personalPhoto != null) {
+      formData.files.add(MapEntry(
+        'personal_photo',
+        await MultipartFile.fromFile(
           personalPhoto.path,
           filename: 'personal_photo.jpg',
         ),
-        'national_id_photo': await MultipartFile.fromFile(
-          nationalIdPhoto.path,
-          filename: 'national_id.jpg',
-        ),
-        'vehicle_license': await MultipartFile.fromFile(
-          vehicleLicense.path,
-          filename: 'vehicle_license.jpg',
-        ),
-        'courier_license': await MultipartFile.fromFile(
-          courierLicense.path,
-          filename: 'courier_license.jpg',
-        ),
-      });
-
-      final response = await _dio.post(
-        '/auth/register',
-        data: formData,
-        options: Options(contentType: 'multipart/form-data'),
-      );
-
-      return AuthResponseModel.fromJson(response.data);
-    } catch (e) {
-      log('Register error: $e');
-      rethrow;
+      ));
     }
-  }
 
-  /// VERIFY PHONE OTP
-  Future<OtpVerificationResponse> verifyPhoneOtp({
-    required String phone,
-    required String userOtp,
-  }) async {
+    final response = await _dio.put(
+      '/profile',
+      data: formData,
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+    );
+
     try {
-      final response = await _dio.post(
-        '/auth/verify-phone?lang=ar',
-        data: {'phone': phone, 'user_otp': userOtp},
-      );
-
-      return OtpVerificationResponse.fromJson(response.data);
-    } on DioException catch (e) {
-      final status = e.response?.statusCode;
-      final message = e.response?.data?['message'];
-
-      // ✅ treat as success
-      if (status == 400 && message == 'Phone already verified') {
-        return OtpVerificationResponse.fromJson({
-          'status': 200,
-          'message': 'Phone already verified',
-          'data': {'phone': phone},
-        });
-      }
-
-      // ❌ real error → rethrow
-      rethrow;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// RESEND PHONE OTP
-  Future<OtpVerificationResponse> resendPhoneOtp({
-    required String phone,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/auth/resend-phone-otp?lang=ar',
-        data: {'phone': phone},
-      );
-
-      return OtpVerificationResponse.fromJson(response.data);
-    } catch (e) {
-      log('Resend OTP error: $e');
-      rethrow;
-    }
-  }
-
-  /// LOGIN
-  Future<AuthResponseModel> login({
-    required String phone,
-    required String password,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/auth/login?lang=ar',
-        data: {'phone': phone, 'password': password},
-      );
-
-      return AuthResponseModel.fromJson(response.data);
-    } catch (e) {
-      log('Login error: $e');
-      rethrow;
-    }
-  }
-
-  /// REFRESH TOKEN
-  Future<RefreshTokenResponse> refreshToken({
-    required String refreshToken,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/auth/refresh-token?lang=ar',
-        options: Options(headers: {'Authorization': 'Bearer $refreshToken'}),
-      );
-
-      return RefreshTokenResponse.fromJson(response.data);
-    } catch (e) {
-      log('Refresh token error: $e');
-      rethrow;
-    }
-  }
-
-  /// DELETE PROFILE
-  Future<Map<String, dynamic>> deleteProfile() async {
-    try {
-      final response = await _dio.delete('/profile/soft-delete?lang=ar');
-      return response.data;
-    } catch (e) {
-      log('Delete profile error: $e');
+      log('Update profile response: ${response.data}');
+      final updateResponse = UpdateProfileResponseModel.fromJson(response.data);
+      log('Updated user profile: ${updateResponse.user.fullName}');
+      return updateResponse;
+    } catch (e, s) {
+      log('Error parsing updated user profile', error: e, stackTrace: s);
       rethrow;
     }
   }
@@ -166,143 +164,18 @@ class AuthRemoteDataSource {
     required String newPassword,
   }) async {
     final response = await _dio.patch(
-      '/auth/update-password?lang=ar',
-      data: {'current_password': oldPassword, 'new_password': newPassword},
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
+      '/api/profile/change-password', // Keep old endpoint if unchanged
+      data: {
+        'oldPassword': oldPassword,
+        'newPassword': newPassword,
+      },
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+      ),
     );
 
-    if (response.statusCode != 200) {
+    if (response.data['success'] != true) {
       throw Exception(response.data['message'] ?? 'Failed to change password');
-    }
-  }
-
-  /// UPDATE PROFILE
-  Future<UserProfileModel> updateProfile({
-    required Map<String, dynamic> data,
-    File? imageUrl,
-  }) async {
-    try {
-      if (imageUrl != null) {
-        if (data['imageUrl'] == null) {
-          data.remove('imageUrl');
-        }
-        data['imageUrl'] = await MultipartFile.fromFile(imageUrl.path);
-      }
-      final formData = FormData.fromMap(data);
-
-      final response = await _dio.put('/profile?lang=ar', data: formData);
-
-      log(response.data.toString());
-      final updatedUser = UserProfileModel.fromJson(
-        response.data['updatedUser'],
-      );
-      log('Updated user profile: ${updatedUser.toString()}');
-      return updatedUser;
-    } catch (e, s) {
-      log('Error parsing updated user profile', error: e, stackTrace: s);
-      rethrow;
-    }
-  }
-
-  /// GOOGLE SIGN IN - phone is now REQUIRED
-  Future<AuthResponseModel> verifyGoogleToken({
-    required String idToken,
-    required String phone,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/auth/google-login?lang=ar',
-        data: {'id_token': idToken, 'phone': phone},
-      );
-
-      final authResponse = AuthResponseModel.fromJson(response.data);
-      log('Google sign in user: ${authResponse.data.accessToken}');
-      return authResponse;
-    } catch (e) {
-      log('Google sign in error: $e');
-      rethrow;
-    }
-  }
-
-  /// APPLE SIGN IN - phone is now REQUIRED
-  Future<AuthResponseModel> verifyAppleToken({
-    required String idToken,
-    String? fullName,
-    required String phone,
-  }) async {
-    try {
-      final data = {'id_token': idToken, 'phone': phone};
-      if (fullName != null) {
-        data['fullname'] = fullName;
-      }
-
-      final response = await _dio.post('/auth/apple-login?lang=ar', data: data);
-
-      final authResponse = AuthResponseModel.fromJson(response.data);
-      log('Apple sign in user: ${authResponse.data.accessToken}');
-      return authResponse;
-    } catch (e) {
-      log('Apple sign in error: $e');
-      rethrow;
-    }
-  }
-
-  /// FORGOT PASSWORD - Send OTP
-  Future<ForgotPasswordResponse> forgotPassword({required String phone}) async {
-    try {
-      final response = await _dio.post(
-        '/auth/forget-password?lang=ar',
-        data: {'phone': phone},
-        options: Options(
-          validateStatus: (status) => status != null && status < 500,
-        ),
-      );
-
-      log('Forgot password response: ${response.data}');
-      return ForgotPasswordResponse.fromJson(response.data);
-    } catch (e) {
-      log('Forgot password error: $e');
-      rethrow;
-    }
-  }
-
-  /// RESET PASSWORD with OTP
-  Future<ResetPasswordResponse> resetPassword({
-    required String phone,
-    required String userOtp,
-    required String newPassword,
-  }) async {
-    try {
-      final response = await _dio.patch(
-        '/auth/change-password?lang=ar',
-        data: {
-          'phone': phone,
-          'user_otp': userOtp,
-          'new_password': newPassword,
-        },
-      );
-
-      return ResetPasswordResponse.fromJson(response.data);
-    } catch (e) {
-      log('Reset password error: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> logOut() async {
-    try {
-      final response = await _dio.post(
-        '/auth/logout?lang=ar',
-        options: Options(
-          headers: {
-            'Authorization':
-                'Bearer ${await SecureStorageService().getToken()}',
-          },
-        ),
-      );
-    } catch (e) {
-      log('Logout error: $e');
-      rethrow;
     }
   }
 }

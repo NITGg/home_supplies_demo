@@ -11,6 +11,7 @@ import '../../../../core/widgets/loading_screen.dart';
 import '../../../../core/widgets/text_button.dart';
 import '../../../../core/widgets/text_form.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../widgets/auth_header.dart';
 import '../widgets/social_auth_button_row.dart';
 import '../../manager/auth_cubit.dart';
 import '../../manager/auth_state.dart';
@@ -103,10 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       const Spacer(), // ← ALL white space goes here
 
-                      SvgPicture.asset(
-                        'assets/images/appbar/logo.svg',
-                        height: 50,
-                      ),
+                      AuthHeaderImage(),
 
                       const Divider(),
                       const SizedBox(height: 22),

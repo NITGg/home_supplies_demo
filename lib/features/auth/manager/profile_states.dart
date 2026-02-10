@@ -24,10 +24,3 @@ class ProfileFailure extends ProfileState {
   ProfileFailure(this.message);
 }
 
-class BadgeProgressLoading extends ProfileState {}
-
-class BadgeProgressLoaded extends ProfileState {
-  final BadgeProgressData badgeProgress;
-
-  BadgeProgressLoaded({required this.badgeProgress});
-}
