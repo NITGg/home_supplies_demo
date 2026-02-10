@@ -461,7 +461,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                   bottomNavigationBar: Directionality(
                     textDirection: Directionality.of(context),
                     child: Container(
-                      height: 100,
+                      height: 90,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         boxShadow: [
