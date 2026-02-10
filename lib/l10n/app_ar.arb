@@ -416,6 +416,13 @@
           "oneTimeAddress": "إدخال عنوان (لا تحفط)",
           "productImageOptional": "صورة المنتج (اختياري)",
           "newOrder": "طلب جديد",
+          "invalidQrCode": "رمز الاستجابة السريع غير صالح: ليس رمز تأكيد التسليم",
+            "invalidQrCodeFormat": "تنسيق رمز الاستجابة السريع غير صالح",
+            "scanQrCode": "مسح رمز الاستجابة السريع",
+            "deliveryConfirmed": "تم تأكيد التسليم بنجاح!",
+            "scanDeliveryQrCode": "امسح رمز تأكيد التسليم من المندوب",
+            "alignQrCode": "قم بمحاذاة رمز Qr ضمن الإطار",
+            "processing": "جارٍ المعالجة...",
         "cancelOrderWarning": "هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها"
 
 

@@ -344,6 +344,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                         // ── Set as Default (only when saving) ────────────────
                         if (widget.saveAddress) ...[
                           CheckboxListTile(
+                            activeColor: Colors.orangeAccent,
                             title: Text(l10n.setAsDefault),
                             value: _isDefault,
                             onChanged: (value) {

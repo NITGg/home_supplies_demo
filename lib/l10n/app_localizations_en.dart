@@ -684,6 +684,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orderInformation => 'Order Information';
 
   @override
+  String get invalidQrCode => 'Invalid QR Code: Not a delivery confirmation code';
+
+  @override
+  String get invalidQrCodeFormat => 'Invalid QR Code format';
+
+  @override
+  String get scanQrCode => 'Scan QR Code';
+
+  @override
+  String get deliveryConfirmed => 'Delivery confirmed successfully!';
+
+  @override
+  String get scanDeliveryQrCode => 'Scan the delivery confirmation QR code from the courier';
+
+  @override
+  String get alignQrCode => 'Align QR code within the frame';
+
+  @override
   String get pickup => 'Pickup';
 
   @override

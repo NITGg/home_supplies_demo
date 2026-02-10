@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/models/qr_model.dart';
 import '../manager/order_cubit.dart';
 import '../manager/order_states.dart';
@@ -42,7 +43,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       final deliveryQR = DeliveryQRCode.fromJson(qrData);
 
       if (!deliveryQR.isConfirmDelivery) {
-        _showError('Invalid QR Code: Not a delivery confirmation code');
+        _showError(AppLocalizations.of(context)!.invalidQrCode);
         setState(() => _isProcessing = false);
         return;
       }
@@ -55,7 +56,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         );
       }
     } catch (e) {
-      _showError('Invalid QR Code format');
+      _showError(AppLocalizations.of(context)!.invalidQrCodeFormat);
       setState(() => _isProcessing = false);
     }
   }
@@ -75,7 +76,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Scan QR Code', style: AppTextStyles.bold18),
+        title: Text(AppLocalizations.of(context)!.scanQrCode, style: AppTextStyles.bold18),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
@@ -84,8 +85,8 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           if (state is DeliveryConfirmed) {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Delivery confirmed successfully!'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!.deliveryConfirmed),
                 backgroundColor: Colors.green,
               ),
             );
@@ -137,8 +138,8 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                     const SizedBox(height: 16),
                     Text(
                       _isProcessing
-                          ? 'Processing...'
-                          : 'Align QR code within the frame',
+                          ? AppLocalizations.of(context)!.processing
+                          : AppLocalizations.of(context)!.alignQrCode,
                       style: AppTextStyles.bold16.copyWith(
                         color: Colors.white,
                       ),
@@ -146,7 +147,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Scan the delivery confirmation QR code from the courier',
+                      AppLocalizations.of(context)!.scanDeliveryQrCode,
                       style: AppTextStyles.regular14.copyWith(
                         color: Colors.white70,
                       ),

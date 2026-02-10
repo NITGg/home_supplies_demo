@@ -27,10 +27,14 @@ class AddressRemoteDataSource {
       final body = address.toJson();
       log('Creating address: $body');
 
-      // Send as raw Map (Dio will serialize to JSON with correct Content-Type)
       final response = await _dio.post(
         '/profile/addresses',
         data: body,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
       );
 
       log('Create address response: ${response.data}');
@@ -42,6 +46,7 @@ class AddressRemoteDataSource {
       }
     } on DioException catch (e) {
       log('Create address error: $e');
+      log('Error response: ${e.response?.data}'); // Add this line to see server error
       throw _handleError(e);
     }
   }

@@ -280,6 +280,7 @@ class _ToggleButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
+        spacing: 5,
         mainAxisSize: MainAxisSize.min,
         children: [
           _Tab(

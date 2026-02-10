@@ -1427,6 +1427,42 @@ abstract class AppLocalizations {
   /// **'Order Information'**
   String get orderInformation;
 
+  /// No description provided for @invalidQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid QR Code: Not a delivery confirmation code'**
+  String get invalidQrCode;
+
+  /// No description provided for @invalidQrCodeFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid QR Code format'**
+  String get invalidQrCodeFormat;
+
+  /// No description provided for @scanQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR Code'**
+  String get scanQrCode;
+
+  /// No description provided for @deliveryConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery confirmed successfully!'**
+  String get deliveryConfirmed;
+
+  /// No description provided for @scanDeliveryQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the delivery confirmation QR code from the courier'**
+  String get scanDeliveryQrCode;
+
+  /// No description provided for @alignQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Align QR code within the frame'**
+  String get alignQrCode;
+
   /// No description provided for @pickup.
   ///
   /// In en, this message translates to:

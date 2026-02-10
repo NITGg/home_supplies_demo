@@ -420,7 +420,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notes => 'الملاحظات';
 
   @override
-  String get processing => 'جاري المعالجة...';
+  String get processing => 'جارٍ المعالجة...';
 
   @override
   String get error => 'خطأ';
@@ -682,6 +682,24 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get orderInformation => 'معلومات الطلب';
+
+  @override
+  String get invalidQrCode => 'رمز الاستجابة السريع غير صالح: ليس رمز تأكيد التسليم';
+
+  @override
+  String get invalidQrCodeFormat => 'تنسيق رمز الاستجابة السريع غير صالح';
+
+  @override
+  String get scanQrCode => 'مسح رمز الاستجابة السريع';
+
+  @override
+  String get deliveryConfirmed => 'تم تأكيد التسليم بنجاح!';
+
+  @override
+  String get scanDeliveryQrCode => 'امسح رمز تأكيد التسليم من المندوب';
+
+  @override
+  String get alignQrCode => 'قم بمحاذاة رمز الاستجابة السريع ضمن الإطار';
 
   @override
   String get pickup => 'الاستلام';
