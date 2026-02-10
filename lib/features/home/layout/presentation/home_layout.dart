@@ -290,6 +290,19 @@ class _HomeLayoutState extends State<HomeLayout> {
                                               style: AppTextStyles.bold16,
                                             ),
                                           ),
+                                          Divider(),ListTile(
+                                            onTap: () {
+                                              context.push('/addressesManagement');
+                                            },
+                                            leading: const Icon(
+                                              Icons
+                                                  .location_pin,
+                                            ),
+                                            title: Text(
+                                              localizations.address,
+                                              style: AppTextStyles.bold16,
+                                            ),
+                                          ),
                                           Divider(),
                                           ListTile(
                                             onTap: () {

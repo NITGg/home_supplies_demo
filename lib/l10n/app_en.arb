@@ -399,6 +399,21 @@
         "back": "Back",
           "actualPriceIsHigher": "Actual Price Is Higher",
         "wallet": "Wallet",
+        "viewProposals": "View Proposals",
+        "useThisAddress": "Use this address",
+          "selectArea": "Select area",
+          "locationRequired": "Location is required",
+          "openSettings": "Open settings",
+          "setAsDefault": "Set as default",
+          "pleaseSelectArea": "Please select an area",
+          "noAreasAvailable": "No areas available",
+          "addressNameHint": "Address name",
+          "addressNameOptional": "Address name (optional)",
+          "pleaseSelectLocation": "Please select a location",
+                    "oneTimeAddress": "Enter Adress (Don't Save)",
+          "productImageOptional": "Product Image (Optional)",
+          "newOrder": "New Order",
+
       "cancelOrderWarning": "Are you sure you want to cancel this order? This action cannot be undone."
 
 

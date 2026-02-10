@@ -12,12 +12,12 @@ class Order {
   final String? actualPrice;
   final int pickupAreaId;
   final String pickupAddressDescription;
-  final String pickupLat;
-  final String pickupLong;
+  final String? pickupLat;
+  final String? pickupLong;
   final int deliveryAreaId;
   final String deliveryAddressDescription;
-  final String deliveryLat;
-  final String deliveryLong;
+  final String? deliveryLat;
+  final String? deliveryLong;
   final String? minDeliveryFee;
   final String? maxDeliveryFee;
   final String? totalFee;
@@ -28,6 +28,7 @@ class Order {
   final String? cancelledReason;
   final String? cancellationFee;
   final int? cancelledBy;
+  final int? proposalsCount;
   final DateTime? createdAt;
   final DateTime? offerAcceptedAt;
   final DateTime? deliveredAt;
@@ -61,6 +62,7 @@ class Order {
     this.cancelledReason,
     this.cancellationFee,
     this.cancelledBy,
+    this.proposalsCount,
     this.createdAt,
     this.offerAcceptedAt,
     this.deliveredAt,
@@ -78,13 +80,15 @@ class Order {
       budget: json['budget']?.toString() ?? '0',
       actualPrice: json['actual_price']?.toString(),
       pickupAreaId: json['pickup_area_id'] as int,
-      pickupAddressDescription: json['pickup_address_description'] as String,
-      pickupLat: json['pickup_lat'] as String,
-      pickupLong: json['pickup_long'] as String,
+      pickupAddressDescription:
+      json['pickup_address_description'] as String,
+      pickupLat: json['pickup_lat'],
+      pickupLong: json['pickup_long'],
       deliveryAreaId: json['delivery_area_id'] as int,
-      deliveryAddressDescription: json['delivery_address_description'] as String,
-      deliveryLat: json['delivery_lat'] as String,
-      deliveryLong: json['delivery_long'] as String,
+      deliveryAddressDescription:
+      json['delivery_address_description'] as String,
+      deliveryLat: json['delivery_lat'],
+      deliveryLong: json['delivery_long'],
       minDeliveryFee: json['min_delivery_fee']?.toString(),
       maxDeliveryFee: json['max_delivery_fee']?.toString(),
       totalFee: json['total_fee']?.toString(),
@@ -95,6 +99,7 @@ class Order {
       cancelledReason: json['cancelled_reason'] as String?,
       cancellationFee: json['cancellation_fee']?.toString(),
       cancelledBy: json['cancelled_by'] as int?,
+      proposalsCount: json['proposals_count'] as int?,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : null,
@@ -126,22 +131,18 @@ class Order {
     };
   }
 
-  // Helper getters
   bool get isPending => status == 'PENDING';
   bool get isAccepted => status == 'ACCEPTED';
   bool get isDelivered => status == 'DELIVERED';
   bool get isCancelled => status == 'CANCELLED';
-  bool get hasProposals => status == 'PENDING'; // Can receive proposals when pending
+  bool get hasProposals => (proposalsCount ?? 0) > 0;
 }
 
 class OrderResponse {
   final String message;
   final Order order;
 
-  OrderResponse({
-    required this.message,
-    required this.order,
-  });
+  OrderResponse({required this.message, required this.order});
 
   factory OrderResponse.fromJson(Map<String, dynamic> json) {
     return OrderResponse(

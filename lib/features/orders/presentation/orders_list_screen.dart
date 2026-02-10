@@ -13,7 +13,6 @@ import '../manager/order_cubit.dart';
 import '../manager/order_states.dart';
 import 'qr_scanner_screen.dart';
 
-// ─── Toggle mode ─────────────────────────────────────────────────────────────
 enum _ViewMode { active, history }
 
 class OrdersListScreen extends StatefulWidget {
@@ -62,37 +61,27 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     );
   }
 
-  void _showCancelDialog(Order order) {
-    showDialog(
+  void _showCancelSheet(Order order) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => BlocProvider.value(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => BlocProvider.value(
         value: context.read<OrderCubit>(),
-        child: CancelOrderDialog(order: order),
-      ),
-    );
-  }
-
-  void _navigateToQRScanner() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: context.read<OrderCubit>(),
-          child: const QRScannerScreen(),
+        child: OrderCancelBottomSheet(
+          isUnavailable: false,
+          orderId: order.id!,
         ),
       ),
     );
   }
 
-  /// Filter orders based on current view mode.
   List<Order> _filter(List<Order> all) {
     if (_viewMode == _ViewMode.active) {
-      // Active = PENDING or ACCEPTED
       return all
-          .where((o) => o.status == 'PENDING' || o.status == 'ACCEPTED')
+          .where((o) => o.status == 'PENDING' || o.status == 'IN_PROGRESS')
           .toList();
     } else {
-      // History = DELIVERED or CANCELLED
       return all
           .where((o) => o.status == 'DELIVERED' || o.status == 'CANCELLED')
           .toList();
@@ -127,62 +116,113 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           ),
         ],
       ),
-      body: BlocConsumer<OrderCubit, OrderState>(
-        listener: (context, state) {
-          if (state is OrderCancelled) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.green,
-              ),
-            );
-          } else if (state is DeliveryConfirmed) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Delivery confirmed successfully!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is OrderLoading) {
-            return const Center(
-              child: LoadingScreen(isOne: true, asWidget: true),
-            );
-          }
-
-          if (state is OrderError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: RefreshIndicator(
+        onRefresh: () => context.read<OrderCubit>().loadOrders(),
+        color: AppColors.kPrimaryColor,
+        child: BlocConsumer<OrderCubit, OrderState>(
+          listenWhen: (_, current) =>
+          current is OrderCancelled ||
+              current is OrderCancelError ||
+              current is DeliveryConfirmed ||
+              current is OrderError ||
+              current is OrderSuccess,
+          listener: (context, state) {
+            if (state is OrderCancelled) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } else if (state is DeliveryConfirmed) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    AppLocalizations.of(context)?.delivered ??
+                        'Delivery confirmed successfully!',
+                  ),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } else if (state is OrderError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          // ── Builder: only react to states that change the visible list ──
+          buildWhen: (previous, current) =>
+          current is OrderLoading ||
+              current is OrdersLoaded ||
+              current is OrderError,
+          builder: (context, state) {
+            // Full-screen loading (first load, no cached list yet)
+            if (state is OrderLoading) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(state.message),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.read<OrderCubit>().loadOrders(),
-                    child: Text(
-                      AppLocalizations.of(context)?.retry ?? 'Retry',
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    child: const Center(
+                      child: LoadingScreen(isOne: true, asWidget: true),
                     ),
                   ),
                 ],
-              ),
-            );
-          }
-
-          if (state is OrdersLoaded) {
-            final filtered = _filter(state.orders);
-
-            if (filtered.isEmpty) {
-              return _EmptyState(viewMode: _viewMode);
+              );
             }
 
-            return RefreshIndicator(
-              onRefresh: () => context.read<OrderCubit>().loadOrders(),
-              child: ListView.builder(
+            // Error (only shown when there is no list to fall back to)
+            if (state is OrderError) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline,
+                              size: 48, color: Colors.red),
+                          const SizedBox(height: 16),
+                          Text(state.message),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () =>
+                                context.read<OrderCubit>().loadOrders(),
+                            child: Text(
+                              AppLocalizations.of(context)?.retry ?? 'Retry',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            if (state is OrdersLoaded) {
+              final filtered = _filter(state.orders);
+
+              if (filtered.isEmpty) {
+                return ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: _EmptyState(viewMode: _viewMode),
+                    ),
+                  ],
+                );
+              }
+
+              return ListView.builder(
                 controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 itemCount: filtered.length + (state.hasMore ? 1 : 0),
                 itemBuilder: (context, index) {
@@ -192,20 +232,31 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
-
                   final order = filtered[index];
                   return _OrderCard(
                     order: order,
                     onViewProposals: () => _showProposals(order),
-                    onCancel: () => _showCancelDialog(order),
+                    onCancel: () => _showCancelSheet(order),
                   );
                 },
-              ),
-            );
-          }
+              );
+            }
 
-          return const SizedBox();
-        },
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _navigateToQRScanner() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: context.read<OrderCubit>(),
+          child: const QRScannerScreen(),
+        ),
       ),
     );
   }
@@ -221,6 +272,7 @@ class _ToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       height: 36,
       decoration: BoxDecoration(
@@ -228,16 +280,15 @@ class _ToggleButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
-        spacing: 5,
         mainAxisSize: MainAxisSize.min,
         children: [
           _Tab(
-            label: AppLocalizations.of(context)?.orders ?? 'Orders',
+            label: l10n?.orders ?? 'Orders',
             selected: active,
             onTap: () => onToggle(true),
           ),
           _Tab(
-            label: AppLocalizations.of(context)?.history ?? 'History',
+            label: l10n?.history ?? 'History',
             selected: !active,
             onTap: () => onToggle(false),
           ),
@@ -266,16 +317,14 @@ class _Tab extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color:
-          selected ? AppColors.kPrimaryColor : Colors.transparent,
+          color: selected ? AppColors.kPrimaryColor : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 13,
-            fontWeight:
-            selected ? FontWeight.bold : FontWeight.normal,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
             color: selected ? Colors.white : Colors.grey.shade600,
           ),
         ),
@@ -284,7 +333,7 @@ class _Tab extends StatelessWidget {
   }
 }
 
-// ─── Empty State ─────────────────────────────────────────────────────────────
+// ─── Empty State ──────────────────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
   final _ViewMode viewMode;
@@ -295,12 +344,9 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isActive = viewMode == _ViewMode.active;
-
     return AppEmptyState(
       icon: isActive ? Icons.shopping_bag_outlined : Icons.history_outlined,
-      title: isActive
-          ? l10n.noActiveOrder
-          : l10n.noData,
+      title: isActive ? l10n.noActiveOrder : l10n.noData,
     );
   }
 }
@@ -318,13 +364,11 @@ class _OrderCard extends StatelessWidget {
     required this.onCancel,
   });
 
-  // ── Status helpers ────────────────────────────────────────────────────────
-
   Color _statusColor() {
     switch (order.status) {
       case 'PENDING':
         return Colors.orange;
-      case 'ACCEPTED':
+      case 'IN_PROGRESS':
         return Colors.blue;
       case 'DELIVERED':
         return Colors.green;
@@ -339,7 +383,7 @@ class _OrderCard extends StatelessWidget {
     switch (order.status) {
       case 'PENDING':
         return Icons.schedule;
-      case 'ACCEPTED':
+      case 'IN_PROGRESS':
         return Icons.local_shipping;
       case 'DELIVERED':
         return Icons.check_circle;
@@ -355,18 +399,16 @@ class _OrderCard extends StatelessWidget {
     switch (order.status) {
       case 'PENDING':
         return l10n?.pending ?? 'Pending';
-      case 'ACCEPTED':
-        return 'Accepted';
+      case 'IN_PROGRESS':
+        return l10n?.inProgress ?? 'In Progress';
       case 'DELIVERED':
         return l10n?.delivered ?? 'Delivered';
       case 'CANCELLED':
-        return 'Cancelled';
+        return l10n?.cancelled ?? 'Cancelled';
       default:
         return order.status ?? '';
     }
   }
-
-  // ── Date helper ───────────────────────────────────────────────────────────
 
   String _formatDate(DateTime? dt) {
     if (dt == null) return '';
@@ -380,6 +422,7 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final statusColor = _statusColor();
 
     return Card(
@@ -393,22 +436,20 @@ class _OrderCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              statusColor.withOpacity(0.03),
-            ],
+            colors: [Colors.white, statusColor.withOpacity(0.03)],
           ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──────────────────────────────────────────────────────
+            // ── Header ───────────────────────────────────────────────────────
             Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
               decoration: BoxDecoration(
                 color: statusColor.withOpacity(0.07),
-                borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
               ),
               child: Row(
                 children: [
@@ -440,7 +481,6 @@ class _OrderCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Status badge
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 6),
@@ -451,8 +491,7 @@ class _OrderCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(_statusIcon(),
-                            size: 12, color: Colors.white),
+                        Icon(_statusIcon(), size: 12, color: Colors.white),
                         const SizedBox(width: 4),
                         Text(
                           _statusLabel(context),
@@ -468,13 +507,12 @@ class _OrderCard extends StatelessWidget {
               ),
             ),
 
-            // ── Product info ─────────────────────────────────────────────────
+            // ── Product info ──────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Description & budget
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -511,47 +549,58 @@ class _OrderCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 14),
-
-                  // Route
                   _RouteSection(order: order),
                 ],
               ),
             ),
 
-            // ── Action buttons (PENDING only) ────────────────────────────────
+            // ── Action buttons ────────────────────────────────────────────────
+            // Show action row only for PENDING orders
+            // ── Action buttons ────────────────────────────────────────────────
             if (order.isPending) ...[
               const Divider(height: 1),
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                 child: Row(
                   children: [
+                    // View Proposals - primary action
                     Expanded(
-                      child: OutlinedButton.icon(
+                      child: ElevatedButton.icon(
                         onPressed: onViewProposals,
-                        icon: const Icon(Icons.local_offer, size: 16),
-                        label: const Text('View Proposals'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.kPrimaryColor,
-                          side: BorderSide(
-                              color: AppColors.kPrimaryColor.withOpacity(0.5)),
+                        icon: const Icon(Icons.local_offer, size: 18),
+                        label: Text(
+                          l10n.viewProposals,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.kPrimaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    OutlinedButton.icon(
-                      onPressed: onCancel,
-                      icon: const Icon(Icons.cancel_outlined, size: 16),
-                      label: const Text('Cancel'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: BorderSide(
-                            color: Colors.red.withOpacity(0.4)),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
+                    const SizedBox(width: 12),
+                    // Cancel - destructive action
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: onCancel,
+                        icon: const Icon(Icons.cancel_outlined, size: 18),
+                        label: Text(
+                          l10n.cancel,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -569,6 +618,7 @@ class _OrderCard extends StatelessWidget {
 
 class _BudgetChip extends StatelessWidget {
   final String budget;
+
   const _BudgetChip({required this.budget});
 
   @override
@@ -584,9 +634,8 @@ class _BudgetChip extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.kSecondaryColor.withOpacity(0.2),
-        ),
+        border:
+        Border.all(color: AppColors.kSecondaryColor.withOpacity(0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -614,10 +663,12 @@ class _BudgetChip extends StatelessWidget {
 
 class _RouteSection extends StatelessWidget {
   final Order order;
+
   const _RouteSection({required this.order});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -629,12 +680,13 @@ class _RouteSection extends StatelessWidget {
         children: [
           _LocationRow(
             icon: Icons.my_location,
-            label: AppLocalizations.of(context)?.pickup ?? 'Pickup',
+            label: l10n?.pickup ?? 'Pickup',
             address: order.pickupAddressDescription,
             color: Colors.green,
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            padding:
+            const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
             child: Row(
               children: [
                 Container(
@@ -648,7 +700,7 @@ class _RouteSection extends StatelessWidget {
           ),
           _LocationRow(
             icon: Icons.location_on,
-            label: AppLocalizations.of(context)?.delivery ?? 'Delivery',
+            label: l10n?.delivery ?? 'Delivery',
             address: order.deliveryAddressDescription,
             color: Colors.blue,
           ),

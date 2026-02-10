@@ -1,86 +1,235 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/style/text_styles.dart';
+import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/text_form.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../data/models/order_model.dart';
 import '../../manager/order_cubit.dart';
+import '../../manager/order_states.dart';
 
+/// Reusable bottom sheet for canceling orders
+class OrderCancelBottomSheet extends StatefulWidget {
+  final bool isUnavailable;
+  final int orderId;
 
-class CancelOrderDialog extends StatefulWidget {
-  final Order order;
-
-  const CancelOrderDialog({
+  const OrderCancelBottomSheet({
     super.key,
-    required this.order,
+    required this.isUnavailable,
+    required this.orderId,
   });
 
   @override
-  State<CancelOrderDialog> createState() => _CancelOrderDialogState();
+  State<OrderCancelBottomSheet> createState() => _OrderCancelBottomSheetState();
 }
 
-class _CancelOrderDialogState extends State<CancelOrderDialog> {
-  final _reasonController = TextEditingController();
+class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
+  final TextEditingController _noteController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
-    _reasonController.dispose();
+    _noteController.dispose();
     super.dispose();
-  }
-
-  void _cancel() {
-    if (_formKey.currentState!.validate()) {
-      context.read<OrderCubit>().cancelOrder(
-        widget.order.id!,
-        _reasonController.text.trim(),
-      );
-      Navigator.pop(context);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Cancel Order',
-        style: AppTextStyles.bold18,
-      ),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Are you sure you want to cancel order ${widget.order.orderNumber}?',
-              style: AppTextStyles.regular14,
+    final l10n = AppLocalizations.of(context)!;
+
+    return BlocListener<OrderCubit, OrderState>(
+      listener: (context, state) {
+        if (state is OrderCancelled) {
+          // Success - close bottom sheet
+          Navigator.pop(context, true);
+        } else if (state is OrderCancelError) {
+          // Error - show snackbar but keep sheet open for retry
+          Navigator.pop(context, true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(state.message)),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            const SizedBox(height: 16),
-            AppTextFormField(
-              controller: _reasonController,
-              label: 'Cancellation Reason',
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please provide a reason';
-                }
-                return null;
-              },
+          );
+        }
+      },
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.cancel_outlined,
+                            color: Colors.red.shade700,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.cancelOrder,
+                                style: AppTextStyles.bold18.copyWith(
+                                  color: Colors.red.shade900,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                widget.isUnavailable
+                                    ? l10n.productUnAvailable
+                                    : l10n.otherReason,
+                                style: AppTextStyles.regular14.copyWith(
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                          color: Colors.grey.shade600,
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Warning message
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.orange.shade200,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.orange.shade700,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              l10n.cancelOrderWarning,
+                              style: AppTextStyles.regular14.copyWith(
+                                color: Colors.orange.shade900,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Note field
+                    if (!widget.isUnavailable)
+                      AppTextFormField(
+                        label: l10n.reason,
+                        controller: _noteController,
+                        prefixIcon: const Icon(Icons.note_alt_outlined),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return l10n.pleaseEnterReason;
+                          }
+                          if (value.trim().length < 10) {
+                            return l10n.tooShort;
+                          }
+                          return null;
+                        },
+                      ),
+
+                    const SizedBox(height: 24),
+
+                    // Buttons
+                    BlocBuilder<OrderCubit, OrderState>(
+                      builder: (context, state) {
+                        final isLoading = state is CancelingOrder;
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: AppCustomButton(
+                                onPressed: () => Navigator.pop(context),
+                                text: l10n.back,
+                                isSecondary: true,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: AppCustomButton(
+                                onPressed: _handleCancel,
+                                text: l10n.confirm,
+                                isDelete: true,
+                                isLoading: isLoading,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(AppLocalizations.of(context)?.cancel ?? 'No'),
-        ),
-        TextButton(
-          onPressed: _cancel,
-          style: TextButton.styleFrom(foregroundColor: Colors.red),
-          child: const Text('Yes, Cancel Order'),
-        ),
-      ],
     );
+  }
+
+  void _handleCancel() {
+    if (_formKey.currentState!.validate()) {
+      final cubit = context.read<OrderCubit>();
+      final note = _noteController.text.trim();
+
+      if (widget.isUnavailable) {
+        cubit.cancelOrderUnavailable(orderId: widget.orderId);
+      } else {
+        cubit.cancelOrderOther(orderId: widget.orderId, note: note);
+      }
+    }
   }
 }

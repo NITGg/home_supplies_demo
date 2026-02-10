@@ -8,88 +8,116 @@ import 'order_states.dart';
 class OrderCubit extends Cubit<OrderState> {
   final OrderRepository _repository;
 
-  OrderCubit({
-    OrderRepository? repository,
-  })  : _repository = repository ?? OrderRepository(),
+  /// Cached list so background operations never wipe the UI.
+  OrdersLoaded? _lastLoadedState;
+
+  OrderCubit({OrderRepository? repository})
+      : _repository = repository ?? OrderRepository(),
         super(OrderInitial());
 
-  // Create Order
-  Future<void> createOrder(Order order) async {
-    emit(OrderLoading());
-    try {
-      log('OrderCubit: Creating order');
-      final response = await _repository.createOrder(order);
-      log('OrderCubit: Order created successfully - ${response.order.orderNumber}');
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
-      emit(OrderSuccess(
-        message: response.message,
-        order: response.order,
-      ));
-    } catch (e) {
-      log('OrderCubit: Error creating order: $e');
-      emit(OrderError(e.toString()));
-    }
+  /// Emits [OrderOperationLoading] while keeping the builder showing
+  /// [_lastLoadedState] (the builder ignores [OrderOperationLoading] and
+  /// falls through to showing the last known list).
+  void _emitOperationLoading() => emit(OrderOperationLoading());
+
+  /// After a mutating operation completes, restore the list so the UI
+  /// never flickers to empty.
+  void _restoreList() {
+    if (_lastLoadedState != null) emit(_lastLoadedState!);
   }
 
-  // Load All Orders
+  // ── Load Orders ────────────────────────────────────────────────────────────
+
   Future<void> loadOrders({int page = 1}) async {
     if (page == 1) {
-      emit(OrderLoading());
+      // Only show full-screen spinner if there is no cached list yet.
+      if (_lastLoadedState == null) emit(OrderLoading());
     } else {
       emit(OrdersLoadingMore());
     }
 
     try {
-      log('OrderCubit: Loading orders - page $page');
+      log('OrderCubit: Loading orders — page $page');
       final response = await _repository.getOrders(page: page);
       log('OrderCubit: Loaded ${response.orders.length} orders');
 
-      if (page == 1) {
-        emit(OrdersLoaded(
-          orders: response.orders,
-          totalOrders: response.totalOrders,
-          totalPages: response.totalPages,
-          currentPage: page,
-        ));
-      } else {
-        // For pagination, we need to append to existing orders
-        final currentState = state;
-        if (currentState is OrdersLoaded) {
-          emit(OrdersLoaded(
-            orders: [...currentState.orders, ...response.orders],
-            totalOrders: response.totalOrders,
-            totalPages: response.totalPages,
-            currentPage: page,
-          ));
-        }
-      }
+      final newState = page == 1
+          ? OrdersLoaded(
+        orders: response.orders,
+        totalOrders: response.totalOrders,
+        totalPages: response.totalPages,
+        currentPage: page,
+      )
+          : OrdersLoaded(
+        orders: [
+          ...(_lastLoadedState?.orders ?? []),
+          ...response.orders,
+        ],
+        totalOrders: response.totalOrders,
+        totalPages: response.totalPages,
+        currentPage: page,
+      );
+
+      _lastLoadedState = newState;
+      emit(newState);
     } catch (e) {
       log('OrderCubit: Error loading orders: $e');
       emit(OrderError(e.toString()));
     }
   }
 
-  // Cancel Order
-  Future<void> cancelOrder(int orderId, String reason) async {
-    emit(OrderLoading());
+  // ── Create Order ───────────────────────────────────────────────────────────
+
+  Future<void> createOrder(Order order) async {
+    _emitOperationLoading();
     try {
-      log('OrderCubit: Cancelling order $orderId');
-      final response = await _repository.cancelOrder(orderId, reason);
-      log('OrderCubit: Order cancelled successfully');
+      log('OrderCubit: Creating order');
+      final response = await _repository.createOrder(order);
+      log('OrderCubit: Order created — ${response.order.orderNumber}');
 
-      emit(OrderCancelled(
-        message: 'Order cancelled successfully',
-      ));
+      emit(OrderSuccess(message: response.message, order: response.order));
 
-      // Reload orders after cancellation
+      // Reload list in background; emits new OrdersLoaded when done.
       await loadOrders();
     } catch (e) {
-      log('OrderCubit: Error cancelling order: $e');
+      log('OrderCubit: Error creating order: $e');
+      _restoreList();
       emit(OrderError(e.toString()));
     }
   }
 
-  // Load Proposals for an Order
+  // ── Cancel Order (reason-based) ────────────────────────────────────────────
+
+  Future<void> cancelOrder(int orderId, String reason) async {
+    emit(CancelingOrder());
+    try {
+      log('OrderCubit: Cancelling order $orderId');
+      await _repository.cancelOrder(orderId, reason);
+      log('OrderCubit: Order cancelled');
+
+      emit(const OrderCancelled(message: 'Order cancelled successfully'));
+      await loadOrders();
+    } catch (e) {
+      log('OrderCubit: Error cancelling order: $e');
+      emit(OrderCancelError(e.toString()));
+    }
+  }
+
+  /// Cancel because the product is unavailable (no reason text required).
+  Future<void> cancelOrderUnavailable({required int orderId}) =>
+      cancelOrder(orderId, 'Product unavailable');
+
+  /// Cancel with a custom other reason.
+  Future<void> cancelOrderOther({
+    required int orderId,
+    required String note,
+  }) =>
+      cancelOrder(orderId, note);
+
+  // ── Load Proposals ─────────────────────────────────────────────────────────
+
   Future<void> loadProposals(int orderId) async {
     emit(ProposalsLoading(orderId));
     try {
@@ -97,17 +125,15 @@ class OrderCubit extends Cubit<OrderState> {
       final response = await _repository.getOrderProposals(orderId);
       log('OrderCubit: Loaded ${response.proposals.length} proposals');
 
-      emit(ProposalsLoaded(
-        orderId: orderId,
-        proposals: response.proposals,
-      ));
+      emit(ProposalsLoaded(orderId: orderId, proposals: response.proposals));
     } catch (e) {
       log('OrderCubit: Error loading proposals: $e');
       emit(ProposalsError(orderId, e.toString()));
     }
   }
 
-  // Accept Proposal
+  // ── Accept Proposal ────────────────────────────────────────────────────────
+
   Future<void> acceptProposal({
     required int orderId,
     required int proposalId,
@@ -120,23 +146,22 @@ class OrderCubit extends Cubit<OrderState> {
         proposalId: proposalId,
         status: 'ACCEPTED',
       );
-      log('OrderCubit: Proposal accepted successfully');
+      log('OrderCubit: Proposal accepted');
 
-      emit(ProposalAccepted(
-        orderId: orderId,
-        proposalId: proposalId,
-      ));
+      emit(ProposalAccepted(orderId: orderId, proposalId: proposalId));
 
-      // Reload orders and proposals
+      // Reload both list and proposals; restore list first so UI doesn't flicker.
       await loadOrders();
       await loadProposals(orderId);
     } catch (e) {
       log('OrderCubit: Error accepting proposal: $e');
+      _restoreList();
       emit(OrderError(e.toString()));
     }
   }
 
-  // Reject Proposal
+  // ── Reject Proposal ────────────────────────────────────────────────────────
+
   Future<void> rejectProposal({
     required int orderId,
     required int proposalId,
@@ -149,14 +174,9 @@ class OrderCubit extends Cubit<OrderState> {
         proposalId: proposalId,
         status: 'REJECTED',
       );
-      log('OrderCubit: Proposal rejected successfully');
+      log('OrderCubit: Proposal rejected');
 
-      emit(ProposalRejected(
-        orderId: orderId,
-        proposalId: proposalId,
-      ));
-
-      // Reload proposals
+      emit(ProposalRejected(orderId: orderId, proposalId: proposalId));
       await loadProposals(orderId);
     } catch (e) {
       log('OrderCubit: Error rejecting proposal: $e');
@@ -164,7 +184,8 @@ class OrderCubit extends Cubit<OrderState> {
     }
   }
 
-  // Confirm Delivery (from QR Code)
+  // ── Confirm Delivery ───────────────────────────────────────────────────────
+
   Future<void> confirmDelivery({
     required int orderId,
     required int courierId,
@@ -176,19 +197,16 @@ class OrderCubit extends Cubit<OrderState> {
         orderId: orderId,
         courierId: courierId,
       );
-      log('OrderCubit: Delivery confirmed successfully');
+      log('OrderCubit: Delivery confirmed');
 
       emit(DeliveryConfirmed(orderId: orderId));
-
-      // Reload orders
       await loadOrders();
     } catch (e) {
       log('OrderCubit: Error confirming delivery: $e');
+      _restoreList();
       emit(OrderError(e.toString()));
     }
   }
 
-  void reset() {
-    emit(OrderInitial());
-  }
+  void reset() => emit(OrderInitial());
 }

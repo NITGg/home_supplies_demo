@@ -528,7 +528,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get female => 'Female';
 
   @override
-  String get yourAccountWillBeVerified => 'Your go information will be verified by our team before activation.';
+  String get yourAccountWillBeVerified => 'Your courier information will be verified by our team before activation.';
 
   @override
   String get enterPhoneToResetPassword => 'Enter your phone number to reset your password';
@@ -873,6 +873,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wallet => 'Wallet';
+
+  @override
+  String get viewProposals => 'View Proposals';
+
+  @override
+  String get useThisAddress => 'Use this address';
+
+  @override
+  String get selectArea => 'Select area';
+
+  @override
+  String get locationRequired => 'Location is required';
+
+  @override
+  String get openSettings => 'Open settings';
+
+  @override
+  String get setAsDefault => 'Set as default';
+
+  @override
+  String get pleaseSelectArea => 'Please select an area';
+
+  @override
+  String get noAreasAvailable => 'No areas available';
+
+  @override
+  String get addressNameHint => 'Address name';
+
+  @override
+  String get addressNameOptional => 'Address name (optional)';
+
+  @override
+  String get pleaseSelectLocation => 'Please select a location';
+
+  @override
+  String get oneTimeAddress => 'Enter Adress (Don\'t Save)';
+
+  @override
+  String get productImageOptional => 'Product Image (Optional)';
+
+  @override
+  String get newOrder => 'New Order';
 
   @override
   String get cancelOrderWarning => 'Are you sure you want to cancel this order? This action cannot be undone.';

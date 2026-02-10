@@ -875,5 +875,47 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wallet => 'المحفظة';
 
   @override
+  String get viewProposals => 'العروض';
+
+  @override
+  String get useThisAddress => 'استخدام هذا العنوان';
+
+  @override
+  String get selectArea => 'اختر المنطقة';
+
+  @override
+  String get locationRequired => 'الموقع مطلوب';
+
+  @override
+  String get openSettings => 'افتح الإعدادات';
+
+  @override
+  String get setAsDefault => 'تعيين كافتراضي';
+
+  @override
+  String get pleaseSelectArea => 'يرجى اختيار المنطقة';
+
+  @override
+  String get noAreasAvailable => 'لا توجد مناطق متاحة';
+
+  @override
+  String get addressNameHint => 'اسم العنوان';
+
+  @override
+  String get addressNameOptional => 'اسم العنوان (اختياري)';
+
+  @override
+  String get pleaseSelectLocation => 'يرجى اختيار الموقع';
+
+  @override
+  String get oneTimeAddress => 'إدخال عنوان (لا تحفط)';
+
+  @override
+  String get productImageOptional => 'صورة المنتج (اختياري)';
+
+  @override
+  String get newOrder => 'طلب جديد';
+
+  @override
   String get cancelOrderWarning => 'هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها';
 }

@@ -1,8 +1,11 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../core/widgets/loading_screen.dart';
+import '../features/addresses/manager/address_cubit.dart';
+import '../features/addresses/presentation/address_management_screen.dart';
 import '../features/auth/presentation/pages/login_screen.dart';
 import '../features/auth/presentation/pages/profile_screen.dart';
 import '../features/auth/presentation/pages/register_screen.dart';
@@ -69,6 +72,12 @@ Future<GoRouter> createAppRouter({
             path: '/auth/login',
             name: 'login',
             builder: (context, state) => const LoginScreen(),
+          ),GoRoute(
+            path: '/addressesManagement',
+            name: 'addressesManagement',
+            builder: (context, state) => BlocProvider(
+                create: (_) => AddressCubit(),
+                child: const AddressManagementScreen()),
           ),
           // GoRoute(
           //   path: '/auth/verify-otp',

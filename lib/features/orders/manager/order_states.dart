@@ -10,25 +10,31 @@ abstract class OrderState {
 
 class OrderInitial extends OrderState {}
 
+/// Full-screen loading (first load only — list is empty).
 class OrderLoading extends OrderState {}
 
+/// Pagination append — list already visible, spinner at bottom.
 class OrdersLoadingMore extends OrderState {}
 
-// Create Order States
+/// Background operation in progress (create / cancel / accept / reject).
+/// The UI keeps showing the existing [OrdersLoaded] state — this is only
+/// consumed by listeners for the loading indicator on action buttons.
+class OrderOperationLoading extends OrderState {}
+
+// ── Create Order ──────────────────────────────────────────────────────────────
+
 class OrderSuccess extends OrderState {
   final String message;
   final Order order;
 
-  const OrderSuccess({
-    required this.message,
-    required this.order,
-  });
+  const OrderSuccess({required this.message, required this.order});
 
   @override
   List<Object?> get props => [message, order];
 }
 
-// Orders List States
+// ── Orders List ───────────────────────────────────────────────────────────────
+
 class OrdersLoaded extends OrderState {
   final List<Order> orders;
   final int totalOrders;
@@ -48,19 +54,30 @@ class OrdersLoaded extends OrderState {
   bool get hasMore => currentPage < totalPages;
 }
 
-// Cancel Order States
+// ── Cancel Order ──────────────────────────────────────────────────────────────
+
+class CancelingOrder extends OrderState {}
+
 class OrderCancelled extends OrderState {
   final String message;
 
-  const OrderCancelled({
-    required this.message,
-  });
+  const OrderCancelled({required this.message});
 
   @override
   List<Object?> get props => [message];
 }
 
-// Proposals States
+class OrderCancelError extends OrderState {
+  final String message;
+
+  const OrderCancelError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+// ── Proposals ─────────────────────────────────────────────────────────────────
+
 class ProposalsLoading extends OrderState {
   final int orderId;
 
@@ -74,10 +91,7 @@ class ProposalsLoaded extends OrderState {
   final int orderId;
   final List<Proposal> proposals;
 
-  const ProposalsLoaded({
-    required this.orderId,
-    required this.proposals,
-  });
+  const ProposalsLoaded({required this.orderId, required this.proposals});
 
   @override
   List<Object?> get props => [orderId, proposals];
@@ -93,17 +107,15 @@ class ProposalsError extends OrderState {
   List<Object?> get props => [orderId, message];
 }
 
-// Proposal Update States
+// ── Proposal Update ───────────────────────────────────────────────────────────
+
 class ProposalUpdating extends OrderState {}
 
 class ProposalAccepted extends OrderState {
   final int orderId;
   final int proposalId;
 
-  const ProposalAccepted({
-    required this.orderId,
-    required this.proposalId,
-  });
+  const ProposalAccepted({required this.orderId, required this.proposalId});
 
   @override
   List<Object?> get props => [orderId, proposalId];
@@ -113,16 +125,14 @@ class ProposalRejected extends OrderState {
   final int orderId;
   final int proposalId;
 
-  const ProposalRejected({
-    required this.orderId,
-    required this.proposalId,
-  });
+  const ProposalRejected({required this.orderId, required this.proposalId});
 
   @override
   List<Object?> get props => [orderId, proposalId];
 }
 
-// Delivery Confirmation States
+// ── Delivery Confirmation ─────────────────────────────────────────────────────
+
 class DeliveryConfirming extends OrderState {}
 
 class DeliveryConfirmed extends OrderState {
@@ -134,7 +144,8 @@ class DeliveryConfirmed extends OrderState {
   List<Object?> get props => [orderId];
 }
 
-// Error State
+// ── Error ─────────────────────────────────────────────────────────────────────
+
 class OrderError extends OrderState {
   final String message;
 

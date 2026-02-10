@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/loading_screen.dart';
@@ -10,19 +11,6 @@ import '../manager/address_states.dart';
 import '../manager/location_cubit.dart';
 import 'address_form_sheet.dart';
 
-/// Standalone screen for managing saved addresses.
-/// Can be pushed onto the navigator from a profile page, settings, or anywhere.
-///
-/// Usage:
-///   Navigator.push(
-///     context,
-///     MaterialPageRoute(
-///       builder: (_) => BlocProvider(
-///         create: (_) => AddressCubit(),
-///         child: const AddressManagementScreen(),
-///       ),
-///     ),
-///   );
 class AddressManagementScreen extends StatefulWidget {
   const AddressManagementScreen({super.key});
 
@@ -107,6 +95,11 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.address),
+        leading: BackButton(
+          onPressed: () {
+            context.pop();
+          },
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_location_alt_outlined),
@@ -279,10 +272,7 @@ class _AddressCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     address.detailedAddress,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

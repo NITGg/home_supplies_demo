@@ -402,6 +402,20 @@
         "tooShort": "قصير للغاية",
         "back": "الرجوع",
         "wallet": "المحفظة",
+        "viewProposals": "العروض",
+          "useThisAddress": "استخدام هذا العنوان",
+          "selectArea": "اختر المنطقة",
+          "locationRequired": "الموقع مطلوب",
+          "openSettings": "افتح الإعدادات",
+          "setAsDefault": "تعيين كافتراضي",
+          "pleaseSelectArea": "يرجى اختيار المنطقة",
+          "noAreasAvailable": "لا توجد مناطق متاحة",
+          "addressNameHint": "اسم العنوان",
+          "addressNameOptional": "اسم العنوان (اختياري)",
+          "pleaseSelectLocation": "يرجى اختيار الموقع",
+          "oneTimeAddress": "إدخال عنوان (لا تحفط)",
+          "productImageOptional": "صورة المنتج (اختياري)",
+          "newOrder": "طلب جديد",
         "cancelOrderWarning": "هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها"
 
 

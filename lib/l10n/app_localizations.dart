@@ -1136,7 +1136,7 @@ abstract class AppLocalizations {
   /// No description provided for @yourAccountWillBeVerified.
   ///
   /// In en, this message translates to:
-  /// **'Your go information will be verified by our team before activation.'**
+  /// **'Your courier information will be verified by our team before activation.'**
   String get yourAccountWillBeVerified;
 
   /// No description provided for @enterPhoneToResetPassword.
@@ -1792,6 +1792,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Wallet'**
   String get wallet;
+
+  /// No description provided for @viewProposals.
+  ///
+  /// In en, this message translates to:
+  /// **'View Proposals'**
+  String get viewProposals;
+
+  /// No description provided for @useThisAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this address'**
+  String get useThisAddress;
+
+  /// No description provided for @selectArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Select area'**
+  String get selectArea;
+
+  /// No description provided for @locationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is required'**
+  String get locationRequired;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get openSettings;
+
+  /// No description provided for @setAsDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as default'**
+  String get setAsDefault;
+
+  /// No description provided for @pleaseSelectArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select an area'**
+  String get pleaseSelectArea;
+
+  /// No description provided for @noAreasAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No areas available'**
+  String get noAreasAvailable;
+
+  /// No description provided for @addressNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Address name'**
+  String get addressNameHint;
+
+  /// No description provided for @addressNameOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Address name (optional)'**
+  String get addressNameOptional;
+
+  /// No description provided for @pleaseSelectLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a location'**
+  String get pleaseSelectLocation;
+
+  /// No description provided for @oneTimeAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Adress (Don\'t Save)'**
+  String get oneTimeAddress;
+
+  /// No description provided for @productImageOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Image (Optional)'**
+  String get productImageOptional;
+
+  /// No description provided for @newOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'New Order'**
+  String get newOrder;
 
   /// No description provided for @cancelOrderWarning.
   ///
