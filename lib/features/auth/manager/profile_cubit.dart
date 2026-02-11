@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/features/auth/manager/profile_states.dart';
 import 'package:tawreedat_go/core/utils/secure_storage_service.dart';
 
+import '../../../core/utils/extract_error_message.dart';
 import '../data/models/user_profile_model.dart';
 import '../data/repositories/profile_repository.dart';
 import '../data/repositories/auth_repository.dart';
@@ -66,11 +67,11 @@ class ProfileCubit extends Cubit<ProfileState> {
       log('ProfileCubit fetchProfile DioException: $e');
       log('Response data: ${e.response?.data}');
       log('Status code: ${e.response?.statusCode}');
-      emit(ProfileFailure(_extractErrorMessage(e)));
+      emit(ProfileFailure(extractErrorMessage(e)));
     } catch (e, stackTrace) {
       log('ProfileCubit fetchProfile error: $e');
       log('Stack trace: $stackTrace');
-      emit(ProfileFailure(_extractErrorMessage(e)));
+      emit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
@@ -106,10 +107,10 @@ class ProfileCubit extends Cubit<ProfileState> {
       log('ProfileCubit updateProfile DioException: $e');
       log('Response data: ${e.response?.data}');
       log('Status code: ${e.response?.statusCode}');
-      emit(ProfileFailure(_extractErrorMessage(e)));
+      emit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
       log('ProfileCubit updateProfile error: $e');
-      emit(ProfileFailure(_extractErrorMessage(e)));
+      emit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
@@ -160,32 +161,12 @@ class ProfileCubit extends Cubit<ProfileState> {
       log('Status code: ${e.response?.statusCode}');
       log('Request data: ${e.requestOptions.data}');
       log('Request headers: ${e.requestOptions.headers}');
-      emit(ProfileFailure(_extractErrorMessage(e)));
+      emit(ProfileFailure(extractErrorMessage(e)));
     } catch (e, stackTrace) {
       log('ProfileCubit updateProfileWithPhoto error: $e');
       log('Stack trace: $stackTrace');
-      emit(ProfileFailure(_extractErrorMessage(e)));
+      emit(ProfileFailure(extractErrorMessage(e)));
     }
-  }
-
-  /// Helper function to extract error messages
-  String _extractErrorMessage(dynamic e) {
-    String message = 'حدث خطأ غير متوقع';
-
-    if (e is DioException) {
-      try {
-        final data = e.response?.data;
-        if (data is Map && data['message'] != null) {
-          message = data['message'];
-        } else if (data is String) {
-          message = data;
-        }
-      } catch (_) {}
-    } else {
-      message = e.toString();
-    }
-
-    return message;
   }
 
   void reset() {

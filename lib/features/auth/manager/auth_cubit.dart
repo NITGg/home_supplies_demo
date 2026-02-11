@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/utils/secure_storage_service.dart';
 import 'package:tawreedat_go/features/auth/data/repositories/auth_repository.dart';
 
+import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/social_auth_service.dart';
 import 'auth_state.dart';
 
@@ -44,7 +45,7 @@ class AuthCubit extends Cubit<AuthState> {
 
       emit(AuthSuccess(shortAuthResponse: result));
     } catch (e) {
-      emit(AuthFailure(_extractErrorMessage(e)));
+      emit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
@@ -65,7 +66,7 @@ class AuthCubit extends Cubit<AuthState> {
 
       emit(AuthSuccess(shortAuthResponse: result));
     } catch (e) {
-      emit(AuthFailure(_extractErrorMessage(e)));
+      emit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
@@ -76,7 +77,7 @@ class AuthCubit extends Cubit<AuthState> {
       final response = await _repository.deleteProfile(token ?? '');
       emit(AuthProfileDeleted(response.message));
     } catch (e) {
-      emit(AuthFailure(_extractErrorMessage(e)));
+      emit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
@@ -94,7 +95,7 @@ class AuthCubit extends Cubit<AuthState> {
         emit(AuthFailure('Google sign-in was cancelled.'));
       }
     } catch (e) {
-      emit(AuthFailure(_extractErrorMessage(e)));
+      emit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
@@ -116,7 +117,7 @@ class AuthCubit extends Cubit<AuthState> {
       );
       emit(AuthUpdateSuccess(updatedUser: result.user));
     } catch (e) {
-      emit(AuthFailure(_extractErrorMessage(e)));
+      emit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
@@ -136,7 +137,7 @@ class AuthCubit extends Cubit<AuthState> {
       );
       emit(AuthUpdateSuccess());
     } catch (e) {
-      emit(AuthFailure(_extractErrorMessage(e)));
+      emit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
@@ -163,28 +164,8 @@ class AuthCubit extends Cubit<AuthState> {
         emit(AuthFailure('تم إلغاء تسجيل الدخول بواسطة Apple'));
       }
     } catch (e) {
-      emit(AuthFailure(_extractErrorMessage(e)));
+      emit(AuthFailure(extractErrorMessage(e)));
     }
-  }
-
-  // Helper function to extract error messages
-  String _extractErrorMessage(dynamic e) {
-    String message = 'حدث خطأ غير متوقع';
-
-    if (e is DioException) {
-      try {
-        final data = e.response?.data;
-        if (data is Map && data['message'] != null) {
-          message = data['message'];
-        } else if (data is String) {
-          message = data;
-        }
-      } catch (_) {}
-    } else {
-      message = e.toString();
-    }
-
-    return message;
   }
 }
 
