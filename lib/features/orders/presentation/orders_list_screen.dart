@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/cancel_order_sheet.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/proposal_sheet.dart';
 import '../../../core/style/app_colors.dart';
-import '../../../core/widgets/loading_screen.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/models/order_model.dart';
 import '../manager/order_cubit.dart';
@@ -40,7 +40,6 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   }
 
   void _onScroll() {
-    // Only paginate in history tab
     if (_viewMode != ViewMode.history) return;
 
     if (_scrollController.position.pixels >=
@@ -92,7 +91,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider.value(
         value: context.read<OrderCubit>(),
-        child: OrderCancelBottomSheet(isUnavailable: false, orderId: order.id!),
+        child: OrderCancelBottomSheet(
+            isUnavailable: false, orderId: order.id!),
       ),
     );
   }
@@ -145,7 +145,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         color: AppColors.kPrimaryColor,
         child: BlocConsumer<OrderCubit, OrderState>(
           listenWhen: (_, current) =>
-              current is OrderCancelled ||
+          current is OrderCancelled ||
               current is OrderCancelError ||
               current is DeliveryConfirmed ||
               current is OrderError ||
@@ -178,12 +178,12 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             }
           },
           buildWhen: (previous, current) =>
-              current is OrderLoading ||
+          current is OrderLoading ||
               current is OrdersLoaded ||
               current is OrderError,
           builder: (context, state) {
             if (state is OrderLoading) {
-              return _buildLoadingView();
+              return _buildShimmerView();
             }
 
             if (state is OrderError) {
@@ -201,19 +201,26 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     );
   }
 
-  Widget _buildLoadingView() {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.7,
-          child: const Center(
-            child: LoadingScreen(isOne: true, asWidget: true),
-          ),
-        ),
-      ],
+  // ── Shimmer loading view ───────────────────────────────────────────────────
+
+  Widget _buildShimmerView() {
+    return Skeletonizer(
+      enabled: true,
+      effect: ShimmerEffect(
+        baseColor: Colors.grey.shade200,
+        highlightColor: Colors.grey.shade50,
+        duration: const Duration(milliseconds: 1200),
+      ),
+      child: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: 5,
+        itemBuilder: (_, __) => const _OrderCardSkeleton(),
+      ),
     );
   }
+
+  // ── Error view ─────────────────────────────────────────────────────────────
 
   Widget _buildErrorView(OrderError state) {
     return ListView(
@@ -236,7 +243,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                         ? cubit.loadActiveOrders()
                         : cubit.loadHistoryOrders();
                   },
-                  child: Text(AppLocalizations.of(context)?.retry ?? 'Retry'),
+                  child:
+                  Text(AppLocalizations.of(context)?.retry ?? 'Retry'),
                 ),
               ],
             ),
@@ -246,15 +254,17 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     );
   }
 
+  // ── Orders list ────────────────────────────────────────────────────────────
+
   Widget _buildOrdersList(OrdersLoaded state) {
     final isCorrectMode =
         (_viewMode == ViewMode.active &&
             state.viewMode == OrderViewMode.active) ||
-        (_viewMode == ViewMode.history &&
-            state.viewMode == OrderViewMode.history);
+            (_viewMode == ViewMode.history &&
+                state.viewMode == OrderViewMode.history);
 
     if (!isCorrectMode) {
-      return _buildLoadingView();
+      return _buildShimmerView();
     }
 
     if (state.orders.isEmpty) {
@@ -273,10 +283,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
-      itemCount:
-          state.orders.length +
+      itemCount: state.orders.length +
           (_viewMode == ViewMode.history && state.hasMore ? 1 : 0),
       itemBuilder: (context, index) {
+        // Pagination spinner at the bottom
         if (index == state.orders.length) {
           return const Padding(
             padding: EdgeInsets.all(16),
@@ -291,6 +301,128 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           onCancel: () => _showCancelSheet(order),
         );
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Skeleton that mirrors the real OrderCard's visual structure
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _OrderCardSkeleton extends StatelessWidget {
+  const _OrderCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header row: order id chip + status badge ─────────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Order number placeholder
+                Container(
+                  width: 100,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                // Status badge placeholder
+                Container(
+                  width: 72,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // ── Product / description line ────────────────────────────────
+            Container(
+              width: double.infinity,
+              height: 14,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.55,
+              height: 14,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Meta row: date + price ────────────────────────────────────
+            Row(
+              children: [
+                // Date chip
+                Container(
+                  width: 90,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const Spacer(),
+                // Price
+                Container(
+                  width: 60,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // ── Action buttons row ────────────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
