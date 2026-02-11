@@ -165,7 +165,7 @@ class WalletBadgeProgressSection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '$completedCount / ${currentBadge.maxCount} ${localizations.deliveries}',
+                    '$completedCount / ${currentBadge.maxCount} ${localizations.orders}',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.white.withOpacity(0.9),
@@ -226,7 +226,7 @@ class WalletBadgeProgressSection extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             isArabic
-                                ? '$remainingToNext توصيلة للوصول إلى ${nextBadge!.nameAr.isNotEmpty ? nextBadge!.nameAr : nextBadge!.name}'
+                                ? '$remainingToNext طلب للوصول إلى ${nextBadge!.nameAr.isNotEmpty ? nextBadge!.nameAr : nextBadge!.name}'
                                 : '$remainingToNext more to reach ${nextBadge!.name}',
                             style: TextStyle(
                               fontSize: 12,
