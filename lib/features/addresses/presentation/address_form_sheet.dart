@@ -10,6 +10,7 @@ import '../manager/address_states.dart';
 import '../manager/governorate_cubit.dart';
 import '../manager/governorate_states.dart';
 import '../manager/location_cubit.dart';
+import 'location_picker_screen.dart';
 
 class AddressFormBottomSheet extends StatefulWidget {
   final Address? address;
@@ -65,14 +66,41 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
     super.dispose();
   }
 
-  Future<void> _getCurrentLocation() async {
-    context.read<LocationCubit>().getCurrentLocation();
+  Future<void> _pickLocationFromMap() async {
+    final result = await Navigator.push<Map<String, String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MapLocationPickerScreen(
+          initialLat: _latController.text.isEmpty ? null : _latController.text,
+          initialLong:
+          _longController.text.isEmpty ? null : _longController.text,
+          initialAddress: _detailedAddressController.text.isEmpty
+              ? null
+              : _detailedAddressController.text,
+        ),
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _latController.text = result['latitude'] ?? '';
+        _longController.text = result['longitude'] ?? '';
+
+        // Pre-fill detailed address if empty
+        if (_detailedAddressController.text.isEmpty &&
+            result['address'] != null &&
+            result['address']!.isNotEmpty) {
+          _detailedAddressController.text = result['address']!;
+        }
+
+        _hasLocation = _latController.text.isNotEmpty &&
+            _longController.text.isNotEmpty;
+      });
+    }
   }
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      // Area is validated by the DropdownButtonFormField validator,
-      // but double-check here to show a SnackBar fallback.
       if (_selectedAreaId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -84,7 +112,6 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
         return;
       }
 
-      // Lat / Long are always required
       if (_latController.text.trim().isEmpty ||
           _longController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -101,7 +128,6 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
       final address = Address(
         id: widget.address?.id,
         areaId: _selectedAreaId!,
-        // Name and isDefault are only relevant when saving
         name: widget.saveAddress
             ? (_nameController.text.trim().isEmpty
             ? null
@@ -135,6 +161,8 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
 
     return MultiBlocListener(
       listeners: [
+        // LocationCubit listener kept in case it's still used elsewhere,
+        // but no GPS button is shown in this form.
         BlocListener<LocationCubit, LocationState>(
           listener: (context, state) {
             if (state is LocationLoaded) {
@@ -219,7 +247,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                       controller: scrollController,
                       padding: const EdgeInsets.all(16),
                       children: [
-                        // ── Address Name (only when saving) ─────────────────
+                        // ── Address Name (only when saving) ──────────────────
                         if (widget.saveAddress) ...[
                           AppTextFormField(
                             controller: _nameController,
@@ -330,6 +358,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
 
                         // ── Detailed Address ─────────────────────────────────
                         AppTextFormField(
+                          enabled: false,
                           controller: _detailedAddressController,
                           label: l10n.detailedAddress,
                           validator: (value) {
@@ -358,91 +387,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                           const SizedBox(height: 16),
                         ],
 
-                        // ── Location error ───────────────────────────────────
-                        BlocBuilder<LocationCubit, LocationState>(
-                          builder: (context, locationState) {
-                            if (locationState is LocationError) {
-                              return AnimatedContainer(
-                                duration:
-                                const Duration(milliseconds: 300),
-                                margin:
-                                const EdgeInsets.only(bottom: 16),
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade50,
-                                  borderRadius:
-                                  BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.red.shade200,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(Icons.error_outline,
-                                        color: Colors.red.shade700,
-                                        size: 22),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            locationState.message,
-                                            style: TextStyle(
-                                              color:
-                                              Colors.red.shade900,
-                                              fontSize: 14,
-                                              fontWeight:
-                                              FontWeight.w500,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          GestureDetector(
-                                            onTap: () => context
-                                                .read<LocationCubit>()
-                                                .openLocationSettings(),
-                                            child: Row(
-                                              mainAxisSize:
-                                              MainAxisSize.min,
-                                              children: [
-                                                Icon(Icons.settings,
-                                                    size: 16,
-                                                    color: Colors
-                                                        .red.shade700),
-                                                const SizedBox(
-                                                    width: 4),
-                                                Text(
-                                                  l10n.openSettings,
-                                                  style: TextStyle(
-                                                    color: Colors
-                                                        .red.shade700,
-                                                    fontSize: 14,
-                                                    fontWeight:
-                                                    FontWeight.bold,
-                                                    decoration:
-                                                    TextDecoration
-                                                        .underline,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
-
-                        // ── Location status + button ──────────────────────────
+                        // ── Location status + pick on map button ─────────────
                         Column(
                           children: [
                             // Success indicator
@@ -455,15 +400,18 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                   return Transform.scale(
                                     scale: value,
                                     child: Container(
-                                      margin: const EdgeInsets.fromLTRB(
+                                      margin:
+                                      const EdgeInsets.fromLTRB(
                                           8, 0, 8, 10),
-                                      padding: const EdgeInsets.all(16),
+                                      padding:
+                                      const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
                                         color: Colors.green.shade50,
                                         borderRadius:
                                         BorderRadius.circular(6),
                                         border: Border.all(
-                                          color: Colors.green.shade200,
+                                          color:
+                                          Colors.green.shade200,
                                           width: 2,
                                         ),
                                       ),
@@ -472,13 +420,13 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                         MainAxisAlignment.center,
                                         children: [
                                           Icon(Icons.location_on,
-                                              color:
-                                              Colors.green.shade700,
+                                              color: Colors
+                                                  .green.shade700,
                                               size: 24),
                                           const SizedBox(width: 8),
                                           Icon(Icons.check_circle,
-                                              color:
-                                              Colors.green.shade700,
+                                              color: Colors
+                                                  .green.shade700,
                                               size: 24),
                                           const SizedBox(width: 12),
                                           Text(
@@ -487,7 +435,8 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                               color:
                                               Colors.green.shade700,
                                               fontSize: 16,
-                                              fontWeight: FontWeight.w600,
+                                              fontWeight:
+                                              FontWeight.w600,
                                             ),
                                           ),
                                         ],
@@ -497,8 +446,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                 },
                               ),
 
-                            // Location required warning (shown only if
-                            // user tries to submit without location)
+                            // Location required warning
                             if (!_hasLocation)
                               Padding(
                                 padding:
@@ -507,7 +455,8 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                   children: [
                                     Icon(Icons.info_outline,
                                         size: 14,
-                                        color: Colors.orange.shade700),
+                                        color:
+                                        Colors.orange.shade700),
                                     const SizedBox(width: 6),
                                     Text(
                                       l10n.locationRequired,
@@ -520,18 +469,11 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                 ),
                               ),
 
-                            // Get location button
-                            BlocBuilder<LocationCubit, LocationState>(
-                              builder: (context, locationState) {
-                                final isLoading =
-                                locationState is LocationLoading;
-                                return AppCustomButton(
-                                  isSecondary: true,
-                                  onPressed: _getCurrentLocation,
-                                  text: l10n.useCurrentLocation,
-                                  isLoading: isLoading,
-                                );
-                              },
+                            // Single "Pick on Map" button (full width)
+                            AppCustomButton(
+                              isSecondary: true,
+                              onPressed: _pickLocationFromMap,
+                              text: l10n.pickOnMaps,
                             ),
                           ],
                         ),
@@ -541,7 +483,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                   ),
                 ),
 
-                // ── Submit Button ────────────────────────────────────────────
+                // ── Submit Button ─────────────────────────────────────────────
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -551,7 +493,8 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                         final isLoading =
                         state is AddressLoading;
                         return AppCustomButton(
-                          onPressed: isLoading ? () {} : _submit,
+                          onPressed:
+                          isLoading ? () {} : _submit,
                           text: widget.address != null
                               ? l10n.updateAddress
                               : l10n.addAddress,

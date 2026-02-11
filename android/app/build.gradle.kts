@@ -14,6 +14,12 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
+}
+
 android {
     namespace = "com.nit.tawreedat.go"
     compileSdk = flutter.compileSdkVersion
@@ -30,14 +36,14 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.nit.tawreedat.go"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        manifestPlaceholders["MAPS_API_KEY"] =
+            localProperties.getProperty("MAPS_API_KEY") ?: ""
     }
 
     signingConfigs {
@@ -62,9 +68,9 @@ android {
 }
 
 dependencies {
-    // Add this dependency for desugaring (use double quotes for Kotlin DSL)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
+
 flutter {
     source = "../.."
 }

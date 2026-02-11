@@ -204,6 +204,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get useCurrentLocation => 'Use current location';
 
   @override
+  String get pickOnMaps => 'Pick On Map';
+
+  @override
   String get locationObtained => 'Location obtained';
 
   @override
@@ -920,7 +923,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addressNameHint => 'Address name';
 
   @override
-  String get addressNameOptional => 'Address name (optional)';
+  String get addressNameOptional => 'Address name';
 
   @override
   String get pleaseSelectLocation => 'Please select a location';

@@ -79,6 +79,7 @@
 
   "gettingLocation": "Getting location",
   "useCurrentLocation": "Use current location",
+    "pickOnMaps": "Pick On Map",
   "locationObtained": "Location obtained",
 
   "postalCode": "Postal Code",
@@ -414,7 +415,7 @@
           "pleaseSelectArea": "Please select an area",
           "noAreasAvailable": "No areas available",
           "addressNameHint": "Address name",
-          "addressNameOptional": "Address name (optional)",
+          "addressNameOptional": "Address name",
           "pleaseSelectLocation": "Please select a location",
                     "oneTimeAddress": "Enter Adress (Don't Save)",
           "productImageOptional": "Product Image (Optional)",

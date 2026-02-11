@@ -485,6 +485,12 @@ abstract class AppLocalizations {
   /// **'Use current location'**
   String get useCurrentLocation;
 
+  /// No description provided for @pickOnMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick On Map'**
+  String get pickOnMaps;
+
   /// No description provided for @locationObtained.
   ///
   /// In en, this message translates to:
@@ -1886,7 +1892,7 @@ abstract class AppLocalizations {
   /// No description provided for @addressNameOptional.
   ///
   /// In en, this message translates to:
-  /// **'Address name (optional)'**
+  /// **'Address name'**
   String get addressNameOptional;
 
   /// No description provided for @pleaseSelectLocation.

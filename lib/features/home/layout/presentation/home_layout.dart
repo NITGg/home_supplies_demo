@@ -901,7 +901,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
                 },
                 child: SvgPicture.asset(
                   'assets/images/appbar/logo.svg',
-                  height: 40,
+                  height: 30,
                 ),
               ),
             ),

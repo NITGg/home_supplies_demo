@@ -201,7 +201,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gettingLocation => 'جاري البحث';
 
   @override
-  String get useCurrentLocation => 'استخدم موقعك الحالي';
+  String get useCurrentLocation => 'استخدم موقعك';
+
+  @override
+  String get pickOnMaps => 'اختر من الخريطة';
 
   @override
   String get locationObtained => 'حصلنا على الموقع';
@@ -920,7 +923,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addressNameHint => 'اسم العنوان';
 
   @override
-  String get addressNameOptional => 'اسم العنوان (اختياري)';
+  String get addressNameOptional => 'اسم العنوان';
 
   @override
   String get pleaseSelectLocation => 'يرجى اختيار الموقع';

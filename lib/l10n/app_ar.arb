@@ -79,7 +79,8 @@
   "state": "المحافظة",
 
   "gettingLocation": "جاري البحث",
-  "useCurrentLocation": "استخدم موقعك الحالي",
+  "useCurrentLocation": "استخدم موقعك",
+  "pickOnMaps": "اختر من الخريطة",
   "locationObtained": "حصلنا على الموقع",
 
   "postalCode": "الكود البريدي",
@@ -411,7 +412,7 @@
           "pleaseSelectArea": "يرجى اختيار المنطقة",
           "noAreasAvailable": "لا توجد مناطق متاحة",
           "addressNameHint": "اسم العنوان",
-          "addressNameOptional": "اسم العنوان (اختياري)",
+          "addressNameOptional": "اسم العنوان",
           "pleaseSelectLocation": "يرجى اختيار الموقع",
           "oneTimeAddress": "إدخال عنوان (لا تحفط)",
           "productImageOptional": "صورة المنتج (اختياري)",

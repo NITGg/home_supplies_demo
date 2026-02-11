@@ -1,9 +1,11 @@
 import 'dart:developer';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tawreedat_go/features/addresses/data/repo/address_repo.dart';
 import 'package:tawreedat_go/features/orders/manager/order_cubit.dart';
@@ -15,6 +17,7 @@ import 'core/error/config.dart';
 import 'core/error/handler.dart';
 import 'core/error/restart_widget.dart';
 import 'core/utils/api_client.dart';
+import 'core/utils/constants.dart';
 import 'core/utils/secure_storage_service.dart';
 import 'core/style/app_colors.dart';
 import 'core/widgets/loading_screen.dart';
@@ -90,11 +93,17 @@ Future<void> main() async {
         // Continue app initialization even if Google Sign-In fails
       }
 
+      // Enable Hybrid Composition for Android Google Maps
+      AndroidGoogleMapsFlutter.useAndroidViewSurface = true;
+
       SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,
       ]);
-
+      assert(
+        AppConstants.googleMapsApiKey.isNotEmpty,
+        'MAPS_API_KEY is not set. Add --dart-define=MAPS_API_KEY=... to your run config.',
+      );
       ApiClient.instance.init();
       await ConnectivityManager.instance.init();
       if (ConnectivityManager.instance.isConnected) {
@@ -421,6 +430,9 @@ class _MyAppState extends State<MyApp> {
                     TargetPlatform.android: CupertinoPageTransitionsBuilder(),
                     TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
                   },
+                ),
+                cupertinoOverrideTheme: const CupertinoThemeData(
+                  primaryColor: AppColors.kSecondaryColor, // ← Change this
                 ),
                 appBarTheme: AppBarTheme(
                   backgroundColor: AppColors.kBackgroundColor,
