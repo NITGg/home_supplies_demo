@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tawreedat_go/features/addresses/data/repo/address_repo.dart';
 import 'package:tawreedat_go/features/orders/manager/order_cubit.dart';
+import 'package:tawreedat_go/features/wallet/manager/wallet_cubit.dart';
 import 'core/connectivity/connectivity_manager.dart';
 import 'core/connectivity/network_aware_widget.dart';
 import 'core/connectivity/offline_screen.dart';
@@ -24,6 +25,8 @@ import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/data/repositories/profile_repository.dart';
 import 'features/auth/manager/profile_cubit.dart';
 import 'features/static_text/app_dynamic_info.dart';
+import 'features/wallet/data/data_source/wallet_remote_data_source.dart';
+import 'features/wallet/data/repositories/wallet_repo.dart';
 import 'routes/app_router.dart';
 import 'features/auth/data/data_sources/auth_remote_data_source.dart';
 import 'features/auth/manager/auth_cubit.dart';
@@ -33,7 +36,6 @@ import 'l10n/manager/locale_cubit.dart';
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 Map<String, dynamic>? pendingNotificationData;
 bool shouldShowNotificationDialog = false;
-
 
 // ✅ Background message handler (MUST be top-level function)
 // @pragma('vm:entry-point')
@@ -81,8 +83,9 @@ Future<void> main() async {
       try {
         await GoogleSignIn.instance.initialize(
           serverClientId:
-          '644970780839-jevk4ojdbj232uvk66na27et844iip8o.apps.googleusercontent.com',
-        );      } catch (e) {
+              '644970780839-jevk4ojdbj232uvk66na27et844iip8o.apps.googleusercontent.com',
+        );
+      } catch (e) {
         log('⚠️ Google Sign-In initialization failed: $e');
         // Continue app initialization even if Google Sign-In fails
       }
@@ -369,30 +372,29 @@ class _MyAppState extends State<MyApp> {
         BlocProvider(create: (_) => LocaleCubit()),
         BlocProvider<AuthCubit>(
           create: (_) => AuthCubit(
-            AuthRepository(
-              AuthRemoteDataSource(),
-              SecureStorageService(),
-            ),
+            AuthRepository(AuthRemoteDataSource(), SecureStorageService()),
           ),
         ),
         BlocProvider<ProfileCubit>(
           create: (_) => ProfileCubit(
-            ProfileRepository(
-              ProfileRemoteDataSource(),
-            ),AuthRepository(
-            AuthRemoteDataSource(),
-            SecureStorageService(),)
+            ProfileRepository(ProfileRemoteDataSource()),
+            AuthRepository(AuthRemoteDataSource(), SecureStorageService()),
+          ),
+        ),
 
-        )),
-
-        BlocProvider<OrderCubit>(
-            create: (_) => OrderCubit(
-            )),
+        BlocProvider<OrderCubit>(create: (_) => OrderCubit()),
 
         BlocProvider<AddressCubit>(
           create: (_) => AddressCubit(
             repository: AddressRepository(
               remoteDataSource: AddressRemoteDataSource(),
+            ),
+          ),
+        ),
+        BlocProvider<WalletCubit>(
+          create: (_) => WalletCubit(
+            repository: WalletRepository(
+              remoteDataSource: WalletRemoteDataSource(),
             ),
           ),
         ),

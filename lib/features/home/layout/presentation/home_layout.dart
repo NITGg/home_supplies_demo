@@ -278,7 +278,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           Divider(),
                                           ListTile(
                                             onTap: () {
-                                              context.push('/ProfileScreen');
+                                              context.push('/WalletScreen');
                                             },
                                             leading: const Icon(
                                               Icons

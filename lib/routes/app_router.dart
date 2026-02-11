@@ -16,6 +16,7 @@ import '../features/home/drawer_pages/terms_page.dart';
 import '../features/home/layout/presentation/home_layout.dart';
 import '../features/onboarding/onboarding.dart';
 import '../core/utils/secure_storage_service.dart';
+import '../features/wallet/presentation/wallet_screen.dart';
 
 Future<GoRouter> createAppRouter({
   required GlobalKey<NavigatorState> rootNavigatorKey,
@@ -45,11 +46,9 @@ Future<GoRouter> createAppRouter({
               // }
               final destination = (token != null && token.isNotEmpty)
                   ? '/mainHome'
-                  :
-                    await storage.shouldShowOnboarding()
-                        ? '/onboarding'
-                        :
-                    '/auth/login';
+                  : await storage.shouldShowOnboarding()
+                  ? '/onboarding'
+                  : '/auth/login';
               if (context.mounted) {
                 GoRouter.of(context).go(destination);
               }
@@ -76,12 +75,14 @@ Future<GoRouter> createAppRouter({
             path: '/auth/login',
             name: 'login',
             builder: (context, state) => const LoginScreen(),
-          ),GoRoute(
+          ),
+          GoRoute(
             path: '/addressesManagement',
             name: 'addressesManagement',
             builder: (context, state) => BlocProvider(
-                create: (_) => AddressCubit(),
-                child: const AddressManagementScreen()),
+              create: (_) => AddressCubit(),
+              child: const AddressManagementScreen(),
+            ),
           ),
           // GoRoute(
           //   path: '/auth/verify-otp',
@@ -132,6 +133,11 @@ Future<GoRouter> createAppRouter({
         path: '/PrivacyPage',
         name: 'PrivacyPage',
         builder: (context, state) => PrivacyPage(),
+      ),
+      GoRoute(
+        path: '/WalletScreen',
+        name: 'WalletScreen',
+        builder: (context, state) => WalletScreen(),
       ),
       GoRoute(
         path: '/mainHome',
