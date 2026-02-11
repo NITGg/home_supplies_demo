@@ -1,7 +1,6 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
-import '../../../auth/manager/auth_cubit.dart';
 import '../models/governorate_model.dart';
 
 class GovernorateRemoteDataSource {

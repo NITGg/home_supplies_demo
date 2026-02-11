@@ -1,7 +1,6 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
-import '../../../auth/manager/auth_cubit.dart';
 import '../models/order_model.dart';
 import '../models/proposal_model.dart';
 import '../models/qr_model.dart';
@@ -37,10 +36,7 @@ class OrderRemoteDataSource {
         formData = FormData.fromMap(order.toJson());
       }
 
-      final response = await _dio.post(
-        '/orders',
-        data: formData,
-      );
+      final response = await _dio.post('/orders', data: formData);
 
       log('Create order response: ${response.data}');
 
@@ -56,15 +52,20 @@ class OrderRemoteDataSource {
   }
 
   // Get All Orders
-  Future<OrdersListResponse> getOrders({int page = 1, int limit = 20}) async {
+  Future<OrdersListResponse> getOrders({
+    int skip = 0,
+    int limit = 20,
+    String? status,
+  }) async {
     try {
-      log('Fetching orders - page: $page, limit: $limit');
+      log('Fetching orders - skip: $skip, limit: $limit, status: $status');
 
       final response = await _dio.get(
         '/orders',
         queryParameters: {
-          'page': page,
+          'skip': skip,
           'limit': limit,
+          if (status != null) 'status': status,
         },
       );
 
@@ -88,9 +89,7 @@ class OrderRemoteDataSource {
 
       final response = await _dio.post(
         '/orders/$orderId/cancel',
-        data: {
-          'cancelled_reason': reason,
-        },
+        data: {'cancelled_reason': reason},
       );
 
       log('Cancel order response: ${response.data}');
@@ -110,10 +109,7 @@ class OrderRemoteDataSource {
     try {
       log('Fetching proposals for order $orderId');
 
-      final response = await _dio.get(
-        '/orders/$orderId/proposals',
-
-      );
+      final response = await _dio.get('/orders/$orderId/proposals');
 
       log('Get proposals response: ${response.data}');
 
@@ -139,10 +135,7 @@ class OrderRemoteDataSource {
 
       final response = await _dio.put(
         '/orders/$orderId/proposals/$proposalId',
-        data: {
-          'status': status,
-        },
-
+        data: {'status': status},
       );
 
       log('Update proposal response: ${response.data}');
@@ -191,7 +184,8 @@ class OrderRemoteDataSource {
 
   String _handleError(DioException e) {
     if (e.response != null) {
-      final message = e.response?.data['message'] ??
+      final message =
+          e.response?.data['message'] ??
           e.response?.data['error'] ??
           'An error occurred';
       return message;

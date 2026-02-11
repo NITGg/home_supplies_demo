@@ -4,7 +4,7 @@ import 'connectivity_manager.dart';
 class OfflineBanner extends StatefulWidget {
   final Widget child;
 
-  const OfflineBanner({Key? key, required this.child}) : super(key: key);
+  const OfflineBanner({super.key, required this.child});
 
   @override
   State<OfflineBanner> createState() => _OfflineBannerState();

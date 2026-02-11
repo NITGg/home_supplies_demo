@@ -1,14 +1,11 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/utils/secure_storage_service.dart';
-import 'package:tawreedat_go/core/utils/api_client.dart';
 import 'package:tawreedat_go/features/auth/data/repositories/auth_repository.dart';
 
 import '../../../core/utils/social_auth_service.dart';
-import '../data/models/user_profile_model.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {

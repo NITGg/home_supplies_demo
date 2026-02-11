@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tawreedat_go/core/error/restart_widget.dart';
 
 class ErrorTestPage extends StatelessWidget {
-  const ErrorTestPage({Key? key}) : super(key: key);
+  const ErrorTestPage({super.key});
 
   @override
   Widget build(BuildContext context) {

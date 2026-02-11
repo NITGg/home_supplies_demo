@@ -157,7 +157,7 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
               Switch(
                 value: !isMale,
                 onChanged: (value) => setState(() => isMale = !value),
-                activeColor: AppColors.kPrimaryColor,
+                activeThumbColor: AppColors.kPrimaryColor,
                 inactiveThumbColor: AppColors.kPrimaryColor,
                 activeTrackColor: AppColors.kPrimaryColor.withOpacity(0.3),
                 inactiveTrackColor: AppColors.kPrimaryColor.withOpacity(0.3),

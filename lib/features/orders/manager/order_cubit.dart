@@ -1,69 +1,169 @@
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/models/order_model.dart';
-import '../data/models/proposal_model.dart';
 import '../data/repositories/order_repo.dart';
 import 'order_states.dart';
+
+enum OrderViewMode { active, history }
 
 class OrderCubit extends Cubit<OrderState> {
   final OrderRepository _repository;
 
-  /// Cached list so background operations never wipe the UI.
-  OrdersLoaded? _lastLoadedState;
+  // Separate caches for active and history
+  List<Order> _activeOrders = [];
+  int _activeSkip = 0;
+  final int _activeLimit = 20;
+  int _activeTotalCount = 0;
+  bool _activeLoading = false;
+
+  List<Order> _historyOrders = [];
+  int _historySkip = 0;
+  final int _historyLimit = 20;
+  int _historyTotalCount = 0;
+  bool _historyLoading = false;
 
   OrderCubit({OrderRepository? repository})
       : _repository = repository ?? OrderRepository(),
         super(OrderInitial());
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // ── Load Active Orders ─────────────────────────────────────────────────────
 
-  /// Emits [OrderOperationLoading] while keeping the builder showing
-  /// [_lastLoadedState] (the builder ignores [OrderOperationLoading] and
-  /// falls through to showing the last known list).
-  void _emitOperationLoading() => emit(OrderOperationLoading());
+  Future<void> loadActiveOrders({bool loadMore = false}) async {
+    if (_activeLoading) return;
 
-  /// After a mutating operation completes, restore the list so the UI
-  /// never flickers to empty.
-  void _restoreList() {
-    if (_lastLoadedState != null) emit(_lastLoadedState!);
-  }
-
-  // ── Load Orders ────────────────────────────────────────────────────────────
-
-  Future<void> loadOrders({int page = 1}) async {
-    if (page == 1) {
-      // Only show full-screen spinner if there is no cached list yet.
-      if (_lastLoadedState == null) emit(OrderLoading());
+    if (!loadMore) {
+      emit(OrderLoading());
+      _activeOrders = [];
+      _activeSkip = 0;
     } else {
-      emit(OrdersLoadingMore());
+      _activeLoading = true;
+      emit(OrdersLoadingMore(viewMode: OrderViewMode.active));
     }
 
     try {
-      log('OrderCubit: Loading orders — page $page');
-      final response = await _repository.getOrders(page: page);
-      log('OrderCubit: Loaded ${response.orders.length} orders');
+      log('OrderCubit: Loading active orders — skip: $_activeSkip, limit: $_activeLimit');
 
-      final newState = page == 1
-          ? OrdersLoaded(
-        orders: response.orders,
-        totalOrders: response.totalOrders,
-        totalPages: response.totalPages,
-        currentPage: page,
-      )
-          : OrdersLoaded(
-        orders: [
-          ...(_lastLoadedState?.orders ?? []),
-          ...response.orders,
-        ],
-        totalOrders: response.totalOrders,
-        totalPages: response.totalPages,
-        currentPage: page,
+      // First fetch PENDING orders
+      final pendingResponse = await _repository.getOrders(
+        skip: _activeSkip,
+        limit: _activeLimit,
+        status: 'PENDING',
       );
 
-      _lastLoadedState = newState;
-      emit(newState);
+      // Then fetch IN_PROGRESS orders
+      final inProgressResponse = await _repository.getOrders(
+        skip: _activeSkip,
+        limit: _activeLimit,
+        status: 'IN_PROGRESS',
+      );
+
+      // Combine both lists
+      final combinedOrders = [
+        ...pendingResponse.orders,
+        ...inProgressResponse.orders,
+      ];
+
+      // Sort by created date (newest first)
+      combinedOrders.sort((a, b) =>
+          (b.createdAt ?? DateTime.now()).compareTo(a.createdAt ?? DateTime.now())
+      );
+
+      if (!loadMore) {
+        _activeOrders = combinedOrders;
+      } else {
+        _activeOrders.addAll(combinedOrders);
+      }
+
+      // Update skip for next load
+      _activeSkip = _activeOrders.length;
+
+      // Total count is sum of both statuses
+      _activeTotalCount = pendingResponse.totalOrders + inProgressResponse.totalOrders;
+
+      _activeLoading = false;
+
+      log('OrderCubit: Loaded ${_activeOrders.length} active orders out of $_activeTotalCount total');
+
+      emit(OrdersLoaded(
+        orders: _activeOrders,
+        totalCount: _activeTotalCount,
+        viewMode: OrderViewMode.active,
+      ));
     } catch (e) {
-      log('OrderCubit: Error loading orders: $e');
+      _activeLoading = false;
+      log('OrderCubit: Error loading active orders: $e');
+      emit(OrderError(e.toString()));
+    }
+  }
+
+  // ── Load History Orders ────────────────────────────────────────────────────
+
+  Future<void> loadHistoryOrders({bool loadMore = false}) async {
+    if (_historyLoading) return;
+
+    if (!loadMore) {
+      emit(OrderLoading());
+      _historyOrders = [];
+      _historySkip = 0;
+    } else {
+      _historyLoading = true;
+      emit(OrdersLoadingMore(viewMode: OrderViewMode.history));
+    }
+
+    try {
+      log('OrderCubit: Loading history orders — skip: $_historySkip, limit: $_historyLimit');
+
+      // First fetch DELIVERED orders
+      final deliveredResponse = await _repository.getOrders(
+        skip: _historySkip,
+        limit: _historyLimit,
+        status: 'DELIVERED',
+      );
+
+      // Then fetch CANCELLED orders
+      final cancelledResponse = await _repository.getOrders(
+        skip: _historySkip,
+        limit: _historyLimit,
+        status: 'CANCELLED',
+      );
+
+      // Combine both lists
+      final combinedOrders = [
+        ...deliveredResponse.orders,
+        ...cancelledResponse.orders,
+      ];
+
+      // Sort by completion date (newest first)
+      combinedOrders.sort((a, b) {
+        final dateA = b.deliveredAt ?? b.canceledAt ?? b.createdAt ?? DateTime.now();
+        final dateB = a.deliveredAt ?? a.canceledAt ?? a.createdAt ?? DateTime.now();
+        return dateA.compareTo(dateB);
+      });
+
+      if (!loadMore) {
+        _historyOrders = combinedOrders;
+      } else {
+        _historyOrders.addAll(combinedOrders);
+      }
+
+      // Update skip for next load
+      _historySkip = _historyOrders.length;
+
+      // Total count is sum of both statuses
+      _historyTotalCount = deliveredResponse.totalOrders + cancelledResponse.totalOrders;
+
+      _historyLoading = false;
+
+      log('OrderCubit: Loaded ${_historyOrders.length} history orders out of $_historyTotalCount total');
+
+      emit(OrdersLoaded(
+        orders: _historyOrders,
+        totalCount: _historyTotalCount,
+        viewMode: OrderViewMode.history,
+      ));
+    } catch (e) {
+      _historyLoading = false;
+      log('OrderCubit: Error loading history orders: $e');
       emit(OrderError(e.toString()));
     }
   }
@@ -71,7 +171,7 @@ class OrderCubit extends Cubit<OrderState> {
   // ── Create Order ───────────────────────────────────────────────────────────
 
   Future<void> createOrder(Order order) async {
-    _emitOperationLoading();
+    emit(OrderOperationLoading());
     try {
       log('OrderCubit: Creating order');
       final response = await _repository.createOrder(order);
@@ -79,16 +179,15 @@ class OrderCubit extends Cubit<OrderState> {
 
       emit(OrderSuccess(message: response.message, order: response.order));
 
-      // Reload list in background; emits new OrdersLoaded when done.
-      await loadOrders();
+      // Reload active orders (new order will be PENDING)
+      await loadActiveOrders(loadMore: false);
     } catch (e) {
       log('OrderCubit: Error creating order: $e');
-      _restoreList();
       emit(OrderError(e.toString()));
     }
   }
 
-  // ── Cancel Order (reason-based) ────────────────────────────────────────────
+  // ── Cancel Order ───────────────────────────────────────────────────────────
 
   Future<void> cancelOrder(int orderId, String reason) async {
     emit(CancelingOrder());
@@ -98,18 +197,19 @@ class OrderCubit extends Cubit<OrderState> {
       log('OrderCubit: Order cancelled');
 
       emit(const OrderCancelled(message: 'Order cancelled successfully'));
-      await loadOrders();
+
+      // Reload both lists (order moved from active to history)
+      await loadActiveOrders(loadMore: false);
+      await loadHistoryOrders(loadMore: false);
     } catch (e) {
       log('OrderCubit: Error cancelling order: $e');
       emit(OrderCancelError(e.toString()));
     }
   }
 
-  /// Cancel because the product is unavailable (no reason text required).
   Future<void> cancelOrderUnavailable({required int orderId}) =>
       cancelOrder(orderId, 'Product unavailable');
 
-  /// Cancel with a custom other reason.
   Future<void> cancelOrderOther({
     required int orderId,
     required String note,
@@ -150,12 +250,11 @@ class OrderCubit extends Cubit<OrderState> {
 
       emit(ProposalAccepted(orderId: orderId, proposalId: proposalId));
 
-      // Reload both list and proposals; restore list first so UI doesn't flicker.
-      await loadOrders();
+      // Reload active orders and proposals
+      await loadActiveOrders(loadMore: false);
       await loadProposals(orderId);
     } catch (e) {
       log('OrderCubit: Error accepting proposal: $e');
-      _restoreList();
       emit(OrderError(e.toString()));
     }
   }
@@ -200,13 +299,35 @@ class OrderCubit extends Cubit<OrderState> {
       log('OrderCubit: Delivery confirmed');
 
       emit(DeliveryConfirmed(orderId: orderId));
-      await loadOrders();
+
+      // Reload both lists (order moved from active to history)
+      await loadActiveOrders(loadMore: false);
+      await loadHistoryOrders(loadMore: false);
     } catch (e) {
       log('OrderCubit: Error confirming delivery: $e');
-      _restoreList();
       emit(OrderError(e.toString()));
     }
   }
 
-  void reset() => emit(OrderInitial());
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  bool canLoadMoreActive() =>
+      _activeOrders.length < _activeTotalCount && !_activeLoading;
+
+  bool canLoadMoreHistory() =>
+      _historyOrders.length < _historyTotalCount && !_historyLoading;
+
+  void reset() {
+    _activeOrders = [];
+    _activeSkip = 0;
+    _activeTotalCount = 0;
+    _activeLoading = false;
+
+    _historyOrders = [];
+    _historySkip = 0;
+    _historyTotalCount = 0;
+    _historyLoading = false;
+
+    emit(OrderInitial());
+  }
 }

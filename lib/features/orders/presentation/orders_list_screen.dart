@@ -29,7 +29,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<OrderCubit>().loadOrders();
+    context.read<OrderCubit>().loadActiveOrders();
     _scrollController.addListener(_onScroll);
   }
 
@@ -40,11 +40,38 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   }
 
   void _onScroll() {
+    // Only paginate in history tab
+    if (_viewMode != _ViewMode.history) return;
+
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
-      final state = context.read<OrderCubit>().state;
-      if (state is OrdersLoaded && state.hasMore) {
-        context.read<OrderCubit>().loadOrders(page: state.currentPage + 1);
+      final cubit = context.read<OrderCubit>();
+      final state = cubit.state;
+
+      if (state is OrdersLoaded &&
+          state.viewMode == OrderViewMode.history &&
+          cubit.canLoadMoreHistory()) {
+        cubit.loadHistoryOrders(loadMore: true);
+      }
+    }
+  }
+
+  void _onTabChanged(_ViewMode newMode) {
+    setState(() => _viewMode = newMode);
+
+    // Load data for the selected tab if not already loaded
+    final cubit = context.read<OrderCubit>();
+    final state = cubit.state;
+
+    if (newMode == _ViewMode.active) {
+      // Check if we need to load active orders
+      if (state is! OrdersLoaded || state.viewMode != OrderViewMode.active) {
+        cubit.loadActiveOrders();
+      }
+    } else {
+      // Check if we need to load history orders
+      if (state is! OrdersLoaded || state.viewMode != OrderViewMode.history) {
+        cubit.loadHistoryOrders();
       }
     }
   }
@@ -68,10 +95,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider.value(
         value: context.read<OrderCubit>(),
-        child: OrderCancelBottomSheet(
-          isUnavailable: false,
-          orderId: order.id!,
-        ),
+        child: OrderCancelBottomSheet(isUnavailable: false, orderId: order.id!),
       ),
     );
   }
@@ -97,7 +121,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           active: _viewMode == _ViewMode.active,
           onToggle: (isActive) {
             setState(() {
-              _viewMode = isActive ? _ViewMode.active : _ViewMode.history;
+              _onTabChanged(isActive ? _ViewMode.active : _ViewMode.history);
             });
           },
         ),
@@ -117,11 +141,16 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => context.read<OrderCubit>().loadOrders(),
+        onRefresh: () {
+          final cubit = context.read<OrderCubit>();
+          return _viewMode == _ViewMode.active
+              ? cubit.loadActiveOrders(loadMore: false)
+              : cubit.loadHistoryOrders(loadMore: false);
+        },
         color: AppColors.kPrimaryColor,
         child: BlocConsumer<OrderCubit, OrderState>(
           listenWhen: (_, current) =>
-          current is OrderCancelled ||
+              current is OrderCancelled ||
               current is OrderCancelError ||
               current is DeliveryConfirmed ||
               current is OrderError ||
@@ -155,7 +184,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           },
           // ── Builder: only react to states that change the visible list ──
           buildWhen: (previous, current) =>
-          current is OrderLoading ||
+              current is OrderLoading ||
               current is OrdersLoaded ||
               current is OrderError,
           builder: (context, state) {
@@ -185,14 +214,21 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline,
-                              size: 48, color: Colors.red),
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Colors.red,
+                          ),
                           const SizedBox(height: 16),
                           Text(state.message),
                           const SizedBox(height: 16),
                           ElevatedButton(
-                            onPressed: () =>
-                                context.read<OrderCubit>().loadOrders(),
+                            onPressed: () {
+                              final cubit = context.read<OrderCubit>();
+                              _viewMode == _ViewMode.active
+                                  ? cubit.loadActiveOrders()
+                                  : cubit.loadHistoryOrders();
+                            },
                             child: Text(
                               AppLocalizations.of(context)?.retry ?? 'Retry',
                             ),
@@ -206,9 +242,29 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             }
 
             if (state is OrdersLoaded) {
-              final filtered = _filter(state.orders);
+              // Only show data for the current view mode
+              final isCorrectMode =
+                  (_viewMode == _ViewMode.active &&
+                      state.viewMode == OrderViewMode.active) ||
+                  (_viewMode == _ViewMode.history &&
+                      state.viewMode == OrderViewMode.history);
 
-              if (filtered.isEmpty) {
+              if (!isCorrectMode) {
+                // Show loading while switching tabs
+                return ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: const Center(
+                        child: LoadingScreen(isOne: true, asWidget: true),
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              if (state.orders.isEmpty) {
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
@@ -224,15 +280,18 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                 controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
-                itemCount: filtered.length + (state.hasMore ? 1 : 0),
+                itemCount:
+                    state.orders.length +
+                    (_viewMode == _ViewMode.history && state.hasMore ? 1 : 0),
                 itemBuilder: (context, index) {
-                  if (index == filtered.length) {
+                  if (index == state.orders.length) {
                     return const Padding(
                       padding: EdgeInsets.all(16),
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
-                  final order = filtered[index];
+
+                  final order = state.orders[index];
                   return _OrderCard(
                     order: order,
                     onViewProposals: () => _showProposals(order),
@@ -460,8 +519,7 @@ class _OrderCard extends StatelessWidget {
                       color: statusColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child:
-                    Icon(_statusIcon(), color: statusColor, size: 20),
+                    child: Icon(_statusIcon(), color: statusColor, size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -484,7 +542,9 @@ class _OrderCard extends StatelessWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor,
                       borderRadius: BorderRadius.circular(20),
@@ -635,8 +695,7 @@ class _BudgetChip extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(8),
-        border:
-        Border.all(color: AppColors.kSecondaryColor.withOpacity(0.2)),
+        border: Border.all(color: AppColors.kSecondaryColor.withOpacity(0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -686,8 +745,7 @@ class _RouteSection extends StatelessWidget {
             color: Colors.green,
           ),
           Padding(
-            padding:
-            const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
             child: Row(
               children: [
                 Container(

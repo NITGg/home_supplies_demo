@@ -1,5 +1,6 @@
 import '../data/models/order_model.dart';
 import '../data/models/proposal_model.dart';
+import 'order_cubit.dart';
 
 abstract class OrderState {
   const OrderState();
@@ -10,15 +11,17 @@ abstract class OrderState {
 
 class OrderInitial extends OrderState {}
 
-/// Full-screen loading (first load only — list is empty).
 class OrderLoading extends OrderState {}
 
-/// Pagination append — list already visible, spinner at bottom.
-class OrdersLoadingMore extends OrderState {}
+class OrdersLoadingMore extends OrderState {
+  final OrderViewMode viewMode;
 
-/// Background operation in progress (create / cancel / accept / reject).
-/// The UI keeps showing the existing [OrdersLoaded] state — this is only
-/// consumed by listeners for the loading indicator on action buttons.
+  const OrdersLoadingMore({required this.viewMode});
+
+  @override
+  List<Object?> get props => [viewMode];
+}
+
 class OrderOperationLoading extends OrderState {}
 
 // ── Create Order ──────────────────────────────────────────────────────────────
@@ -37,21 +40,19 @@ class OrderSuccess extends OrderState {
 
 class OrdersLoaded extends OrderState {
   final List<Order> orders;
-  final int totalOrders;
-  final int totalPages;
-  final int currentPage;
+  final int totalCount; // Total number of orders available
+  final OrderViewMode viewMode;
 
   const OrdersLoaded({
     required this.orders,
-    required this.totalOrders,
-    required this.totalPages,
-    required this.currentPage,
+    required this.totalCount,
+    required this.viewMode,
   });
 
   @override
-  List<Object?> get props => [orders, totalOrders, totalPages, currentPage];
+  List<Object?> get props => [orders, totalCount, viewMode];
 
-  bool get hasMore => currentPage < totalPages;
+  bool get hasMore => orders.length < totalCount;
 }
 
 // ── Cancel Order ──────────────────────────────────────────────────────────────

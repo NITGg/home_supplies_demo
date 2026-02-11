@@ -289,7 +289,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                 }
 
                                 return DropdownButtonFormField<int>(
-                                  value: _selectedAreaId,
+                                  initialValue: _selectedAreaId,
                                   decoration: InputDecoration(
                                     labelText: l10n.selectArea,
                                     border: OutlineInputBorder(

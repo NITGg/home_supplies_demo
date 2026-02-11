@@ -9,12 +9,12 @@ class NetworkAwareWidget extends StatefulWidget {
   final Function()? onDisconnected;
 
   const NetworkAwareWidget({
-    Key? key,
+    super.key,
     required this.child,
     this.offlineWidget,
     this.onConnected,
     this.onDisconnected,
-  }) : super(key: key);
+  });
 
   @override
   State<NetworkAwareWidget> createState() => _NetworkAwareWidgetState();

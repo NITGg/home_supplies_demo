@@ -1,11 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/user_profile_model.dart';
-import '../../manager/profile_cubit.dart';
 
 class ProfileHeaderSection extends StatelessWidget {
   final UserProfileModel profile;

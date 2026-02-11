@@ -14,12 +14,12 @@ class ErrorScreen extends StatelessWidget {
   final VoidCallback? onClearOverlay;
 
   const ErrorScreen({
-    Key? key,
+    super.key,
     this.errorDetails,
     required this.config,
     this.onRestart,
     this.onClearOverlay,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

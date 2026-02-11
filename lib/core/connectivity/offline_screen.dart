@@ -4,7 +4,7 @@ import '../style/app_colors.dart';
 class OfflineScreen extends StatelessWidget {
   final VoidCallback? onRetry;
 
-  const OfflineScreen({Key? key, this.onRetry}) : super(key: key);
+  const OfflineScreen({super.key, this.onRetry});
 
   @override
   Widget build(BuildContext context) {

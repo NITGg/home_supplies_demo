@@ -1,14 +1,12 @@
 import '../data_source/order_remote_data_source.dart';
 import '../models/order_model.dart';
 import '../models/proposal_model.dart';
-import '../models/qr_model.dart';
 
 class OrderRepository {
   final OrderRemoteDataSource _remoteDataSource;
 
-  OrderRepository({
-    OrderRemoteDataSource? remoteDataSource,
-  }) : _remoteDataSource = remoteDataSource ?? OrderRemoteDataSource();
+  OrderRepository({OrderRemoteDataSource? remoteDataSource})
+    : _remoteDataSource = remoteDataSource ?? OrderRemoteDataSource();
 
   // Create Order
   Future<OrderResponse> createOrder(Order order) async {
@@ -16,8 +14,16 @@ class OrderRepository {
   }
 
   // Get All Orders (with pagination)
-  Future<OrdersListResponse> getOrders({int page = 1, int limit = 20}) async {
-    return await _remoteDataSource.getOrders(page: page, limit: limit);
+  Future<OrdersListResponse> getOrders({
+    int skip = 0,
+    int limit = 20,
+    String? status,
+  }) async {
+    return await _remoteDataSource.getOrders(
+      skip: skip,
+      limit: limit,
+      status: status,
+    );
   }
 
   // Cancel Order
