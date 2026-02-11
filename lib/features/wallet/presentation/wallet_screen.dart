@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../manager/wallet_cubit.dart';
 import '../manager/wallet_state.dart';
@@ -43,7 +44,7 @@ class _WalletScreenState extends State<WalletScreen> {
         builder: (context, state) {
           if (state is WalletLoading) {
             return const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFDCB6E)),
+              child: LoadingScreen(isOne: true,),
             );
           }
 
