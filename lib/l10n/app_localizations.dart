@@ -1913,6 +1913,66 @@ abstract class AppLocalizations {
   /// **'New Order'**
   String get newOrder;
 
+  /// No description provided for @acceptProposalConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to accept this proposal?'**
+  String get acceptProposalConfirmation;
+
+  /// No description provided for @acceptProposal.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Proposal'**
+  String get acceptProposal;
+
+  /// No description provided for @rejectProposalConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to reject this proposal?'**
+  String get rejectProposalConfirmation;
+
+  /// No description provided for @rejectProposal.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject Proposal'**
+  String get rejectProposal;
+
+  /// No description provided for @proposals.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposals'**
+  String get proposals;
+
+  /// No description provided for @reject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get reject;
+
+  /// No description provided for @accept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get accept;
+
+  /// No description provided for @deliveryFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Fee'**
+  String get deliveryFee;
+
+  /// No description provided for @couriersWillSendProposalsSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Couriers will send proposals soon'**
+  String get couriersWillSendProposalsSoon;
+
+  /// No description provided for @noProposalsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No proposals yet'**
+  String get noProposalsYet;
+
   /// No description provided for @cancelOrderWarning.
   ///
   /// In en, this message translates to:

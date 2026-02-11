@@ -18,7 +18,7 @@ import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
 import '../../../orders/presentation/orders_list_screen.dart';
-import '../../../orders/presentation/widgets/create_order_sheet.dart';
+import '../../../orders/presentation/widgets/sheets/create_order_sheet.dart';
 import '../manager/home_cubit.dart';
 
 class HomeLayout extends StatefulWidget {
@@ -314,24 +314,6 @@ class _HomeLayoutState extends State<HomeLayout> {
                                             ),
                                           ),
                                           Divider(),
-                                          // ListTile(
-                                          //   onTap: () async {
-                                          //       showModalBottomSheet(
-                                          //         context: context,
-                                          //         isScrollControlled: true,
-                                          //         backgroundColor: Colors.transparent,
-                                          //         builder: (_) => const AddressFormBottomSheet(),
-                                          //       );
-                                          //   },
-                                          //   leading: const Icon(
-                                          //     Icons.pin_drop_rounded,
-                                          //   ),
-                                          //   title: Text(
-                                          //     localizations.address,
-                                          //     style: AppTextStyles.bold16,
-                                          //   ),
-                                          // ),
-                                          // Divider(),
                                           ListTile(
                                             leading: const Icon(
                                               Icons.star_half,
@@ -343,6 +325,9 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           ),
                                           Divider(),
                                           ListTile(
+                                            onTap: () {
+                                              context.push('/FaqPage');
+                                            },
                                             leading: const Icon(
                                               Icons.question_mark,
                                             ),
@@ -353,6 +338,9 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           ),
                                           Divider(),
                                           ListTile(
+                                            onTap: () {
+                                              context.push('/SupportPage');
+                                            },
                                             leading: const Icon(
                                               Icons.support_agent_rounded,
                                             ),
@@ -363,6 +351,9 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           ),
                                           Divider(),
                                           ListTile(
+                                            onTap: () {
+                                              context.push('/PrivacyPage');
+                                            },
                                             leading: const Icon(
                                               Icons.policy_rounded,
                                             ),
@@ -373,6 +364,9 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           ),
                                           Divider(),
                                           ListTile(
+                                            onTap: () {
+                                              context.push('/Terms');
+                                            },
                                             leading: const Icon(Icons.lock),
                                             title: Text(
                                               localizations.termsAndConditions,

@@ -699,7 +699,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get scanDeliveryQrCode => 'امسح رمز تأكيد التسليم من المندوب';
 
   @override
-  String get alignQrCode => 'قم بمحاذاة رمز الاستجابة السريع ضمن الإطار';
+  String get alignQrCode => 'قم بمحاذاة رمز Qr ضمن الإطار';
 
   @override
   String get pickup => 'الاستلام';
@@ -933,6 +933,36 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get newOrder => 'طلب جديد';
+
+  @override
+  String get acceptProposalConfirmation => 'هل أنت متأكد من قبول هذا العرض؟';
+
+  @override
+  String get acceptProposal => 'قبول العرض';
+
+  @override
+  String get rejectProposalConfirmation => 'هل أنت متأكد من رفض هذا العرض؟';
+
+  @override
+  String get rejectProposal => 'رفض العرض';
+
+  @override
+  String get proposals => 'العروض';
+
+  @override
+  String get reject => 'رفض';
+
+  @override
+  String get accept => 'قبول';
+
+  @override
+  String get deliveryFee => 'رسوم التوصيل';
+
+  @override
+  String get couriersWillSendProposalsSoon => 'سيقوم المندوبون بإرسال العروض قريبًا';
+
+  @override
+  String get noProposalsYet => 'لا توجد عروض حتى الآن';
 
   @override
   String get cancelOrderWarning => 'هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها';

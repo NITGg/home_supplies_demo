@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-import 'package:tawreedat_go/features/orders/presentation/widgets/cancel_order_dialog.dart';
-import 'package:tawreedat_go/features/orders/presentation/widgets/empty_state.dart';
-import 'package:tawreedat_go/features/orders/presentation/widgets/proposal_sheet.dart';
+import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/cancel_order_sheet.dart';
+import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/proposal_sheet.dart';
 import '../../../core/style/app_colors.dart';
-import '../../../core/style/text_styles.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/models/order_model.dart';
 import '../manager/order_cubit.dart';
 import '../manager/order_states.dart';
 import 'qr_scanner_screen.dart';
+import 'widgets/empty_state.dart';
+import 'widgets/order_card.dart';
+import 'widgets/order_toggle_button.dart';
 
-enum _ViewMode { active, history }
+enum ViewMode { active, history }
 
 class OrdersListScreen extends StatefulWidget {
   const OrdersListScreen({super.key});
@@ -24,7 +24,7 @@ class OrdersListScreen extends StatefulWidget {
 
 class _OrdersListScreenState extends State<OrdersListScreen> {
   final ScrollController _scrollController = ScrollController();
-  _ViewMode _viewMode = _ViewMode.active;
+  ViewMode _viewMode = ViewMode.active;
 
   @override
   void initState() {
@@ -41,7 +41,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
   void _onScroll() {
     // Only paginate in history tab
-    if (_viewMode != _ViewMode.history) return;
+    if (_viewMode != ViewMode.history) return;
 
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
@@ -56,20 +56,17 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     }
   }
 
-  void _onTabChanged(_ViewMode newMode) {
+  void _onTabChanged(ViewMode newMode) {
     setState(() => _viewMode = newMode);
 
-    // Load data for the selected tab if not already loaded
     final cubit = context.read<OrderCubit>();
     final state = cubit.state;
 
-    if (newMode == _ViewMode.active) {
-      // Check if we need to load active orders
+    if (newMode == ViewMode.active) {
       if (state is! OrdersLoaded || state.viewMode != OrderViewMode.active) {
         cubit.loadActiveOrders();
       }
     } else {
-      // Check if we need to load history orders
       if (state is! OrdersLoaded || state.viewMode != OrderViewMode.history) {
         cubit.loadHistoryOrders();
       }
@@ -100,16 +97,16 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     );
   }
 
-  List<Order> _filter(List<Order> all) {
-    if (_viewMode == _ViewMode.active) {
-      return all
-          .where((o) => o.status == 'PENDING' || o.status == 'IN_PROGRESS')
-          .toList();
-    } else {
-      return all
-          .where((o) => o.status == 'DELIVERED' || o.status == 'CANCELLED')
-          .toList();
-    }
+  void _navigateToQRScanner() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: context.read<OrderCubit>(),
+          child: const QRScannerScreen(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -117,12 +114,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 16,
-        title: _ToggleButton(
-          active: _viewMode == _ViewMode.active,
+        title: OrderToggleButton(
+          active: _viewMode == ViewMode.active,
           onToggle: (isActive) {
-            setState(() {
-              _onTabChanged(isActive ? _ViewMode.active : _ViewMode.history);
-            });
+            _onTabChanged(isActive ? ViewMode.active : ViewMode.history);
           },
         ),
         actions: [
@@ -143,7 +138,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       body: RefreshIndicator(
         onRefresh: () {
           final cubit = context.read<OrderCubit>();
-          return _viewMode == _ViewMode.active
+          return _viewMode == ViewMode.active
               ? cubit.loadActiveOrders(loadMore: false)
               : cubit.loadHistoryOrders(loadMore: false);
         },
@@ -182,123 +177,21 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
               );
             }
           },
-          // ── Builder: only react to states that change the visible list ──
           buildWhen: (previous, current) =>
               current is OrderLoading ||
               current is OrdersLoaded ||
               current is OrderError,
           builder: (context, state) {
-            // Full-screen loading (first load, no cached list yet)
             if (state is OrderLoading) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.7,
-                    child: const Center(
-                      child: LoadingScreen(isOne: true, asWidget: true),
-                    ),
-                  ),
-                ],
-              );
+              return _buildLoadingView();
             }
 
-            // Error (only shown when there is no list to fall back to)
             if (state is OrderError) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.7,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 48,
-                            color: Colors.red,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(state.message),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              final cubit = context.read<OrderCubit>();
-                              _viewMode == _ViewMode.active
-                                  ? cubit.loadActiveOrders()
-                                  : cubit.loadHistoryOrders();
-                            },
-                            child: Text(
-                              AppLocalizations.of(context)?.retry ?? 'Retry',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
+              return _buildErrorView(state);
             }
 
             if (state is OrdersLoaded) {
-              // Only show data for the current view mode
-              final isCorrectMode =
-                  (_viewMode == _ViewMode.active &&
-                      state.viewMode == OrderViewMode.active) ||
-                  (_viewMode == _ViewMode.history &&
-                      state.viewMode == OrderViewMode.history);
-
-              if (!isCorrectMode) {
-                // Show loading while switching tabs
-                return ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.7,
-                      child: const Center(
-                        child: LoadingScreen(isOne: true, asWidget: true),
-                      ),
-                    ),
-                  ],
-                );
-              }
-
-              if (state.orders.isEmpty) {
-                return ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.7,
-                      child: _EmptyState(viewMode: _viewMode),
-                    ),
-                  ],
-                );
-              }
-
-              return ListView.builder(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                itemCount:
-                    state.orders.length +
-                    (_viewMode == _ViewMode.history && state.hasMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == state.orders.length) {
-                    return const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-
-                  final order = state.orders[index];
-                  return _OrderCard(
-                    order: order,
-                    onViewProposals: () => _showProposals(order),
-                    onCancel: () => _showCancelSheet(order),
-                  );
-                },
-              );
+              return _buildOrdersList(state);
             }
 
             return const SizedBox();
@@ -308,519 +201,96 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     );
   }
 
-  void _navigateToQRScanner() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: context.read<OrderCubit>(),
-          child: const QRScannerScreen(),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Toggle Button ────────────────────────────────────────────────────────────
-
-class _ToggleButton extends StatelessWidget {
-  final bool active;
-  final ValueChanged<bool> onToggle;
-
-  const _ToggleButton({required this.active, required this.onToggle});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Container(
-      height: 36,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        spacing: 5,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _Tab(
-            label: l10n?.orders ?? 'Orders',
-            selected: active,
-            onTap: () => onToggle(true),
-          ),
-          _Tab(
-            label: l10n?.history ?? 'History',
-            selected: !active,
-            onTap: () => onToggle(false),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Tab extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _Tab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.kPrimaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-            color: selected ? Colors.white : Colors.grey.shade600,
+  Widget _buildLoadingView() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: const Center(
+            child: LoadingScreen(isOne: true, asWidget: true),
           ),
         ),
-      ),
+      ],
     );
   }
-}
 
-// ─── Empty State ──────────────────────────────────────────────────────────────
-
-class _EmptyState extends StatelessWidget {
-  final _ViewMode viewMode;
-
-  const _EmptyState({required this.viewMode});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final isActive = viewMode == _ViewMode.active;
-    return AppEmptyState(
-      icon: isActive ? Icons.shopping_bag_outlined : Icons.history_outlined,
-      title: isActive ? l10n.noActiveOrder : l10n.noData,
-    );
-  }
-}
-
-// ─── Order Card ───────────────────────────────────────────────────────────────
-
-class _OrderCard extends StatelessWidget {
-  final Order order;
-  final VoidCallback onViewProposals;
-  final VoidCallback onCancel;
-
-  const _OrderCard({
-    required this.order,
-    required this.onViewProposals,
-    required this.onCancel,
-  });
-
-  Color _statusColor() {
-    switch (order.status) {
-      case 'PENDING':
-        return Colors.orange;
-      case 'IN_PROGRESS':
-        return Colors.blue;
-      case 'DELIVERED':
-        return Colors.green;
-      case 'CANCELLED':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData _statusIcon() {
-    switch (order.status) {
-      case 'PENDING':
-        return Icons.schedule;
-      case 'IN_PROGRESS':
-        return Icons.local_shipping;
-      case 'DELIVERED':
-        return Icons.check_circle;
-      case 'CANCELLED':
-        return Icons.cancel;
-      default:
-        return Icons.info;
-    }
-  }
-
-  String _statusLabel(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    switch (order.status) {
-      case 'PENDING':
-        return l10n?.pending ?? 'Pending';
-      case 'IN_PROGRESS':
-        return l10n?.inProgress ?? 'In Progress';
-      case 'DELIVERED':
-        return l10n?.delivered ?? 'Delivered';
-      case 'CANCELLED':
-        return l10n?.cancelled ?? 'Cancelled';
-      default:
-        return order.status ?? '';
-    }
-  }
-
-  String _formatDate(DateTime? dt) {
-    if (dt == null) return '';
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return DateFormat('MMM dd').format(dt);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final statusColor = _statusColor();
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 3,
-      shadowColor: AppColors.kPrimaryColor.withOpacity(0.08),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.white, statusColor.withOpacity(0.03)],
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Header ───────────────────────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.07),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(_statusIcon(), color: statusColor, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          order.orderNumber ?? 'N/A',
-                          style: AppTextStyles.bold16,
-                        ),
-                        Text(
-                          _formatDate(order.createdAt),
-                          style: AppTextStyles.regular14.copyWith(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(_statusIcon(), size: 12, color: Colors.white),
-                        const SizedBox(width: 4),
-                        Text(
-                          _statusLabel(context),
-                          style: AppTextStyles.bold14.copyWith(
-                            fontSize: 11,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Product info ──────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.kPrimaryColor.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.shopping_bag_outlined,
-                          size: 20,
-                          color: AppColors.kPrimaryColor,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              order.productDescription,
-                              style: AppTextStyles.bold14.copyWith(
-                                fontSize: 15,
-                                height: 1.3,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 8),
-                            _BudgetChip(budget: order.budget),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  _RouteSection(order: order),
-                ],
-              ),
-            ),
-
-            // ── Action buttons ────────────────────────────────────────────────
-            // Show action row only for PENDING orders
-            // ── Action buttons ────────────────────────────────────────────────
-            if (order.isPending) ...[
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                child: Row(
-                  children: [
-                    // View Proposals - primary action
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: onViewProposals,
-                        icon: const Icon(Icons.local_offer, size: 18),
-                        label: Text(
-                          l10n.viewProposals,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.kPrimaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Cancel - destructive action
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: onCancel,
-                        icon: const Icon(Icons.cancel_outlined, size: 18),
-                        label: Text(
-                          l10n.cancel,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Budget chip ──────────────────────────────────────────────────────────────
-
-class _BudgetChip extends StatelessWidget {
-  final String budget;
-
-  const _BudgetChip({required this.budget});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.kSecondaryColor.withOpacity(0.12),
-            AppColors.kSecondaryColor.withOpacity(0.06),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.kSecondaryColor.withOpacity(0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.account_balance_wallet_outlined,
-            size: 14,
-            color: AppColors.kSecondaryColor,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '${l10n?.budget ?? 'Budget'}: $budget ${l10n?.egp ?? 'EGP'}',
-            style: AppTextStyles.bold14.copyWith(
-              fontSize: 12,
-              color: AppColors.kSecondaryColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Route section ────────────────────────────────────────────────────────────
-
-class _RouteSection extends StatelessWidget {
-  final Order order;
-
-  const _RouteSection({required this.order});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        children: [
-          _LocationRow(
-            icon: Icons.my_location,
-            label: l10n?.pickup ?? 'Pickup',
-            address: order.pickupAddressDescription,
-            color: Colors.green,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-            child: Row(
+  Widget _buildErrorView(OrderError state) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 1.5,
-                  height: 16,
-                  color: Colors.grey.shade300,
-                  margin: const EdgeInsets.only(left: 11),
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(state.message),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    final cubit = context.read<OrderCubit>();
+                    _viewMode == ViewMode.active
+                        ? cubit.loadActiveOrders()
+                        : cubit.loadHistoryOrders();
+                  },
+                  child: Text(AppLocalizations.of(context)?.retry ?? 'Retry'),
                 ),
               ],
             ),
           ),
-          _LocationRow(
-            icon: Icons.location_on,
-            label: l10n?.delivery ?? 'Delivery',
-            address: order.deliveryAddressDescription,
-            color: Colors.blue,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LocationRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String address;
-  final Color color;
-
-  const _LocationRow({
-    required this.icon,
-    required this.label,
-    required this.address,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Icon(icon, size: 14, color: color),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: AppTextStyles.bold14.copyWith(
-                  fontSize: 11,
-                  color: color,
-                ),
-              ),
-              Text(
-                address,
-                style: AppTextStyles.regular14.copyWith(
-                  fontSize: 12,
-                  color: Colors.grey.shade700,
-                  height: 1.3,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildOrdersList(OrdersLoaded state) {
+    final isCorrectMode =
+        (_viewMode == ViewMode.active &&
+            state.viewMode == OrderViewMode.active) ||
+        (_viewMode == ViewMode.history &&
+            state.viewMode == OrderViewMode.history);
+
+    if (!isCorrectMode) {
+      return _buildLoadingView();
+    }
+
+    if (state.orders.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: OrderEmptyState(viewMode: _viewMode),
+          ),
+        ],
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      itemCount:
+          state.orders.length +
+          (_viewMode == ViewMode.history && state.hasMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == state.orders.length) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final order = state.orders[index];
+        return OrderCard(
+          order: order,
+          onViewProposals: () => _showProposals(order),
+          onCancel: () => _showCancelSheet(order),
+        );
+      },
     );
   }
 }

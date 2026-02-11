@@ -419,6 +419,16 @@
                     "oneTimeAddress": "Enter Adress (Don't Save)",
           "productImageOptional": "Product Image (Optional)",
           "newOrder": "New Order",
+"acceptProposalConfirmation": "Are you sure you want to accept this proposal?",
+"acceptProposal": "Accept Proposal",
+"rejectProposalConfirmation": "Are you sure you want to reject this proposal?",
+"rejectProposal": "Reject Proposal",
+"proposals": "Proposals",
+"reject": "Reject",
+"accept": "Accept",
+"deliveryFee": "Delivery Fee",
+"couriersWillSendProposalsSoon": "Couriers will send proposals soon",
+"noProposalsYet": "No proposals yet",
 
       "cancelOrderWarning": "Are you sure you want to cancel this order? This action cannot be undone."
 

@@ -9,6 +9,10 @@ import '../features/addresses/presentation/address_management_screen.dart';
 import '../features/auth/presentation/pages/login_screen.dart';
 import '../features/auth/presentation/pages/profile_screen.dart';
 import '../features/auth/presentation/pages/register_screen.dart';
+import '../features/home/drawer_pages/faq_page.dart';
+import '../features/home/drawer_pages/privacy_page.dart';
+import '../features/home/drawer_pages/support_page.dart';
+import '../features/home/drawer_pages/terms_page.dart';
 import '../features/home/layout/presentation/home_layout.dart';
 import '../features/onboarding/onboarding.dart';
 import '../core/utils/secure_storage_service.dart';
@@ -42,9 +46,9 @@ Future<GoRouter> createAppRouter({
               final destination = (token != null && token.isNotEmpty)
                   ? '/mainHome'
                   :
-                    // await storage.shouldShowOnboarding()
-                    //     ? '/onboarding'
-                    //     :
+                    await storage.shouldShowOnboarding()
+                        ? '/onboarding'
+                        :
                     '/auth/login';
               if (context.mounted) {
                 GoRouter.of(context).go(destination);
@@ -108,6 +112,26 @@ Future<GoRouter> createAppRouter({
                 const LoginScreen(isAccountDeleted: true),
           ),
         ],
+      ),
+      GoRoute(
+        path: '/FaqPage',
+        name: 'FaqPage',
+        builder: (context, state) => FaqPage(),
+      ),
+      GoRoute(
+        path: '/Terms',
+        name: 'Terms',
+        builder: (context, state) => TermsPage(),
+      ),
+      GoRoute(
+        path: '/SupportPage',
+        name: 'SupportPage',
+        builder: (context, state) => SupportPage(),
+      ),
+      GoRoute(
+        path: '/PrivacyPage',
+        name: 'PrivacyPage',
+        builder: (context, state) => PrivacyPage(),
       ),
       GoRoute(
         path: '/mainHome',

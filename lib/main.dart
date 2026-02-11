@@ -23,6 +23,7 @@ import 'features/auth/data/data_sources/profile_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/data/repositories/profile_repository.dart';
 import 'features/auth/manager/profile_cubit.dart';
+import 'features/static_text/app_dynamic_info.dart';
 import 'routes/app_router.dart';
 import 'features/auth/data/data_sources/auth_remote_data_source.dart';
 import 'features/auth/manager/auth_cubit.dart';
@@ -95,7 +96,7 @@ Future<void> main() async {
       await ConnectivityManager.instance.init();
       if (ConnectivityManager.instance.isConnected) {
         // await AppSettings().load();
-        // await AppInfoManager().loadAppInfo();
+        await AppInfoManager().loadAppInfo();
       }
     },
   );

@@ -1,14 +1,35 @@
 import 'package:flutter/material.dart';
-
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../orders_list_screen.dart';
+
+class OrderEmptyState extends StatelessWidget {
+  final ViewMode viewMode;
+
+  const OrderEmptyState({
+    super.key,
+    required this.viewMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isActive = viewMode == ViewMode.active;
+
+    return AppEmptyState(
+      icon: isActive ? Icons.shopping_bag_outlined : Icons.history_outlined,
+      title: isActive ? l10n.noActiveOrder : l10n.noData,
+    );
+  }
+}
 
 class AppEmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
-  final Future<void> Function()? onRefresh; // optional
-  final bool useScroll; // for RefreshIndicator support
+  final Future<void> Function()? onRefresh;
+  final bool useScroll;
 
   const AppEmptyState({
     super.key,
@@ -38,16 +59,12 @@ class AppEmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-
-          /// title
           Text(
             title,
             style: AppTextStyles.bold18.copyWith(
               color: Colors.grey.shade700,
             ),
           ),
-
-          /// subtitle
           if (subtitle != null) ...[
             const SizedBox(height: 12),
             Padding(
@@ -62,8 +79,6 @@ class AppEmptyState extends StatelessWidget {
               ),
             ),
           ],
-
-          /// refresh button
           if (onRefresh != null) ...[
             const SizedBox(height: 24),
             TextButton.icon(
@@ -81,7 +96,6 @@ class AppEmptyState extends StatelessWidget {
       ),
     );
 
-    /// wrap with scroll only when refresh is needed
     if (useScroll && onRefresh != null) {
       return RefreshIndicator(
         onRefresh: onRefresh!,

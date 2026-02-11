@@ -935,5 +935,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newOrder => 'New Order';
 
   @override
+  String get acceptProposalConfirmation => 'Are you sure you want to accept this proposal?';
+
+  @override
+  String get acceptProposal => 'Accept Proposal';
+
+  @override
+  String get rejectProposalConfirmation => 'Are you sure you want to reject this proposal?';
+
+  @override
+  String get rejectProposal => 'Reject Proposal';
+
+  @override
+  String get proposals => 'Proposals';
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get deliveryFee => 'Delivery Fee';
+
+  @override
+  String get couriersWillSendProposalsSoon => 'Couriers will send proposals soon';
+
+  @override
+  String get noProposalsYet => 'No proposals yet';
+
+  @override
   String get cancelOrderWarning => 'Are you sure you want to cancel this order? This action cannot be undone.';
 }

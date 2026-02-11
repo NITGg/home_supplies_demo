@@ -422,8 +422,18 @@
             "deliveryConfirmed": "تم تأكيد التسليم بنجاح!",
             "scanDeliveryQrCode": "امسح رمز تأكيد التسليم من المندوب",
             "alignQrCode": "قم بمحاذاة رمز Qr ضمن الإطار",
-            "processing": "جارٍ المعالجة...",
-        "cancelOrderWarning": "هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها"
+            "processing":"جارٍ المعالجة...",
+        "cancelOrderWarning": "هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها",
+"acceptProposalConfirmation": "هل أنت متأكد من قبول هذا العرض؟",
+"acceptProposal": "قبول العرض",
+"rejectProposalConfirmation": "هل أنت متأكد من رفض هذا العرض؟",
+"rejectProposal": "رفض العرض",
+"proposals": "العروض",
+"reject": "رفض",
+"accept": "قبول",
+"deliveryFee": "رسوم التوصيل",
+"couriersWillSendProposalsSoon": "سيقوم المندوبون بإرسال العروض قريبًا",
+"noProposalsYet": "لا توجد عروض حتى الآن"
 
 
 

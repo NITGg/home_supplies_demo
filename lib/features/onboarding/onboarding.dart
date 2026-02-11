@@ -4,14 +4,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../core/style/app_colors.dart';
 import '../../core/style/text_styles.dart';
 import '../../core/utils/secure_storage_service.dart';
+import '../../core/utils/api_client.dart';
 import '../../core/widgets/loading_screen.dart';
 import '../../core/widgets/text_button.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/manager/locale_cubit.dart';
-
 
 class OnBoardingModel {
   OnBoardingModel({required this.onBoarding});
@@ -105,10 +106,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _fetchOnBoardingData() async {
     try {
-      final response = await OnboardingApiClient.instance.dio.get('/api/on-boarding?sort=sort_id');
+      final response = await ApiClient.instance.dio.get('/on-boarding?sort=sort_id');
       if (mounted) {
         setState(() {
-          final List<dynamic> onBoardingJson = response.data['onBoarding'];
+          final List<dynamic> onBoardingJson = response.data['items'];
           _pages = onBoardingJson
               .map(
                 (json) => OnBoardingData.fromJson(json as Map<String, dynamic>),
@@ -153,7 +154,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _finishOnboarding() {
     SecureStorageService().setOnboardingShown();
-    context.go('/mainHome');
+    context.go('/auth/login');
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
         statusBarColor: Colors.white,
@@ -439,7 +440,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                             child: _currentPage == _pages.length - 1
                                 ? Text(
-                                    AppLocalizations.of(context)!.skip,
+                                    AppLocalizations.of(context)!.continue_,
                                     style: AppTextStyles.bold14,
                                   )
                                 : const Icon(
@@ -488,24 +489,3 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 }
-
-class OnboardingApiClient {
-  late final Dio dio;
-
-  OnboardingApiClient._internal() {
-    dio = Dio(
-      BaseOptions(
-        baseUrl: 'https://tawreedatapis.nitg-eg.com', // change this
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
-        headers: {
-          'Accept': 'application/json',
-        },
-      ),
-    );
-  }
-
-  static final OnboardingApiClient instance =
-  OnboardingApiClient._internal();
-}
-
