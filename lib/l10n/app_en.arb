@@ -416,6 +416,7 @@
           "noAreasAvailable": "No areas available",
           "addressNameHint": "Address name",
           "addressNameOptional": "Address name",
+          "distanceTooClose": "Pickup and delivery locations are too close. Please choose different locations",
           "pleaseSelectLocation": "Please select a location",
                     "oneTimeAddress": "Enter Adress (Don't Save)",
           "productImageOptional": "Product Image (Optional)",

@@ -926,6 +926,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addressNameOptional => 'اسم العنوان';
 
   @override
+  String get distanceTooClose => 'مواقع الاستلام والتوصيل قريبة جدًا من بعضها. يرجى اختيار مواقع مختلفة.';
+
+  @override
   String get pleaseSelectLocation => 'يرجى اختيار الموقع';
 
   @override

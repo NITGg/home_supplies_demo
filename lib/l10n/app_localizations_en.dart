@@ -926,6 +926,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addressNameOptional => 'Address name';
 
   @override
+  String get distanceTooClose => 'Pickup and delivery locations are too close. Please choose different locations';
+
+  @override
   String get pleaseSelectLocation => 'Please select a location';
 
   @override

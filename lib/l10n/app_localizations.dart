@@ -1895,6 +1895,12 @@ abstract class AppLocalizations {
   /// **'Address name'**
   String get addressNameOptional;
 
+  /// No description provided for @distanceTooClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup and delivery locations are too close. Please choose different locations'**
+  String get distanceTooClose;
+
   /// No description provided for @pleaseSelectLocation.
   ///
   /// In en, this message translates to:

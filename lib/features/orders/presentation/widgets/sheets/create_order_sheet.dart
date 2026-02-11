@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tawreedat_go/l10n/app_localizations.dart';
 
 import '../../../../../core/style/app_colors.dart';
 import '../../../../../core/style/text_styles.dart';
+import '../../../../../core/utils/calculate_distance.dart';
 import '../../../../../core/widgets/custom_button.dart';
 import '../../../../../core/widgets/text_form.dart';
 import '../../../../addresses/data/models/address_model.dart';
@@ -107,6 +109,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+
       if (_pickupAddress == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -120,6 +123,23 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           SnackBar(
             content: Text(AppLocalizations.of(context)!.pleaseSelectLocation),
           ),
+        );
+        return;
+      }
+
+// Check distance between pickup and delivery
+      final distance = calculateDistance(
+        double.parse(_pickupAddress!.addressLat),
+        double.parse(_pickupAddress!.addressLong),
+        double.parse(_deliveryAddress!.addressLat),
+        double.parse(_deliveryAddress!.addressLong),
+      );
+
+      if (distance < 50) { // e.g., less than 50 meters apart
+        Fluttertoast.showToast(
+          msg: AppLocalizations.of(context)!.distanceTooClose,
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
         );
         return;
       }
