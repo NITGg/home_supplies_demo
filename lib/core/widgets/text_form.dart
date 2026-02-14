@@ -13,6 +13,9 @@ class AppTextFormField extends StatefulWidget {
   final String? Function(String?)? validator;
   final Widget? prefixIcon;
   final String? hintText;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+  final Function(String)? onFieldSubmitted;
 
   const AppTextFormField({
     super.key,
@@ -26,6 +29,9 @@ class AppTextFormField extends StatefulWidget {
     this.validator,
     this.prefixIcon,
     this.hintText,
+    this.focusNode,
+    this.textInputAction,
+    this.onFieldSubmitted,
   });
 
   @override
@@ -35,11 +41,14 @@ class AppTextFormField extends StatefulWidget {
 class _AppTextFormFieldState extends State<AppTextFormField> {
   bool _obscureText = true;
   bool _isFocused = false;
-  final FocusNode _focusNode = FocusNode();
+  late FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
+
+    _focusNode = widget.focusNode ?? FocusNode();
+
     _focusNode.addListener(() {
       setState(() {
         _isFocused = _focusNode.hasFocus;
@@ -49,7 +58,9 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    if (widget.focusNode == null) {
+      _focusNode.dispose();
+    }
     super.dispose();
   }
 
@@ -106,17 +117,18 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
         ],
       ),
       child: TextFormField(
+        textInputAction: widget.textInputAction,
+        onFieldSubmitted: widget.onFieldSubmitted,
         enabled: widget.enabled,
         controller: widget.controller,
         focusNode: _focusNode,
         obscuringCharacter: '•',
         obscureText: widget.isPassword ? _obscureText : false,
-        keyboardType: widget.keyboardType,
+        keyboardType: widget.isPhone
+            ? TextInputType.phone
+            : widget.keyboardType,
         validator: widget.validator ?? _defaultValidate,
-        style: const TextStyle(
-          fontSize: 16,
-          color: Colors.black87,
-        ),
+        style: const TextStyle(fontSize: 16, color: Colors.black87),
         decoration: InputDecoration(
           labelText: widget.label,
           hintText: widget.hintText,
@@ -125,10 +137,7 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
             fontSize: 16,
             fontWeight: _isFocused ? FontWeight.w500 : FontWeight.normal,
           ),
-          hintStyle: TextStyle(
-            color: Colors.grey.shade400,
-            fontSize: 15,
-          ),
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
           filled: true,
           fillColor: widget.enabled ? Colors.white : Colors.grey.shade50,
           contentPadding: const EdgeInsets.symmetric(
@@ -138,10 +147,7 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
           prefixIcon: widget.prefixIcon,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: Colors.grey.shade300,
-              width: 1.5,
-            ),
+            borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -152,24 +158,15 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: Colors.red.shade400,
-              width: 1.5,
-            ),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: Colors.red.shade400,
-              width: 2,
-            ),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 2),
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: Colors.grey.shade200,
-              width: 1.5,
-            ),
+            borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
           ),
           errorStyle: TextStyle(
             color: Colors.red.shade600,
@@ -185,7 +182,9 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
               _obscureText
                   ? Icons.visibility_off_rounded
                   : Icons.visibility_rounded,
-              color: _isFocused ? AppColors.kPrimaryColor : Colors.grey.shade400,
+              color: _isFocused
+                  ? AppColors.kPrimaryColor
+                  : Colors.grey.shade400,
               size: 22,
             ),
             onPressed: () {

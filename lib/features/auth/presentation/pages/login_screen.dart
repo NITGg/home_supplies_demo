@@ -26,6 +26,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final FocusNode phoneFocus = FocusNode();
+  final FocusNode passwordFocus = FocusNode();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -51,6 +53,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     phoneController.dispose();
     passwordController.dispose();
+    phoneFocus.dispose();
+    passwordFocus.dispose();
     super.dispose();
   }
 
@@ -114,6 +118,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Column(
                           children: [
                             AppTextFormField(
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (_) {
+                                FocusScope.of(context).requestFocus(passwordFocus);
+                              },
+                              focusNode: phoneFocus,
                               controller: phoneController,
                               label: loc.phone,
                               isPhone: true,
@@ -129,6 +138,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 18),
                             AppTextFormField(
+                              focusNode: passwordFocus,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) {
+                                if (_formKey.currentState!.validate()) {
+                                  String phone = phoneController.text.trim();
+                                  if (!phone.startsWith('+2')) phone = '+2$phone';
+
+                                  context.read<AuthCubit>().login(
+                                    phone: phone,
+                                    password: passwordController.text.trim(),
+                                  );
+                                }
+                              },
                               controller: passwordController,
                               label: loc.password,
                               isPassword: true,

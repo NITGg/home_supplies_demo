@@ -27,6 +27,9 @@ class CreateOrderBottomSheet extends StatefulWidget {
 
 class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   final _formKey = GlobalKey<FormState>();
+  final FocusNode _productDescriptionFocus = FocusNode();
+  final FocusNode _budgetFocus = FocusNode();
+
   final _productDescriptionController = TextEditingController();
   final _budgetController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
@@ -68,6 +71,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     _initCubit.close();
     _productDescriptionController.dispose();
     _budgetController.dispose();
+    _productDescriptionFocus.dispose();
+    _budgetFocus.dispose();
     super.dispose();
   }
 
@@ -108,7 +113,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-
       if (_pickupAddress == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -126,7 +130,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         return;
       }
 
-// Check distance between pickup and delivery
+      // Check distance between pickup and delivery
       final distance = calculateDistance(
         double.parse(_pickupAddress!.addressLat),
         double.parse(_pickupAddress!.addressLong),
@@ -134,7 +138,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         double.parse(_deliveryAddress!.addressLong),
       );
 
-      if (distance < 50) { // e.g., less than 50 meters apart
+      if (distance < 50) {
+        // e.g., less than 50 meters apart
         Fluttertoast.showToast(
           msg: AppLocalizations.of(context)!.distanceTooClose,
           toastLength: Toast.LENGTH_SHORT,
@@ -398,6 +403,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       padding: const EdgeInsets.all(16),
                       children: [
                         AppTextFormField(
+                          focusNode: _productDescriptionFocus,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: (_) {
+                            FocusScope.of(context).requestFocus(_budgetFocus);
+                          },
                           controller: _productDescriptionController,
                           label: AppLocalizations.of(context)!.productDetails,
                           validator: (v) => (v == null || v.trim().isEmpty)
@@ -406,6 +416,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                         ),
                         const SizedBox(height: 16),
                         AppTextFormField(
+                          focusNode: _budgetFocus,
+                          textInputAction: TextInputAction.next,
                           controller: _budgetController,
                           label: AppLocalizations.of(context)!.budget,
                           keyboardType: TextInputType.number,
@@ -497,9 +509,7 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => MultiBlocProvider(
-        providers: [
-          BlocProvider.value(value: addressCubit),
-        ],
+        providers: [BlocProvider.value(value: addressCubit)],
         child: AddressFormBottomSheet(saveAddress: saveAddress),
       ),
     );

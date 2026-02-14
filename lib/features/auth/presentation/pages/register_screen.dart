@@ -13,18 +13,72 @@ import '../../manager/auth_state.dart';
 import '../widgets/auth_header.dart';
 import '../widgets/social_auth_button_row.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
+  RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-  TextEditingController();
+  // FocusNodes
+  final FocusNode firstNameFocus = FocusNode();
+  final FocusNode lastNameFocus = FocusNode();
+  final FocusNode emailFocus = FocusNode();
+  final FocusNode phoneFocus = FocusNode();
+  final FocusNode passwordFocus = FocusNode();
+  final FocusNode confirmPasswordFocus = FocusNode();
 
-  RegisterScreen({super.key});
+  final TextEditingController firstNameController = TextEditingController();
+
+  final TextEditingController lastNameController = TextEditingController();
+
+  final TextEditingController emailController = TextEditingController();
+
+  final TextEditingController phoneController = TextEditingController();
+
+  final TextEditingController passwordController = TextEditingController();
+
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+
+    firstNameFocus.dispose();
+    lastNameFocus.dispose();
+    emailFocus.dispose();
+    phoneFocus.dispose();
+    passwordFocus.dispose();
+    confirmPasswordFocus.dispose();
+
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      String phone = phoneController.text;
+      if (!phone.startsWith('+2')) {
+        phone = '+2$phone';
+      }
+
+      context.read<AuthCubit>().register(
+        context: context,
+        email: emailController.text.isEmpty ? null : emailController.text,
+        phone: phone,
+        password: passwordController.text,
+        fullName: '${firstNameController.text} ${lastNameController.text}',
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,22 +138,43 @@ class RegisterScreen extends StatelessWidget {
                               child: Column(
                                 children: [
                                   AppTextFormField(
+                                    focusNode: firstNameFocus,
+                                    textInputAction: TextInputAction.next,
+                                    onFieldSubmitted: (_) {
+                                      FocusScope.of(
+                                        context,
+                                      ).requestFocus(lastNameFocus);
+                                    },
                                     label:
-                                    '${AppLocalizations.of(context)!.firstName} *',
+                                        '${AppLocalizations.of(context)!.firstName} *',
                                     controller: firstNameController,
                                     validator: (v) =>
-                                    v!.isEmpty ? 'Required' : null,
+                                        v!.isEmpty ? 'Required' : null,
                                   ),
                                   const SizedBox(height: 18),
                                   AppTextFormField(
+                                    focusNode: lastNameFocus,
+                                    textInputAction: TextInputAction.next,
+                                    onFieldSubmitted: (_) {
+                                      FocusScope.of(
+                                        context,
+                                      ).requestFocus(emailFocus);
+                                    },
                                     label:
-                                    '${AppLocalizations.of(context)!.lastName} *',
+                                        '${AppLocalizations.of(context)!.lastName} *',
                                     controller: lastNameController,
                                     validator: (v) =>
-                                    v!.isEmpty ? 'Required' : null,
+                                        v!.isEmpty ? 'Required' : null,
                                   ),
                                   const SizedBox(height: 18),
                                   AppTextFormField(
+                                    focusNode: emailFocus,
+                                    textInputAction: TextInputAction.next,
+                                    onFieldSubmitted: (_) {
+                                      FocusScope.of(
+                                        context,
+                                      ).requestFocus(phoneFocus);
+                                    },
                                     label: AppLocalizations.of(context)!.email,
                                     controller: emailController,
                                     validator: (v) {
@@ -117,8 +192,15 @@ class RegisterScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 18),
                                   AppTextFormField(
+                                    focusNode: phoneFocus,
+                                    textInputAction: TextInputAction.next,
+                                    onFieldSubmitted: (_) {
+                                      FocusScope.of(
+                                        context,
+                                      ).requestFocus(passwordFocus);
+                                    },
                                     label:
-                                    '${AppLocalizations.of(context)!.phone} *',
+                                        '${AppLocalizations.of(context)!.phone} *',
                                     controller: phoneController,
                                     isPhone: true,
                                     validator: (v) {
@@ -136,7 +218,16 @@ class RegisterScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 18),
                                   AppTextFormField(
-                                    label: AppLocalizations.of(context)!.password,
+                                    focusNode: passwordFocus,
+                                    textInputAction: TextInputAction.next,
+                                    onFieldSubmitted: (_) {
+                                      FocusScope.of(
+                                        context,
+                                      ).requestFocus(confirmPasswordFocus);
+                                    },
+                                    label: AppLocalizations.of(
+                                      context,
+                                    )!.password,
                                     controller: passwordController,
                                     isPassword: true,
                                     validator: (v) {
@@ -150,6 +241,13 @@ class RegisterScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 18),
                                   AppTextFormField(
+                                    focusNode: confirmPasswordFocus,
+                                    textInputAction: TextInputAction.done,
+                                    onFieldSubmitted: (_) {
+                                      if (_formKey.currentState!.validate()) {
+                                        _submit();
+                                      }
+                                    },
                                     label: AppLocalizations.of(
                                       context,
                                     )!.confirmPassword,
@@ -191,22 +289,7 @@ class RegisterScreen extends StatelessWidget {
                     AppCustomButton(
                       text: AppLocalizations.of(context)!.register,
                       onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          String phone = phoneController.text;
-                          if (!phone.startsWith('+2')) {
-                            phone = '+2$phone';
-                          }
-                          context.read<AuthCubit>().register(
-                            context: context,
-                            email: emailController.text.isEmpty
-                                ? null
-                                : emailController.text,
-                            phone: phone,
-                            password: passwordController.text,
-                            fullName:
-                            '${firstNameController.text} ${lastNameController.text}',
-                          );
-                        }
+                        _submit();
                       },
                     ),
                     Row(
