@@ -8,7 +8,6 @@ import '../../../l10n/app_localizations.dart';
 import '../data/models/address_model.dart';
 import '../manager/address_cubit.dart';
 import '../manager/address_states.dart';
-import '../manager/location_cubit.dart';
 import 'address_form_sheet.dart';
 
 class AddressManagementScreen extends StatefulWidget {
@@ -36,7 +35,6 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
       builder: (_) => MultiBlocProvider(
         providers: [
           BlocProvider.value(value: addressCubit),
-          BlocProvider(create: (_) => LocationCubit()),
         ],
         child: const AddressFormBottomSheet(),
       ),
@@ -53,7 +51,6 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
       builder: (_) => MultiBlocProvider(
         providers: [
           BlocProvider.value(value: addressCubit),
-          BlocProvider(create: (_) => LocationCubit()),
         ],
         child: AddressFormBottomSheet(address: address),
       ),

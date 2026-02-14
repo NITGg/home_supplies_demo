@@ -39,9 +39,7 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.pickOnMaps),
-        leading: BackButton(
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: BackButton(onPressed: () => Navigator.pop(context)),
       ),
       body: MapLocationPicker(
         config: MapLocationPickerConfig(
@@ -49,36 +47,82 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
           initialPosition: LatLng(initialLat, initialLong),
           initialZoom: 15.0,
           language: l10n.localeName,
-          bottomCardBuilder: (context, geoResult, results, address, isLoading, onNext, searchBar) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                boxShadow: [
-                  BoxShadow(color: Colors.black12, blurRadius: 8),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Address text
-                  Row(
-                    children: [
-                      Icon(Icons.location_on, color: AppColors.kSecondaryColor),
-                      const SizedBox(width: 8),
-                      Flexible(child: Text(address ?? AppLocalizations.of(context)!.pickOnMaps,maxLines: 2, style: TextStyle(fontSize: 16,overflow: TextOverflow.ellipsis))),
+          searchBarBuilder: (context, searchBar) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 10, left: 12, right: 12),
+              child: SizedBox(
+                width: double.infinity, // Full width
+                height: 56, // Taller height (default is ~40)
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black12, blurRadius: 6),
                     ],
                   ),
-
-                  const SizedBox(height: 12),
-
-                  // Your custom confirm button
-                  AppCustomButton(onPressed: onNext, text: AppLocalizations.of(context)!.confirm)
-                ],
+                  child: searchBar,
+                ),
               ),
             );
           },
+
+          bottomCardBuilder:
+              (
+                context,
+                geoResult,
+                results,
+                address,
+                isLoading,
+                onNext,
+                searchBar,
+              ) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black12, blurRadius: 8),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Address text
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: AppColors.kSecondaryColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              address,
+                              maxLines: 2,
+                              style: TextStyle(
+                                fontSize: 16,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Your custom confirm button
+                      AppCustomButton(
+                        onPressed: onNext,
+                        text: l10n.confirm,
+                      ),
+                    ],
+                  ),
+                );
+              },
           onNext: (GeocodingResult? result) {
             if (result != null) {
               // Immediately return the selected location
@@ -105,6 +149,7 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
 
         searchConfig: SearchConfig(
           apiKey: AppConstants.googleMapsApiKey,
+          searchHintText: l10n.searchFor,
         ),
 
         geoCodingConfig: GeoCodingConfig(

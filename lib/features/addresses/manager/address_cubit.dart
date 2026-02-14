@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/utils/extract_error_message.dart';
 import '../data/models/address_model.dart';
 import '../data/repo/address_repo.dart';
 import 'address_states.dart';
@@ -23,7 +24,7 @@ class AddressCubit extends Cubit<AddressState> {
     } catch (e) {
       log('AddressCubit: Error loading addresses: $e');
       if (!isClosed) {
-        emit(AddressError(e.toString()));
+        emit(AddressError(extractErrorMessage(e)));
       }
     }
   }
@@ -48,7 +49,7 @@ class AddressCubit extends Cubit<AddressState> {
     } catch (e) {
       log('AddressCubit: Error creating address: $e');
       if (!isClosed) {
-        emit(AddressError(e.toString()));
+        emit(AddressError(extractErrorMessage(e)));
       }
     }
   }
@@ -73,7 +74,7 @@ class AddressCubit extends Cubit<AddressState> {
     } catch (e) {
       log('AddressCubit: Error updating address: $e');
       if (!isClosed) {
-        emit(AddressError(e.toString()));
+        emit(AddressError(extractErrorMessage(e)));
       }
     }
   }
@@ -97,7 +98,7 @@ class AddressCubit extends Cubit<AddressState> {
     } catch (e) {
       log('AddressCubit: Error deleting address: $e');
       if (!isClosed) {
-        emit(AddressError(e.toString()));
+        emit(AddressError(extractErrorMessage(e)));
       }
     }
   }

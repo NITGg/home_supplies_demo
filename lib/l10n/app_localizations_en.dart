@@ -99,6 +99,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get search => 'Search';
 
   @override
+  String get searchFor => 'search for a place, address, landmark....';
+
+  @override
   String get showAll => 'Show All';
 
   @override

@@ -18,7 +18,7 @@ class OrderRemoteDataSource {
       if (order.productImageFile != null) {
         formData = FormData.fromMap({
           'product_description': order.productDescription,
-          'budget': order.budget,
+          'budget': (double.parse(order.budget) * 100).round(),
           'pickup_area_id': order.pickupAreaId,
           'pickup_address_description': order.pickupAddressDescription,
           'pickup_lat': order.pickupLat,

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/utils/extract_error_message.dart';
 import '../data/repositories/wallet_repo.dart';
 import 'wallet_state.dart';
 
@@ -14,7 +15,7 @@ class WalletCubit extends Cubit<WalletState> {
       final walletData = await repository.getWalletData();
       emit(WalletLoaded(walletData: walletData));
     } catch (e) {
-      emit(WalletError(message: e.toString()));
+      emit(WalletError(message: extractErrorMessage(e)));
     }
   }
 
@@ -24,7 +25,7 @@ class WalletCubit extends Cubit<WalletState> {
       final walletData = await repository.getWalletData();
       emit(WalletLoaded(walletData: walletData));
     } catch (e) {
-      emit(WalletError(message: e.toString()));
+      emit(WalletError(message: extractErrorMessage(e)));
     }
   }
 }

@@ -13,7 +13,6 @@ import '../../../../../core/widgets/text_form.dart';
 import '../../../../addresses/data/models/address_model.dart';
 import '../../../../addresses/manager/address_cubit.dart';
 import '../../../../addresses/manager/address_states.dart';
-import '../../../../addresses/manager/location_cubit.dart';
 import '../../../../addresses/presentation/address_form_sheet.dart';
 import '../../../data/models/order_model.dart';
 import '../../../manager/order_cubit.dart';
@@ -500,7 +499,6 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
       builder: (_) => MultiBlocProvider(
         providers: [
           BlocProvider.value(value: addressCubit),
-          BlocProvider(create: (_) => LocationCubit()),
         ],
         child: AddressFormBottomSheet(saveAddress: saveAddress),
       ),

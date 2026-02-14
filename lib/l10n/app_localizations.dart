@@ -275,6 +275,12 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get search;
 
+  /// No description provided for @searchFor.
+  ///
+  /// In en, this message translates to:
+  /// **'search for a place, address, landmark....'**
+  String get searchFor;
+
   /// No description provided for @showAll.
   ///
   /// In en, this message translates to:

@@ -99,6 +99,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get search => 'بحث';
 
   @override
+  String get searchFor => 'ابحث عن مكان، عنوان، معلم بارز…';
+
+  @override
   String get showAll => 'عرض الكل';
 
   @override

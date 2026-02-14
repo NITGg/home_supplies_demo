@@ -9,7 +9,6 @@ import '../manager/address_cubit.dart';
 import '../manager/address_states.dart';
 import '../manager/governorate_cubit.dart';
 import '../manager/governorate_states.dart';
-import '../manager/location_cubit.dart';
 import 'location_picker_screen.dart';
 
 class AddressFormBottomSheet extends StatefulWidget {
@@ -161,19 +160,6 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
 
     return MultiBlocListener(
       listeners: [
-        // LocationCubit listener kept in case it's still used elsewhere,
-        // but no GPS button is shown in this form.
-        BlocListener<LocationCubit, LocationState>(
-          listener: (context, state) {
-            if (state is LocationLoaded) {
-              setState(() {
-                _latController.text = state.latitude;
-                _longController.text = state.longitude;
-                _hasLocation = true;
-              });
-            }
-          },
-        ),
         if (widget.saveAddress)
           BlocListener<AddressCubit, AddressState>(
             listener: (context, state) {

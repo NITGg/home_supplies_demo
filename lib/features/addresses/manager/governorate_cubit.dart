@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/utils/extract_error_message.dart';
 import '../data/repo/governorate_repo.dart';
 import 'governorate_states.dart';
 
@@ -20,7 +21,7 @@ class GovernorateCubit extends Cubit<GovernorateState> {
       emit(GovernoratesLoaded(response));
     } catch (e) {
       log('GovernorateCubit: Error loading governorates: $e');
-      emit(GovernorateError(e.toString()));
+      emit(GovernorateError(extractErrorMessage(e)));
     }
   }
 }

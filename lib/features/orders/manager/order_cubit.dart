@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/utils/extract_error_message.dart';
 import '../data/models/order_model.dart';
 import '../data/repositories/order_repo.dart';
 import 'order_states.dart';
@@ -92,7 +93,7 @@ class OrderCubit extends Cubit<OrderState> {
     } catch (e) {
       _activeLoading = false;
       log('OrderCubit: Error loading active orders: $e');
-      emit(OrderError(e.toString()));
+      emit(OrderError(extractErrorMessage(e)));
     }
   }
 
@@ -164,7 +165,7 @@ class OrderCubit extends Cubit<OrderState> {
     } catch (e) {
       _historyLoading = false;
       log('OrderCubit: Error loading history orders: $e');
-      emit(OrderError(e.toString()));
+      emit(OrderError(extractErrorMessage(e)));
     }
   }
 
@@ -183,7 +184,7 @@ class OrderCubit extends Cubit<OrderState> {
       await loadActiveOrders(loadMore: false);
     } catch (e) {
       log('OrderCubit: Error creating order: $e');
-      emit(OrderError(e.toString()));
+      emit(OrderError(extractErrorMessage(e)));
     }
   }
 
@@ -203,7 +204,7 @@ class OrderCubit extends Cubit<OrderState> {
       await loadHistoryOrders(loadMore: false);
     } catch (e) {
       log('OrderCubit: Error cancelling order: $e');
-      emit(OrderCancelError(e.toString()));
+      emit(OrderCancelError(extractErrorMessage(e)));
     }
   }
 
@@ -228,7 +229,7 @@ class OrderCubit extends Cubit<OrderState> {
       emit(ProposalsLoaded(orderId: orderId, proposals: response.proposals));
     } catch (e) {
       log('OrderCubit: Error loading proposals: $e');
-      emit(ProposalsError(orderId, e.toString()));
+      emit(ProposalsError(orderId, extractErrorMessage(e)));
     }
   }
 
@@ -255,7 +256,7 @@ class OrderCubit extends Cubit<OrderState> {
       await loadProposals(orderId);
     } catch (e) {
       log('OrderCubit: Error accepting proposal: $e');
-      emit(OrderError(e.toString()));
+      emit(OrderError(extractErrorMessage(e)));
     }
   }
 
@@ -279,7 +280,7 @@ class OrderCubit extends Cubit<OrderState> {
       await loadProposals(orderId);
     } catch (e) {
       log('OrderCubit: Error rejecting proposal: $e');
-      emit(OrderError(e.toString()));
+      emit(OrderError(extractErrorMessage(e)));
     }
   }
 
@@ -305,7 +306,7 @@ class OrderCubit extends Cubit<OrderState> {
       await loadHistoryOrders(loadMore: false);
     } catch (e) {
       log('OrderCubit: Error confirming delivery: $e');
-      emit(OrderError(e.toString()));
+      emit(OrderError(extractErrorMessage(e)));
     }
   }
 
