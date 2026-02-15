@@ -302,7 +302,6 @@ class OrderCubit extends Cubit<OrderState> {
 
       // Reload both lists (order moved from active to history)
       await loadActiveOrders(loadMore: false);
-      await loadHistoryOrders(loadMore: false);
     } catch (e) {
       log('OrderCubit: Error confirming delivery: $e');
       emit(OrderError(extractErrorMessage(e)));
