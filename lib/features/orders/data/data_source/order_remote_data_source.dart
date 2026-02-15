@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../core/utils/socket_service.dart';
 import '../models/order_model.dart';
 import '../models/proposal_model.dart';
 import '../models/qr_model.dart';
@@ -41,6 +42,7 @@ class OrderRemoteDataSource {
       log('Create order response: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        SocketService().joinOrder(response.data['order']['id']);
         return OrderResponse.fromJson(response.data);
       } else {
         throw Exception('Failed to create order');

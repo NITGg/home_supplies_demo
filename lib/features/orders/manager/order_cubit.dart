@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/core/utils/socket_service.dart';
 import '../../../core/utils/extract_error_message.dart';
 import '../data/models/order_model.dart';
 import '../data/repositories/order_repo.dart';
@@ -24,8 +25,8 @@ class OrderCubit extends Cubit<OrderState> {
   bool _historyLoading = false;
 
   OrderCubit({OrderRepository? repository})
-      : _repository = repository ?? OrderRepository(),
-        super(OrderInitial());
+    : _repository = repository ?? OrderRepository(),
+      super(OrderInitial());
 
   // ── Load Active Orders ─────────────────────────────────────────────────────
 
@@ -42,7 +43,9 @@ class OrderCubit extends Cubit<OrderState> {
     }
 
     try {
-      log('OrderCubit: Loading active orders — skip: $_activeSkip, limit: $_activeLimit');
+      log(
+        'OrderCubit: Loading active orders — skip: $_activeSkip, limit: $_activeLimit',
+      );
 
       // First fetch PENDING orders
       final pendingResponse = await _repository.getOrders(
@@ -65,8 +68,10 @@ class OrderCubit extends Cubit<OrderState> {
       ];
 
       // Sort by created date (newest first)
-      combinedOrders.sort((a, b) =>
-          (b.createdAt ?? DateTime.now()).compareTo(a.createdAt ?? DateTime.now())
+      combinedOrders.sort(
+        (a, b) => (b.createdAt ?? DateTime.now()).compareTo(
+          a.createdAt ?? DateTime.now(),
+        ),
       );
 
       if (!loadMore) {
@@ -79,17 +84,22 @@ class OrderCubit extends Cubit<OrderState> {
       _activeSkip = _activeOrders.length;
 
       // Total count is sum of both statuses
-      _activeTotalCount = pendingResponse.totalOrders + inProgressResponse.totalOrders;
+      _activeTotalCount =
+          pendingResponse.totalOrders + inProgressResponse.totalOrders;
 
       _activeLoading = false;
 
-      log('OrderCubit: Loaded ${_activeOrders.length} active orders out of $_activeTotalCount total');
+      log(
+        'OrderCubit: Loaded ${_activeOrders.length} active orders out of $_activeTotalCount total',
+      );
 
-      emit(OrdersLoaded(
-        orders: _activeOrders,
-        totalCount: _activeTotalCount,
-        viewMode: OrderViewMode.active,
-      ));
+      emit(
+        OrdersLoaded(
+          orders: _activeOrders,
+          totalCount: _activeTotalCount,
+          viewMode: OrderViewMode.active,
+        ),
+      );
     } catch (e) {
       _activeLoading = false;
       log('OrderCubit: Error loading active orders: $e');
@@ -112,7 +122,9 @@ class OrderCubit extends Cubit<OrderState> {
     }
 
     try {
-      log('OrderCubit: Loading history orders — skip: $_historySkip, limit: $_historyLimit');
+      log(
+        'OrderCubit: Loading history orders — skip: $_historySkip, limit: $_historyLimit',
+      );
 
       // First fetch DELIVERED orders
       final deliveredResponse = await _repository.getOrders(
@@ -136,8 +148,10 @@ class OrderCubit extends Cubit<OrderState> {
 
       // Sort by completion date (newest first)
       combinedOrders.sort((a, b) {
-        final dateA = b.deliveredAt ?? b.canceledAt ?? b.createdAt ?? DateTime.now();
-        final dateB = a.deliveredAt ?? a.canceledAt ?? a.createdAt ?? DateTime.now();
+        final dateA =
+            b.deliveredAt ?? b.canceledAt ?? b.createdAt ?? DateTime.now();
+        final dateB =
+            a.deliveredAt ?? a.canceledAt ?? a.createdAt ?? DateTime.now();
         return dateA.compareTo(dateB);
       });
 
@@ -151,17 +165,22 @@ class OrderCubit extends Cubit<OrderState> {
       _historySkip = _historyOrders.length;
 
       // Total count is sum of both statuses
-      _historyTotalCount = deliveredResponse.totalOrders + cancelledResponse.totalOrders;
+      _historyTotalCount =
+          deliveredResponse.totalOrders + cancelledResponse.totalOrders;
 
       _historyLoading = false;
 
-      log('OrderCubit: Loaded ${_historyOrders.length} history orders out of $_historyTotalCount total');
+      log(
+        'OrderCubit: Loaded ${_historyOrders.length} history orders out of $_historyTotalCount total',
+      );
 
-      emit(OrdersLoaded(
-        orders: _historyOrders,
-        totalCount: _historyTotalCount,
-        viewMode: OrderViewMode.history,
-      ));
+      emit(
+        OrdersLoaded(
+          orders: _historyOrders,
+          totalCount: _historyTotalCount,
+          viewMode: OrderViewMode.history,
+        ),
+      );
     } catch (e) {
       _historyLoading = false;
       log('OrderCubit: Error loading history orders: $e');
@@ -179,7 +198,6 @@ class OrderCubit extends Cubit<OrderState> {
       log('OrderCubit: Order created — ${response.order.orderNumber}');
 
       emit(OrderSuccess(message: response.message, order: response.order));
-
       // Reload active orders (new order will be PENDING)
       await loadActiveOrders(loadMore: false);
     } catch (e) {
@@ -210,10 +228,7 @@ class OrderCubit extends Cubit<OrderState> {
   Future<void> cancelOrderUnavailable({required int orderId}) =>
       cancelOrder(orderId, 'Product unavailable');
 
-  Future<void> cancelOrderOther({
-    required int orderId,
-    required String note,
-  }) =>
+  Future<void> cancelOrderOther({required int orderId, required String note}) =>
       cancelOrder(orderId, note);
 
   // ── Load Proposals ─────────────────────────────────────────────────────────
@@ -292,10 +307,7 @@ class OrderCubit extends Cubit<OrderState> {
     emit(DeliveryConfirming());
     try {
       log('OrderCubit: Confirming delivery for order $orderId');
-      await _repository.confirmDelivery(
-        orderId: orderId,
-        courierId: courierId,
-      );
+      await _repository.confirmDelivery(orderId: orderId, courierId: courierId);
       log('OrderCubit: Delivery confirmed');
 
       emit(DeliveryConfirmed(orderId: orderId));

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/socket_service.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/loading_screen.dart';
 import '../../../../core/widgets/text_form.dart';
@@ -35,6 +36,16 @@ class _HomeLayoutState extends State<HomeLayout> {
   void initState() {
     super.initState();
     _userProfileFuture = _loadUserProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final token = await SecureStorageService().getToken();
+      if (token != null && token.isNotEmpty) {
+        final socketService = SocketService();
+        socketService.connect(
+          baseUrl: 'https://tawreedat.nitg-eg.com',
+          accessToken: token,
+        );
+      }
+    });
     // if(shouldShowNotificationDialog==true){
     //   WidgetsBinding.instance.addPostFrameCallback((_) {
     //     showNotificationsDialog(context, kUserId);
