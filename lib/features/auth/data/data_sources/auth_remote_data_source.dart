@@ -84,7 +84,7 @@ class AuthRemoteDataSource {
 
   Future<LongAuthResponseModel> verifyGoogleToken(String idToken) async {
     final response = await _dio.post(
-      '/api/auth/google/verify', // Keep old endpoint if Google auth unchanged
+      '/auth/google/verify',
       data: {'idToken': idToken},
     );
 
@@ -98,7 +98,7 @@ class AuthRemoteDataSource {
       String? fullName,
       ) async {
     final response = await _dio.post(
-      '/api/auth/apple/verify', // Keep old endpoint if Apple auth unchanged
+      '/auth/apple/verify',
       data: {
         'idToken': idToken,
         'fullname': fullName,

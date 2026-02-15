@@ -201,7 +201,6 @@ class OrderCubit extends Cubit<OrderState> {
 
       // Reload both lists (order moved from active to history)
       await loadActiveOrders(loadMore: false);
-      await loadHistoryOrders(loadMore: false);
     } catch (e) {
       log('OrderCubit: Error cancelling order: $e');
       emit(OrderCancelError(extractErrorMessage(e)));

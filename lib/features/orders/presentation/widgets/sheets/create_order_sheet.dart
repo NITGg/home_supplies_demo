@@ -152,7 +152,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         Order(
           productDescription: _productDescriptionController.text.trim(),
           productImageFile: _productImage,
-          budget: _budgetController.text.trim(),
+          budget: (double.parse(_budgetController.text.trim())*100).round().toString(),
           pickupAreaId: _pickupAddress!.areaId,
           pickupAddressDescription: _pickupAddress!.detailedAddress,
           pickupLat: _pickupAddress!.addressLat,
@@ -279,7 +279,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     required bool isPickup,
   }) {
     final color = isPickup ? Colors.green : Colors.blue;
-    final icon = isPickup ? Icons.my_location : Icons.location_on;
+    final icon = isPickup ? Icons.store_outlined : Icons.location_on;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

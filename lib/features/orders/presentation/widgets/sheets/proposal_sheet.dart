@@ -31,15 +31,117 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.acceptProposal),
-        content: Text('${l10n.acceptProposalConfirmation} (${proposal.courier.user.fullName}) - ${proposal.totalFee} ${l10n.egp}'
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                l10n.acceptProposal,
+                style: AppTextStyles.bold18.copyWith(fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.acceptProposalConfirmation,
+              style: AppTextStyles.regular14.copyWith(
+                fontSize: 15,
+                color: Colors.grey.shade700,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.green.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.person,
+                        size: 18,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          proposal.courier.user.fullName,
+                          style: AppTextStyles.bold14.copyWith(
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.account_balance_wallet,
+                        size: 18,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${proposal.totalFee} ${l10n.egp}',
+                        style: AppTextStyles.bold16.copyWith(
+                          color: Colors.green,
+                          fontSize: 17,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: Text(l10n.cancel),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.grey.shade700,
+              side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
-          TextButton(
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(dialogContext);
               context.read<OrderCubit>().acceptProposal(
@@ -47,8 +149,20 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                 proposalId: proposal.id,
               );
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.green),
-            child: Text(l10n.accept),
+            icon: const Icon(Icons.check, size: 18),
+            label: Text(
+              l10n.accept,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           ),
         ],
       ),
@@ -61,16 +175,95 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.rejectProposal),
-        content: Text(
-          '${l10n.rejectProposalConfirmation} (${proposal.courier.user.fullName})',
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.cancel,
+                color: Colors.red,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                l10n.rejectProposal,
+                style: AppTextStyles.bold18.copyWith(fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.rejectProposalConfirmation,
+              style: AppTextStyles.regular14.copyWith(
+                fontSize: 15,
+                color: Colors.grey.shade700,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.red.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.person,
+                    size: 18,
+                    color: Colors.red,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      proposal.courier.user.fullName,
+                      style: AppTextStyles.bold14.copyWith(
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: Text(l10n.cancel),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.grey.shade700,
+              side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
-          TextButton(
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(dialogContext);
               context.read<OrderCubit>().rejectProposal(
@@ -78,8 +271,20 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                 proposalId: proposal.id,
               );
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text(l10n.reject),
+            icon: const Icon(Icons.close, size: 18),
+            label: Text(
+              l10n.reject,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           ),
         ],
       ),
@@ -240,114 +445,241 @@ class _ProposalCard extends StatelessWidget {
     return Colors.orange;
   }
 
+  IconData _getStatusIcon() {
+    if (proposal.isAccepted) return Icons.check_circle;
+    if (proposal.isRejected) return Icons.cancel;
+    return Icons.schedule;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final statusColor = _getStatusColor();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      elevation: 3,
+      shadowColor: statusColor.withOpacity(0.2),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: _getStatusColor().withOpacity(0.3), width: 2),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.white, statusColor.withOpacity(0.03)],
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            _buildHeader(context, l10n, statusColor),
+            _buildFeeSection(context, l10n),
+            if (proposal.isPending) _buildActionButtons(l10n),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n, Color statusColor) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: statusColor.withOpacity(0.07),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(16),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.kPrimaryColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.kPrimaryColor.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              Icons.person,
+              color: AppColors.kPrimaryColor,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  backgroundColor: AppColors.kPrimaryColor.withOpacity(0.1),
-                  child: Icon(Icons.person, color: AppColors.kPrimaryColor),
+                Text(
+                  proposal.courier.user.fullName,
+                  style: AppTextStyles.bold16.copyWith(fontSize: 15),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        proposal.courier.user.fullName,
-                        style: AppTextStyles.bold16,
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.phone,
+                      size: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      textDirection: TextDirection.ltr,
+                      proposal.courier.user.phone,
+                      style: AppTextStyles.regular14.copyWith(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
                       ),
-                      Text(
-                        proposal.courier.user.phone,
-                        style: AppTextStyles.regular14.copyWith(
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    proposal.status,
-                    style: AppTextStyles.bold14.copyWith(color: Colors.white),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: statusColor,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: statusColor.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(_getStatusIcon(), size: 12, color: Colors.white),
+                const SizedBox(width: 4),
+                Text(
+                  proposal.status,
+                  style: AppTextStyles.bold14.copyWith(
+                    fontSize: 11,
+                    color: Colors.white,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.kPrimaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(l10n.deliveryFee, style: AppTextStyles.bold14),
-                  Text(
-                    '${proposal.totalFee} ${l10n.egp}',
-                    style: AppTextStyles.bold18.copyWith(
-                      color: AppColors.kPrimaryColor,
-                    ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeeSection(BuildContext context, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.kPrimaryColor.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.kPrimaryColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
+                  child: Icon(
+                    Icons.local_shipping,
+                    size: 18,
+                    color: AppColors.kPrimaryColor,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.deliveryFee,
+                  style: AppTextStyles.bold14.copyWith(
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              '${proposal.totalFee} ${l10n.egp}',
+              style: AppTextStyles.bold18.copyWith(
+                color: AppColors.kPrimaryColor,
+                fontSize: 20,
               ),
             ),
-            if (proposal.isPending) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onReject,
-                      icon: const Icon(Icons.close, size: 18),
-                      label: Text(l10n.reject),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: onAccept,
-                      icon: const Icon(Icons.check, size: 18),
-                      label: Text(l10n.accept),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildActionButtons(AppLocalizations l10n) {
+    return Column(
+      children: [
+        const Divider(height: 1),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onReject,
+                  icon: const Icon(Icons.close, size: 18),
+                  label: Text(
+                    l10n.reject,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red, width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onAccept,
+                  icon: const Icon(Icons.check, size: 18),
+                  label: Text(
+                    l10n.accept,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

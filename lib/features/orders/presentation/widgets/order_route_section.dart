@@ -24,7 +24,7 @@ class OrderRouteSection extends StatelessWidget {
       child: Column(
         children: [
           _LocationRow(
-            icon: Icons.my_location,
+            icon: Icons.store_outlined,
             label: l10n?.pickup ?? 'Pickup',
             address: order.pickupAddressDescription,
             color: Colors.green,

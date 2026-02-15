@@ -77,7 +77,7 @@ class Order {
       orderNumber: json['order_number'] as String?,
       productDescription: json['product_description'] as String,
       productImage: json['product_image'] as String?,
-      budget: json['budget']?.toString() ?? '0',
+      budget: ((num.tryParse(json['budget']?.toString() ?? '0') ?? 0) / 100).toString(),
       actualPrice: json['actual_price']?.toString(),
       pickupAreaId: json['pickup_area_id'] as int,
       pickupAddressDescription:
