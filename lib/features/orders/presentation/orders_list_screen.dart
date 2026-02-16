@@ -93,7 +93,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                 children: [
                   Text(
                     l10n?.newProposalReceived ?? 'New Proposal Received!',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
                   Text(
                     l10n?.tapToView ?? 'Tap to view details',
@@ -138,9 +141,12 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             Expanded(
               child: Text(
                 reason == 'unavailable'
-                    ? (l10n?.orderCancelledUnavailable ?? 'Order cancelled - Item unavailable')
-                    : (l10n?.orderCancelled ?? 'Order cancelled'),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ? (l10n!.orderCancelledUnavailable)
+                    : (l10n!.orderCancelled),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
               ),
             ),
           ],
@@ -188,13 +194,14 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     final completedStatuses = ['DELIVERED', 'CANCELLED'];
     return completedStatuses.contains(order.status?.toLowerCase());
   }
+
   void _findAndShowProposals(int orderId) {
     final cubit = context.read<OrderCubit>();
     final state = cubit.state;
 
     if (state is OrdersLoaded) {
       final order = state.orders.firstWhere(
-            (o) => o.id == orderId,
+        (o) => o.id == orderId,
         orElse: () => state.orders.first,
       );
       _showProposals(order);
@@ -255,8 +262,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider.value(
         value: context.read<OrderCubit>(),
-        child: OrderCancelBottomSheet(
-            isUnavailable: false, orderId: order.id!),
+        child: OrderCancelBottomSheet(isUnavailable: false, orderId: order.id!),
       ),
     );
   }
@@ -309,7 +315,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         color: AppColors.kPrimaryColor,
         child: BlocConsumer<OrderCubit, OrderState>(
           listenWhen: (_, current) =>
-          current is OrderCancelled ||
+              current is OrderCancelled ||
               current is OrderCancelError ||
               current is DeliveryConfirmed ||
               current is OrderError ||
@@ -318,17 +324,14 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             if (state is OrderCancelled) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.message),
+                  content: Text(AppLocalizations.of(context)!.orderCancelled),
                   backgroundColor: Colors.green,
                 ),
               );
             } else if (state is DeliveryConfirmed) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(
-                    AppLocalizations.of(context)?.delivered ??
-                        'Delivery confirmed successfully!',
-                  ),
+                  content: Text(AppLocalizations.of(context)!.delivered),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -342,7 +345,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             }
           },
           buildWhen: (previous, current) =>
-          current is OrderLoading ||
+              current is OrderLoading ||
               current is OrdersLoaded ||
               current is OrderError,
           builder: (context, state) {
@@ -411,8 +414,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                         ? cubit.loadActiveOrders()
                         : cubit.loadHistoryOrders();
                   },
-                  child:
-                  Text(AppLocalizations.of(context)?.retry ?? 'Retry'),
+                  child: Text(AppLocalizations.of(context)?.retry ?? 'Retry'),
                 ),
               ],
             ),
@@ -428,8 +430,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     final isCorrectMode =
         (_viewMode == ViewMode.active &&
             state.viewMode == OrderViewMode.active) ||
-            (_viewMode == ViewMode.history &&
-                state.viewMode == OrderViewMode.history);
+        (_viewMode == ViewMode.history &&
+            state.viewMode == OrderViewMode.history);
 
     if (!isCorrectMode) {
       return _buildShimmerView();
@@ -451,16 +453,17 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
-      itemCount: state.orders.length +
+      itemCount:
+          state.orders.length +
           (_viewMode == ViewMode.history && state.hasMore ? 1 : 0),
       itemBuilder: (context, index) {
         // Pagination spinner at the bottom
         if (index == state.orders.length) {
           return const Padding(
             padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator(
-              color: AppColors.kPrimaryColor,
-            )),
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.kPrimaryColor),
+            ),
           );
         }
 

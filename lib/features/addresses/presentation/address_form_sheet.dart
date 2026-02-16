@@ -307,6 +307,13 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                   initialValue: _selectedAreaId,
                                   decoration: InputDecoration(
                                     labelText: l10n.selectArea,
+                                    labelStyle: TextStyle(color: Colors.black),
+                                    focusedBorder:  OutlineInputBorder(
+                                      borderSide: const BorderSide(
+                                          color: AppColors.kPrimaryColor),
+                                      borderRadius:
+                                      BorderRadius.circular(12),
+                                    ),
                                     border: OutlineInputBorder(
                                       borderRadius:
                                       BorderRadius.circular(12),
