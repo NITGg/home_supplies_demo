@@ -164,8 +164,14 @@ class _HomeLayoutState extends State<HomeLayout> {
                                 children: [
                                   DrawerHeader(
                                     decoration: BoxDecoration(
-                                      color: AppColors.kSecondaryColor,
-                                    ),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Color(0xFF2D3436),
+                                          Color(0xFF636E72),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),                                    ),
                                     child: GestureDetector(
                                       onTap: () {
                                         if (profile != null) {
