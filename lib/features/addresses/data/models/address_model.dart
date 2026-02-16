@@ -88,7 +88,7 @@ class Address {
 
   String get displayAddress {
     if (name != null && name!.isNotEmpty) {
-      return '$name - $detailedAddress';
+      return '$name\n $detailedAddress';
     }
     return detailedAddress;
   }

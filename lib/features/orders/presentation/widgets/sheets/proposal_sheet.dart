@@ -23,6 +23,9 @@ class OrderProposalsSheet extends StatefulWidget {
 
 class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
   StreamSubscription? _newOfferSubscription;
+  List<Proposal> _currentProposals = [];
+  bool _isInitialLoad = true;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -34,7 +37,6 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
   @override
   void dispose() {
     _newOfferSubscription?.cancel();
-    // Don't leave the order room - parent screen manages this
     super.dispose();
   }
 
@@ -76,12 +78,13 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
       ),
     );
 
-    // Auto-refresh proposals
+    // Set refreshing flag and reload proposals
+    setState(() {
+      _isRefreshing = true;
+    });
+
     context.read<OrderCubit>().loadProposals(widget.order.id!);
   }
-
-
-  // ================= EXISTING METHODS =================
 
   void _acceptProposal(Proposal proposal) {
     final l10n = AppLocalizations.of(context)!;
@@ -385,42 +388,16 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                         children: [
                           Text(l10n.proposals, style: AppTextStyles.bold18),
                           const SizedBox(width: 8),
-                          // Live indicator
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.green.withOpacity(0.3),
-                                width: 1,
+                          // Show refresh indicator when refreshing
+                          if (_isRefreshing)
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.kPrimaryColor,
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.green,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Live',
-                                  style: AppTextStyles.bold14.copyWith(
-                                    fontSize: 11,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
                       Text(
@@ -443,13 +420,35 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
 
           // Proposals List
           Expanded(
-            child: BlocBuilder<OrderCubit, OrderState>(
+            child: BlocConsumer<OrderCubit, OrderState>(
+              listener: (context, state) {
+                // Update cached proposals and reset flags when loaded
+                if (state is ProposalsLoaded) {
+                  setState(() {
+                    _currentProposals = state.proposals;
+                    _isInitialLoad = false;
+                    _isRefreshing = false;
+                  });
+                }
+              },
+              buildWhen: (previous, current) {
+                // Only rebuild on initial load, not on refresh
+                return _isInitialLoad && (current is ProposalsLoading ||
+                    current is ProposalsLoaded ||
+                    current is ProposalsError);
+              },
               builder: (context, state) {
-                if (state is ProposalsLoading) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.kPrimaryColor));
+                // Show loading only on initial load
+                if (_isInitialLoad && state is ProposalsLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.kPrimaryColor,
+                    ),
+                  );
                 }
 
-                if (state is ProposalsError) {
+                // Show error state
+                if (state is ProposalsError && _currentProposals.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -463,9 +462,14 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                         Text(state.message),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: () => context
-                              .read<OrderCubit>()
-                              .loadProposals(widget.order.id!),
+                          onPressed: () {
+                            setState(() {
+                              _isInitialLoad = true;
+                            });
+                            context
+                                .read<OrderCubit>()
+                                .loadProposals(widget.order.id!);
+                          },
                           child: Text(l10n.retry),
                         ),
                       ],
@@ -473,51 +477,52 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                   );
                 }
 
-                if (state is ProposalsLoaded) {
-                  if (state.proposals.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.local_offer_outlined,
-                            size: 64,
+                // Show cached proposals (or loaded proposals)
+                final proposals = state is ProposalsLoaded
+                    ? state.proposals
+                    : _currentProposals;
+
+                if (proposals.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.local_offer_outlined,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.noProposalsYet,
+                          style: AppTextStyles.regular14.copyWith(
                             color: Colors.grey,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            l10n.noProposalsYet,
-                            style: AppTextStyles.regular14.copyWith(
-                              color: Colors.grey,
-                            ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.couriersWillSendProposalsSoon,
+                          style: AppTextStyles.regular14.copyWith(
+                            color: Colors.grey[400],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            l10n.couriersWillSendProposalsSoon,
-                            style: AppTextStyles.regular14.copyWith(
-                              color: Colors.grey[400],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: state.proposals.length,
-                    itemBuilder: (context, index) {
-                      final proposal = state.proposals[index];
-                      return _ProposalCard(
-                        proposal: proposal,
-                        onAccept: () => _acceptProposal(proposal),
-                        onReject: () => _rejectProposal(proposal),
-                      );
-                    },
+                        ),
+                      ],
+                    ),
                   );
                 }
 
-                return const SizedBox();
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: proposals.length,
+                  itemBuilder: (context, index) {
+                    final proposal = proposals[index];
+                    return _ProposalCard(
+                      proposal: proposal,
+                      onAccept: () => _acceptProposal(proposal),
+                      onReject: () => _rejectProposal(proposal),
+                    );
+                  },
+                );
               },
             ),
           ),
@@ -583,7 +588,8 @@ class _ProposalCard extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, AppLocalizations l10n, Color statusColor) {
+  Widget _buildHeader(
+      BuildContext context, AppLocalizations l10n, Color statusColor) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

@@ -42,7 +42,6 @@ class OrderRemoteDataSource {
       log('Create order response: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // SocketService().joinOrder(response.data['order']['id']);
         return OrderResponse.fromJson(response.data);
       } else {
         throw Exception('Failed to create order');

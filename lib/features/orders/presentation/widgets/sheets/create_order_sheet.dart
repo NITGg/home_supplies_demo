@@ -623,11 +623,11 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
                         child: ListTile(
                           leading: Icon(
                             widget.isPickup
-                                ? Icons.my_location
+                                ? Icons.store
                                 : Icons.location_on,
                             color: widget.isPickup ? Colors.green : Colors.blue,
                           ),
-                          title: Text(address.displayAddress),
+                          title: Text(address.displayAddress,overflow: TextOverflow.ellipsis,maxLines: 3,),
                           subtitle: isDefault
                               ? Text(
                                   'Default',
