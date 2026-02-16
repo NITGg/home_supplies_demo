@@ -974,5 +974,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noProposalsYet => 'No proposals yet';
 
   @override
+  String get orderCancelledUnavailable => 'Order Cancelled - your product is Unavailable';
+
+  @override
+  String get view => 'View';
+
+  @override
+  String get tapToView => 'Tap To View';
+
+  @override
+  String get newProposalReceived => 'New Proposal Received';
+
+  @override
   String get cancelOrderWarning => 'Are you sure you want to cancel this order? This action cannot be undone.';
 }

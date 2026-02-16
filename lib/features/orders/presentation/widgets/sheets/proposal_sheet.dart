@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/style/app_colors.dart';
 import '../../../../../core/style/text_styles.dart';
+import '../../../../../core/utils/socket_service.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../data/models/order_model.dart';
 import '../../../data/models/proposal_model.dart';
@@ -19,11 +22,66 @@ class OrderProposalsSheet extends StatefulWidget {
 }
 
 class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
+  StreamSubscription? _newOfferSubscription;
+
   @override
   void initState() {
     super.initState();
     context.read<OrderCubit>().loadProposals(widget.order.id!);
+    _setupSocketListener();
   }
+
+  @override
+  void dispose() {
+    _newOfferSubscription?.cancel();
+    // Don't leave the order room - parent screen manages this
+    super.dispose();
+  }
+
+  void _setupSocketListener() {
+    final socketService = SocketService();
+
+    if (!socketService.isConnected) return;
+
+    // Subscribe to new offers, filtering for this specific order
+    _newOfferSubscription = socketService.onNewOffer.listen((data) {
+      final orderId = data['orderId'] as int?;
+
+      if (mounted && orderId == widget.order.id) {
+        _handleNewOffer();
+      }
+    });
+  }
+
+  void _handleNewOffer() {
+    final l10n = AppLocalizations.of(context)!;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.refresh, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Text(
+              l10n.newProposalReceived ?? 'New proposal received!',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+
+    // Auto-refresh proposals
+    context.read<OrderCubit>().loadProposals(widget.order.id!);
+  }
+
+
+  // ================= EXISTING METHODS =================
 
   void _acceptProposal(Proposal proposal) {
     final l10n = AppLocalizations.of(context)!;
@@ -323,7 +381,48 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(l10n.proposals, style: AppTextStyles.bold18),
+                      Row(
+                        children: [
+                          Text(l10n.proposals, style: AppTextStyles.bold18),
+                          const SizedBox(width: 8),
+                          // Live indicator
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.green.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Live',
+                                  style: AppTextStyles.bold14.copyWith(
+                                    fontSize: 11,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                       Text(
                         widget.order.orderNumber ?? 'N/A',
                         style: AppTextStyles.regular14.copyWith(

@@ -437,7 +437,11 @@
 "accept": "قبول",
 "deliveryFee": "رسوم التوصيل",
 "couriersWillSendProposalsSoon": "سيقوم المندوبون بإرسال العروض قريبًا",
-"noProposalsYet": "لا توجد عروض حتى الآن"
+"noProposalsYet": "لا توجد عروض حتى الآن",
+"orderCancelledUnavailable": "تم إلغاء الطلب - المنتج غير متوفر",
+"view": "عرض",
+"tapToView": "اضغط لعرضه",
+"newProposalReceived": "تم استلام عرض جديد"
 
 
 

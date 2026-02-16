@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/cancel_order_sheet.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/proposal_sheet.dart';
 import '../../../core/style/app_colors.dart';
+import '../../../core/utils/socket_service.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/models/order_model.dart';
 import '../manager/order_cubit.dart';
@@ -26,18 +29,179 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   final ScrollController _scrollController = ScrollController();
   ViewMode _viewMode = ViewMode.active;
 
+  // Stream subscriptions
+  StreamSubscription? _newOfferSubscription;
+  StreamSubscription? _orderCancelledSubscription;
+
   @override
   void initState() {
     super.initState();
     context.read<OrderCubit>().loadActiveOrders();
     _scrollController.addListener(_onScroll);
+    _setupSocketListeners();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _cleanupSocketListeners();
     super.dispose();
   }
+
+  // ================= SOCKET SETUP =================
+  void _setupSocketListeners() {
+    final socketService = SocketService();
+
+    // Subscribe to new offer stream
+    _newOfferSubscription = socketService.onNewOffer.listen((data) {
+      if (mounted) {
+        _handleNewOffer(data);
+      }
+    });
+
+    // Subscribe to order cancelled stream
+    _orderCancelledSubscription = socketService.onOrderCancelled.listen((data) {
+      if (mounted) {
+        final reason = data['reason'] as String? ?? 'other';
+        _handleOrderCancelled(data, reason);
+      }
+    });
+  }
+
+  void _cleanupSocketListeners() {
+    _newOfferSubscription?.cancel();
+    _orderCancelledSubscription?.cancel();
+
+    // Note: We don't leave order rooms here anymore
+    // Rooms are only left when orders are completed/cancelled
+  }
+
+  // ================= SOCKET EVENT HANDLERS =================
+  void _handleNewOffer(Map<String, dynamic> data) {
+    final l10n = AppLocalizations.of(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.local_offer, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n?.newProposalReceived ?? 'New Proposal Received!',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                  Text(
+                    l10n?.tapToView ?? 'Tap to view details',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: l10n?.view ?? 'View',
+          textColor: Colors.white,
+          onPressed: () {
+            final orderId = data['orderId'] as int?;
+            if (orderId != null) {
+              _findAndShowProposals(orderId);
+            }
+          },
+        ),
+      ),
+    );
+
+    // Refresh active orders
+    if (_viewMode == ViewMode.active) {
+      context.read<OrderCubit>().loadActiveOrders(loadMore: false);
+    }
+  }
+
+  void _handleOrderCancelled(Map<String, dynamic> data, String reason) {
+    final l10n = AppLocalizations.of(context);
+    final orderId = data['orderId'] as int?;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.cancel_outlined, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                reason == 'unavailable'
+                    ? (l10n?.orderCancelledUnavailable ?? 'Order cancelled - Item unavailable')
+                    : (l10n?.orderCancelled ?? 'Order cancelled'),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.orange.shade700,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+
+    // Leave the order room since it's completed
+    if (orderId != null) {
+      SocketService().leaveOrder(orderId);
+    }
+
+    // Refresh the list
+    if (_viewMode == ViewMode.active) {
+      context.read<OrderCubit>().loadActiveOrders(loadMore: false);
+    }
+  }
+
+  // ================= JOIN ORDER ROOMS =================
+  void _joinOrderRooms(List<Order> orders) {
+    final socketService = SocketService();
+
+    if (!socketService.isConnected) return;
+
+    // Get list of active order IDs that need real-time updates
+    final activeOrderIds = orders
+        .where((order) => order.id != null && !_isOrderCompleted(order))
+        .map((order) => order.id!)
+        .toList();
+
+    // Join rooms for active orders
+    for (final orderId in activeOrderIds) {
+      socketService.joinOrder(orderId);
+    }
+
+    // Leave rooms for orders that are no longer in the list
+    socketService.leaveInactiveOrders(activeOrderIds);
+  }
+
+  // Helper to determine if an order is completed
+  bool _isOrderCompleted(Order order) {
+    // Adjust these status strings to match your actual order statuses
+    final completedStatuses = ['DELIVERED', 'CANCELLED'];
+    return completedStatuses.contains(order.status?.toLowerCase());
+  }
+  void _findAndShowProposals(int orderId) {
+    final cubit = context.read<OrderCubit>();
+    final state = cubit.state;
+
+    if (state is OrdersLoaded) {
+      final order = state.orders.firstWhere(
+            (o) => o.id == orderId,
+        orElse: () => state.orders.first,
+      );
+      _showProposals(order);
+    }
+  }
+
+  // ================= EXISTING METHODS =================
 
   void _onScroll() {
     if (_viewMode != ViewMode.history) return;
@@ -191,6 +355,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             }
 
             if (state is OrdersLoaded) {
+              // Join socket rooms for active orders
+              if (_viewMode == ViewMode.active) {
+                _joinOrderRooms(state.orders);
+              }
               return _buildOrdersList(state);
             }
 
@@ -290,7 +458,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         if (index == state.orders.length) {
           return const Padding(
             padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CircularProgressIndicator(
+              color: AppColors.kPrimaryColor,
+            )),
           );
         }
 

@@ -974,5 +974,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noProposalsYet => 'لا توجد عروض حتى الآن';
 
   @override
+  String get orderCancelledUnavailable => 'تم إلغاء الطلب - المنتج غير متوفر';
+
+  @override
+  String get view => 'عرض';
+
+  @override
+  String get tapToView => 'اضغط لعرضه';
+
+  @override
+  String get newProposalReceived => 'تم استلام عرض جديد';
+
+  @override
   String get cancelOrderWarning => 'هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها';
 }

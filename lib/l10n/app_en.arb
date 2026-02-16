@@ -432,6 +432,10 @@
 "deliveryFee": "Delivery Fee",
 "couriersWillSendProposalsSoon": "Couriers will send proposals soon",
 "noProposalsYet": "No proposals yet",
+"orderCancelledUnavailable": "Order Cancelled - your product is Unavailable",
+"view": "View",
+"tapToView": "Tap To View",
+"newProposalReceived": "New Proposal Received",
 
       "cancelOrderWarning": "Are you sure you want to cancel this order? This action cannot be undone."
 

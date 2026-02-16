@@ -1991,6 +1991,30 @@ abstract class AppLocalizations {
   /// **'No proposals yet'**
   String get noProposalsYet;
 
+  /// No description provided for @orderCancelledUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Cancelled - your product is Unavailable'**
+  String get orderCancelledUnavailable;
+
+  /// No description provided for @view.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get view;
+
+  /// No description provided for @tapToView.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap To View'**
+  String get tapToView;
+
+  /// No description provided for @newProposalReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'New Proposal Received'**
+  String get newProposalReceived;
+
   /// No description provided for @cancelOrderWarning.
   ///
   /// In en, this message translates to:
