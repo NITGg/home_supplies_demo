@@ -1,6 +1,5 @@
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tawreedat_go/core/utils/socket_service.dart';
 import '../../../core/utils/extract_error_message.dart';
 import '../data/models/order_model.dart';
 import '../data/repositories/order_repo.dart';
