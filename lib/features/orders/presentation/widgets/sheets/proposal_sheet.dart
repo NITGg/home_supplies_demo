@@ -446,7 +446,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
             child: BlocBuilder<OrderCubit, OrderState>(
               builder: (context, state) {
                 if (state is ProposalsLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator(color: AppColors.kPrimaryColor));
                 }
 
                 if (state is ProposalsError) {

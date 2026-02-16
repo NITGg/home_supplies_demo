@@ -580,7 +580,9 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
             child: BlocBuilder<AddressCubit, AddressState>(
               builder: (context, state) {
                 if (state is AddressLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator(
+                    color: AppColors.kPrimaryColor,
+                  ));
                 }
                 if (state is AddressError) {
                   return Center(child: Text(state.message));
