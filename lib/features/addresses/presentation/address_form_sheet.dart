@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/loading_screen.dart';
 import '../../../core/widgets/text_form.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -253,7 +254,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                             builder: (context, state) {
                               if (state is GovernorateLoading) {
                                 return const Center(
-                                  child: CircularProgressIndicator(color: AppColors.kPrimaryColor,),
+                                  child: LoadingScreen(isOne: true, asWidget: true),
                                 );
                               }
 

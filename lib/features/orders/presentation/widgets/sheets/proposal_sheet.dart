@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/style/app_colors.dart';
 import '../../../../../core/style/text_styles.dart';
 import '../../../../../core/utils/socket_service.dart';
+import '../../../../../core/widgets/loading_screen.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../data/models/order_model.dart';
 import '../../../data/models/proposal_model.dart';
@@ -390,14 +391,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                           const SizedBox(width: 8),
                           // Show refresh indicator when refreshing
                           if (_isRefreshing)
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.kPrimaryColor,
-                              ),
-                            ),
+                            LoadingScreen(isOne: true, asWidget: true),
                         ],
                       ),
                       Text(
@@ -441,9 +435,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                 // Show loading only on initial load
                 if (_isInitialLoad && state is ProposalsLoading) {
                   return const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.kPrimaryColor,
-                    ),
+                    child: LoadingScreen(isOne: true, asWidget: true),
                   );
                 }
 

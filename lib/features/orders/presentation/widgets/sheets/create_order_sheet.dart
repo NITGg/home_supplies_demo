@@ -9,6 +9,7 @@ import '../../../../../core/style/app_colors.dart';
 import '../../../../../core/style/text_styles.dart';
 import '../../../../../core/utils/calculate_distance.dart';
 import '../../../../../core/widgets/custom_button.dart';
+import '../../../../../core/widgets/loading_screen.dart';
 import '../../../../../core/widgets/text_form.dart';
 import '../../../../addresses/data/models/address_model.dart';
 import '../../../../addresses/manager/address_cubit.dart';
@@ -152,7 +153,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         Order(
           productDescription: _productDescriptionController.text.trim(),
           productImageFile: _productImage,
-          budget: (double.parse(_budgetController.text.trim())*100).round().toString(),
+          budget: (double.parse(_budgetController.text.trim()) * 100)
+              .round()
+              .toString(),
           pickupAreaId: _pickupAddress!.areaId,
           pickupAddressDescription: _pickupAddress!.detailedAddress,
           pickupLat: _pickupAddress!.addressLat,
@@ -580,9 +583,9 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
             child: BlocBuilder<AddressCubit, AddressState>(
               builder: (context, state) {
                 if (state is AddressLoading) {
-                  return const Center(child: CircularProgressIndicator(
-                    color: AppColors.kPrimaryColor,
-                  ));
+                  return const Center(
+                    child: LoadingScreen(isOne: true, asWidget: true),
+                  );
                 }
                 if (state is AddressError) {
                   return Center(child: Text(state.message));
@@ -622,12 +625,14 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
                         ),
                         child: ListTile(
                           leading: Icon(
-                            widget.isPickup
-                                ? Icons.store
-                                : Icons.location_on,
+                            widget.isPickup ? Icons.store : Icons.location_on,
                             color: widget.isPickup ? Colors.green : Colors.blue,
                           ),
-                          title: Text(address.displayAddress,overflow: TextOverflow.ellipsis,maxLines: 3,),
+                          title: Text(
+                            address.displayAddress,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 3,
+                          ),
                           subtitle: isDefault
                               ? Text(
                                   'Default',
