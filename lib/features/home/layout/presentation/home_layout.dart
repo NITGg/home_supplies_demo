@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tawreedat_go/features/coupons/manager/coupons_cubit.dart';
 
 import '../../../../core/utils/socket_service.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -18,6 +19,7 @@ import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
+import '../../../coupons/presentation/coupons_ticker_title.dart';
 import '../../../orders/presentation/orders_list_screen.dart';
 import '../../../orders/presentation/widgets/sheets/create_order_sheet.dart';
 import '../manager/home_cubit.dart';
@@ -88,6 +90,7 @@ class _HomeLayoutState extends State<HomeLayout> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<HomeCubit>(create: (_) => HomeCubit()),
+        BlocProvider<CouponCubit>(create: (_) => CouponCubit()..loadCoupons()),
         // BlocProvider(create: (context) => AdsCubit()..getHomeAds()),
       ],
       child: BlocBuilder<HomeCubit, HomeState>(
@@ -829,7 +832,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
             ? TextDirection.ltr
             : TextDirection.rtl,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // NotificationButton(userId: kUserId),
             // InkWell(
@@ -880,8 +883,12 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
                 },
               ),
             ),
+            Expanded(child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              child: CouponTickerTitle(),
+            )),
 
-            const Spacer(),
+
             GestureDetector(
               onTap: _triggerEasterEgg,
               child: AnimatedBuilder(
