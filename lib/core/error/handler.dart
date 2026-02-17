@@ -222,11 +222,21 @@ class GlobalErrorHandler {
     if (message.contains('A RenderFlex overflowed')) return true;
 
     // Image network/socket errors
-    if (message.contains('ClientException with SocketException: Connection refused')) return true;
+    if (message.contains(
+      'ClientException with SocketException: Connection refused',
+    )) {
+      return true;
+    }
     if (message.contains('Failed host lookup')) return true;
     if (message.contains('Image provider')) return true;
     if (message.contains('HTTP request failed')) return true;
-    if (message.contains('Invalid argument(s): No host specified in URI')) return true;
+    if (message.contains('Invalid argument(s): No host specified in URI')) {
+      return true;
+    }
+    // Cubit closed before async operation completed
+    if (message.contains('Cannot emit new states after calling close')) {
+      return true;
+    }
 
     // You can add more harmless ones here
     return false;
