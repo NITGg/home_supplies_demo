@@ -258,7 +258,7 @@
                     "avgDeliveryTime": "متوسط وقت التوصيل",
                     "min": "دقائق",
                     "totalReviews": "مجموع المراجعات",
-                    "cancelled": "ملغاة",
+                    "cancelled": "ملغي",
                     "earn": "اكسب",
                     "status": "الحالة",
             "pendingApproval": "في انتظار الموافقة",

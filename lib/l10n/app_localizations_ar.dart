@@ -612,7 +612,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get totalReviews => 'مجموع المراجعات';
 
   @override
-  String get cancelled => 'ملغاة';
+  String get cancelled => 'ملغي';
 
   @override
   String get earn => 'اكسب';

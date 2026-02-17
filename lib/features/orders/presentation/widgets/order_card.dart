@@ -179,19 +179,19 @@ class OrderCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.kPrimaryColor.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 20,
-                  color: AppColors.kPrimaryColor,
-                ),
-              ),
-              const SizedBox(width: 12),
+              // Container(
+              //   padding: const EdgeInsets.all(8),
+              //   decoration: BoxDecoration(
+              //     color: AppColors.kPrimaryColor.withOpacity(0.08),
+              //     borderRadius: BorderRadius.circular(8),
+              //   ),
+              //   child: const Icon(
+              //     Icons.shopping_bag_outlined,
+              //     size: 20,
+              //     color: AppColors.kPrimaryColor,
+              //   ),
+              // ),
+              // const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
