@@ -884,7 +884,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
               ),
             ),
             Expanded(child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: CouponTickerTitle(),
             )),
 

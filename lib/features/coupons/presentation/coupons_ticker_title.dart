@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,15 +7,57 @@ import '../data/models/coupons_model.dart';
 import '../manager/coupons_cubit.dart';
 import '../manager/ocupons_states.dart';
 
-class CouponTickerTitle extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// Fades in on first appearance, then scrolls continuously forever.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class CouponTickerTitle extends StatefulWidget {
   const CouponTickerTitle({super.key});
+
+  @override
+  State<CouponTickerTitle> createState() => _CouponTickerTitleState();
+}
+
+class _CouponTickerTitleState extends State<CouponTickerTitle>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _fadeController;
+  late final Animation<double> _fadeAnimation;
+  bool _hasAnimated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeIn,
+    );
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<CouponCubit, CouponState>(
       builder: (context, state) {
         if (state is CouponsLoaded && state.activeCoupons.isNotEmpty) {
-          return _ContinuousTicker(coupons: state.activeCoupons);
+          if (!_hasAnimated) {
+            _hasAnimated = true;
+            WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _fadeController.forward(),
+            );
+          }
+          return FadeTransition(
+            opacity: _fadeAnimation,
+            child: _ContinuousTicker(coupons: state.activeCoupons),
+          );
         }
         return const SizedBox.shrink();
       },
@@ -131,7 +171,7 @@ class _ContinuousTickerState extends State<_ContinuousTicker>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// A measured segment: TextPainter (easy, correct width) + the raw text
+// Segment
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _Segment {
@@ -141,13 +181,11 @@ class _Segment {
   _Segment(this.text, this.painter);
 
   double get width => painter.width;
-
   double get height => painter.height;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Painter — uses TextPainter (not ui.Paragraph) so width is always correct,
-// draws each label + an orange dot separator, two strips for seamless loop.
+// Painter
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _TickerPainter extends CustomPainter {
@@ -170,13 +208,12 @@ class _TickerPainter extends CustomPainter {
     letterSpacing: 0.1,
   );
 
-  static const double _dotPadding = 14.0; // space each side of dot
+  static const double _dotPadding = 14.0;
   static const double _dotRadius = 3.0;
   static const double _separatorWidth = _dotPadding * 2 + _dotRadius * 2;
 
-  final Paint _dotPaint = Paint()..color = Colors.deepOrange;
+  final Paint _dotPaint = Paint()..color = Colors.orangeAccent;
 
-  // ── Cache ─────────────────────────────────────────────────────────────────
   static List<String>? _cachedLabels;
   static List<_Segment>? _cachedSegments;
   static double _cachedStripWidth = 0;
@@ -197,7 +234,7 @@ class _TickerPainter extends CustomPainter {
         text: TextSpan(text: label, style: _style),
         textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
         maxLines: 1,
-      )..layout(); // no width constraint → measures full intrinsic width
+      )..layout();
 
       segments.add(_Segment(label, tp));
       totalWidth += tp.width + _separatorWidth;
@@ -222,13 +259,11 @@ class _TickerPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
 
-    // Two strips — copy 1 and copy 2 offset by one stripWidth
-    _drawStrip(canvas, size, segments, stripWidth, isRtl ? offset : -offset);
+    _drawStrip(canvas, size, segments, isRtl ? offset : -offset);
     _drawStrip(
       canvas,
       size,
       segments,
-      stripWidth,
       isRtl ? offset - stripWidth : stripWidth - offset,
     );
 
@@ -236,24 +271,19 @@ class _TickerPainter extends CustomPainter {
   }
 
   void _drawStrip(
-    Canvas canvas,
-    Size size,
-    List<_Segment> segments,
-    double stripWidth,
-    double startX,
-  ) {
+      Canvas canvas,
+      Size size,
+      List<_Segment> segments,
+      double startX,
+      ) {
     double x = startX;
     final centerY = size.height / 2;
 
     for (final seg in segments) {
       final textY = centerY - seg.height / 2;
-
-      // Paint the text using TextPainter — always LTR draw position,
-      // RTL text is handled internally by TextPainter direction setting.
       seg.painter.paint(canvas, Offset(x, textY));
       x += seg.width;
 
-      // Orange dot separator
       x += _dotPadding + _dotRadius;
       canvas.drawCircle(Offset(x, centerY), _dotRadius, _dotPaint);
       x += _dotRadius + _dotPadding;
@@ -263,6 +293,6 @@ class _TickerPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _TickerPainter old) =>
       old.elapsed != elapsed ||
-      old.labels.join() != labels.join() ||
-      old.isRtl != isRtl;
+          old.labels.join() != labels.join() ||
+          old.isRtl != isRtl;
 }
