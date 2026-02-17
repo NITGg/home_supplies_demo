@@ -213,6 +213,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                                                     .tawreedatIsYourBestChoice,
                                                 style: AppTextStyles.regular14
                                                     .copyWith(
+                                                  fontSize: 12,
                                                       color: Colors.white,
                                                     ),
                                               ),
