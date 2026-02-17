@@ -30,7 +30,7 @@ class OrderBudgetChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.account_balance_wallet_outlined,
+            Icons.account_balance_wallet,
             size: 14,
             color: AppColors.kSecondaryColor,
           ),
