@@ -438,6 +438,14 @@ class _MyAppState extends State<MyApp> {
                   backgroundColor: AppColors.kBackgroundColor,
                   elevation: 0,
                 ),
+                elevatedButtonTheme: ElevatedButtonThemeData(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.kPrimaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
                 scaffoldBackgroundColor: AppColors.kBackgroundColor,
                 textTheme: Theme.of(
                   context,

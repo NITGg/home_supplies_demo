@@ -125,7 +125,7 @@ class _ContinuousTickerState extends State<_ContinuousTicker>
   late final Ticker _ticker;
   Duration _elapsed = Duration.zero;
 
-  static const double _speed = 40.0;
+  static const double _speed = 30.0;
 
   @override
   void initState() {
