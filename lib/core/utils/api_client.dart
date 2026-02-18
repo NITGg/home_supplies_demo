@@ -10,7 +10,8 @@ class ApiClient {
 
   late final Dio dio;
 
-  static const String baseUrl = 'https://tawreedat.nitg-eg.com/admin_apis/api/v1';
+  static const String baseUrl =
+      'https://tawreedat.nitg-eg.com/admin_apis/api/v1';
 
   void init() {
     dio = Dio(
@@ -33,9 +34,47 @@ class ApiClient {
           handler.next(options);
         },
         onError: (e, handler) {
-          handler.next(e);
+          final friendlyError = _toFriendlyError(e);
+
+          handler.next(friendlyError);
         },
       ),
+    );
+  }
+
+  DioException _toFriendlyError(DioException error) {
+    String? message;
+
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        message = 'انتهت مهلة الاتصال، يرجى المحاولة مرة أخرى';
+        break;
+      case DioExceptionType.connectionError:
+        message = 'تعذر الاتصال بالخادم، تحقق من اتصالك بالإنترنت';
+        break;
+      case DioExceptionType.badResponse:
+        final statusCode = error.response?.statusCode;
+        if (statusCode != null && statusCode >= 500) {
+          message = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
+        }
+        break;
+      case DioExceptionType.cancel:
+        message = 'تم إلغاء الطلب';
+        break;
+      default:
+        break; // leave message null → keep original error
+    }
+
+    if (message == null) return error;
+
+    return DioException(
+      requestOptions: error.requestOptions,
+      response: error.response,
+      type: error.type,
+      error: message,
+      message: message,
     );
   }
 }

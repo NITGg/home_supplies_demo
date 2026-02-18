@@ -10,7 +10,6 @@ class OrderRemoteDataSource {
 
   // Create Order
   Future<OrderResponse> createOrder(Order order) async {
-    try {
       log('Creating order: ${order.toJson()}');
 
       FormData formData;
@@ -45,10 +44,7 @@ class OrderRemoteDataSource {
       } else {
         throw Exception('Failed to create order');
       }
-    } on DioException catch (e) {
-      log('Create order error: $e');
-      throw _handleError(e);
-    }
+
   }
 
   // Get All Orders
@@ -57,7 +53,6 @@ class OrderRemoteDataSource {
     int limit = 20,
     String? status,
   }) async {
-    try {
       log('Fetching orders - skip: $skip, limit: $limit, status: $status');
 
       final response = await _dio.get(
@@ -76,15 +71,11 @@ class OrderRemoteDataSource {
       } else {
         throw Exception('Failed to load orders');
       }
-    } on DioException catch (e) {
-      log('Get orders error: $e');
-      throw _handleError(e);
-    }
+
   }
 
   // Cancel Order
   Future<void> cancelOrder(int orderId, String reason) async {
-    try {
       log('Cancelling order $orderId with reason: $reason');
 
       final response = await _dio.post(
@@ -98,15 +89,11 @@ class OrderRemoteDataSource {
       } else {
         throw Exception('Failed to cancel order');
       }
-    } on DioException catch (e) {
-      log('Cancel order error: $e');
-      throw _handleError(e);
-    }
+
   }
 
   // Get Proposals for an Order
   Future<ProposalsResponse> getOrderProposals(int orderId) async {
-    try {
       log('Fetching proposals for order $orderId');
 
       final response = await _dio.get('/orders/$orderId/proposals');
@@ -118,10 +105,7 @@ class OrderRemoteDataSource {
       } else {
         throw Exception('Failed to load proposals');
       }
-    } on DioException catch (e) {
-      log('Get proposals error: $e');
-      throw _handleError(e);
-    }
+
   }
 
   // Accept or Reject Proposal
@@ -130,7 +114,6 @@ class OrderRemoteDataSource {
     required int proposalId,
     required String status, // ACCEPTED or REJECTED
   }) async {
-    try {
       log('Updating proposal $proposalId status to $status');
 
       final response = await _dio.put(
@@ -145,10 +128,6 @@ class OrderRemoteDataSource {
       } else {
         throw Exception('Failed to update proposal');
       }
-    } on DioException catch (e) {
-      log('Update proposal error: $e');
-      throw _handleError(e);
-    }
   }
 
   // Confirm Delivery (from QR Code scan)
@@ -156,7 +135,6 @@ class OrderRemoteDataSource {
     required int orderId,
     required int courierId,
   }) async {
-    try {
       log('Confirming delivery for order $orderId by courier $courierId');
 
       final request = ConfirmDeliveryRequest(
@@ -176,26 +154,6 @@ class OrderRemoteDataSource {
       } else {
         throw Exception('Failed to confirm delivery');
       }
-    } on DioException catch (e) {
-      log('Confirm delivery error: $e');
-      throw _handleError(e);
     }
   }
 
-  String _handleError(DioException e) {
-    if (e.response != null) {
-      final message =
-          e.response?.data['message'] ??
-          e.response?.data['error'] ??
-          'An error occurred';
-      return message;
-    } else if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      return 'Connection timeout. Please check your internet connection.';
-    } else if (e.type == DioExceptionType.connectionError) {
-      return 'No internet connection. Please check your network.';
-    } else {
-      return 'An unexpected error occurred. Please try again.';
-    }
-  }
-}

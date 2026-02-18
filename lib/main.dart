@@ -432,7 +432,7 @@ class _MyAppState extends State<MyApp> {
                   },
                 ),
                 cupertinoOverrideTheme: const CupertinoThemeData(
-                  primaryColor: AppColors.kSecondaryColor, // ← Change this
+                  primaryColor: AppColors.kSecondaryColor,
                 ),
                 appBarTheme: AppBarTheme(
                   backgroundColor: AppColors.kBackgroundColor,
@@ -440,9 +440,10 @@ class _MyAppState extends State<MyApp> {
                 ),
                 elevatedButtonTheme: ElevatedButtonThemeData(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.kPrimaryColor,
+                    backgroundColor: AppColors.kSecondaryColor,
+                    foregroundColor: AppColors.kPrimaryColor,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                 ),

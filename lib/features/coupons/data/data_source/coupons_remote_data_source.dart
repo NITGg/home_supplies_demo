@@ -14,25 +14,12 @@ class CouponRemoteDataSourceImpl implements CouponRemoteDataSource {
       : _apiClient = apiClient ?? ApiClient.instance;
 
   @override
+  // Replace entire try/catch with nothing:
   Future<CouponsResponse> getCoupons({int page = 1, int limit = 20}) async {
-    try {
-      final response = await _apiClient.dio.get(
-        '/customer-coupons',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
-      );
-
-      return CouponsResponse.fromJson(
-        response.data as Map<String, dynamic>,
-      );
-    } on DioException catch (e) {
-      log('CouponRemoteDataSource - DioException: ${e.message}');
-      throw Exception(e.response?.data?['message'] ?? e.message ?? 'Network error');
-    } catch (e) {
-      log('CouponRemoteDataSource - Exception: $e');
-      throw Exception('Unexpected error: $e');
-    }
+    final response = await _apiClient.dio.get(
+      '/customer-coupons',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+    return CouponsResponse.fromJson(response.data as Map<String, dynamic>);
   }
 }

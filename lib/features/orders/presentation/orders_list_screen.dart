@@ -403,18 +403,37 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.kSecondaryLightColor.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.error_outline,
+                    size: 80,
+                    color: AppColors.kPrimaryColor.withOpacity(0.6),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Text(state.message),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
+                TextButton.icon(
+                  onPressed:  () {
                     final cubit = context.read<OrderCubit>();
                     _viewMode == ViewMode.active
                         ? cubit.loadActiveOrders()
                         : cubit.loadHistoryOrders();
                   },
-                  child: Text(AppLocalizations.of(context)?.retry ?? 'Retry'),
+                  icon: const Icon(Icons.refresh),
+                  label: Text(AppLocalizations.of(context)!.retry),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.kPrimaryColor,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
                 ),
               ],
             ),
