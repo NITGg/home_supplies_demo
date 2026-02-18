@@ -111,9 +111,7 @@ class OrderCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: statusColor.withOpacity(0.07),
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(16),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Row(
         children: [
@@ -130,10 +128,7 @@ class OrderCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  order.orderNumber ?? 'N/A',
-                  style: AppTextStyles.bold16,
-                ),
+                Text(order.orderNumber ?? 'N/A', style: AppTextStyles.bold16),
                 Text(
                   _formatDate(order.createdAt),
                   style: AppTextStyles.regular14.copyWith(
@@ -196,14 +191,27 @@ class OrderCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      order.productDescription,
-                      style: AppTextStyles.bold14.copyWith(
-                        fontSize: 15,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          order.productDescription,
+                          style: AppTextStyles.bold14.copyWith(
+                            fontSize: 15,
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (order.status == 'IN_PROGRESS')
+                          IconButton(
+                            onPressed: onCancel,
+                            icon: Icon(
+                              Icons.cancel_outlined,
+                              color: Colors.grey,
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     OrderBudgetChip(budget: order.budget),
