@@ -965,6 +965,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get accept => 'قبول';
 
   @override
+  String get rejected => 'مرفوض';
+
+  @override
+  String get accepted => 'مقبول';
+
+  @override
   String get deliveryFee => 'رسوم التوصيل';
 
   @override

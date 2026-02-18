@@ -1973,6 +1973,18 @@ abstract class AppLocalizations {
   /// **'Accept'**
   String get accept;
 
+  /// No description provided for @rejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get rejected;
+
+  /// No description provided for @accepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get accepted;
+
   /// No description provided for @deliveryFee.
   ///
   /// In en, this message translates to:

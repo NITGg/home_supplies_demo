@@ -540,6 +540,11 @@ class _ProposalCard extends StatelessWidget {
     if (proposal.isRejected) return Colors.red;
     return Colors.orange;
   }
+  String _getStatusText(context) {
+    if (proposal.isAccepted) return AppLocalizations.of(context)!.accepted;
+    if (proposal.isRejected) return AppLocalizations.of(context)!.rejected;
+    return AppLocalizations.of(context)!.pending;
+  }
 
   IconData _getStatusIcon() {
     if (proposal.isAccepted) return Icons.check_circle;
@@ -661,7 +666,7 @@ class _ProposalCard extends StatelessWidget {
                 Icon(_getStatusIcon(), size: 12, color: Colors.white),
                 const SizedBox(width: 4),
                 Text(
-                  proposal.status,
+                  _getStatusText(context),
                   style: AppTextStyles.bold14.copyWith(
                     fontSize: 11,
                     color: Colors.white,

@@ -965,6 +965,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accept => 'Accept';
 
   @override
+  String get rejected => 'Rejected';
+
+  @override
+  String get accepted => 'Accepted';
+
+  @override
   String get deliveryFee => 'Delivery Fee';
 
   @override

@@ -435,6 +435,8 @@
 "proposals": "العروض",
 "reject": "رفض",
 "accept": "قبول",
+"rejected": "مرفوض",
+"accepted": "مقبول",
 "deliveryFee": "رسوم التوصيل",
 "couriersWillSendProposalsSoon": "سيقوم المندوبون بإرسال العروض قريبًا",
 "noProposalsYet": "لا توجد عروض حتى الآن",

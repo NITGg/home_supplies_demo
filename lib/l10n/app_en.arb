@@ -429,6 +429,8 @@
 "proposals": "Proposals",
 "reject": "Reject",
 "accept": "Accept",
+"rejected": "Rejected",
+"accepted": "Accepted",
 "deliveryFee": "Delivery Fee",
 "couriersWillSendProposalsSoon": "Couriers will send proposals soon",
 "noProposalsYet": "No proposals yet",

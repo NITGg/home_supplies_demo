@@ -92,7 +92,7 @@ class OrderCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 3,
-      shadowColor: AppColors.kPrimaryColor.withOpacity(0.08),
+      shadowColor: AppColors.kSecondaryColor.withOpacity(0.08),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         decoration: BoxDecoration(
@@ -108,6 +108,7 @@ class OrderCard extends StatelessWidget {
           children: [
             _buildHeader(statusColor, context),
             _buildProductInfo(),
+            _buildResultInfo(context),
             if (order.isPending) _buildActionButtons(l10n),
           ],
         ),
@@ -169,6 +170,87 @@ class OrderCard extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResultInfo(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+      child: Column(
+        children: [
+          // Delivery info or cancellation reason
+          if (order.isCancelled && order.cancelledReason != null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.shade200, width: 1),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.red.shade700,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.reason,
+                          style: AppTextStyles.bold14.copyWith(
+                            fontSize: 12,
+                            color: Colors.red.shade900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          order.cancelledReason!,
+                          style: AppTextStyles.regular14.copyWith(
+                            fontSize: 12,
+                            color: Colors.red.shade800,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (order.isDelivered && order.deliveredAt != null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green.shade200, width: 1),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    color: Colors.green.shade700,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${AppLocalizations.of(context)!.delivered}: ${_formatDate(context, order.deliveredAt!)}',
+                    style: AppTextStyles.medium18.copyWith(
+                      fontSize: 13,
+                      color: Colors.green.shade900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

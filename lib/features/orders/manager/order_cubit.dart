@@ -108,13 +108,21 @@ class OrderCubit extends Cubit<OrderState> {
 
   // ── Load History Orders ────────────────────────────────────────────────────
 
-  Future<void> loadHistoryOrders({bool loadMore = false}) async {
+  String _historyFilter = 'all'; // NEW
+
+  Future<void> loadHistoryOrders({
+    bool loadMore = false,
+    String filter = 'all',
+  }) async {
     if (_historyLoading) return;
 
-    if (!loadMore) {
+    // Reset pagination when filter changes
+    if (!loadMore || filter != _historyFilter) {
+      _historyFilter = filter;
       emit(OrderLoading());
       _historyOrders = [];
       _historySkip = 0;
+      _historyTotalCount = 0;
     } else {
       _historyLoading = true;
       emit(OrdersLoadingMore(viewMode: OrderViewMode.history));
@@ -122,28 +130,46 @@ class OrderCubit extends Cubit<OrderState> {
 
     try {
       log(
-        'OrderCubit: Loading history orders — skip: $_historySkip, limit: $_historyLimit',
+        'OrderCubit: Loading history orders — skip: $_historySkip, limit: $_historyLimit, filter: $_historyFilter',
       );
 
-      // First fetch DELIVERED orders
-      final deliveredResponse = await _repository.getOrders(
-        skip: _historySkip,
-        limit: _historyLimit,
-        status: 'DELIVERED',
-      );
+      List<Order> combinedOrders = [];
 
-      // Then fetch CANCELLED orders
-      final cancelledResponse = await _repository.getOrders(
-        skip: _historySkip,
-        limit: _historyLimit,
-        status: 'CANCELLED',
-      );
-
-      // Combine both lists
-      final combinedOrders = [
-        ...deliveredResponse.orders,
-        ...cancelledResponse.orders,
-      ];
+      if (_historyFilter == 'DELIVERED') {
+        final deliveredResponse = await _repository.getOrders(
+          skip: _historySkip,
+          limit: _historyLimit,
+          status: 'DELIVERED',
+        );
+        combinedOrders = deliveredResponse.orders;
+        _historyTotalCount = deliveredResponse.totalOrders;
+      } else if (_historyFilter == 'CANCELLED') {
+        final cancelledResponse = await _repository.getOrders(
+          skip: _historySkip,
+          limit: _historyLimit,
+          status: 'CANCELLED',
+        );
+        combinedOrders = cancelledResponse.orders;
+        _historyTotalCount = cancelledResponse.totalOrders;
+      } else {
+        // 'all' — fetch both
+        final deliveredResponse = await _repository.getOrders(
+          skip: _historySkip,
+          limit: _historyLimit,
+          status: 'DELIVERED',
+        );
+        final cancelledResponse = await _repository.getOrders(
+          skip: _historySkip,
+          limit: _historyLimit,
+          status: 'CANCELLED',
+        );
+        combinedOrders = [
+          ...deliveredResponse.orders,
+          ...cancelledResponse.orders,
+        ];
+        _historyTotalCount =
+            deliveredResponse.totalOrders + cancelledResponse.totalOrders;
+      }
 
       // Sort by completion date (newest first)
       combinedOrders.sort((a, b) {
@@ -160,13 +186,7 @@ class OrderCubit extends Cubit<OrderState> {
         _historyOrders.addAll(combinedOrders);
       }
 
-      // Update skip for next load
       _historySkip = _historyOrders.length;
-
-      // Total count is sum of both statuses
-      _historyTotalCount =
-          deliveredResponse.totalOrders + cancelledResponse.totalOrders;
-
       _historyLoading = false;
 
       log(
@@ -186,6 +206,10 @@ class OrderCubit extends Cubit<OrderState> {
       emit(OrderError(extractErrorMessage(e)));
     }
   }
+
+  // Update helper too
+  bool canLoadMoreHistory() =>
+      _historyOrders.length < _historyTotalCount && !_historyLoading;
 
   // ── Create Order ───────────────────────────────────────────────────────────
 
@@ -323,9 +347,6 @@ class OrderCubit extends Cubit<OrderState> {
 
   bool canLoadMoreActive() =>
       _activeOrders.length < _activeTotalCount && !_activeLoading;
-
-  bool canLoadMoreHistory() =>
-      _historyOrders.length < _historyTotalCount && !_historyLoading;
 
   void reset() {
     _activeOrders = [];
