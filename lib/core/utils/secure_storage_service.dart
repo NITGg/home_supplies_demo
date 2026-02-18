@@ -2,20 +2,37 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureStorageService {
-  static final SecureStorageService _instance = SecureStorageService._internal();
+  static final SecureStorageService _instance =
+  SecureStorageService._internal();
+
   factory SecureStorageService() => _instance;
+
   SecureStorageService._internal();
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
   );
 
   // Keys
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userProfileKey = 'user_profile';
+  static const String _localeKey = 'app_locale';
+
+  /// Save locale
+  Future<void> saveLocale(String languageCode) async {
+    await _storage.write(key: _localeKey, value: languageCode);
+  }
+
+  /// Get locale
+  Future<String?> getLocale() async {
+    return await _storage.read(key: _localeKey);
+  }
+
+  /// Delete locale (optional)
+  Future<void> deleteLocale() async {
+    await _storage.delete(key: _localeKey);
+  }
 
   /// Save access token
   Future<void> saveToken(String token) async {
