@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -65,14 +66,22 @@ class OrderCard extends StatelessWidget {
     }
   }
 
-  String _formatDate(DateTime? dt) {
-    if (dt == null) return '';
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return DateFormat('MMM dd').format(dt);
+  String _formatDate(BuildContext context, DateTime date) {
+    final l10n = AppLocalizations.of(context)!;
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inMinutes < 1) {
+      return l10n.justNow;
+    } else if (diff.inMinutes < 60) {
+      return l10n.minutesAgo(diff.inMinutes);
+    } else if (diff.inHours < 24) {
+      return l10n.hoursAgo(diff.inHours);
+    } else if (diff.inDays < 7) {
+      return l10n.daysAgo(diff.inDays);
+    } else {
+      return DateFormat('MMM dd').format(date);
+    }
   }
 
   @override
@@ -130,7 +139,7 @@ class OrderCard extends StatelessWidget {
               children: [
                 Text(order.orderNumber ?? 'N/A', style: AppTextStyles.bold16),
                 Text(
-                  _formatDate(order.createdAt),
+                  _formatDate(context, order.createdAt ?? DateTime.now()),
                   style: AppTextStyles.regular14.copyWith(
                     fontSize: 12,
                     color: Colors.grey.shade500,
