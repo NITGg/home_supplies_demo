@@ -31,6 +31,11 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   ViewMode _viewMode = ViewMode.active;
   String _currentFilter = 'all';
 
+  // True only while a paginated history load is in flight.
+  // Cleared as soon as the cubit emits any OrdersLoaded state.
+  // This prevents the spinner from sticking after the last page.
+  bool _isLoadingMore = false;
+
   StreamSubscription? _newOfferSubscription;
   StreamSubscription? _orderCancelledSubscription;
 
@@ -175,7 +180,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   }
 
   bool _isOrderCompleted(Order order) {
-    final completedStatuses = ['DELIVERED', 'CANCELLED'];
+    const completedStatuses = ['DELIVERED', 'CANCELLED'];
     return completedStatuses.contains(order.status?.toUpperCase());
   }
 
@@ -196,6 +201,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
   void _onScroll() {
     if (_viewMode != ViewMode.history) return;
+    if (_isLoadingMore) return; // already loading — don't stack requests
 
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
@@ -204,7 +210,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
       if (state is OrdersLoaded &&
           state.viewMode == OrderViewMode.history &&
+          state.hasMore && // no more pages → skip immediately
           cubit.canLoadMoreHistory()) {
+        setState(() => _isLoadingMore = true);
         cubit.loadHistoryOrders(loadMore: true, filter: _currentFilter);
       }
     }
@@ -216,6 +224,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     setState(() {
       _viewMode = newMode;
       _currentFilter = 'all';
+      _isLoadingMore = false;
     });
 
     final cubit = context.read<OrderCubit>();
@@ -301,6 +310,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () {
+          setState(() => _isLoadingMore = false);
           final cubit = context.read<OrderCubit>();
           return _viewMode == ViewMode.active
               ? cubit.loadActiveOrders(loadMore: false)
@@ -311,13 +321,26 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         },
         color: AppColors.kPrimaryColor,
         child: BlocConsumer<OrderCubit, OrderState>(
+          // Include OrdersLoaded so the listener can reliably clear
+          // _isLoadingMore the moment new data arrives — whether the
+          // network is fast or slow.
           listenWhen: (_, current) =>
+              current is OrdersLoaded ||
               current is OrderCancelled ||
               current is OrderCancelError ||
               current is DeliveryConfirmed ||
               current is OrderError ||
               current is OrderSuccess,
           listener: (context, state) {
+            // ── Pagination: clear in-flight flag as a proper side-effect.
+            // The listener runs outside the build phase, so setState here
+            // is safe and guaranteed to schedule a new frame AFTER the
+            // current one renders — meaning the spinner is visible for at
+            // least one frame before disappearing.
+            if (state is OrdersLoaded && _isLoadingMore) {
+              setState(() => _isLoadingMore = false);
+            }
+
             if (state is OrderCancelled) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -341,7 +364,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
               );
             }
           },
-          buildWhen: (previous, current) =>
+          buildWhen: (_, current) =>
               current is OrderLoading ||
               current is OrdersLoaded ||
               current is OrderError,
@@ -506,7 +529,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       selected: isSelected,
       onSelected: (selected) {
         if (selected && _currentFilter != value) {
-          setState(() => _currentFilter = value);
+          setState(() {
+            _currentFilter = value;
+            _isLoadingMore = false;
+          });
           context.read<OrderCubit>().loadHistoryOrders(filter: value);
           if (_scrollController.hasClients) _scrollController.jumpTo(0);
         }
@@ -530,10 +556,13 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
   // ================= ORDERS LIST =================
 
+  /// Show the pagination spinner only while a load is actively in flight
+  /// AND the cubit still believes there are more pages.
+  /// This prevents the spinner from sticking after the last page is fetched.
   bool _shouldShowPaginationSpinner(OrdersLoaded state) {
     if (_viewMode != ViewMode.history) return false;
-    if (!state.hasMore) return false;
-    if (!context.read<OrderCubit>().canLoadMoreHistory()) return false;
+    if (!_isLoadingMore) return false; // no request in flight
+    if (!state.hasMore) return false; // cubit says nothing left
     return true;
   }
 
@@ -602,6 +631,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     );
   }
 }
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Skeleton that mirrors the real OrderCard's visual structure
 // ─────────────────────────────────────────────────────────────────────────────
@@ -621,11 +651,9 @@ class _OrderCardSkeleton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header row: order id chip + status badge ─────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Order number placeholder
                 Container(
                   width: 100,
                   height: 16,
@@ -634,7 +662,6 @@ class _OrderCardSkeleton extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-                // Status badge placeholder
                 Container(
                   width: 72,
                   height: 24,
@@ -646,8 +673,6 @@ class _OrderCardSkeleton extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-
-            // ── Product / description line ────────────────────────────────
             Container(
               width: double.infinity,
               height: 14,
@@ -666,11 +691,8 @@ class _OrderCardSkeleton extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
-            // ── Meta row: date + price ────────────────────────────────────
             Row(
               children: [
-                // Date chip
                 Container(
                   width: 90,
                   height: 12,
@@ -680,7 +702,6 @@ class _OrderCardSkeleton extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                // Price
                 Container(
                   width: 60,
                   height: 16,
@@ -692,8 +713,6 @@ class _OrderCardSkeleton extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-
-            // ── Action buttons row ────────────────────────────────────────
             Row(
               children: [
                 Expanded(

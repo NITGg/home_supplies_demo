@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:lottie/lottie.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
