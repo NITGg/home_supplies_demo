@@ -4,7 +4,7 @@ import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class OrderBudgetChip extends StatelessWidget {
-  final String budget;
+  final String? budget;
 
   const OrderBudgetChip({
     super.key,

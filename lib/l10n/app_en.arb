@@ -191,6 +191,9 @@
   "pending": "Pending",
   "completed": "Completed",
   "shipping": "Shipping",
+  "packageImage": "Package Image",
+  "shopping": "Shopping",
+
   "tax": "Tax",
 
   "default_": "Default",

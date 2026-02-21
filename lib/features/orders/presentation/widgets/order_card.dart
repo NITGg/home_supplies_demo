@@ -304,7 +304,8 @@ class OrderCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    OrderBudgetChip(budget: order.budget),
+                    if (order.budget != '0.01')
+                      OrderBudgetChip(budget: order.budget),
                   ],
                 ),
               ),

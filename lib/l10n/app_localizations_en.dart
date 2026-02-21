@@ -444,6 +444,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shipping => 'Shipping';
 
   @override
+  String get packageImage => 'Package Image';
+
+  @override
+  String get shopping => 'Shopping';
+
+  @override
   String get tax => 'Tax';
 
   @override

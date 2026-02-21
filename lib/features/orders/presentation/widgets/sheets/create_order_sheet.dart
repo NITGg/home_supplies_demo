@@ -38,6 +38,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   Address? _deliveryAddress;
   File? _productImage;
 
+  /// true = Shopping (budget visible, photo optional)
+  /// false = Shipping (budget hidden, photo required)
+  bool _isShopping = true;
+
   late final AddressCubit _initCubit;
 
   @override
@@ -52,7 +56,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (!mounted) return;
       if (state is AddressesLoaded && state.addresses.isNotEmpty) {
         final defaultAddr = state.addresses.firstWhere(
-          (a) => a.isDefault,
+              (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
         if (_deliveryAddress == null) {
@@ -110,6 +114,18 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      // In shipping mode the photo is required
+      if (!_isShopping && _productImage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.tapToSelectImage,
+            ),
+          ),
+        );
+        return;
+      }
+
       if (_pickupAddress == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -147,9 +163,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         Order(
           productDescription: _productDescriptionController.text.trim(),
           productImageFile: _productImage,
-          budget: (double.parse(_budgetController.text.trim()) * 100)
+          budget: _isShopping
+              ? (double.parse(_budgetController.text.trim()) * 100)
               .round()
-              .toString(),
+              .toString()
+              : '1',
           pickupAreaId: _pickupAddress!.areaId,
           pickupAddressDescription: _pickupAddress!.detailedAddress,
           pickupLat: _pickupAddress!.addressLat,
@@ -203,10 +221,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               },
             ),
             ListTile(
-              leading: Icon(
-                Icons.photo_library,
-                color: AppColors.kPrimaryColor,
-              ),
+              leading:
+              Icon(Icons.photo_library, color: AppColors.kPrimaryColor),
               title: Text(localizations.gallery),
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -232,13 +248,60 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     }
   }
 
+  // ── Widgets ────────────────────────────────────────────────────────────────
+
+  /// Segmented toggle matching OrderToggleButton style exactly.
+  Widget _buildToggle() {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      height: 36,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        spacing: 5,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ToggleTab(
+            label: l10n.shipping,
+            selected: !_isShopping,
+            onTap: () => setState(() => _isShopping = false),
+          ),
+          _ToggleTab(
+            label: l10n.shopping,
+            selected: _isShopping,
+            onTap: () => setState(() => _isShopping = true),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildImagePicker() {
+    final isRequired = !_isShopping;
+    final label = isRequired
+        ? AppLocalizations.of(context)!.packageImage
+        : AppLocalizations.of(context)!.productImageOptional;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          AppLocalizations.of(context)!.productImageOptional,
-          style: AppTextStyles.regular14,
+        Row(
+          children: [
+            Text(label, style: AppTextStyles.regular14),
+            if (isRequired) ...[
+              const SizedBox(width: 4),
+              Text(
+                '*',
+                style: TextStyle(
+                  color: Colors.red.shade600,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ],
         ),
         const SizedBox(height: 8),
         InkWell(
@@ -251,80 +314,78 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               border: Border.all(
                 color: _productImage != null
                     ? AppColors.kPrimaryColor
+                    : (isRequired && _productImage == null)
+                    ? Colors.red.shade200
                     : Colors.grey.shade300,
                 width: _productImage != null ? 2 : 1,
               ),
               borderRadius: BorderRadius.circular(12),
-              color: _productImage != null ? Colors.white : Colors.grey.shade50,
+              color:
+              _productImage != null ? Colors.white : Colors.grey.shade50,
             ),
             child: _productImage != null
                 ? Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.file(
-                          _productImage!,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                        ),
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(
-                            Icons.edit,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.kPrimaryColor.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.add_photo_alternate,
-                          size: 32,
-                          color: AppColors.kPrimaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        AppLocalizations.of(context)!.tapToSelectImage,
-                        style: AppTextStyles.regular14.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'JPG or PNG (max 1MB)',
-                        style: AppTextStyles.regular14.copyWith(
-                          color: Colors.grey.shade500,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(
+                    _productImage!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
                   ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.edit,
+                        color: Colors.white, size: 16),
+                  ),
+                ),
+              ],
+            )
+                : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.kPrimaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.add_photo_alternate,
+                    size: 32,
+                    color: AppColors.kPrimaryColor,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  AppLocalizations.of(context)!.tapToSelectImage,
+                  style: AppTextStyles.regular14.copyWith(
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'JPG or PNG (max 1MB)',
+                  style: AppTextStyles.regular14.copyWith(
+                    color: Colors.grey.shade500,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
-
-  // ── Address tile ───────────────────────────────────────────────────────────
 
   Widget _buildAddressTile({
     required String label,
@@ -338,10 +399,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        Text(label,
+            style:
+            const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         InkWell(
           onTap: onTap,
@@ -366,15 +426,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   child: Text(
                     address?.displayAddress ?? label,
                     style: TextStyle(
-                      color: address == null ? Colors.grey : Colors.black87,
+                      color:
+                      address == null ? Colors.grey : Colors.black87,
                     ),
                   ),
                 ),
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Colors.grey,
-                ),
+                const Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey),
               ],
             ),
           ),
@@ -387,6 +445,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BlocListener<OrderCubit, OrderState>(
       listenWhen: (_, s) => s is OrderSuccess || s is OrderError,
       listener: (context, state) {
@@ -394,15 +454,14 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           Navigator.pop(context, state.order);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                '${AppLocalizations.of(context)!.created}: ${state.order.orderNumber}',
-              ),
+              content: Text('${l10n.created}: ${state.order.orderNumber}'),
               backgroundColor: Colors.green,
             ),
           );
         } else if (state is OrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(
+                content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
@@ -415,10 +474,12 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           return Container(
             decoration: const BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+              BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               children: [
+                // ── Handle ────────────────────────────────────────────
                 Container(
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   width: 40,
@@ -428,19 +489,23 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
+
+                // ── Title row + toggle ────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
-                          AppLocalizations.of(context)!.newOrder,
+                          l10n.newOrder,
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
+                      _buildToggle(),
+                      const SizedBox(width: 8),
                       IconButton(
                         icon: const Icon(Icons.close),
                         onPressed: () => Navigator.pop(context),
@@ -448,7 +513,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     ],
                   ),
                 ),
+
                 const Divider(height: 1),
+
+                // ── Form ──────────────────────────────────────────────
                 Expanded(
                   child: Form(
                     key: _formKey,
@@ -458,45 +526,59 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       children: [
                         AppTextFormField(
                           focusNode: _productDescriptionFocus,
-                          textInputAction: TextInputAction.next,
+                          textInputAction: _isShopping
+                              ? TextInputAction.next
+                              : TextInputAction.done,
                           onFieldSubmitted: (_) {
-                            FocusScope.of(context).requestFocus(_budgetFocus);
+                            if (_isShopping) {
+                              FocusScope.of(context)
+                                  .requestFocus(_budgetFocus);
+                            } else {
+                              FocusScope.of(context).unfocus();
+                            }
                           },
                           controller: _productDescriptionController,
-                          label: AppLocalizations.of(context)!.productDetails,
-                          validator: (v) => (v == null || v.trim().isEmpty)
+                          label: l10n.productDetails,
+                          validator: (v) =>
+                          (v == null || v.trim().isEmpty)
                               ? 'Please enter product description'
                               : null,
                         ),
-                        const SizedBox(height: 16),
-                        AppTextFormField(
-                          focusNode: _budgetFocus,
-                          textInputAction: TextInputAction.next,
-                          controller: _budgetController,
-                          label: AppLocalizations.of(context)!.budget,
-                          keyboardType: TextInputType.number,
-                          validator: (v) {
-                            if (v == null || v.trim().isEmpty) {
-                              return 'Please enter budget';
-                            }
-                            if (double.tryParse(v) == null) {
-                              return 'Please enter a valid number';
-                            }
-                            return null;
-                          },
-                        ),
+
+                        // Budget — shopping only
+                        if (_isShopping) ...[
+                          const SizedBox(height: 16),
+                          AppTextFormField(
+                            focusNode: _budgetFocus,
+                            textInputAction: TextInputAction.done,
+                            controller: _budgetController,
+                            label: l10n.budget,
+                            keyboardType: TextInputType.number,
+                            validator: (v) {
+                              if (!_isShopping) return null;
+                              if (v == null || v.trim().isEmpty) {
+                                return 'Please enter budget';
+                              }
+                              if (double.tryParse(v) == null) {
+                                return 'Please enter a valid number';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+
                         const SizedBox(height: 16),
                         _buildImagePicker(),
                         const SizedBox(height: 24),
                         _buildAddressTile(
-                          label: AppLocalizations.of(context)!.pickupLocation,
+                          label: l10n.pickupLocation,
                           address: _pickupAddress,
                           onTap: _selectPickupAddress,
                           isPickup: true,
                         ),
                         const SizedBox(height: 24),
                         _buildAddressTile(
-                          label: AppLocalizations.of(context)!.deliveryLocation,
+                          label: l10n.deliveryLocation,
                           address: _deliveryAddress,
                           onTap: _selectDeliveryAddress,
                           isPickup: false,
@@ -506,19 +588,21 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     ),
                   ),
                 ),
+
+                // ── Confirm button ────────────────────────────────────
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: BlocBuilder<OrderCubit, OrderState>(
                       buildWhen: (_, s) =>
-                          s is OrderOperationLoading ||
+                      s is OrderOperationLoading ||
                           s is OrdersLoaded ||
                           s is OrderError ||
                           s is OrderSuccess,
                       builder: (context, state) {
                         return AppCustomButton(
                           onPressed: _submit,
-                          text: AppLocalizations.of(context)!.confirm,
+                          text: l10n.confirm,
                           isLoading: state is OrderOperationLoading,
                         );
                       },
@@ -534,18 +618,59 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 }
 
+// ── Reusable toggle tab (matches OrderToggleButton._Tab exactly) ──────────────
+
+class _ToggleTab extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ToggleTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.kPrimaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight:
+            selected ? FontWeight.bold : FontWeight.normal,
+            color: selected ? Colors.white : Colors.grey.shade600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Inner address-selection sheet
+// Inner address-selection sheet (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _AddressSelectionSheet extends StatefulWidget {
   final String title;
   final bool isPickup;
 
-  const _AddressSelectionSheet({required this.title, required this.isPickup});
+  const _AddressSelectionSheet(
+      {required this.title, required this.isPickup});
 
   @override
-  State<_AddressSelectionSheet> createState() => _AddressSelectionSheetState();
+  State<_AddressSelectionSheet> createState() =>
+      _AddressSelectionSheetState();
 }
 
 class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
@@ -557,7 +682,6 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
 
   Future<void> _showAddressForm({required bool saveAddress}) async {
     final addressCubit = context.read<AddressCubit>();
-
     final result = await showModalBottomSheet<Address>(
       context: context,
       isScrollControlled: true,
@@ -567,12 +691,12 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
         child: AddressFormBottomSheet(saveAddress: saveAddress),
       ),
     );
-
     if (result != null && mounted) Navigator.pop(context, result);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: MediaQuery.of(context).size.height * 0.65,
       decoration: const BoxDecoration(
@@ -595,13 +719,9 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    widget.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: Text(widget.title,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -617,13 +737,13 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
               children: [
                 AppCustomButton(
                   onPressed: () => _showAddressForm(saveAddress: true),
-                  text: AppLocalizations.of(context)!.addAddress,
+                  text: l10n.addAddress,
                   isSecondary: true,
                 ),
                 const SizedBox(height: 8),
                 AppCustomButton(
                   onPressed: () => _showAddressForm(saveAddress: false),
-                  text: AppLocalizations.of(context)!.oneTimeAddress,
+                  text: l10n.oneTimeAddress,
                   isSecondary: true,
                 ),
               ],
@@ -635,8 +755,7 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
               builder: (context, state) {
                 if (state is AddressLoading) {
                   return const Center(
-                    child: LoadingScreen(isOne: true, asWidget: true),
-                  );
+                      child: LoadingScreen(isOne: true, asWidget: true));
                 }
                 if (state is AddressError) {
                   return Center(child: Text(state.message));
@@ -648,11 +767,9 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
 
                   final defaultId = !widget.isPickup
                       ? state.addresses
-                            .firstWhere(
-                              (a) => a.isDefault,
-                              orElse: () => state.addresses.first,
-                            )
-                            .id
+                      .firstWhere((a) => a.isDefault,
+                      orElse: () => state.addresses.first)
+                      .id
                       : null;
 
                   return ListView.builder(
@@ -661,37 +778,35 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
                     itemBuilder: (_, index) {
                       final address = state.addresses[index];
                       final isDefault = address.id == defaultId;
-
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                           side: isDefault
                               ? BorderSide(
-                                  color: Theme.of(context).primaryColor,
-                                  width: 1.5,
-                                )
+                              color: Theme.of(context).primaryColor,
+                              width: 1.5)
                               : BorderSide.none,
                         ),
                         child: ListTile(
                           leading: Icon(
-                            widget.isPickup ? Icons.store : Icons.location_on,
-                            color: widget.isPickup ? Colors.green : Colors.blue,
+                            widget.isPickup
+                                ? Icons.store
+                                : Icons.location_on,
+                            color: widget.isPickup
+                                ? Colors.green
+                                : Colors.blue,
                           ),
-                          title: Text(
-                            address.displayAddress,
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 3,
-                          ),
+                          title: Text(address.displayAddress,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 3),
                           subtitle: isDefault
-                              ? Text(
-                                  'Default',
-                                  style: TextStyle(
-                                    color: Theme.of(context).primaryColor,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                  ),
-                                )
+                              ? Text('Default',
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ))
                               : null,
                           onTap: () => Navigator.pop(context, address),
                         ),

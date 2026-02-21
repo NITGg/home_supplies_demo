@@ -965,6 +965,18 @@ abstract class AppLocalizations {
   /// **'Shipping'**
   String get shipping;
 
+  /// No description provided for @packageImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Package Image'**
+  String get packageImage;
+
+  /// No description provided for @shopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping'**
+  String get shopping;
+
   /// No description provided for @tax.
   ///
   /// In en, this message translates to:

@@ -194,6 +194,8 @@
   "pending": "قيد الانتظار",
   "completed": "مكتملة",
   "shipping": "الشحن",
+    "packageImage": "صورة الشحنة",
+    "shopping": "التسوق",
   "tax": "الضريبة",
 
   "default_": "الأساسي",

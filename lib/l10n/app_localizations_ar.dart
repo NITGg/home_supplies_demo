@@ -444,6 +444,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shipping => 'الشحن';
 
   @override
+  String get packageImage => 'صورة الشحنة';
+
+  @override
+  String get shopping => 'التسوق';
+
+  @override
   String get tax => 'الضريبة';
 
   @override
