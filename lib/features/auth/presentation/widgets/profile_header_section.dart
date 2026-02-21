@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/user_profile_model.dart';
@@ -18,13 +19,13 @@ class ProfileHeaderSection extends StatelessWidget {
       textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: Row(
         children: [
-          // Avatar with badge overlay
+          // Avatar with camera overlay
           Stack(
             children: [
               GestureDetector(
                 onTap: () => _showPhotoOptions(context),
                 child: Hero(
-                  tag: 'profile_avatar',
+                  tag: 'profile-avatar',
                   child: Container(
                     width: 70,
                     height: 70,
@@ -42,13 +43,12 @@ class ProfileHeaderSection extends StatelessWidget {
                     child: ClipOval(
                       child: profile.personalPhoto != null
                           ? Image.network(
-                        profile.personalPhoto??'',
+                        profile.personalPhoto ?? '',
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return SvgPicture.asset(
-                            'assets/images/drawer/profile_placholder.svg',
-                          );
-                        },
+                        errorBuilder: (context, error, stackTrace) =>
+                            SvgPicture.asset(
+                              'assets/images/drawer/profile_placholder.svg',
+                            ),
                       )
                           : SvgPicture.asset(
                         'assets/images/drawer/profile_placholder.svg',
@@ -79,7 +79,7 @@ class ProfileHeaderSection extends StatelessWidget {
 
           const SizedBox(width: 16),
 
-          // Name and info
+          // Name
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,18 +130,15 @@ class ProfileHeaderSection extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               localizations.updateProfile,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.camera_alt, color: Colors.orange),
-              title: Text(localizations.camera ),
+              title: Text(localizations.camera),
               onTap: () async {
                 Navigator.pop(context);
-                await _pickImage(parentContext, ImageSource.camera);
+                await _pickAndCropImage(parentContext, ImageSource.camera);
               },
             ),
             ListTile(
@@ -149,7 +146,7 @@ class ProfileHeaderSection extends StatelessWidget {
               title: Text(localizations.gallery),
               onTap: () async {
                 Navigator.pop(context);
-                await _pickImage(parentContext, ImageSource.gallery);
+                await _pickAndCropImage(parentContext, ImageSource.gallery);
               },
             ),
             const SizedBox(height: 20),
@@ -159,15 +156,36 @@ class ProfileHeaderSection extends StatelessWidget {
     );
   }
 
-  Future<void> _pickImage(BuildContext context, ImageSource source) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+  Future<void> _pickAndCropImage(
+      BuildContext context, ImageSource source) async {
+    final pickedFile = await ImagePicker().pickImage(source: source);
+    if (pickedFile == null) return;
 
-    if (pickedFile != null) {
-      final file = File(pickedFile.path);
-      if (context.mounted) {
-        // context.read<ProfileCubit>().updateDocuments(personalPhoto: file);
-      }
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: pickedFile.path,
+      // Square crop suits a circular profile avatar
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle:
+          AppLocalizations.of(context)?.updateProfile ?? 'Crop Photo',
+          toolbarColor: Colors.orange,
+          toolbarWidgetColor: Colors.white,
+          lockAspectRatio: true,
+          hideBottomControls: false,
+        ),
+        IOSUiSettings(
+          title: AppLocalizations.of(context)?.updateProfile ?? 'Crop Photo',
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
+        ),
+      ],
+    );
+
+    if (croppedFile != null && context.mounted) {
+      final file = File(croppedFile.path);
+      // Uncomment and use whichever cubit/method handles profile photo updates:
+      // context.read<AuthCubit>().updateProfile(personalPhoto: file);
     }
   }
 }

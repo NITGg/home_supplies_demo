@@ -84,9 +84,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onPressed: () {
                         context.read<ProfileCubit>().fetchProfile();
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.kPrimaryColor,
-                      ),
                       child: Text(localizations.retry),
                     ),
                   ],
@@ -112,9 +109,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onPressed: () {
                         context.read<ProfileCubit>().fetchProfile();
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.kPrimaryColor,
-                      ),
                       child: Text(localizations.retry),
                     ),
                   ],

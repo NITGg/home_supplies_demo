@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/features/coupons/manager/coupons_cubit.dart';
+import 'package:tawreedat_go/features/wallet/manager/wallet_cubit.dart';
+import 'package:tawreedat_go/features/wallet/manager/wallet_state.dart';
 
 import '../../../../core/utils/socket_service.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -47,12 +49,11 @@ class _HomeLayoutState extends State<HomeLayout> {
           accessToken: token,
         );
       }
+      // Fetch wallet data so badge info is available in the drawer
+      if (mounted) {
+        context.read<WalletCubit>().fetchWalletData();
+      }
     });
-    // if(shouldShowNotificationDialog==true){
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     showNotificationsDialog(context, kUserId);
-    //   });
-    // }
   }
 
   Future<UserProfileModel?> _loadUserProfile() async {
@@ -80,31 +81,26 @@ class _HomeLayoutState extends State<HomeLayout> {
   @override
   Widget build(BuildContext context) {
     final scaffoldKey = GlobalKey<ScaffoldState>();
-
-    // This is needed inside the build method as it depends on context.
-    // It was previously in a separate method but build context should not be passed around.
     final localizations = AppLocalizations.of(context)!;
-
     final screens = const [OrdersListScreen(), SizedBox.shrink()];
 
     return MultiBlocProvider(
       providers: [
         BlocProvider<HomeCubit>(create: (_) => HomeCubit()),
         BlocProvider<CouponCubit>(create: (_) => CouponCubit()..loadCoupons()),
-        // BlocProvider(create: (context) => AdsCubit()..getHomeAds()),
       ],
       child: BlocBuilder<HomeCubit, HomeState>(
         builder: (context, state) {
           final cubit = context.read<HomeCubit>();
           final itemsList = [
             BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long),
-              activeIcon: Icon(Icons.receipt),
+              icon: const Icon(Icons.receipt_long),
+              activeIcon: const Icon(Icons.receipt),
               label: localizations.orders,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.notifications_none_rounded),
-              activeIcon: Icon(Icons.notifications),
+              icon: const Icon(Icons.notifications_none_rounded),
+              activeIcon: const Icon(Icons.notifications),
               label: localizations.notifications,
             ),
           ];
@@ -123,7 +119,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                 child: Scaffold(
                   key: scaffoldKey,
                   appBar: PreferredSize(
-                    preferredSize: Size.fromHeight(Platform.isIOS ? 60 : 60),
+                    preferredSize: const Size.fromHeight(60),
                     child: Padding(
                       padding: Platform.isIOS
                           ? const EdgeInsets.only(top: 0.0)
@@ -135,7 +131,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                     ),
                   ),
                   floatingActionButtonLocation:
-                      FloatingActionButtonLocation.centerDocked,
+                  FloatingActionButtonLocation.centerDocked,
                   floatingActionButton: FloatingActionButton.large(
                     onPressed: () {
                       showModalBottomSheet(
@@ -160,239 +156,227 @@ class _HomeLayoutState extends State<HomeLayout> {
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: Column(
                           children: [
-                            // Scrollable part
                             Expanded(
                               child: ListView(
                                 padding: EdgeInsets.zero,
                                 children: [
-                                  DrawerHeader(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Color(0xFF2D3436),
-                                          Color(0xFF636E72),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),                                    ),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        if (profile != null) {
-                                          context.push('/MyDataPage');
-                                        }
-                                      },
-                                      child: Row(
-                                        spacing: 10,
-                                        children: [
-                                          profile?.personalPhoto == null
-                                              ? SvgPicture.asset(
-                                                  'assets/images/drawer/profile_placholder.svg',
-                                                )
-                                              : CircleAvatar(
-                                                  radius: 30,
-                                                  backgroundImage: NetworkImage(
-                                                    profile!.personalPhoto!,
-                                                  ),
-                                                ),
-                                          Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                  // ── Drawer header: avatar + badge ────────
+                                  BlocBuilder<WalletCubit, WalletState>(
+                                    builder: (context, walletState) {
+                                      final walletCubit =
+                                      context.read<WalletCubit>();
+                                      final badge = walletCubit.currentBadge;
+                                      final isArabic =
+                                          localizations.localeName == 'ar';
+
+                                      final badgeName = badge == null
+                                          ? null
+                                          : isArabic &&
+                                          (badge.nameAr?.isNotEmpty ??
+                                              false)
+                                          ? badge.nameAr
+                                          : badge.name;
+
+                                      return DrawerHeader(
+                                        decoration: const BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Color(0xFF2D3436),
+                                              Color(0xFF636E72),
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                        ),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            if (profile != null) {
+                                              context.push('/ProfileScreen');
+                                            }
+                                          },
+                                          child: Row(
                                             spacing: 10,
                                             children: [
-                                              Text(
-                                                localizations.welcome,
-                                                style: AppTextStyles.bold16
-                                                    .copyWith(
-                                                      color: Colors.white,
-                                                    ),
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    bottom: 10.0),
+                                                child: _ProfileAvatar(
+                                                  imageUrl:
+                                                  profile?.personalPhoto,
+                                                  badgeName: badgeName,
+                                                ),
                                               ),
-                                              Text(
-                                                localizations
-                                                    .tawreedatIsYourBestChoice,
-                                                style: AppTextStyles.regular14
-                                                    .copyWith(
-                                                  fontSize: 12,
-                                                      color: Colors.white,
+                                              Expanded(
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                                  spacing: 10,
+                                                  children: [
+                                                    Text(
+                                                      localizations.welcome,
+                                                      style: AppTextStyles
+                                                          .bold16
+                                                          .copyWith(
+                                                          color:
+                                                          Colors.white),
                                                     ),
+                                                    Text(
+                                                      localizations
+                                                          .tawreedatIsYourBestChoice,
+                                                      style: AppTextStyles
+                                                          .regular14
+                                                          .copyWith(
+                                                        fontSize: 12,
+                                                        color: Colors.white,
+                                                      ),
+                                                      overflow:
+                                                      TextOverflow.ellipsis,
+                                                      maxLines: 2,
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ],
                                           ),
-                                        ],
-                                      ),
-                                    ),
+                                        ),
+                                      );
+                                    },
                                   ),
+
                                   Padding(
                                     padding: const EdgeInsets.all(17.0),
                                     child: Material(
                                       elevation: 4,
                                       color: Colors.white,
-                                      shadowColor: Colors.black.withOpacity(
-                                        0.1,
-                                      ),
+                                      shadowColor:
+                                      Colors.black.withOpacity(0.1),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
+                                        borderRadius:
+                                        BorderRadius.circular(10),
                                       ),
                                       clipBehavior: Clip.antiAlias,
                                       child: Column(
                                         children: [
                                           ListTile(
                                             leading: const Icon(
-                                              Icons.language_outlined,
-                                            ),
-                                            title: Text(
-                                              localizations.lang,
-                                              style: AppTextStyles.bold16,
-                                            ),
+                                                Icons.language_outlined),
+                                            title: Text(localizations.lang,
+                                                style: AppTextStyles.bold16),
                                             trailing: SizedBox(
                                               width: 100,
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
+                                                MainAxisAlignment
+                                                    .spaceBetween,
                                                 children: [
-                                                  Text(
-                                                    'EN',
-                                                    style:
-                                                        AppTextStyles.regular14,
-                                                  ),
+                                                  Text('EN',
+                                                      style: AppTextStyles
+                                                          .regular14),
                                                   Switch(
-                                                    value:
-                                                        localizations
-                                                            .localeName ==
+                                                    value: localizations
+                                                        .localeName ==
                                                         'ar',
-                                                    onChanged: (value) {
-                                                      context
-                                                          .read<LocaleCubit>()
-                                                          .toggleLocale();
-                                                    },
+                                                    onChanged: (value) =>
+                                                        context
+                                                            .read<LocaleCubit>()
+                                                            .toggleLocale(),
                                                     trackOutlineColor:
-                                                        WidgetStateProperty.resolveWith(
-                                                          (states) => AppColors
-                                                              .kPrimaryColor,
-                                                        ),
+                                                    WidgetStateProperty
+                                                        .resolveWith(
+                                                            (_) => AppColors
+                                                            .kPrimaryColor),
                                                     activeThumbColor:
-                                                        AppColors.kPrimaryColor,
+                                                    AppColors.kPrimaryColor,
                                                     activeTrackColor:
-                                                        Colors.white,
+                                                    Colors.white,
                                                     inactiveTrackColor:
-                                                        Colors.white,
+                                                    Colors.white,
                                                     inactiveThumbColor:
-                                                        AppColors.kPrimaryColor,
+                                                    AppColors.kPrimaryColor,
                                                   ),
-                                                  Text(
-                                                    'AR',
-                                                    style:
-                                                        AppTextStyles.regular14,
-                                                  ),
+                                                  Text('AR',
+                                                      style: AppTextStyles
+                                                          .regular14),
                                                 ],
                                               ),
                                             ),
-                                            onTap: () {
-                                              context
-                                                  .read<LocaleCubit>()
-                                                  .toggleLocale();
-                                            },
+                                            onTap: () => context
+                                                .read<LocaleCubit>()
+                                                .toggleLocale(),
                                           ),
-                                          Divider(),
+                                          const Divider(),
                                           ListTile(
-                                            onTap: () {
-                                              context.push('/WalletScreen');
-                                            },
+                                            onTap: () =>
+                                                context.push('/WalletScreen'),
+                                            leading: const Icon(Icons
+                                                .account_balance_wallet_rounded),
+                                            title: Text(localizations.wallet,
+                                                style: AppTextStyles.bold16),
+                                          ),
+                                          const Divider(),
+                                          ListTile(
+                                            onTap: () => context
+                                                .push('/addressesManagement'),
                                             leading: const Icon(
-                                              Icons
-                                                  .account_balance_wallet_rounded,
-                                            ),
-                                            title: Text(
-                                              localizations.wallet,
-                                              style: AppTextStyles.bold16,
-                                            ),
+                                                Icons.location_pin),
+                                            title: Text(localizations.address,
+                                                style: AppTextStyles.bold16),
                                           ),
-                                          Divider(),ListTile(
-                                            onTap: () {
-                                              context.push('/addressesManagement');
-                                            },
+                                          const Divider(),
+                                          ListTile(
+                                            onTap: () =>
+                                                context.push('/ProfileScreen'),
+                                            leading:
+                                            const Icon(Icons.person),
+                                            title: Text(localizations.profile,
+                                                style: AppTextStyles.bold16),
+                                          ),
+                                          const Divider(),
+                                          ListTile(
+                                            leading:
+                                            const Icon(Icons.star_half),
+                                            title: Text(localizations.reviews,
+                                                style: AppTextStyles.bold16),
+                                          ),
+                                          const Divider(),
+                                          ListTile(
+                                            onTap: () =>
+                                                context.push('/FaqPage'),
                                             leading: const Icon(
-                                              Icons
-                                                  .location_pin,
-                                            ),
-                                            title: Text(
-                                              localizations.address,
-                                              style: AppTextStyles.bold16,
-                                            ),
+                                                Icons.question_mark),
+                                            title: Text(localizations.faq,
+                                                style: AppTextStyles.bold16),
                                           ),
-                                          Divider(),
+                                          const Divider(),
                                           ListTile(
-                                            onTap: () {
-                                              context.push('/ProfileScreen');
-                                            },
-                                            leading: const Icon(Icons.person),
-                                            title: Text(
-                                              localizations.profile,
-                                              style: AppTextStyles.bold16,
-                                            ),
-                                          ),
-                                          Divider(),
-                                          ListTile(
+                                            onTap: () =>
+                                                context.push('/SupportPage'),
                                             leading: const Icon(
-                                              Icons.star_half,
-                                            ),
-                                            title: Text(
-                                              localizations.reviews,
-                                              style: AppTextStyles.bold16,
-                                            ),
+                                                Icons.support_agent_rounded),
+                                            title: Text(localizations.support,
+                                                style: AppTextStyles.bold16),
                                           ),
-                                          Divider(),
+                                          const Divider(),
                                           ListTile(
-                                            onTap: () {
-                                              context.push('/FaqPage');
-                                            },
+                                            onTap: () =>
+                                                context.push('/PrivacyPage'),
                                             leading: const Icon(
-                                              Icons.question_mark,
-                                            ),
+                                                Icons.policy_rounded),
                                             title: Text(
-                                              localizations.faq,
-                                              style: AppTextStyles.bold16,
-                                            ),
+                                                localizations.privecyPolicy,
+                                                style: AppTextStyles.bold16),
                                           ),
-                                          Divider(),
+                                          const Divider(),
                                           ListTile(
-                                            onTap: () {
-                                              context.push('/SupportPage');
-                                            },
-                                            leading: const Icon(
-                                              Icons.support_agent_rounded,
-                                            ),
-                                            title: Text(
-                                              localizations.support,
-                                              style: AppTextStyles.bold16,
-                                            ),
-                                          ),
-                                          Divider(),
-                                          ListTile(
-                                            onTap: () {
-                                              context.push('/PrivacyPage');
-                                            },
-                                            leading: const Icon(
-                                              Icons.policy_rounded,
-                                            ),
-                                            title: Text(
-                                              localizations.privecyPolicy,
-                                              style: AppTextStyles.bold16,
-                                            ),
-                                          ),
-                                          Divider(),
-                                          ListTile(
-                                            onTap: () {
-                                              context.push('/Terms');
-                                            },
+                                            onTap: () =>
+                                                context.push('/Terms'),
                                             leading: const Icon(Icons.lock),
                                             title: Text(
-                                              localizations.termsAndConditions,
-                                              style: AppTextStyles.bold16,
-                                            ),
+                                                localizations.termsAndConditions,
+                                                style: AppTextStyles.bold16),
                                           ),
                                         ],
                                       ),
@@ -416,21 +400,20 @@ class _HomeLayoutState extends State<HomeLayout> {
                                     snapshot.data != null) {
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 17.0,
-                                    ),
+                                        horizontal: 17.0),
                                     child: Material(
                                       elevation: 1,
                                       color: Colors.white,
                                       shadowColor: AppColors.kPrimaryColor,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
+                                        borderRadius:
+                                        BorderRadius.circular(18),
                                       ),
                                       clipBehavior: Clip.antiAlias,
                                       child: InkWell(
                                         onTap: () async {
                                           await SecureStorageService()
                                               .clearAll();
-
                                           if (context.mounted) {
                                             context.go('/auth/login');
                                           }
@@ -441,7 +424,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           width: double.infinity,
                                           child: Row(
                                             mainAxisAlignment:
-                                                MainAxisAlignment.center,
+                                            MainAxisAlignment.center,
                                             spacing: 10,
                                             children: [
                                               SvgPicture.asset(
@@ -451,9 +434,8 @@ class _HomeLayoutState extends State<HomeLayout> {
                                                 localizations.logout,
                                                 style: AppTextStyles.bold16
                                                     .copyWith(
-                                                      color: AppColors
-                                                          .kPrimaryColor,
-                                                    ),
+                                                    color: AppColors
+                                                        .kPrimaryColor),
                                               ),
                                             ],
                                           ),
@@ -462,7 +444,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                                     ),
                                   );
                                 } else {
-                                  return SizedBox.shrink();
+                                  return const SizedBox.shrink();
                                 }
                               },
                             ),
@@ -494,13 +476,12 @@ class _HomeLayoutState extends State<HomeLayout> {
 
                           final textDirection = Directionality.of(context);
                           final logicalIndex =
-                              textDirection == TextDirection.ltr
+                          textDirection == TextDirection.ltr
                               ? cubit.currentIndex
                               : (itemCount - 1 - cubit.currentIndex);
 
-                          final indicatorWidth = 65.0;
-                          final leftPos =
-                              logicalIndex * itemWidth +
+                          const indicatorWidth = 65.0;
+                          final leftPos = logicalIndex * itemWidth +
                               (itemWidth - indicatorWidth) / 2;
 
                           return Container(
@@ -522,12 +503,12 @@ class _HomeLayoutState extends State<HomeLayout> {
                                         if (index == 4) {
                                           scaffoldKey.currentState
                                               ?.openEndDrawer();
-                                          return; // Prevent navigation to menu tab
+                                          return;
                                         }
                                         cubit.changeTab(index);
                                       },
                                       selectedItemColor:
-                                          AppColors.kPrimaryColor,
+                                      AppColors.kPrimaryColor,
                                       unselectedItemColor: Colors.grey,
                                       type: BottomNavigationBarType.fixed,
                                       selectedLabelStyle: const TextStyle(
@@ -572,16 +553,6 @@ class _HomeLayoutState extends State<HomeLayout> {
     );
   }
 
-  Widget _buildNavIcon({
-    required int index,
-    required int cubitIndex,
-    required String icon,
-    required String selectedIcon,
-  }) {
-    final isSelected = index == cubitIndex;
-    return SvgPicture.asset(isSelected ? selectedIcon : icon);
-  }
-
   void _showPhoneNumberBottomSheet(BuildContext context) {
     final TextEditingController phoneController = TextEditingController();
     final localizations = AppLocalizations.of(context)!;
@@ -607,11 +578,13 @@ class _HomeLayoutState extends State<HomeLayout> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(localizations.enterPhoneNumber, style: AppTextStyles.bold18),
+              Text(localizations.enterPhoneNumber,
+                  style: AppTextStyles.bold18),
               const SizedBox(height: 8),
               Text(
                 localizations.weNeedYourPhoneNumber,
-                style: AppTextStyles.regular14.copyWith(color: Colors.grey),
+                style:
+                AppTextStyles.regular14.copyWith(color: Colors.grey),
               ),
               const SizedBox(height: 20),
               Form(
@@ -633,11 +606,7 @@ class _HomeLayoutState extends State<HomeLayout> {
               const SizedBox(height: 20),
               AppCustomButton(
                 onPressed: () {
-                  formKey.currentState!.validate();
                   if (formKey.currentState!.validate()) {
-                    // context.read<AuthCubit>().updateProfile(
-                    //   phone: phoneController.text.toString(),
-                    // );
                     log(phoneController.text.toString());
                     Navigator.pop(context);
                   }
@@ -647,13 +616,9 @@ class _HomeLayoutState extends State<HomeLayout> {
               const SizedBox(height: 10),
               Center(
                 child: TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    localizations.maybeLater,
-                    style: AppTextStyles.bold16,
-                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(localizations.maybeLater,
+                      style: AppTextStyles.bold16),
                 ),
               ),
               const SizedBox(height: 20),
@@ -664,6 +629,73 @@ class _HomeLayoutState extends State<HomeLayout> {
     );
   }
 }
+
+// ── _ProfileAvatar ────────────────────────────────────────────────────────────
+
+class _ProfileAvatar extends StatelessWidget {
+  final String? imageUrl;
+  final String? badgeName;
+
+  const _ProfileAvatar({this.imageUrl, this.badgeName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 70,
+          height: 70,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Hero(
+            tag:'profile-avatar',
+            child: ClipOval(
+              child: imageUrl != null && imageUrl!.isNotEmpty
+                  ? Image.network(
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    SvgPicture.asset(
+                      'assets/images/drawer/profile_placholder.svg',
+                    ),
+              )
+                  : SvgPicture.asset(
+                'assets/images/drawer/profile_placholder.svg',
+              ),
+            ),
+          ),
+        ),
+        if (badgeName != null && badgeName!.isNotEmpty)
+          Positioned(
+            bottom: -20,
+            left: 10,
+            right: 10,
+            child: Text(
+              badgeName!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ── AppLayoutAppBar (unchanged) ───────────────────────────────────────────────
 
 class AppLayoutAppBar extends StatefulWidget {
   const AppLayoutAppBar({
@@ -698,112 +730,83 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
 
     _scaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.0,
-          end: 1.3,
-        ).chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(begin: 1.0, end: 1.3)
+            .chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.3,
-          end: 0.9,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(begin: 1.3, end: 0.9)
+            .chain(CurveTween(curve: Curves.easeInOut)),
         weight: 30,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.9,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.elasticOut)),
+        tween: Tween<double>(begin: 0.9, end: 1.0)
+            .chain(CurveTween(curve: Curves.elasticOut)),
         weight: 40,
       ),
     ]).animate(_controller);
 
     _rotationAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.0,
-          end: 0.1,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(begin: 0.0, end: 0.1)
+            .chain(CurveTween(curve: Curves.easeInOut)),
         weight: 25,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.1,
-          end: -0.1,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(begin: 0.1, end: -0.1)
+            .chain(CurveTween(curve: Curves.easeInOut)),
         weight: 25,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: -0.1,
-          end: 0.05,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(begin: -0.1, end: 0.05)
+            .chain(CurveTween(curve: Curves.easeInOut)),
         weight: 25,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.05,
-          end: 0.0,
-        ).chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(begin: 0.05, end: 0.0)
+            .chain(CurveTween(curve: Curves.easeOut)),
         weight: 25,
       ),
     ]).animate(_controller);
 
-    // App logo fade out/in animation
     _appLogoOpacity = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.0,
-          end: 0.0,
-        ).chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(begin: 1.0, end: 0.0)
+            .chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
       TweenSequenceItem(tween: ConstantTween<double>(0.0), weight: 40),
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.0,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween<double>(begin: 0.0, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeIn)),
         weight: 30,
       ),
     ]).animate(_controller);
 
-    // Company logo fade in/out animation
     _companyLogoOpacity = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.0,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween<double>(begin: 0.0, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeIn)),
         weight: 30,
       ),
       TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 40),
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.0,
-          end: 0.0,
-        ).chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(begin: 1.0, end: 0.0)
+            .chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
     ]).animate(_controller);
 
-    // Company logo scale animation
     _companyLogoScale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.5,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(begin: 0.5, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
       TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 40),
       TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.0,
-          end: 1.2,
-        ).chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween<double>(begin: 1.0, end: 1.2)
+            .chain(CurveTween(curve: Curves.easeIn)),
         weight: 30,
       ),
     ]).animate(_controller);
@@ -827,7 +830,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
       automaticallyImplyLeading: false,
       scrolledUnderElevation: 0,
       elevation: 0,
-      actions: [SizedBox.shrink()],
+      actions: const [SizedBox.shrink()],
       title: Directionality(
         textDirection: AppLocalizations.of(context)!.localeName == 'ar'
             ? TextDirection.ltr
@@ -835,61 +838,23 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // NotificationButton(userId: kUserId),
-            // InkWell(
-            //   onTap: () {
-            //     context.push('/PointsPage');
-            //   },
-            //   customBorder: const RoundedRectangleBorder(
-            //     borderRadius: BorderRadius.only(
-            //       topLeft: Radius.circular(5),
-            //       bottomLeft: Radius.circular(25),
-            //       topRight: Radius.circular(25),
-            //       bottomRight: Radius.circular(25),
-            //     ),
-            //   ),
-            //   child: Container(
-            //     height: 38,
-            //     width: 76,
-            //     decoration: BoxDecoration(
-            //       borderRadius: BorderRadius.only(
-            //         topLeft: Radius.circular(5),
-            //         bottomLeft: Radius.circular(25),
-            //         topRight: Radius.circular(25),
-            //         bottomRight: Radius.circular(25),
-            //       ),
-            //       border: Border.all(color: Colors.grey.shade300, width: 1),
-            //     ),
-            //     child: Row(
-            //       mainAxisAlignment: MainAxisAlignment.center,
-            //       spacing: 5,
-            //       children: [
-            //         SvgPicture.asset('assets/images/appbar/points.svg'),
-            //         Text(
-            //           widget.localizations.points,
-            //           style: AppTextStyles.bold14.copyWith(fontSize: 11),
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            // ),
             CircleAvatar(
               radius: 20,
               backgroundColor: Colors.grey.shade200,
               child: IconButton(
-                icon: Icon(Icons.menu),
+                icon: const Icon(Icons.menu),
                 color: Colors.grey.shade700,
                 onPressed: () {
                   widget.scaffoldKey.currentState?.openEndDrawer();
                 },
               ),
             ),
-            Expanded(child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: CouponTickerTitle(),
-            )),
-
-
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: CouponTickerTitle(),
+              ),
+            ),
             GestureDetector(
               onTap: _triggerEasterEgg,
               child: AnimatedBuilder(
@@ -902,12 +867,10 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // App logo (fades out during animation)
                           Opacity(
                             opacity: _appLogoOpacity.value,
                             child: child!,
                           ),
-                          // Company logo overlay (fades in during animation)
                           if (_companyLogoOpacity.value > 0)
                             Opacity(
                               opacity: _companyLogoOpacity.value,

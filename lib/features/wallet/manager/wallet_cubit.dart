@@ -8,6 +8,14 @@ class WalletCubit extends Cubit<WalletState> {
 
   WalletCubit({required this.repository}) : super(WalletInitial());
 
+  /// Returns the badge from the last successful wallet load, or null.
+  /// The drawer header reads this to show the badge name under the avatar.
+  dynamic get currentBadge {
+    final s = state;
+    if (s is WalletLoaded) return s.walletData.badge;
+    return null;
+  }
+
   Future<void> fetchWalletData() async {
     emit(WalletLoading());
 

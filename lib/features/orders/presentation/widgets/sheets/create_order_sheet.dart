@@ -33,13 +33,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   final _productDescriptionController = TextEditingController();
   final _budgetController = TextEditingController();
-  final ImagePicker _picker = ImagePicker();
 
   Address? _pickupAddress;
   Address? _deliveryAddress;
   File? _productImage;
 
-  /// Dedicated cubit that fetches addresses once to pre-fill default delivery.
   late final AddressCubit _initCubit;
 
   @override
@@ -49,8 +47,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     _preloadDefaultDelivery();
   }
 
-  /// Loads saved addresses and, if one is marked default (or falls back to
-  /// the first), pre-fills the delivery address field.
   Future<void> _preloadDefaultDelivery() async {
     _initCubit.stream.listen((state) {
       if (!mounted) return;
@@ -131,7 +127,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         return;
       }
 
-      // Check distance between pickup and delivery
       final distance = calculateDistance(
         double.parse(_pickupAddress!.addressLat),
         double.parse(_pickupAddress!.addressLong),
@@ -140,7 +135,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       );
 
       if (distance < 50) {
-        // e.g., less than 50 meters apart
         Fluttertoast.showToast(
           msg: AppLocalizations.of(context)!.distanceTooClose,
           toastLength: Toast.LENGTH_SHORT,
@@ -171,14 +165,71 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   // ── Image picker ───────────────────────────────────────────────────────────
 
-  Future<void> _pickImage() async {
-    final XFile? img = await _picker.pickImage(
-      source: ImageSource.gallery,
+  void _showImageSourceSheet() {
+    final localizations = AppLocalizations.of(context)!;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              localizations.productImageOptional,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Icon(Icons.camera_alt, color: AppColors.kPrimaryColor),
+              title: Text(localizations.camera),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.photo_library,
+                color: AppColors.kPrimaryColor,
+              ),
+              title: Text(localizations.gallery),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await ImagePicker().pickImage(
+      source: source,
       maxWidth: 1024,
       maxHeight: 1024,
       imageQuality: 85,
     );
-    if (img != null && mounted) setState(() => _productImage = File(img.path));
+    if (pickedFile != null && mounted) {
+      setState(() => _productImage = File(pickedFile.path));
+    }
   }
 
   Widget _buildImagePicker() {
@@ -191,7 +242,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         ),
         const SizedBox(height: 8),
         InkWell(
-          onTap: _pickImage,
+          onTap: _showImageSourceSheet,
           borderRadius: BorderRadius.circular(12),
           child: Container(
             height: 150,
@@ -384,7 +435,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       Expanded(
                         child: Text(
                           AppLocalizations.of(context)!.newOrder,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -484,7 +535,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Inner address-selection sheet (pickup OR delivery within create order flow)
+// Inner address-selection sheet
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _AddressSelectionSheet extends StatefulWidget {
@@ -595,7 +646,6 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
                     return const Center(child: Text('No saved addresses'));
                   }
 
-                  // For the delivery sheet, highlight the default address.
                   final defaultId = !widget.isPickup
                       ? state.addresses
                             .firstWhere(
