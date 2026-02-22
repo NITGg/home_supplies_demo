@@ -13,7 +13,7 @@ class ReviewsRemoteDataSource {
   }) async {
     try {
       final response = await _dio.get(
-        '/customer-reviews/customer/me',
+        '/courier-reviews',
         queryParameters: {
           'skip': skip,
           'limit': limit,

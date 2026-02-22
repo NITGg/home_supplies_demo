@@ -54,10 +54,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
               Navigator.pop(context);
             },
           ),
-          title: Text(
-            l10n.reviews,
-            style: AppTextStyles.bold18,
-          ),
+          title: Text(l10n.reviews, style: AppTextStyles.bold18),
           centerTitle: true,
         ),
         body: BlocBuilder<ReviewsCubit, ReviewsState>(
@@ -119,9 +116,6 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
 
               return Column(
                 children: [
-                  // Summary header
-                  _buildSummaryHeader(context, state),
-
                   // Reviews list
                   Expanded(
                     child: RefreshIndicator(
@@ -156,154 +150,6 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
             return const SizedBox();
           },
         ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryHeader(BuildContext context, ReviewsLoaded state) {
-    final l10n = AppLocalizations.of(context)!;
-
-    // Average rating
-    final avg = state.reviews.isEmpty
-        ? 0.0
-        : state.reviews.map((r) => r.rating).reduce((a, b) => a + b) /
-              state.reviews.length;
-
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF2D3436),
-            Color(0xFF636E72),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.kSecondaryColor.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Average score
-          Expanded(
-            child: Column(
-              children: [
-                Text(
-                  avg.toStringAsFixed(1),
-                  style: AppTextStyles.bold25.copyWith(
-                    color: AppColors.kPrimaryColor,
-                    fontSize: 40,
-                  ),
-                ),
-                _buildStarRow(avg),
-                const SizedBox(height: 4),
-                Text(
-                  '${state.totalReviews} ${l10n.totalReviews}',
-                  style: AppTextStyles.regular14.copyWith(
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(width: 1, height: 60, color: Colors.white24),
-          // Rating breakdown
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 8),
-              child: Column(
-                children: [5, 4, 3, 2, 1].map((star) {
-                  final count = state.reviews
-                      .where((r) => r.rating == star)
-                      .length;
-                  final fraction = state.reviews.isEmpty
-                      ? 0.0
-                      : count / state.reviews.length;
-                  return _buildRatingBar(star, fraction, count);
-                }).toList(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStarRow(double rating) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(5, (i) {
-        if (i < rating.floor()) {
-          return const Icon(
-            Icons.star_rounded,
-            color: AppColors.kPrimaryColor,
-            size: 18,
-          );
-        } else if (i < rating) {
-          return const Icon(
-            Icons.star_half_rounded,
-            color: AppColors.kPrimaryColor,
-            size: 18,
-          );
-        }
-        return const Icon(
-          Icons.star_border_rounded,
-          color: Colors.white38,
-          size: 18,
-        );
-      }),
-    );
-  }
-
-  Widget _buildRatingBar(int star, double fraction, int count) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.5),
-      child: Row(
-        children: [
-          Text(
-            '$star',
-            style: AppTextStyles.regular14.copyWith(
-              color: Colors.white70,
-              fontSize: 11,
-            ),
-          ),
-          const SizedBox(width: 4),
-          const Icon(
-            Icons.star_rounded,
-            color: AppColors.kPrimaryColor,
-            size: 10,
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: fraction,
-                backgroundColor: Colors.white24,
-                valueColor: const AlwaysStoppedAnimation(
-                  AppColors.kPrimaryColor,
-                ),
-                minHeight: 5,
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '$count',
-            style: AppTextStyles.regular14.copyWith(
-              color: Colors.white70,
-              fontSize: 11,
-            ),
-          ),
-        ],
       ),
     );
   }
