@@ -87,9 +87,6 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                     ElevatedButton(
                       onPressed: () =>
                           context.read<ReviewsCubit>().fetchReviews(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.kPrimaryColor,
-                      ),
                       child: Text(l10n.retry),
                     ),
                   ],

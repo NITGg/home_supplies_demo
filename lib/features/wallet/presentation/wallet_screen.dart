@@ -74,14 +74,6 @@ class _WalletScreenState extends State<WalletScreen> {
                     },
                     icon: const Icon(Icons.refresh),
                     label: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFDCB6E),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
                   ),
                 ],
               ),
