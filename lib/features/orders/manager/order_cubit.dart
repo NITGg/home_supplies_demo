@@ -333,7 +333,7 @@ class OrderCubit extends Cubit<OrderState> {
       await _repository.confirmDelivery(orderId: orderId, courierId: courierId);
       log('OrderCubit: Delivery confirmed');
 
-      emit(DeliveryConfirmed(orderId: orderId));
+      emit(DeliveryConfirmed(orderId: orderId, courierId: courierId));
 
       // Reload both lists (order moved from active to history)
       await loadActiveOrders(loadMore: false);

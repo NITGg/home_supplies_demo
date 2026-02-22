@@ -445,8 +445,22 @@
 "orderCancelledUnavailable": "تم إلغاء الطلب - المنتج غير متوفر",
 "view": "عرض",
 "tapToView": "اضغط لعرضه",
-"newProposalReceived": "تم استلام عرض جديد"
-
+"newProposalReceived": "تم استلام عرض جديد",
+"reviewsCount": "{count} تقييم",
+"@reviewsCount": {
+  "placeholders": { "count": { "type": "int" } }
+},
+"averageRating": "متوسط التقييم",
+"rateTheCourier": "قيّم المندوب",
+    "howWasYourExperience": "كيف كانت تجربتك مع هذا المندوب؟",
+    "leaveAComment": "اترك تعليقاً (اختياري)",
+    "submitReview": "إرسال التقييم",
+    "pleaseSelectRating": "يرجى اختيار تقييم",
+    "ratingPoor": "سيء",
+    "ratingFair": "مقبول",
+    "ratingGood": "جيد",
+    "ratingVeryGood": "جيد جداً",
+    "ratingExcellent": "ممتاز"
 
 
 }

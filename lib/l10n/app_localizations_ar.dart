@@ -999,4 +999,42 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cancelOrderWarning => 'هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها';
+
+  @override
+  String reviewsCount(int count) {
+    return '$count تقييم';
+  }
+
+  @override
+  String get averageRating => 'متوسط التقييم';
+
+  @override
+  String get rateTheCourier => 'قيّم المندوب';
+
+  @override
+  String get howWasYourExperience => 'كيف كانت تجربتك مع هذا المندوب؟';
+
+  @override
+  String get leaveAComment => 'اترك تعليقاً (اختياري)';
+
+  @override
+  String get submitReview => 'إرسال التقييم';
+
+  @override
+  String get pleaseSelectRating => 'يرجى اختيار تقييم';
+
+  @override
+  String get ratingPoor => 'سيء';
+
+  @override
+  String get ratingFair => 'مقبول';
+
+  @override
+  String get ratingGood => 'جيد';
+
+  @override
+  String get ratingVeryGood => 'جيد جداً';
+
+  @override
+  String get ratingExcellent => 'ممتاز';
 }

@@ -999,4 +999,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancelOrderWarning => 'Are you sure you want to cancel this order? This action cannot be undone.';
+
+  @override
+  String reviewsCount(int count) {
+    return '$count Reviews';
+  }
+
+  @override
+  String get averageRating => 'Average Rating';
+
+  @override
+  String get rateTheCourier => 'Rate the Courier';
+
+  @override
+  String get howWasYourExperience => 'How was your experience with this courier?';
+
+  @override
+  String get leaveAComment => 'Leave a comment (optional)';
+
+  @override
+  String get submitReview => 'Submit Review';
+
+  @override
+  String get pleaseSelectRating => 'Please select a rating';
+
+  @override
+  String get ratingPoor => 'Poor';
+
+  @override
+  String get ratingFair => 'Fair';
+
+  @override
+  String get ratingGood => 'Good';
+
+  @override
+  String get ratingVeryGood => 'Very Good';
+
+  @override
+  String get ratingExcellent => 'Excellent';
 }

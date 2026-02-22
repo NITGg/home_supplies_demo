@@ -138,11 +138,12 @@ class DeliveryConfirming extends OrderState {}
 
 class DeliveryConfirmed extends OrderState {
   final int orderId;
+  final int courierId;
 
-  const DeliveryConfirmed({required this.orderId});
+  const DeliveryConfirmed({required this.orderId, required this.courierId});
 
   @override
-  List<Object?> get props => [orderId];
+  List<Object?> get props => [orderId, courierId];
 }
 
 // ── Error ─────────────────────────────────────────────────────────────────────

@@ -336,6 +336,8 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           ),
                                           const Divider(),
                                           ListTile(
+                                            onTap: () =>
+                                                context.push('/ReviewsScreen'),
                                             leading:
                                             const Icon(Icons.star_half),
                                             title: Text(localizations.reviews,

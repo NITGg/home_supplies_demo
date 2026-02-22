@@ -16,6 +16,10 @@ import '../features/home/drawer_pages/terms_page.dart';
 import '../features/home/layout/presentation/home_layout.dart';
 import '../features/onboarding/onboarding.dart';
 import '../core/utils/secure_storage_service.dart';
+import '../features/reviews/data/data_source/reviews_remote_data_source.dart';
+import '../features/reviews/data/repositories/reviews_repo.dart';
+import '../features/reviews/manager/reviews_cubit.dart';
+import '../features/reviews/presentation/reviews_screen.dart';
 import '../features/wallet/presentation/wallet_screen.dart';
 
 Future<GoRouter> createAppRouter({
@@ -65,6 +69,15 @@ Future<GoRouter> createAppRouter({
         path: '/ProfileScreen',
         name: 'ProfileScreen',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/ReviewsScreen',
+        name: 'ReviewsScreen',
+        builder: (context, state) => BlocProvider(
+          create: (_) =>
+              ReviewsCubit(ReviewsRepository(ReviewsRemoteDataSource())),
+          child: const ReviewsScreen(),
+        ),
       ),
       ShellRoute(
         builder: (context, state, child) {

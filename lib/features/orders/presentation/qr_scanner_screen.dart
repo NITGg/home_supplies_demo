@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/review_bottom_sheet.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
 import '../../../l10n/app_localizations.dart';
@@ -61,13 +62,19 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     }
   }
 
+  void _showReviewSheet(BuildContext context, int orderId, int courierId) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ReviewBottomSheet(orderId: orderId, courierId: courierId),
+    );
+  }
+
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
     }
   }
@@ -76,14 +83,17 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.scanQrCode, style: AppTextStyles.bold18),
+        title: Text(
+          AppLocalizations.of(context)!.scanQrCode,
+          style: AppTextStyles.bold18,
+        ),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
       body: BlocListener<OrderCubit, OrderState>(
         listener: (context, state) {
           if (state is DeliveryConfirmed) {
-            Navigator.pop(context);
+            _showReviewSheet(context, state.orderId, state.courierId);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(AppLocalizations.of(context)!.deliveryConfirmed),
@@ -97,15 +107,9 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         },
         child: Stack(
           children: [
-            MobileScanner(
-              controller: cameraController,
-              onDetect: _onDetect,
-            ),
+            MobileScanner(controller: cameraController, onDetect: _onDetect),
             // Overlay with scanning frame
-            CustomPaint(
-              painter: ScannerOverlayPainter(),
-              child: Container(),
-            ),
+            CustomPaint(painter: ScannerOverlayPainter(), child: Container()),
             // Instructions
             Positioned(
               bottom: 0,
@@ -117,10 +121,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.8),
-                      Colors.transparent,
-                    ],
+                    colors: [Colors.black.withOpacity(0.8), Colors.transparent],
                   ),
                 ),
                 child: Column(
@@ -140,9 +141,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                       _isProcessing
                           ? AppLocalizations.of(context)!.processing
                           : AppLocalizations.of(context)!.alignQrCode,
-                      style: AppTextStyles.bold16.copyWith(
-                        color: Colors.white,
-                      ),
+                      style: AppTextStyles.bold16.copyWith(color: Colors.white),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
@@ -183,7 +182,9 @@ class ScannerOverlayPainter extends CustomPainter {
       Path.combine(
         PathOperation.difference,
         Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
-        Path()..addRRect(RRect.fromRectAndRadius(scanAreaRect, const Radius.circular(20))),
+        Path()..addRRect(
+          RRect.fromRectAndRadius(scanAreaRect, const Radius.circular(20)),
+        ),
       ),
       overlayPaint,
     );

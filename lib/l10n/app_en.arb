@@ -442,8 +442,22 @@
 "tapToView": "Tap To View",
 "newProposalReceived": "New Proposal Received",
 
-      "cancelOrderWarning": "Are you sure you want to cancel this order? This action cannot be undone."
-
+      "cancelOrderWarning": "Are you sure you want to cancel this order? This action cannot be undone.",
+"reviewsCount": "{count} Reviews",
+"@reviewsCount": {
+  "placeholders": { "count": { "type": "int" } }
+},
+"averageRating": "Average Rating",
+"rateTheCourier": "Rate the Courier",
+"howWasYourExperience": "How was your experience with this courier?",
+"leaveAComment": "Leave a comment (optional)",
+"submitReview": "Submit Review",
+"pleaseSelectRating": "Please select a rating",
+"ratingPoor": "Poor",
+"ratingFair": "Fair",
+"ratingGood": "Good",
+"ratingVeryGood": "Very Good",
+"ratingExcellent": "Excellent"
 
 
 }
