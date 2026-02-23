@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/widgets/loading_screen.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../manager/wallet_cubit.dart';
 import '../manager/wallet_state.dart';
 import 'badge_progress_section.dart';
+import 'balance_card.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -102,140 +102,13 @@ class _WalletScreenState extends State<WalletScreen> {
                     const SizedBox(height: 20),
 
                     // Wallet Balance Card
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 20),
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF00B894), Color(0xFF00D2A0)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF00B894).withOpacity(0.3),
-                            blurRadius: 15,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  Icons.account_balance_wallet,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      isArabic
-                                          ? 'رصيد المحفظة'
-                                          : 'Wallet Balance',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.white.withOpacity(0.9),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${wallet.balance.toStringAsFixed(2)} ${isArabic ? 'ج.م' : 'EGP'}',
-                                      style: const TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Status indicator
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: wallet.isActive
-                                  ? Colors.white.withOpacity(0.2)
-                                  : Colors.red.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  wallet.isActive
-                                      ? Icons.check_circle
-                                      : Icons.warning,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  wallet.isActive
-                                      ? (isArabic ? 'نشطة' : 'Active')
-                                      : (isArabic ? 'مجمدة' : 'Frozen'),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          if (!wallet.isActive &&
-                              wallet.freezeReason != null) ...[
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.info_outline,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      wallet.freezeReason!,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
+                    WalletBalanceCard(
+                      balance: wallet.balance,
+                      isActive: wallet.isActive,
+                      freezeReason: wallet.freezeReason,
+                      totalUnpaid: 0,
+                      totalPenalties: 0,
+                      availableBalance: wallet.balance,
                     ),
 
                     const SizedBox(height: 24),
@@ -262,7 +135,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                 child: _QuickActionButton(
                                   icon: Icons.add_card_rounded,
                                   label: isArabic ? 'شحن' : 'TopUp',
-                                  color: const Color(0xFF00B894),
+                                  color: Colors.green.shade600,
                                   onTap: () => context.push('/wallet/topup'),
                                 ),
                               ),

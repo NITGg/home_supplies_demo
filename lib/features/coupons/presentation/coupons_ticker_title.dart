@@ -81,8 +81,8 @@ String _labelFor(Coupon coupon, bool isAr) {
       if (coupon.discountValue != null) {
         buf.write(
           coupon.isPercentDiscount
-              ? 'خصم ${coupon.discountValue!.toStringAsFixed(0)}٪'
-              : 'خصم ${coupon.discountValue!.toStringAsFixed(0)} جنيه',
+              ? 'خصم ${coupon.discountValue!.toStringAsFixed(0)}٪ على طلبك'
+              : 'خصم ${coupon.discountValue!.toStringAsFixed(0)} جنيه على طلبك',
         );
       }
     }
@@ -98,8 +98,8 @@ String _labelFor(Coupon coupon, bool isAr) {
       if (coupon.discountValue != null) {
         buf.write(
           coupon.isPercentDiscount
-              ? '${coupon.discountValue!.toStringAsFixed(0)}% off'
-              : '${coupon.discountValue!.toStringAsFixed(0)} EGP off',
+              ? '${coupon.discountValue!.toStringAsFixed(0)}% off your oder'
+              : '${coupon.discountValue!.toStringAsFixed(0)} EGP off your oder',
         );
       }
     }

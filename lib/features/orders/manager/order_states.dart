@@ -156,3 +156,52 @@ class OrderError extends OrderState {
   @override
   List<Object?> get props => [message];
 }
+
+// ── Coupon ────────────────────────────────────────────────────────────────────
+
+class CouponValidating extends OrderState {}
+
+class CouponValid extends OrderState {
+  final String code;
+  final String title;
+  final int? walletAmountCents; // e.g. 2000 = 20.00 EGP
+  final int? walletPoints;
+
+  const CouponValid({
+    required this.code,
+    required this.title,
+    this.walletAmountCents,
+    this.walletPoints,
+  });
+
+  @override
+  List<Object?> get props => [code, title, walletAmountCents, walletPoints];
+}
+
+class CouponInvalid extends OrderState {
+  final String message;
+  const CouponInvalid(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class CouponRedeeming extends OrderState {}
+
+class CouponRedeemed extends OrderState {
+  final String message;
+  final CouponValid? coupon; // carries validated coupon data into the sheet
+
+  const CouponRedeemed({required this.message, this.coupon});
+
+  @override
+  List<Object?> get props => [message, coupon];
+}
+
+class CouponRedeemError extends OrderState {
+  final String message;
+  const CouponRedeemError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

@@ -597,7 +597,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get earnings => 'المكاسب';
 
   @override
-  String get egp => 'جنيه';
+  String get egp => ' ج.م ';
 
   @override
   String get rating => 'التقييم';
@@ -1099,7 +1099,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get transactionId => 'رقم المعاملة';
 
   @override
-  String get pendingCommissionsDeducted => 'تم خصم أي عمولات أو جزاءات معلقة تلقائيًا';
+  String get pendingCommissionsDeducted => 'تم خصم أي جزاءات معلقة تلقائيًا';
 
   @override
   String get backToWallet => 'العودة إلى المحفظة';
@@ -1132,7 +1132,54 @@ class AppLocalizationsAr extends AppLocalizations {
   String get paymentFailed => 'فشل الدفع';
 
   @override
-  String get pendingCommissionsWillBeDeducted => 'سيتم خصم أي عمولات أو جزاءات معلقة تلقائيًا عند الشحن';
+  String get pendingCommissionsWillBeDeducted => 'سيتم خصم أي جزاءات معلقة تلقائيًا عند الشحن';
+
+  @override
+  String get couponCode => 'كود الكوبون';
+
+  @override
+  String get applyCoupon => 'تطبيق';
+
+  @override
+  String couponApplied(String title) {
+    return 'تم تطبيق الكوبون \"$title\"!';
+  }
+
+  @override
+  String get couponRedeemed => 'تم استرداد الكوبون — تم إضافة الرصيد!';
+
+  @override
+  String couponRedeemFailed(String message) {
+    return 'فشل استرداد الكوبون: $message';
+  }
+
+  @override
+  String get removeCoupon => 'إزالة الكوبون';
+
+  @override
+  String walletCredit(String amount) {
+    return '+$amount ج.م رصيد محفظة';
+  }
+
+  @override
+  String walletPoints(int points) {
+    return '+$points نقطة';
+  }
+
+  @override
+  String get walletBalance => 'رصيد المحفظة';
+
+  @override
+  String get active => 'نشطة';
+
+  @override
+  String get frozen => 'مجمدة';
+
+  @override
+  String get pendingPenalties => 'الجزاءات المعلقة';
+
+  @override
+  String get availableBalance => 'الرصيد المتاح';
 
   @override
   String get ratingExcellent => 'ممتاز';

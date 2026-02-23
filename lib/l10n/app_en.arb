@@ -252,7 +252,7 @@
               "vehicleInformation": "Vehicle Information",
           "performanceMetrics": "Performance Metrics",
           "earnings": "Earnings",
-          "egp": "EGP",
+          "egp": "EGP ",
                     "rating": "Rating",
 "completionRate": "Completion Rate",
                     "acceptanceRate": "Acceptance Rate",
@@ -478,7 +478,7 @@
   "walletToppedUp": "Your wallet has been topped up successfully",
   "amountAdded": "Amount Added",
   "transactionId": "Transaction ID",
-  "pendingCommissionsDeducted": "Any pending commissions or penalties were automatically deducted",
+  "pendingCommissionsDeducted": "Any pending penalties were automatically deducted",
   "backToWallet": "Back to Wallet",
   "cancelPayment": "Cancel Payment?",
   "cancelPaymentConfirm": "Are you sure you want to cancel the payment?",
@@ -489,7 +489,32 @@
     "minimumTopUpIs": "Minimum top-up is 10 EGP",
       "maximumTopUpIs": "Maximum top-up is 5000 EGP",
         "paymentFailed": "Payment failed",
-  "pendingCommissionsWillBeDeducted": "Any pending commissions or penalties will be automatically deducted upon top-up",
+  "pendingCommissionsWillBeDeducted": "Any pending penalties will be automatically deducted upon top-up",
+  "couponCode": "Coupon Code",
+  "applyCoupon": "Apply",
+  "couponApplied": "Coupon \"{title}\" applied!",
+  "@couponApplied": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "couponRedeemed": "Coupon redeemed — wallet credited!",
+  "couponRedeemFailed": "Coupon redeem failed: {message}",
+  "@couponRedeemFailed": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+  "removeCoupon": "Remove coupon",
+  "walletCredit": "+{amount} EGP wallet credit",
+  "@walletCredit": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "walletPoints": "+{points} points",
+  "@walletPoints": {
+    "placeholders": { "points": { "type": "int" } }
+  },
+  "walletBalance": "Wallet Balance",
+    "active": "Active",
+    "frozen": "Frozen",
+    "pendingPenalties": "Pending Penalties",
+    "availableBalance": "Available Balance",
 "ratingExcellent": "Excellent"
 
 

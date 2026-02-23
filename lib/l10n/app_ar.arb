@@ -305,7 +305,7 @@
   "deliveryLocation": "موقع التوصيل",
 
   "budget": "الميزانية",
-  "egp": "جنيه",
+  "egp": " ج.م ",
   "customerBudget": "ميزانية العميل",
 
   "offers": "عروض",
@@ -481,7 +481,7 @@
       "walletToppedUp": "تم شحن محفظتك بنجاح",
       "amountAdded": "المبلغ المضاف",
       "transactionId": "رقم المعاملة",
-      "pendingCommissionsDeducted": "تم خصم أي عمولات أو جزاءات معلقة تلقائيًا",
+      "pendingCommissionsDeducted": "تم خصم أي جزاءات معلقة تلقائيًا",
       "backToWallet": "العودة إلى المحفظة",
       "cancelPayment": "إلغاء الدفع؟",
       "cancelPaymentConfirm": "هل أنت متأكد أنك تريد إلغاء عملية الدفع؟",
@@ -489,10 +489,35 @@
       "topup": "شحن",
         "amount": "المبلغ",
         "pleaseEnterAmount": "برجاء ادخل مبلغ",
-          "pendingCommissionsWillBeDeducted": "سيتم خصم أي عمولات أو جزاءات معلقة تلقائيًا عند الشحن",
+          "pendingCommissionsWillBeDeducted": "سيتم خصم أي جزاءات معلقة تلقائيًا عند الشحن",
             "minimumTopUpIs": "أقل مبلغ للشحن 10 ج.م",
             "maximumTopUpIs": "أقصى قيمة للشحن هي 5000 ج.م",
               "paymentFailed": "فشل الدفع",
+              "couponCode": "كود الكوبون",
+              "applyCoupon": "تطبيق",
+              "couponApplied": "تم تطبيق الكوبون \"{title}\"!",
+              "@couponApplied": {
+                "placeholders": { "title": { "type": "String" } }
+              },
+              "couponRedeemed": "تم استرداد الكوبون — تم إضافة الرصيد!",
+              "couponRedeemFailed": "فشل استرداد الكوبون: {message}",
+              "@couponRedeemFailed": {
+                "placeholders": { "message": { "type": "String" } }
+              },
+              "removeCoupon": "إزالة الكوبون",
+              "walletCredit": "+{amount} ج.م رصيد محفظة",
+              "@walletCredit": {
+                "placeholders": { "amount": { "type": "String" } }
+              },
+              "walletPoints": "+{points} نقطة",
+              "@walletPoints": {
+                "placeholders": { "points": { "type": "int" } }
+              },
+                "walletBalance": "رصيد المحفظة",
+                "active": "نشطة",
+                "frozen": "مجمدة",
+                "pendingPenalties": "الجزاءات المعلقة",
+                "availableBalance": "الرصيد المتاح",
     "ratingExcellent": "ممتاز"
 
 

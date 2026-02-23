@@ -155,5 +155,31 @@ class OrderRemoteDataSource {
         throw Exception('Failed to confirm delivery');
       }
     }
+
+  // Validate coupon
+  Future<Map<String, dynamic>> validateCoupon(String code) async {
+    final response = await _dio.post(
+      '/customer-coupons/validate',
+      data: {'code': code},
+    );
+    if (response.statusCode == 200) {
+      return response.data;
+    } else {
+      throw Exception('Failed to validate coupon');
+    }
+  }
+
+// Redeem coupon
+  Future<Map<String, dynamic>> redeemCoupon(String code) async {
+    final response = await _dio.post(
+      '/profile/wallet/coupon/redeem',
+      data: {'code': code},
+    );
+    if (response.statusCode == 200) {
+      return response.data;
+    } else {
+      throw Exception('Failed to redeem coupon');
+    }
+  }
   }
 

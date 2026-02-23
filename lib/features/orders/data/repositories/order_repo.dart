@@ -59,4 +59,12 @@ class OrderRepository {
       courierId: courierId,
     );
   }
+
+  Future<Map<String, dynamic>> validateCoupon(String code) async {
+    return await _remoteDataSource.validateCoupon(code);
+  }
+
+  Future<Map<String, dynamic>> redeemCoupon(String code) async {
+    return await _remoteDataSource.redeemCoupon(code);
+  }
 }

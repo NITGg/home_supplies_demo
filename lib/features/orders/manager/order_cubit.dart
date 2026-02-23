@@ -321,6 +321,51 @@ class OrderCubit extends Cubit<OrderState> {
     }
   }
 
+
+  // ── Coupon ─────────────────────────────────────────────────────────────────────
+
+  Future<void> validateCoupon(String code) async {
+    emit(CouponValidating());
+    try {
+      log('OrderCubit: Validating coupon $code');
+      final data = await _repository.validateCoupon(code);
+      final coupon = data['coupon'] as Map<String, dynamic>;
+      final isValid = data['valid'] == true;
+
+      if (!isValid) {
+        // Pull the message from the response body instead of hardcoding
+        final apiMessage = data['message'] as String? ?? 'errors.invalid';
+        emit(CouponInvalid(apiMessage));
+        return;
+      }
+
+      final validState = CouponValid(
+        code: coupon['code'] as String,
+        title: (coupon['title'] ?? 'Coupon') as String,
+        walletAmountCents: coupon['wallet_amount_cents'] as int?,
+        walletPoints: coupon['wallet_points'] as int?,
+      );
+
+      emit(CouponRedeeming());
+      await _redeemAfterValidation(code, validState);
+    } catch (e) {
+      // This handles 4xx/5xx from validate endpoint (e.g. errors.not_found)
+      log('OrderCubit: Coupon validation error: $e');
+      emit(CouponInvalid(extractErrorMessage(e)));
+    }
+  }
+
+  Future<void> _redeemAfterValidation(String code, CouponValid validState) async {
+    try {
+      log('OrderCubit: Redeeming coupon $code');
+      await _repository.redeemCoupon(code);
+      log('OrderCubit: Coupon redeemed');
+      emit(CouponRedeemed(message: 'Coupon redeemed successfully!', coupon: validState));
+    } catch (e) {
+      log('OrderCubit: Coupon redeem error: $e');
+      emit(CouponRedeemError(extractErrorMessage(e)));
+    }
+  }
   // ── Confirm Delivery ───────────────────────────────────────────────────────
 
   Future<void> confirmDelivery({
@@ -341,7 +386,10 @@ class OrderCubit extends Cubit<OrderState> {
       log('OrderCubit: Error confirming delivery: $e');
       emit(OrderError(extractErrorMessage(e)));
     }
+
+
   }
+
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 

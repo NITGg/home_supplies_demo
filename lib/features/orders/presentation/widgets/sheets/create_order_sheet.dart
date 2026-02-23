@@ -30,17 +30,21 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final FocusNode _productDescriptionFocus = FocusNode();
   final FocusNode _budgetFocus = FocusNode();
+  final FocusNode _couponFocus = FocusNode();
 
   final _productDescriptionController = TextEditingController();
   final _budgetController = TextEditingController();
+  final _couponController = TextEditingController();
 
   Address? _pickupAddress;
   Address? _deliveryAddress;
   File? _productImage;
 
-  /// true = Shopping (budget visible, photo optional)
-  /// false = Shipping (budget hidden, photo required)
   bool _isShopping = true;
+
+  // Coupon state
+  CouponValid? _appliedCoupon;
+  bool _couponValidating = false;
 
   late final AddressCubit _initCubit;
 
@@ -56,7 +60,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (!mounted) return;
       if (state is AddressesLoaded && state.addresses.isNotEmpty) {
         final defaultAddr = state.addresses.firstWhere(
-              (a) => a.isDefault,
+          (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
         if (_deliveryAddress == null) {
@@ -72,9 +76,33 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     _initCubit.close();
     _productDescriptionController.dispose();
     _budgetController.dispose();
+    _couponController.dispose();
     _productDescriptionFocus.dispose();
     _budgetFocus.dispose();
+    _couponFocus.dispose();
     super.dispose();
+  }
+
+  // ── Coupon ─────────────────────────────────────────────────────────────────
+
+  Future<void> _validateCoupon() async {
+    final code = _couponController.text.trim();
+    if (code.isEmpty) return;
+
+    setState(() {
+      _couponValidating = true;
+      _appliedCoupon = null;
+    });
+
+    // Use cubit — listen via BlocListener
+    context.read<OrderCubit>().validateCoupon(code);
+  }
+
+  void _removeCoupon() {
+    setState(() {
+      _appliedCoupon = null;
+      _couponController.clear();
+    });
   }
 
   // ── Address sheet ──────────────────────────────────────────────────────────
@@ -114,13 +142,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      // In shipping mode the photo is required
       if (!_isShopping && _productImage == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.tapToSelectImage,
-            ),
+            content: Text(AppLocalizations.of(context)!.tapToSelectImage),
           ),
         );
         return;
@@ -165,8 +190,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           productImageFile: _productImage,
           budget: _isShopping
               ? (double.parse(_budgetController.text.trim()) * 100)
-              .round()
-              .toString()
+                    .round()
+                    .toString()
               : '1',
           pickupAreaId: _pickupAddress!.areaId,
           pickupAddressDescription: _pickupAddress!.detailedAddress,
@@ -185,7 +210,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   void _showImageSourceSheet() {
     final localizations = AppLocalizations.of(context)!;
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -221,8 +245,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               },
             ),
             ListTile(
-              leading:
-              Icon(Icons.photo_library, color: AppColors.kPrimaryColor),
+              leading: Icon(
+                Icons.photo_library,
+                color: AppColors.kPrimaryColor,
+              ),
               title: Text(localizations.gallery),
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -250,7 +276,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   // ── Widgets ────────────────────────────────────────────────────────────────
 
-  /// Segmented toggle matching OrderToggleButton style exactly.
   Widget _buildToggle() {
     final l10n = AppLocalizations.of(context)!;
     return Container(
@@ -320,67 +345,69 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                 width: _productImage != null ? 2 : 1,
               ),
               borderRadius: BorderRadius.circular(12),
-              color:
-              _productImage != null ? Colors.white : Colors.grey.shade50,
+              color: _productImage != null ? Colors.white : Colors.grey.shade50,
             ),
             child: _productImage != null
                 ? Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.file(
-                    _productImage!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(Icons.edit,
-                        color: Colors.white, size: 16),
-                  ),
-                ),
-              ],
-            )
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.file(
+                          _productImage!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(
+                            Icons.edit,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
                 : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.kPrimaryColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.kPrimaryColor.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.add_photo_alternate,
+                          size: 32,
+                          color: AppColors.kPrimaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        AppLocalizations.of(context)!.tapToSelectImage,
+                        style: AppTextStyles.regular14.copyWith(
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'JPG or PNG (max 1MB)',
+                        style: AppTextStyles.regular14.copyWith(
+                          color: Colors.grey.shade500,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Icon(
-                    Icons.add_photo_alternate,
-                    size: 32,
-                    color: AppColors.kPrimaryColor,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  AppLocalizations.of(context)!.tapToSelectImage,
-                  style: AppTextStyles.regular14.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'JPG or PNG (max 1MB)',
-                  style: AppTextStyles.regular14.copyWith(
-                    color: Colors.grey.shade500,
-                    fontSize: 10,
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ],
@@ -399,9 +426,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style:
-            const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         InkWell(
           onTap: onTap,
@@ -426,18 +454,134 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   child: Text(
                     address?.displayAddress ?? label,
                     style: TextStyle(
-                      color:
-                      address == null ? Colors.grey : Colors.black87,
+                      color: address == null ? Colors.grey : Colors.black87,
                     ),
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey,
+                ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  /// Coupon input row + applied badge
+  Widget _buildCouponSection() {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (_appliedCoupon != null) {
+      return _buildAppliedCouponBadge(_appliedCoupon!);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: AppTextFormField(
+                controller: _couponController,
+                focusNode: _couponFocus,
+                label: l10n.couponCode,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _validateCoupon(),
+                prefixIcon: const Icon(Icons.local_offer_outlined,color: Colors.grey,),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _validateCoupon,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.kPrimaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  elevation: 0,
+                ),
+                child: _couponValidating
+                    ? CircularProgressIndicator(color: Colors.white)
+                    : Text(
+                        l10n.applyCoupon,
+                        style: AppTextStyles.bold14,
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAppliedCouponBadge(CouponValid coupon) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final parts = <String>[];
+    if (coupon.walletAmountCents != null) {
+      final egp = (coupon.walletAmountCents! / 100).toStringAsFixed(2);
+      parts.add(l10n.walletCredit(egp));
+    }
+    if (coupon.walletPoints != null) {
+      parts.add(l10n.walletPoints(coupon.walletPoints!));
+    }
+    final reward = parts.join(' & ');
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        border: Border.all(color: Colors.green.shade300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  coupon.title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade800,
+                  ),
+                ),
+                if (reward.isNotEmpty)
+                  Text(
+                    reward,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.green.shade700,
+                    ),
+                  ),
+                Text(
+                  coupon.code,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.green.shade600,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.close, color: Colors.green.shade700, size: 18),
+            onPressed: _removeCoupon,
+            tooltip: l10n.removeCoupon,
+          ),
+        ],
+      ),
     );
   }
 
@@ -448,9 +592,43 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final l10n = AppLocalizations.of(context)!;
 
     return BlocListener<OrderCubit, OrderState>(
-      listenWhen: (_, s) => s is OrderSuccess || s is OrderError,
       listener: (context, state) {
-        if (state is OrderSuccess) {
+        if (state is CouponValidating || state is CouponRedeeming) {
+          // Keep spinner going through both phases
+          if (!_couponValidating) setState(() => _couponValidating = true);
+        } else if (state is CouponRedeemed) {
+          setState(() {
+            _couponValidating = false;
+            if (state.coupon != null) _appliedCoupon = state.coupon;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.couponRedeemed),
+              backgroundColor: Colors.green.shade700,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }  else if (state is CouponInvalid) {
+          setState(() => _couponValidating = false);
+          Fluttertoast.showToast(
+            msg: state.message,
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+
+        } else if (state is CouponRedeemError) {
+          setState(() => _couponValidating = false);
+          Fluttertoast.showToast(
+            msg: state.message,
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.orange,
+            textColor: Colors.white,
+          );
+
+        } else if (state is OrderSuccess) {
           Navigator.pop(context, state.order);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -460,8 +638,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           );
         } else if (state is OrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
@@ -474,12 +651,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           return Container(
             decoration: const BoxDecoration(
               color: Colors.white,
-              borderRadius:
-              BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               children: [
-                // ── Handle ────────────────────────────────────────────
                 Container(
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   width: 40,
@@ -489,8 +664,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-
-                // ── Title row + toggle ────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
@@ -513,10 +686,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     ],
                   ),
                 ),
-
                 const Divider(height: 1),
-
-                // ── Form ──────────────────────────────────────────────
                 Expanded(
                   child: Form(
                     key: _formKey,
@@ -531,21 +701,18 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               : TextInputAction.done,
                           onFieldSubmitted: (_) {
                             if (_isShopping) {
-                              FocusScope.of(context)
-                                  .requestFocus(_budgetFocus);
+                              FocusScope.of(context).requestFocus(_budgetFocus);
                             } else {
                               FocusScope.of(context).unfocus();
                             }
                           },
                           controller: _productDescriptionController,
                           label: l10n.productDetails,
-                          validator: (v) =>
-                          (v == null || v.trim().isEmpty)
+                          validator: (v) => (v == null || v.trim().isEmpty)
                               ? 'Please enter product description'
                               : null,
                         ),
 
-                        // Budget — shopping only
                         if (_isShopping) ...[
                           const SizedBox(height: 16),
                           AppTextFormField(
@@ -583,19 +750,22 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           onTap: _selectDeliveryAddress,
                           isPickup: false,
                         ),
+                        const SizedBox(height: 24),
+
+                        // ── Coupon section ──
+                        _buildCouponSection(),
+
                         const SizedBox(height: 16),
                       ],
                     ),
                   ),
                 ),
-
-                // ── Confirm button ────────────────────────────────────
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: BlocBuilder<OrderCubit, OrderState>(
                       buildWhen: (_, s) =>
-                      s is OrderOperationLoading ||
+                          s is OrderOperationLoading ||
                           s is OrdersLoaded ||
                           s is OrderError ||
                           s is OrderSuccess,
@@ -618,7 +788,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 }
 
-// ── Reusable toggle tab (matches OrderToggleButton._Tab exactly) ──────────────
+// ── Toggle tab ────────────────────────────────────────────────────────────────
 
 class _ToggleTab extends StatelessWidget {
   final String label;
@@ -637,8 +807,7 @@ class _ToggleTab extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding:
-        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
           color: selected ? AppColors.kPrimaryColor : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
@@ -647,8 +816,7 @@ class _ToggleTab extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 13,
-            fontWeight:
-            selected ? FontWeight.bold : FontWeight.normal,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
             color: selected ? Colors.white : Colors.grey.shade600,
           ),
         ),
@@ -657,20 +825,16 @@ class _ToggleTab extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Inner address-selection sheet (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Address selection sheet (unchanged) ───────────────────────────────────────
 
 class _AddressSelectionSheet extends StatefulWidget {
   final String title;
   final bool isPickup;
 
-  const _AddressSelectionSheet(
-      {required this.title, required this.isPickup});
+  const _AddressSelectionSheet({required this.title, required this.isPickup});
 
   @override
-  State<_AddressSelectionSheet> createState() =>
-      _AddressSelectionSheetState();
+  State<_AddressSelectionSheet> createState() => _AddressSelectionSheetState();
 }
 
 class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
@@ -719,9 +883,13 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(widget.title,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -755,7 +923,8 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
               builder: (context, state) {
                 if (state is AddressLoading) {
                   return const Center(
-                      child: LoadingScreen(isOne: true, asWidget: true));
+                    child: LoadingScreen(isOne: true, asWidget: true),
+                  );
                 }
                 if (state is AddressError) {
                   return Center(child: Text(state.message));
@@ -767,9 +936,11 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
 
                   final defaultId = !widget.isPickup
                       ? state.addresses
-                      .firstWhere((a) => a.isDefault,
-                      orElse: () => state.addresses.first)
-                      .id
+                            .firstWhere(
+                              (a) => a.isDefault,
+                              orElse: () => state.addresses.first,
+                            )
+                            .id
                       : null;
 
                   return ListView.builder(
@@ -784,29 +955,30 @@ class _AddressSelectionSheetState extends State<_AddressSelectionSheet> {
                           borderRadius: BorderRadius.circular(10),
                           side: isDefault
                               ? BorderSide(
-                              color: Theme.of(context).primaryColor,
-                              width: 1.5)
+                                  color: Theme.of(context).primaryColor,
+                                  width: 1.5,
+                                )
                               : BorderSide.none,
                         ),
                         child: ListTile(
                           leading: Icon(
-                            widget.isPickup
-                                ? Icons.store
-                                : Icons.location_on,
-                            color: widget.isPickup
-                                ? Colors.green
-                                : Colors.blue,
+                            widget.isPickup ? Icons.store : Icons.location_on,
+                            color: widget.isPickup ? Colors.green : Colors.blue,
                           ),
-                          title: Text(address.displayAddress,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 3),
+                          title: Text(
+                            address.displayAddress,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 3,
+                          ),
                           subtitle: isDefault
-                              ? Text('Default',
-                              style: TextStyle(
-                                color: Theme.of(context).primaryColor,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ))
+                              ? Text(
+                                  'Default',
+                                  style: TextStyle(
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                )
                               : null,
                           onTap: () => Navigator.pop(context, address),
                         ),

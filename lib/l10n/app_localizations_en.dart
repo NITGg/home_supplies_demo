@@ -1099,7 +1099,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionId => 'Transaction ID';
 
   @override
-  String get pendingCommissionsDeducted => 'Any pending commissions or penalties were automatically deducted';
+  String get pendingCommissionsDeducted => 'Any pending penalties were automatically deducted';
 
   @override
   String get backToWallet => 'Back to Wallet';
@@ -1132,7 +1132,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentFailed => 'Payment failed';
 
   @override
-  String get pendingCommissionsWillBeDeducted => 'Any pending commissions or penalties will be automatically deducted upon top-up';
+  String get pendingCommissionsWillBeDeducted => 'Any pending penalties will be automatically deducted upon top-up';
+
+  @override
+  String get couponCode => 'Coupon Code';
+
+  @override
+  String get applyCoupon => 'Apply';
+
+  @override
+  String couponApplied(String title) {
+    return 'Coupon \"$title\" applied!';
+  }
+
+  @override
+  String get couponRedeemed => 'Coupon redeemed — wallet credited!';
+
+  @override
+  String couponRedeemFailed(String message) {
+    return 'Coupon redeem failed: $message';
+  }
+
+  @override
+  String get removeCoupon => 'Remove coupon';
+
+  @override
+  String walletCredit(String amount) {
+    return '+$amount EGP wallet credit';
+  }
+
+  @override
+  String walletPoints(int points) {
+    return '+$points points';
+  }
+
+  @override
+  String get walletBalance => 'Wallet Balance';
+
+  @override
+  String get active => 'Active';
+
+  @override
+  String get frozen => 'Frozen';
+
+  @override
+  String get pendingPenalties => 'Pending Penalties';
+
+  @override
+  String get availableBalance => 'Available Balance';
 
   @override
   String get ratingExcellent => 'Excellent';

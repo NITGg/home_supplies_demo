@@ -2240,7 +2240,7 @@ abstract class AppLocalizations {
   /// No description provided for @pendingCommissionsDeducted.
   ///
   /// In en, this message translates to:
-  /// **'Any pending commissions or penalties were automatically deducted'**
+  /// **'Any pending penalties were automatically deducted'**
   String get pendingCommissionsDeducted;
 
   /// No description provided for @backToWallet.
@@ -2306,8 +2306,86 @@ abstract class AppLocalizations {
   /// No description provided for @pendingCommissionsWillBeDeducted.
   ///
   /// In en, this message translates to:
-  /// **'Any pending commissions or penalties will be automatically deducted upon top-up'**
+  /// **'Any pending penalties will be automatically deducted upon top-up'**
   String get pendingCommissionsWillBeDeducted;
+
+  /// No description provided for @couponCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon Code'**
+  String get couponCode;
+
+  /// No description provided for @applyCoupon.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get applyCoupon;
+
+  /// No description provided for @couponApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon \"{title}\" applied!'**
+  String couponApplied(String title);
+
+  /// No description provided for @couponRedeemed.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon redeemed — wallet credited!'**
+  String get couponRedeemed;
+
+  /// No description provided for @couponRedeemFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon redeem failed: {message}'**
+  String couponRedeemFailed(String message);
+
+  /// No description provided for @removeCoupon.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove coupon'**
+  String get removeCoupon;
+
+  /// No description provided for @walletCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'+{amount} EGP wallet credit'**
+  String walletCredit(String amount);
+
+  /// No description provided for @walletPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'+{points} points'**
+  String walletPoints(int points);
+
+  /// No description provided for @walletBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet Balance'**
+  String get walletBalance;
+
+  /// No description provided for @active.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// No description provided for @frozen.
+  ///
+  /// In en, this message translates to:
+  /// **'Frozen'**
+  String get frozen;
+
+  /// No description provided for @pendingPenalties.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Penalties'**
+  String get pendingPenalties;
+
+  /// No description provided for @availableBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Balance'**
+  String get availableBalance;
 
   /// No description provided for @ratingExcellent.
   ///
