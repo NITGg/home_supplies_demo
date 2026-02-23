@@ -1036,5 +1036,104 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ratingVeryGood => 'جيد جداً';
 
   @override
+  String get topUpWallet => 'شحن المحفظة';
+
+  @override
+  String get selectAmount => 'اختر مبلغًا';
+
+  @override
+  String get orEnterCustomAmount => 'أو أدخل مبلغًا مخصصًا';
+
+  @override
+  String get minimumTopUp => 'الحد الأدنى: 10 ج.م | الحد الأقصى: 5000 ج.م';
+
+  @override
+  String get selectPaymentMethod => 'اختر طريقة الدفع';
+
+  @override
+  String get creditDebitCard => 'بطاقة الدفع';
+
+  @override
+  String get onlinePayment => 'الدفع عبر الإنترنت';
+
+  @override
+  String get mobileWalletInstaPay => 'محفظة موبايل / InstaPay';
+
+  @override
+  String get transferToOurNumbers => 'التحويل إلى أرقامنا';
+
+  @override
+  String get manualTransfer => 'تحويل يدوي';
+
+  @override
+  String get transferAmount => 'حول المبلغ إلى أحد الحسابات التالية';
+
+  @override
+  String get keepReceipt => 'احتفظ بإيصال التحويل';
+
+  @override
+  String get contactSupport => 'تواصل مع الدعم لتأكيد التحويل';
+
+  @override
+  String get balanceWillBeAdded => 'سيتم إضافة الرصيد إلى محفظتك بعد تأكيد الدعم للتحويل (عادة خلال 1-2 ساعة عمل)';
+
+  @override
+  String get vodafoneCash => 'Vodafone Cash';
+
+  @override
+  String get instaPay => 'InstaPay';
+
+  @override
+  String get copiedToClipboard => 'تم النسخ';
+
+  @override
+  String get success => 'تم بنجاح!';
+
+  @override
+  String get walletToppedUp => 'تم شحن محفظتك بنجاح';
+
+  @override
+  String get amountAdded => 'المبلغ المضاف';
+
+  @override
+  String get transactionId => 'رقم المعاملة';
+
+  @override
+  String get pendingCommissionsDeducted => 'تم خصم أي عمولات أو جزاءات معلقة تلقائيًا';
+
+  @override
+  String get backToWallet => 'العودة إلى المحفظة';
+
+  @override
+  String get cancelPayment => 'إلغاء الدفع؟';
+
+  @override
+  String get cancelPaymentConfirm => 'هل أنت متأكد أنك تريد إلغاء عملية الدفع؟';
+
+  @override
+  String get transactionHistory => 'سجل المعاملات';
+
+  @override
+  String get topup => 'شحن';
+
+  @override
+  String get amount => 'المبلغ';
+
+  @override
+  String get pleaseEnterAmount => 'برجاء ادخل مبلغ';
+
+  @override
+  String get minimumTopUpIs => 'أقل مبلغ للشحن 10 ج.م';
+
+  @override
+  String get maximumTopUpIs => 'أقصى قيمة للشحن هي 5000 ج.م';
+
+  @override
+  String get paymentFailed => 'فشل الدفع';
+
+  @override
+  String get pendingCommissionsWillBeDeducted => 'سيتم خصم أي عمولات أو جزاءات معلقة تلقائيًا عند الشحن';
+
+  @override
   String get ratingExcellent => 'ممتاز';
 }

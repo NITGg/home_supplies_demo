@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../manager/wallet_cubit.dart';
@@ -26,7 +27,6 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
@@ -43,9 +43,7 @@ class _WalletScreenState extends State<WalletScreen> {
       body: BlocBuilder<WalletCubit, WalletState>(
         builder: (context, state) {
           if (state is WalletLoading) {
-            return const Center(
-              child: LoadingScreen(isOne: true,),
-            );
+            return const Center(child: LoadingScreen(isOne: true));
           }
 
           if (state is WalletError) {
@@ -78,6 +76,15 @@ class _WalletScreenState extends State<WalletScreen> {
                 ],
               ),
             );
+          }
+
+          if (state is TopUpInitiated ||
+              state is TopUpLoading ||
+              state is TopUpError) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              context.read<WalletCubit>().fetchWalletData();
+            });
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (state is WalletLoaded) {
@@ -253,64 +260,10 @@ class _WalletScreenState extends State<WalletScreen> {
                             children: [
                               Expanded(
                                 child: _QuickActionButton(
-                                  icon: Icons.history,
-                                  label: isArabic ? 'السجل' : 'History',
-                                  color: const Color(0xFF6C5CE7),
-                                  onTap: () {
-                                    // TODO: Navigate to transaction history
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          isArabic
-                                              ? 'قريباً: سجل المعاملات'
-                                              : 'Coming soon: Transaction History',
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _QuickActionButton(
-                                  icon: Icons.account_balance,
-                                  label: isArabic ? 'سحب' : 'Withdraw',
-                                  color: const Color(0xFFE17055),
-                                  onTap: () {
-                                    // TODO: Navigate to withdrawal screen
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          isArabic
-                                              ? 'قريباً: سحب الأموال'
-                                              : 'Coming soon: Withdraw Funds',
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _QuickActionButton(
                                   icon: Icons.add_card_rounded,
                                   label: isArabic ? 'شحن' : 'TopUp',
                                   color: const Color(0xFF00B894),
-                                  onTap: () {
-                                    // TODO: Navigate to withdrawal screen
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          isArabic
-                                              ? 'قريباً: شحن الأموال'
-                                              : 'Coming soon: TopUp Funds',
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () => context.push('/wallet/topup'),
                                 ),
                               ),
                             ],

@@ -2111,6 +2111,204 @@ abstract class AppLocalizations {
   /// **'Very Good'**
   String get ratingVeryGood;
 
+  /// No description provided for @topUpWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Up Wallet'**
+  String get topUpWallet;
+
+  /// No description provided for @selectAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Amount'**
+  String get selectAmount;
+
+  /// No description provided for @orEnterCustomAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Or Enter Custom Amount'**
+  String get orEnterCustomAmount;
+
+  /// No description provided for @minimumTopUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Min: 10 EGP | Max: 5000 EGP'**
+  String get minimumTopUp;
+
+  /// No description provided for @selectPaymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Payment Method'**
+  String get selectPaymentMethod;
+
+  /// No description provided for @creditDebitCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit/Debit Card'**
+  String get creditDebitCard;
+
+  /// No description provided for @onlinePayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Online Payment'**
+  String get onlinePayment;
+
+  /// No description provided for @mobileWalletInstaPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile Wallet / InstaPay'**
+  String get mobileWalletInstaPay;
+
+  /// No description provided for @transferToOurNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer to our numbers'**
+  String get transferToOurNumbers;
+
+  /// No description provided for @manualTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Transfer'**
+  String get manualTransfer;
+
+  /// No description provided for @transferAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer the amount to one of these accounts'**
+  String get transferAmount;
+
+  /// No description provided for @keepReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your transfer receipt'**
+  String get keepReceipt;
+
+  /// No description provided for @contactSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact support to confirm transfer'**
+  String get contactSupport;
+
+  /// No description provided for @balanceWillBeAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance will be added to your wallet after support confirms the transfer (usually within 1-2 business hours)'**
+  String get balanceWillBeAdded;
+
+  /// No description provided for @vodafoneCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Vodafone Cash'**
+  String get vodafoneCash;
+
+  /// No description provided for @instaPay.
+  ///
+  /// In en, this message translates to:
+  /// **'InstaPay'**
+  String get instaPay;
+
+  /// No description provided for @copiedToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard'**
+  String get copiedToClipboard;
+
+  /// No description provided for @success.
+  ///
+  /// In en, this message translates to:
+  /// **'Success!'**
+  String get success;
+
+  /// No description provided for @walletToppedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wallet has been topped up successfully'**
+  String get walletToppedUp;
+
+  /// No description provided for @amountAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount Added'**
+  String get amountAdded;
+
+  /// No description provided for @transactionId.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction ID'**
+  String get transactionId;
+
+  /// No description provided for @pendingCommissionsDeducted.
+  ///
+  /// In en, this message translates to:
+  /// **'Any pending commissions or penalties were automatically deducted'**
+  String get pendingCommissionsDeducted;
+
+  /// No description provided for @backToWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Wallet'**
+  String get backToWallet;
+
+  /// No description provided for @cancelPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Payment?'**
+  String get cancelPayment;
+
+  /// No description provided for @cancelPaymentConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel the payment?'**
+  String get cancelPaymentConfirm;
+
+  /// No description provided for @transactionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction History'**
+  String get transactionHistory;
+
+  /// No description provided for @topup.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Up'**
+  String get topup;
+
+  /// No description provided for @amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amount;
+
+  /// No description provided for @pleaseEnterAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Please Enter Amount'**
+  String get pleaseEnterAmount;
+
+  /// No description provided for @minimumTopUpIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum top-up is 10 EGP'**
+  String get minimumTopUpIs;
+
+  /// No description provided for @maximumTopUpIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum top-up is 5000 EGP'**
+  String get maximumTopUpIs;
+
+  /// No description provided for @paymentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment failed'**
+  String get paymentFailed;
+
+  /// No description provided for @pendingCommissionsWillBeDeducted.
+  ///
+  /// In en, this message translates to:
+  /// **'Any pending commissions or penalties will be automatically deducted upon top-up'**
+  String get pendingCommissionsWillBeDeducted;
+
   /// No description provided for @ratingExcellent.
   ///
   /// In en, this message translates to:

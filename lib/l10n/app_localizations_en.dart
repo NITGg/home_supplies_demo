@@ -1036,5 +1036,104 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ratingVeryGood => 'Very Good';
 
   @override
+  String get topUpWallet => 'Top Up Wallet';
+
+  @override
+  String get selectAmount => 'Select Amount';
+
+  @override
+  String get orEnterCustomAmount => 'Or Enter Custom Amount';
+
+  @override
+  String get minimumTopUp => 'Min: 10 EGP | Max: 5000 EGP';
+
+  @override
+  String get selectPaymentMethod => 'Select Payment Method';
+
+  @override
+  String get creditDebitCard => 'Credit/Debit Card';
+
+  @override
+  String get onlinePayment => 'Online Payment';
+
+  @override
+  String get mobileWalletInstaPay => 'Mobile Wallet / InstaPay';
+
+  @override
+  String get transferToOurNumbers => 'Transfer to our numbers';
+
+  @override
+  String get manualTransfer => 'Manual Transfer';
+
+  @override
+  String get transferAmount => 'Transfer the amount to one of these accounts';
+
+  @override
+  String get keepReceipt => 'Keep your transfer receipt';
+
+  @override
+  String get contactSupport => 'Contact support to confirm transfer';
+
+  @override
+  String get balanceWillBeAdded => 'Balance will be added to your wallet after support confirms the transfer (usually within 1-2 business hours)';
+
+  @override
+  String get vodafoneCash => 'Vodafone Cash';
+
+  @override
+  String get instaPay => 'InstaPay';
+
+  @override
+  String get copiedToClipboard => 'Copied to clipboard';
+
+  @override
+  String get success => 'Success!';
+
+  @override
+  String get walletToppedUp => 'Your wallet has been topped up successfully';
+
+  @override
+  String get amountAdded => 'Amount Added';
+
+  @override
+  String get transactionId => 'Transaction ID';
+
+  @override
+  String get pendingCommissionsDeducted => 'Any pending commissions or penalties were automatically deducted';
+
+  @override
+  String get backToWallet => 'Back to Wallet';
+
+  @override
+  String get cancelPayment => 'Cancel Payment?';
+
+  @override
+  String get cancelPaymentConfirm => 'Are you sure you want to cancel the payment?';
+
+  @override
+  String get transactionHistory => 'Transaction History';
+
+  @override
+  String get topup => 'Top Up';
+
+  @override
+  String get amount => 'Amount';
+
+  @override
+  String get pleaseEnterAmount => 'Please Enter Amount';
+
+  @override
+  String get minimumTopUpIs => 'Minimum top-up is 10 EGP';
+
+  @override
+  String get maximumTopUpIs => 'Maximum top-up is 5000 EGP';
+
+  @override
+  String get paymentFailed => 'Payment failed';
+
+  @override
+  String get pendingCommissionsWillBeDeducted => 'Any pending commissions or penalties will be automatically deducted upon top-up';
+
+  @override
   String get ratingExcellent => 'Excellent';
 }

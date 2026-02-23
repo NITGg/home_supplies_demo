@@ -16,6 +16,7 @@ class AppTextFormField extends StatefulWidget {
   final FocusNode? focusNode;
   final TextInputAction? textInputAction;
   final Function(String)? onFieldSubmitted;
+  final Function(String)? onChanged;
 
   const AppTextFormField({
     super.key,
@@ -32,6 +33,7 @@ class AppTextFormField extends StatefulWidget {
     this.focusNode,
     this.textInputAction,
     this.onFieldSubmitted,
+    this.onChanged,
   });
 
   @override
@@ -117,6 +119,7 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
         ],
       ),
       child: TextFormField(
+        onChanged: widget.onChanged,
         textInputAction: widget.textInputAction,
         onFieldSubmitted: widget.onFieldSubmitted,
         enabled: widget.enabled,

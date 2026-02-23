@@ -337,6 +337,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             // is safe and guaranteed to schedule a new frame AFTER the
             // current one renders — meaning the spinner is visible for at
             // least one frame before disappearing.
+            if (state is OrderSuccess) {
+              _onTabChanged(ViewMode.active);
+            }
+
             if (state is OrdersLoaded && _isLoadingMore) {
               setState(() => _isLoadingMore = false);
             }

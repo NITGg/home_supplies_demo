@@ -20,6 +20,10 @@ import '../features/reviews/data/data_source/reviews_remote_data_source.dart';
 import '../features/reviews/data/repositories/reviews_repo.dart';
 import '../features/reviews/manager/reviews_cubit.dart';
 import '../features/reviews/presentation/reviews_screen.dart';
+import '../features/wallet/presentation/manual_topup_screen.dart';
+import '../features/wallet/presentation/payment_success_screen.dart';
+import '../features/wallet/presentation/paymob_webview.dart';
+import '../features/wallet/presentation/topup_screen.dart';
 import '../features/wallet/presentation/wallet_screen.dart';
 
 Future<GoRouter> createAppRouter({
@@ -151,6 +155,40 @@ Future<GoRouter> createAppRouter({
         path: '/WalletScreen',
         name: 'WalletScreen',
         builder: (context, state) => WalletScreen(),
+      ),
+      // Add inside your GoRouter routes:
+
+      GoRoute(
+        path: '/wallet/topup',
+        builder: (context, state) => const TopUpScreen(),
+      ),
+      GoRoute(
+        path: '/wallet/topup/payment',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return PaymobWebViewScreen(
+            paymentUrl: extra['paymentUrl'] as String,
+            amount: extra['amount'] as int,
+            transactionId: extra['transactionId'] as int,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/wallet/topup/success',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return PaymentSuccessScreen(
+            amount: extra['amount'] as int,
+            transactionId: extra['transactionId'] as int,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/wallet/topup/manual',
+        builder: (context, state) {
+          final amount = state.extra as int;
+          return ManualTopUpScreen(amount: amount);
+        },
       ),
       GoRoute(
         path: '/mainHome',
