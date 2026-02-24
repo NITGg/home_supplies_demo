@@ -130,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     pinned: true,
                     elevation: 0,
                     leading: const BackButton(color: Colors.white),
-                    backgroundColor: AppColors.kPrimaryColor,
+                    backgroundColor: AppColors.kSecondaryColor,
                     flexibleSpace: FlexibleSpaceBar(
                       background: Container(
                         decoration: BoxDecoration(
