@@ -38,6 +38,7 @@ class CouponSection extends StatelessWidget {
             controller: couponController,
             focusNode: couponFocus,
             label: l10n.couponCode,
+            validator: (v) => null,
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => onValidate(),
             prefixIcon: const Icon(
