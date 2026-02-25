@@ -25,6 +25,7 @@ import '../../../coupons/presentation/coupons_ticker_title.dart';
 import '../../../orders/presentation/orders_list_screen.dart';
 import '../../../orders/presentation/widgets/sheets/create_order_sheet/create_order_sheet.dart';
 import '../manager/home_cubit.dart';
+import 'go_button.dart';
 
 class HomeLayout extends StatefulWidget {
   const HomeLayout({super.key});
@@ -143,11 +144,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                     },
                     backgroundColor: AppColors.kSecondaryColor,
                     shape: const CircleBorder(),
-                    child: SvgPicture.asset(
-                      'assets/images/go.svg',
-                      fit: BoxFit.scaleDown,
-                      height: 40,
-                    ),
+                    child: AnimatedGoButton(),
                   ),
                   endDrawer: Drawer(
                     backgroundColor: AppColors.kBackgroundColor,
