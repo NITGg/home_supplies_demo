@@ -1,5 +1,7 @@
 // lib/features/wallet/data/data_source/wallet_remote_data_source.dart
 
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
 import '../models/wallet_model.dart';
@@ -11,6 +13,7 @@ class WalletRemoteDataSource {
   Future<WalletModel> getWalletData() async {
     final response = await _dio.get('/profile/wallet');
     if (response.statusCode == 200) {
+      log(response.data.toString());
       return WalletModel.fromJson(response.data);
     }
     throw DioException(

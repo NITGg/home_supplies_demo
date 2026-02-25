@@ -140,6 +140,5 @@ class UserBadge {
     };
   }
 
-  // Commission rate calculation (100 - ratio)
-  double get commissionRate => 100 - ratio;
+  double get commissionRate => ratio;
 }

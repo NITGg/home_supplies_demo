@@ -215,7 +215,7 @@ class WalletBadgeProgressSection extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${localizations.earn} ${currentBadge.commissionRate.toStringAsFixed(0)}% ${localizations.commissionRate}',
+                          '${localizations.earn} ${currentBadge.commissionRate.toStringAsFixed(0)}% ${localizations.discount}',
                           style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF00B894),

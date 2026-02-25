@@ -213,7 +213,7 @@ class _BadgeCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${localizations.earn} ${badge.commissionRate.toStringAsFixed(0)}% ${localizations.commissionRate}',
+                  '${localizations.earn} ${badge.commissionRate.toStringAsFixed(0)}% ${localizations.discount}',
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF00B894),
