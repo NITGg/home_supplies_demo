@@ -518,6 +518,9 @@
                 "frozen": "مجمدة",
                 "pendingPenalties": "الجزاءات المعلقة",
                 "availableBalance": "الرصيد المتاح",
+"estimatedShippingFee": "رسوم الشحن التقديرية",
+    "km": "كم",
+
     "ratingExcellent": "ممتاز"
 
 

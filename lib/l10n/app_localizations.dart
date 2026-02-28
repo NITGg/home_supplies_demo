@@ -2387,6 +2387,18 @@ abstract class AppLocalizations {
   /// **'Available Balance'**
   String get availableBalance;
 
+  /// No description provided for @estimatedShippingFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated Shipping Fee'**
+  String get estimatedShippingFee;
+
+  /// No description provided for @km.
+  ///
+  /// In en, this message translates to:
+  /// **'km'**
+  String get km;
+
   /// No description provided for @ratingExcellent.
   ///
   /// In en, this message translates to:

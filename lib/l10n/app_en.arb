@@ -515,6 +515,8 @@
     "frozen": "Frozen",
     "pendingPenalties": "Pending Penalties",
     "availableBalance": "Available Balance",
+    "estimatedShippingFee": "Estimated Shipping Fee",
+    "km": "km",
 "ratingExcellent": "Excellent"
 
 

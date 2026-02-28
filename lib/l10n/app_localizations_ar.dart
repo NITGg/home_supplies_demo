@@ -1182,5 +1182,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get availableBalance => 'الرصيد المتاح';
 
   @override
+  String get estimatedShippingFee => 'رسوم الشحن التقديرية';
+
+  @override
+  String get km => 'كم';
+
+  @override
   String get ratingExcellent => 'ممتاز';
 }

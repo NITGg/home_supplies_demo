@@ -1182,5 +1182,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get availableBalance => 'Available Balance';
 
   @override
+  String get estimatedShippingFee => 'Estimated Shipping Fee';
+
+  @override
+  String get km => 'km';
+
+  @override
   String get ratingExcellent => 'Excellent';
 }

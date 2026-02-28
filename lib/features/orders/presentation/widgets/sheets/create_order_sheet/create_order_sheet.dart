@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:tawreedat_go/core/style/app_colors.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/create_order_sheet/select_address.dart';
 import 'package:tawreedat_go/l10n/app_localizations.dart';
 
@@ -136,6 +137,67 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
   }
 
+  // ── Shipping Fee ───────────────────────────────────────────────────────────
+
+  static const double _feePerKm = 10.0;
+  static const double _minFee = 30.0;
+
+  Widget _buildShippingFeeEstimate() {
+    if (_pickupAddress == null || _deliveryAddress == null) {
+      return const SizedBox.shrink();
+    }
+
+    final distanceInMeters = calculateDistance(
+      double.parse(_pickupAddress!.addressLat),
+      double.parse(_pickupAddress!.addressLong),
+      double.parse(_deliveryAddress!.addressLat),
+      double.parse(_deliveryAddress!.addressLong),
+    );
+
+    final distanceKm = distanceInMeters / 1000;
+    final calculatedFee = distanceKm * _feePerKm;
+    final fee = calculatedFee < _minFee ? _minFee : calculatedFee;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.kSecondaryColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.black),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.local_shipping_outlined, color: Colors.white),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.estimatedShippingFee,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '${fee.toStringAsFixed(2)} ${AppLocalizations.of(context)!.egp}',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   void _submit() {
@@ -173,7 +235,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         double.parse(_deliveryAddress!.addressLong),
       );
 
-      if (distance < 50) {
+      if (distance < 500) {
         Fluttertoast.showToast(
           msg: AppLocalizations.of(context)!.distanceTooClose,
           toastLength: Toast.LENGTH_SHORT,
@@ -455,6 +517,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           onTap: _selectDeliveryAddress,
                           isPickup: false,
                         ),
+                        // ── Shipping Fee Estimate ──────────────────────────
+                        _buildShippingFeeEstimate(),
                         const SizedBox(height: 24),
                         CouponSection(
                           couponController: _couponController,
