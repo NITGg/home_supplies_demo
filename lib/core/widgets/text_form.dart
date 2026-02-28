@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../style/app_colors.dart';
 
@@ -130,6 +131,9 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
         keyboardType: widget.isPhone
             ? TextInputType.phone
             : widget.keyboardType,
+        inputFormatters: widget.keyboardType == TextInputType.number
+            ? [FilteringTextInputFormatter.digitsOnly]
+            : null,
         validator: widget.validator ?? _defaultValidate,
         style: const TextStyle(fontSize: 16, color: Colors.black87),
         decoration: InputDecoration(
