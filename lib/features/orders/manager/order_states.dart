@@ -68,6 +68,14 @@ class OrderCancelled extends OrderState {
   List<Object?> get props => [message];
 }
 
+class PriceAdjustmentResponding extends OrderState {}
+
+class PriceAdjustmentResponded extends OrderState {
+  final String status; // 'ACCEPTED' or 'REJECTED'
+  const PriceAdjustmentResponded(this.status);
+}
+
+
 class OrderCancelError extends OrderState {
   final String message;
 

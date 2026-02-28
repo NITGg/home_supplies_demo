@@ -56,7 +56,7 @@ class OrderRemoteDataSource {
       log('Fetching orders - skip: $skip, limit: $limit, status: $status');
 
       final response = await _dio.get(
-        '/orders',
+        '/orders?includes=courier=user',
         queryParameters: {
           'skip': skip,
           'limit': limit,
@@ -166,6 +166,27 @@ class OrderRemoteDataSource {
       return response.data;
     } else {
       throw Exception('Failed to validate coupon');
+    }
+  }
+  // Add this method to OrderRemoteDataSource
+
+  Future<Map<String, dynamic>> respondToPriceAdjustment({
+    required int orderId,
+    required String status, // 'ACCEPTED' or 'REJECTED'
+  }) async {
+    log('Responding to price adjustment for order $orderId with status: $status');
+
+    final response = await _dio.put(
+      '/orders/$orderId/price-adjustment',
+      data: {'status': status},
+    );
+
+    log('Price adjustment response: ${response.data}');
+
+    if (response.statusCode == 200) {
+      return response.data;
+    } else {
+      throw Exception('Failed to respond to price adjustment');
     }
   }
 

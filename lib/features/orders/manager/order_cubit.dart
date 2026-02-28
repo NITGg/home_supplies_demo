@@ -390,6 +390,23 @@ class OrderCubit extends Cubit<OrderState> {
 
   }
 
+  Future<void> respondToPriceAdjustment({
+    required int orderId,
+    required String status, // 'ACCEPTED' or 'REJECTED'
+  }) async {
+    emit(PriceAdjustmentResponding());
+    try {
+      await _repository.respondToPriceAdjustment(
+        orderId: orderId,
+        status: status,
+      );
+      emit(PriceAdjustmentResponded(status));
+      // Refresh active orders so the card reflects the new state
+      loadActiveOrders(loadMore: false);
+    } catch (e) {
+      emit(OrderError(extractErrorMessage(e)));
+    }
+  }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 

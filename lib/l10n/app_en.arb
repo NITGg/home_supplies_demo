@@ -61,6 +61,7 @@
   "sum": "Total",
   "quantity": "Quantity",
   "price": "Price:",
+  "newBudget": "Required Budget:",
 
   "info": "Info",
   "deleteAll": "Delete All",

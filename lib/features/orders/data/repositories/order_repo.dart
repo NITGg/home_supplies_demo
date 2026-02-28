@@ -49,6 +49,16 @@ class OrderRepository {
     );
   }
 
+  Future<Map<String, dynamic>> respondToPriceAdjustment({
+    required int orderId,
+    required String status, // 'ACCEPTED' or 'REJECTED'
+  }) async {
+    return await _remoteDataSource.respondToPriceAdjustment(
+      orderId: orderId,
+      status: status,
+    );
+  }
+
   // Confirm Delivery
   Future<Map<String, dynamic>> confirmDelivery({
     required int orderId,

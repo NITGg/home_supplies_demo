@@ -407,6 +407,12 @@ abstract class AppLocalizations {
   /// **'Price:'**
   String get price;
 
+  /// No description provided for @newBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Required Budget:'**
+  String get newBudget;
+
   /// No description provided for @info.
   ///
   /// In en, this message translates to:

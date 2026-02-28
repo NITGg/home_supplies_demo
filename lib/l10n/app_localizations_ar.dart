@@ -165,6 +165,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get price => 'السعر:';
 
   @override
+  String get newBudget => 'الميزانية المطلوبة:';
+
+  @override
   String get info => 'معلومات';
 
   @override

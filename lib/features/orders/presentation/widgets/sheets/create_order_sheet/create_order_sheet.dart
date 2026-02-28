@@ -138,7 +138,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 
   // ── Shipping Fee ───────────────────────────────────────────────────────────
-
+//todo get from settings
   static const double _feePerKm = 10.0;
   static const double _minFee = 30.0;
 
@@ -281,14 +281,14 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           ToggleTab(
-            label: l10n.shipping,
-            selected: !_isShopping,
-            onTap: () => setState(() => _isShopping = false),
-          ),
-          ToggleTab(
             label: l10n.shopping,
             selected: _isShopping,
             onTap: () => setState(() => _isShopping = true),
+          ),
+          ToggleTab(
+            label: l10n.shipping,
+            selected: !_isShopping,
+            onTap: () => setState(() => _isShopping = false),
           ),
         ],
       ),
@@ -518,6 +518,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           isPickup: false,
                         ),
                         // ── Shipping Fee Estimate ──────────────────────────
+                        const SizedBox(height: 12),
                         _buildShippingFeeEstimate(),
                         const SizedBox(height: 24),
                         CouponSection(

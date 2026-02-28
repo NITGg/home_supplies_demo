@@ -33,8 +33,16 @@ class Order {
   final DateTime? offerAcceptedAt;
   final DateTime? deliveredAt;
   final DateTime? canceledAt;
+  final String? courierName;
+  final String? courierPhone;
+  final String? courierPhoto;           // ← NEW: courier avatar URL
+  final String? priceAdjustmentStatus; // ← NEW: NONE | ACCEPTED | REJECTED | PENDING
 
   Order({
+    this.courierName,
+    this.courierPhone,
+    this.courierPhoto,
+    this.priceAdjustmentStatus,
     this.id,
     this.customerId,
     this.courierId,
@@ -70,18 +78,26 @@ class Order {
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
+    final courier = json['courier'] as Map<String, dynamic>?;
+    final user = courier?['user'] as Map<String, dynamic>?;
+
     return Order(
+      courierName: user?['full_name'] as String?,
+      courierPhone: user?['phone'] as String?,
+      courierPhoto: user?['personal_photo'] as String?,
+      priceAdjustmentStatus: json['price_adjustment_status'] as String?,
+
       id: json['id'] as int?,
       customerId: json['customer_id'] as int?,
       courierId: json['courier_id'] as int?,
       orderNumber: json['order_number'] as String?,
       productDescription: json['product_description'] as String,
       productImage: json['product_image'] as String?,
-      budget: ((num.tryParse(json['budget']?.toString() ?? '0') ?? 0) / 100).toString(),
+      budget: ((num.tryParse(json['budget']?.toString() ?? '0') ?? 0) / 100)
+          .toString(),
       actualPrice: json['actual_price']?.toString(),
       pickupAreaId: json['pickup_area_id'] as int,
-      pickupAddressDescription:
-      json['pickup_address_description'] as String,
+      pickupAddressDescription: json['pickup_address_description'] as String,
       pickupLat: json['pickup_lat'],
       pickupLong: json['pickup_long'],
       deliveryAreaId: json['delivery_area_id'] as int,
@@ -136,6 +152,9 @@ class Order {
   bool get isDelivered => status == 'DELIVERED';
   bool get isCancelled => status == 'CANCELLED';
   bool get hasProposals => (proposalsCount ?? 0) > 0;
+
+  /// True when the courier proposed a new price and we're waiting for customer response
+  bool get hasPendingPriceAdjustment => priceAdjustmentStatus == 'PENDING';
 }
 
 class OrderResponse {

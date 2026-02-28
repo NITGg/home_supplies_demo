@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/cancel_order_sheet.dart';
+import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/price_adjust.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/proposal_sheet.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
@@ -36,6 +37,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   bool _isLoadingMore = false;
 
   StreamSubscription? _newOfferSubscription;
+  StreamSubscription? _newPriceSubscription;
   StreamSubscription? _orderCancelledSubscription;
 
   @override
@@ -61,6 +63,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     _newOfferSubscription = socketService.onNewOffer.listen((data) {
       if (mounted) _handleNewOffer(data);
     });
+    _newPriceSubscription = socketService.onPriceReport.listen((data) {
+      if (mounted) _handleNewPrice(data);
+    });
 
     _orderCancelledSubscription = socketService.onOrderCancelled.listen((data) {
       if (mounted) {
@@ -77,6 +82,25 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
   // ================= SOCKET EVENT HANDLERS =================
 
+  void _handleNewPrice(Map<String, dynamic> data) {
+    final orderId = data['orderId'] as int?;
+    final newPriceCents = (data['newPrice'] as num?)?.toDouble();
+
+    if (orderId == null || newPriceCents == null) return;
+
+    // Convert from cents → currency units (e.g. 40000 → 400.00)
+    final newPrice = newPriceCents / 100;
+
+    final originalPriceCents = (data['originalPrice'] as num?)?.toDouble();
+    final originalPrice = originalPriceCents != null ? originalPriceCents / 100 : null;
+
+    PriceAdjustmentSheet.show(
+      context,
+      orderId: orderId,
+      newPrice: newPrice,
+      originalPrice: originalPrice,
+    );
+  }
   void _handleNewOffer(Map<String, dynamic> data) {
     final l10n = AppLocalizations.of(context);
 
