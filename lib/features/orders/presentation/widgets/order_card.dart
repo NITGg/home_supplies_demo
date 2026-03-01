@@ -237,7 +237,7 @@ class OrderCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     if (order.budget != '0.01')
                       OrderBudgetChip(
-                        budget: order.actualPrice ?? order.budget
+                        budget: order.actualPrice == '0'? order.budget: order.actualPrice,
                       ),
                   ],
                 ),
