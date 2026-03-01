@@ -61,7 +61,8 @@ class Proposal {
       id: json['id'] as int,
       orderId: json['order_id'] as int,
       courierId: json['courier_id'] as int,
-      totalFee: ((int.parse(json['total_fee'].toString())) / 100).toString(),
+      totalFee: ((num.tryParse(json['total_fee']?.toString() ?? '0') ?? 0) / 100)
+          .toStringAsFixed(0),
       status: json['status'] as String,
       createdAt: DateTime.parse(json['created_at']),
       confirmedAt: json['confirmed_at'] != null
