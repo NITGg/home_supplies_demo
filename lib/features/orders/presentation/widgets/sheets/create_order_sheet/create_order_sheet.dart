@@ -139,8 +139,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 
   // ── Shipping Fee ───────────────────────────────────────────────────────────
-  static final double _feePerKm = double.tryParse(AppSettings.delivery_price_for_each_1km??'0') ?? 10;
-  static final double _minFee = double.tryParse(AppSettings.min_delivery_fee??'0') ?? 30;
+  static final double _feePerKm =
+      double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ??
+      1000 / 100;
+  static final double _minFee =
+      (double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000) / 100;
 
   Widget _buildShippingFeeEstimate() {
     if (_pickupAddress == null || _deliveryAddress == null) {
