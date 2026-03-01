@@ -17,6 +17,7 @@ import 'core/error/config.dart';
 import 'core/error/handler.dart';
 import 'core/error/restart_widget.dart';
 import 'core/utils/api_client.dart';
+import 'core/utils/app_dynamic_settings.dart';
 import 'core/utils/constants.dart';
 import 'core/utils/secure_storage_service.dart';
 import 'core/style/app_colors.dart';
@@ -107,7 +108,7 @@ Future<void> main() async {
       ApiClient.instance.init();
       await ConnectivityManager.instance.init();
       if (ConnectivityManager.instance.isConnected) {
-        // await AppSettings().load();
+        await AppSettings().load();
         await AppInfoManager().loadAppInfo();
       }
     },

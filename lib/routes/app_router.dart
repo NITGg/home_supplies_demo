@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../core/utils/check_for_updates.dart';
 import '../core/widgets/loading_screen.dart';
 import '../features/addresses/manager/address_cubit.dart';
 import '../features/addresses/presentation/address_management_screen.dart';
@@ -40,8 +41,7 @@ Future<GoRouter> createAppRouter({
           isSplash: true,
           onComplete: () async {
             // First, check for update
-            // bool updateShown = await checkForUpdate(context);
-            bool updateShown = false;
+            bool updateShown = await checkForUpdate(context);
 
             // Only navigate if update was NOT shown
             if (!updateShown) {

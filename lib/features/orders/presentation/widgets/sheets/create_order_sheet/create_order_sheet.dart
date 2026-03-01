@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
+import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/create_order_sheet/select_address.dart';
 import 'package:tawreedat_go/l10n/app_localizations.dart';
 
@@ -138,9 +139,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 
   // ── Shipping Fee ───────────────────────────────────────────────────────────
-//todo get from settings
-  static const double _feePerKm = 10.0;
-  static const double _minFee = 30.0;
+  static final double _feePerKm = double.tryParse(AppSettings.delivery_price_for_each_1km??'0') ?? 10;
+  static final double _minFee = double.tryParse(AppSettings.min_delivery_fee??'0') ?? 30;
 
   Widget _buildShippingFeeEstimate() {
     if (_pickupAddress == null || _deliveryAddress == null) {
@@ -235,7 +235,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         double.parse(_deliveryAddress!.addressLong),
       );
 
-      if (distance < 500) {
+      if (distance <
+          (double.tryParse(AppSettings.min_delivery_distance ?? '1') ?? 1) *
+              1000) {
         Fluttertoast.showToast(
           msg: AppLocalizations.of(context)!.distanceTooClose,
           toastLength: Toast.LENGTH_SHORT,
