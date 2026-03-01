@@ -103,7 +103,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
                     // Wallet Balance Card
                     WalletBalanceCard(
-                      balance: wallet.balance/100,
+                      balance: wallet.balance,
                       isActive: wallet.isActive,
                       freezeReason: wallet.freezeReason,
                       totalUnpaid: 0,

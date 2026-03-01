@@ -54,7 +54,8 @@ class Wallet {
   factory Wallet.fromJson(Map<String, dynamic> json) {
     return Wallet(
       id: json['id'],
-      balance: (json['balance'] ?? 0).toDouble(),
+      balance: ((num.tryParse(json['balance']?.toString() ?? '0') ?? 0) / 100)
+      ,
       status: json['status'] ?? 'ACTIVE',
       ownerType: json['owner_type'] ?? 'CUSTOMER',
       freezeReason: json['freeze_reason'],

@@ -35,8 +35,9 @@ class Order {
   final DateTime? canceledAt;
   final String? courierName;
   final String? courierPhone;
-  final String? courierPhoto;           // ← NEW: courier avatar URL
-  final String? priceAdjustmentStatus; // ← NEW: NONE | ACCEPTED | REJECTED | PENDING
+  final String? courierPhoto; // ← NEW: courier avatar URL
+  final String?
+  priceAdjustmentStatus; // ← NEW: NONE | ACCEPTED | REJECTED | PENDING
 
   Order({
     this.courierName,
@@ -94,15 +95,17 @@ class Order {
       productDescription: json['product_description'] as String,
       productImage: json['product_image'] as String?,
       budget: ((num.tryParse(json['budget']?.toString() ?? '0') ?? 0) / 100)
-          .toString(),
-      actualPrice: json['actual_price']?.toString(),
+          .toStringAsFixed(0),
+      actualPrice:
+          ((num.tryParse(json['actual_price']?.toString() ?? '0') ?? 0) / 100)
+              .toStringAsFixed(0),
       pickupAreaId: json['pickup_area_id'] as int,
       pickupAddressDescription: json['pickup_address_description'] as String,
       pickupLat: json['pickup_lat'],
       pickupLong: json['pickup_long'],
       deliveryAreaId: json['delivery_area_id'] as int,
       deliveryAddressDescription:
-      json['delivery_address_description'] as String,
+          json['delivery_address_description'] as String,
       deliveryLat: json['delivery_lat'],
       deliveryLong: json['delivery_long'],
       minDeliveryFee: json['min_delivery_fee']?.toString(),
@@ -148,9 +151,13 @@ class Order {
   }
 
   bool get isPending => status == 'PENDING';
+
   bool get isAccepted => status == 'ACCEPTED';
+
   bool get isDelivered => status == 'DELIVERED';
+
   bool get isCancelled => status == 'CANCELLED';
+
   bool get hasProposals => (proposalsCount ?? 0) > 0;
 
   /// True when the courier proposed a new price and we're waiting for customer response

@@ -237,12 +237,7 @@ class OrderCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     if (order.budget != '0.01')
                       OrderBudgetChip(
-                        budget: order.actualPrice == null
-                            ? order.budget
-                            : ((double.tryParse(order.actualPrice ?? '0.0') ??
-                            0) /
-                            100)
-                            .toString(),
+                        budget: order.actualPrice ?? order.budget
                       ),
                   ],
                 ),
@@ -480,19 +475,6 @@ class _PriceAdjustmentFooter extends StatelessWidget {
 
   const _PriceAdjustmentFooter({required this.order});
 
-  /// Parses the raw actualPrice (stored in cents as a string from the API)
-  /// and converts it to a display value.
-  double get _proposedPrice {
-    final raw = double.tryParse(order.actualPrice ?? '0') ?? 0;
-    // actual_price comes from the API already in cents; divide by 100.
-    return raw / 100;
-  }
-
-  double get _originalBudget {
-    return double.tryParse(order.budget) ?? 0;
-    // budget is already converted to currency units in Order.fromJson
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -579,7 +561,7 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${_originalBudget.toStringAsFixed(2)} ${l10n.egp}',
+                            '${order.budget} ${l10n.egp}',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey.shade500,
@@ -613,7 +595,7 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${_proposedPrice.toStringAsFixed(2)} ${l10n.egp}',
+                            '${order.actualPrice} ${l10n.egp}',
                             style: TextStyle(
                               fontSize: 16,
                               color: const Color(0xFFE65100),
