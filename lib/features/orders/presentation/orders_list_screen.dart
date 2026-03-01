@@ -83,23 +83,26 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   // ================= SOCKET EVENT HANDLERS =================
 
   void _handleNewPrice(Map<String, dynamic> data) {
-    final orderId = data['orderId'] as int?;
-    final newPriceCents = (data['newPrice'] as num?)?.toDouble();
-
-    if (orderId == null || newPriceCents == null) return;
-
-    // Convert from cents → currency units (e.g. 40000 → 400.00)
-    final newPrice = newPriceCents / 100;
-
-    final originalPriceCents = (data['originalPrice'] as num?)?.toDouble();
-    final originalPrice = originalPriceCents != null ? originalPriceCents / 100 : null;
-
-    PriceAdjustmentSheet.show(
-      context,
-      orderId: orderId,
-      newPrice: newPrice,
-      originalPrice: originalPrice,
-    );
+    if (_viewMode == ViewMode.active) {
+      context.read<OrderCubit>().loadActiveOrders(loadMore: false);
+    }
+    // final orderId = data['orderId'] as int?;
+    // final newPriceCents = (data['newPrice'] as num?)?.toDouble();
+    //
+    // if (orderId == null || newPriceCents == null) return;
+    //
+    // // Convert from cents → currency units (e.g. 40000 → 400.00)
+    // final newPrice = newPriceCents / 100;
+    //
+    // final originalPriceCents = (data['originalPrice'] as num?)?.toDouble();
+    // final originalPrice = originalPriceCents != null ? originalPriceCents / 100 : null;
+    //
+    // PriceAdjustmentSheet.show(
+    //   context,
+    //   orderId: orderId,
+    //   newPrice: newPrice,
+    //   originalPrice: originalPrice,
+    // );
   }
   void _handleNewOffer(Map<String, dynamic> data) {
     final l10n = AppLocalizations.of(context);

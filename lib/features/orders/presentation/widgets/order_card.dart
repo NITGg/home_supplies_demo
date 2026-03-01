@@ -1,12 +1,15 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/order_model.dart';
+import '../../manager/order_cubit.dart';
+import '../../manager/order_states.dart';
 import 'order_budget_chip.dart';
 import 'order_route_section.dart';
 
@@ -99,8 +102,6 @@ class OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final statusColor = _statusColor();
-    final hasCourier =
-        order.courierName != null && order.courierName!.isNotEmpty;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -123,6 +124,9 @@ class OrderCard extends StatelessWidget {
             _buildProductInfo(),
             _buildResultInfo(context),
             if (order.status == "IN_PROGRESS") _buildCourierFooter(context),
+            // ── Price adjustment banner: shown when courier proposed a new price ──
+            if (order.hasPendingPriceAdjustment)
+              _PriceAdjustmentFooter(order: order),
             if (order.isPending) _buildActionButtons(l10n),
           ],
         ),
@@ -236,9 +240,9 @@ class OrderCard extends StatelessWidget {
                         budget: order.actualPrice == null
                             ? order.budget
                             : ((double.tryParse(order.actualPrice ?? '0.0') ??
-                                          0) /
-                                      100)
-                                  .toString(),
+                            0) /
+                            100)
+                            .toString(),
                       ),
                   ],
                 ),
@@ -270,11 +274,7 @@ class OrderCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.red.shade700,
-                    size: 20,
-                  ),
+                  Icon(Icons.info_outline, color: Colors.red.shade700, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -313,11 +313,7 @@ class OrderCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.check_circle,
-                    color: Colors.green.shade700,
-                    size: 20,
-                  ),
+                  Icon(Icons.check_circle, color: Colors.green.shade700, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     '${AppLocalizations.of(context)!.delivered}: ${_formatDate(context, order.deliveredAt!)}',
@@ -352,29 +348,24 @@ class OrderCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // ── Avatar: real photo or initials fallback ──
           CircleAvatar(
             radius: 20,
             backgroundColor: Colors.blue.shade100,
-            backgroundImage: hasPhoto
-                ? NetworkImage(order.courierPhoto!)
-                : null,
-            onBackgroundImageError: hasPhoto
-                ? (_, __) {} // silently fall through to child
-                : null,
+            backgroundImage:
+            hasPhoto ? NetworkImage(order.courierPhoto!) : null,
+            onBackgroundImageError: hasPhoto ? (_, __) {} : null,
             child: hasPhoto
                 ? null
                 : Text(
-                    _initials(order.courierName!),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade700,
-                    ),
-                  ),
+              _initials(order.courierName!),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade700,
+              ),
+            ),
           ),
           const SizedBox(width: 10),
-          // ── Name + phone ──
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,7 +388,6 @@ class OrderCard extends StatelessWidget {
               ],
             ),
           ),
-          // ── Phone button ──
           if (hasPhone)
             Material(
               color: Colors.blue.shade600,
@@ -424,7 +414,7 @@ class OrderCard extends StatelessWidget {
     return name.isNotEmpty ? name[0].toUpperCase() : '?';
   }
 
-  // ── Action buttons ─────────────────────────────────────────────────────────
+  // ── Action buttons (PENDING order) ────────────────────────────────────────
 
   Widget _buildActionButtons(AppLocalizations l10n) {
     return Column(
@@ -475,6 +465,305 @@ class OrderCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Price Adjustment Footer
+// Shown inline on the card whenever priceAdjustmentStatus == PENDING.
+// Uses BlocConsumer so it can show a local spinner and auto-dismiss on success.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PriceAdjustmentFooter extends StatelessWidget {
+  final Order order;
+
+  const _PriceAdjustmentFooter({required this.order});
+
+  /// Parses the raw actualPrice (stored in cents as a string from the API)
+  /// and converts it to a display value.
+  double get _proposedPrice {
+    final raw = double.tryParse(order.actualPrice ?? '0') ?? 0;
+    // actual_price comes from the API already in cents; divide by 100.
+    return raw / 100;
+  }
+
+  double get _originalBudget {
+    return double.tryParse(order.budget) ?? 0;
+    // budget is already converted to currency units in Order.fromJson
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return BlocConsumer<OrderCubit, OrderState>(
+      // Only rebuild/listen for states relevant to price adjustment
+      listenWhen: (_, current) =>
+      current is PriceAdjustmentResponded || current is OrderError,
+      listener: (context, state) {
+        // Nothing to do here — the cubit reloads orders after responding,
+        // which will clear hasPendingPriceAdjustment naturally.
+      },
+      buildWhen: (_, current) =>
+      current is PriceAdjustmentResponding ||
+          current is PriceAdjustmentResponded ||
+          current is OrderError ||
+          current is OrdersLoaded,
+      builder: (context, state) {
+        // Show spinner only when THIS order's adjustment is being processed.
+        // We can't easily know which orderId is in flight from the state alone,
+        // so we show the spinner for any PriceAdjustmentResponding state while
+        // this card is for a pending-adjustment order.
+        final isLoading = state is PriceAdjustmentResponding;
+
+        return Container(
+          margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          decoration: BoxDecoration(
+            // Warm amber tint to draw attention without being alarming
+            color: const Color(0xFFFFF8E1),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFFFE082), width: 1.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Banner header ──
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFECB3),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.price_change_outlined,
+                      size: 18,
+                      color: Color(0xFFF57F17),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n.budgetNotEnough,
+                        style: AppTextStyles.bold14.copyWith(
+                          fontSize: 13,
+                          color: const Color(0xFFE65100),
+                        ),
+                      ),
+                    ),
+                    // Pulsing dot to signal action required
+                    _PulsingDot(),
+                  ],
+                ),
+              ),
+
+              // ── Price comparison row ──
+              Padding(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    // Original budget (struck through)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.budget,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${_originalBudget.toStringAsFixed(2)} ${l10n.egp}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                              decoration: TextDecoration.lineThrough,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Arrow
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: Colors.orange.shade700,
+                      ),
+                    ),
+                    // Proposed price
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            l10n.newBudget,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.orange.shade700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${_proposedPrice.toStringAsFixed(2)} ${l10n.egp}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: const Color(0xFFE65100),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Divider ──
+              Divider(height: 1, color: const Color(0xFFFFE082)),
+
+              // ── Action buttons ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: isLoading
+                    ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6),
+                    child: CircularProgressIndicator(
+                      color: AppColors.kPrimaryColor,
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+                )
+                    : Row(
+                  children: [
+                    // REJECT
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () =>
+                            _respond(context, 'REJECTED'),
+                        icon: Icon(
+                          Icons.close,
+                          size: 16,
+                          color: Colors.red.shade600,
+                        ),
+                        label: Text(
+                          l10n.reject,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red.shade600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding:
+                          const EdgeInsets.symmetric(vertical: 10),
+                          side: BorderSide(
+                            color: Colors.red.shade300,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // ACCEPT
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () =>
+                            _respond(context, 'ACCEPTED'),
+                        icon: const Icon(Icons.check, size: 16),
+                        label: Text(
+                          l10n.accept,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.kPrimaryColor,
+                          foregroundColor: Colors.white,
+                          padding:
+                          const EdgeInsets.symmetric(vertical: 10),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _respond(BuildContext context, String status) {
+    context.read<OrderCubit>().respondToPriceAdjustment(
+      orderId: order.id!,
+      status: status,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Animated pulsing dot — signals the user that action is required
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PulsingDot extends StatefulWidget {
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _scale = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scale,
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: const BoxDecoration(
+          color: Color(0xFFE65100),
+          shape: BoxShape.circle,
+        ),
+      ),
     );
   }
 }
