@@ -168,7 +168,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       double.parse(_deliveryAddress!.addressLat),
       double.parse(_deliveryAddress!.addressLong),
     );
-    final distanceKm = distanceInMeters / 1000;
+    final distanceKm = (distanceInMeters / 1000).round();
     log('distanceInMeters: $distanceInMeters');
     log('distanceKm:       $distanceKm');
 
