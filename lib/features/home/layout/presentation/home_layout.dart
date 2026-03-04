@@ -187,9 +187,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                                         ),
                                         child: GestureDetector(
                                           onTap: () {
-                                            if (profile != null) {
                                               context.push('/ProfileScreen');
-                                            }
                                           },
                                           child: Row(
                                             spacing: 10,

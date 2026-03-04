@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -140,8 +141,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   // ── Shipping Fee ───────────────────────────────────────────────────────────
   static final double _feePerKm =
-      double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ??
-      1000 / 100;
+  (double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000);
+
   static final double _minFee =
       (double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000) / 100;
 
@@ -149,6 +150,17 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     if (_pickupAddress == null || _deliveryAddress == null) {
       return const SizedBox.shrink();
     }
+    log('─── _buildShippingFeeEstimate ───────────────────────');
+
+    final rawFeePerKm = double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000;
+    final rawMinFee   = double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000;
+    log('AppSettings.delivery_price_for_each_1km (raw): ${AppSettings.delivery_price_for_each_1km}');
+    log('AppSettings.min_delivery_fee (raw):             ${AppSettings.min_delivery_fee}');
+
+    final double feePerKm = rawFeePerKm / 100;
+    final double minFee   = rawMinFee / 100;
+    log('feePerKm (EGP/km): $feePerKm');
+    log('minFee   (EGP):    $minFee');
 
     final distanceInMeters = calculateDistance(
       double.parse(_pickupAddress!.addressLat),
@@ -156,11 +168,15 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       double.parse(_deliveryAddress!.addressLat),
       double.parse(_deliveryAddress!.addressLong),
     );
-
     final distanceKm = distanceInMeters / 1000;
-    final calculatedFee = distanceKm * _feePerKm;
-    final fee = calculatedFee < _minFee ? _minFee : calculatedFee;
+    log('distanceInMeters: $distanceInMeters');
+    log('distanceKm:       $distanceKm');
 
+    final calculatedFee = distanceKm * feePerKm;
+    final fee = calculatedFee < minFee ? minFee : calculatedFee;
+    log('calculatedFee: $calculatedFee');
+    log('fee (after min clamp): $fee ${calculatedFee < minFee ? "(clamped to min)" : "(used calculated)"}');
+    log('─────────────────────────────────────────────────────');
     return Container(
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -239,7 +255,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       );
 
       if (distance <
-          (double.tryParse(AppSettings.min_delivery_distance ?? '1') ?? 1) *
+          (double.tryParse(AppSettings.min_delivery_distance ?? '2') ?? 2) *
               1000) {
         Fluttertoast.showToast(
           msg: AppLocalizations.of(context)!.distanceTooClose,
