@@ -205,7 +205,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             ),
           ),
           Text(
-            '${fee.toStringAsFixed(2)} ${AppLocalizations.of(context)!.egp}',
+            '${fee.toStringAsFixed(0)} ${AppLocalizations.of(context)!.egp}',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
