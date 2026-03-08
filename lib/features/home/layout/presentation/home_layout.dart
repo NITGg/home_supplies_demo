@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -39,6 +38,7 @@ class HomeLayout extends StatefulWidget {
 
 class _HomeLayoutState extends State<HomeLayout> {
   late Future<UserProfileModel?> _userProfileFuture;
+  String _userId = ''; // ✅ initialized empty, set once profile loads
 
   @override
   void initState() {
@@ -69,7 +69,14 @@ class _HomeLayoutState extends State<HomeLayout> {
           }
         });
       }
-      return UserProfileModel.fromJson(userProfileJson);
+      final profile = UserProfileModel.fromJson(userProfileJson);
+      // ✅ Set userId as soon as profile is available, before build runs
+      if (mounted) {
+        setState(() {
+          _userId = profile.id.toString();
+        });
+      }
+      return profile;
     }
     return null;
   }
@@ -100,8 +107,8 @@ class _HomeLayoutState extends State<HomeLayout> {
             future: _userProfileFuture,
             builder: (context, snapshot) {
               final profile = snapshot.data;
-              final userId = profile?.id.toString() ?? '';
-log('userId: $userId');
+              // ✅ Use _userId from state — already set before first build with data
+
               return BlocListener<AuthCubit, AuthState>(
                 listener: (context, state) {
                   if (state is AuthUpdateSuccess) {
@@ -447,14 +454,13 @@ log('userId: $userId');
                     ),
                   ),
                   body: screens[cubit.currentIndex],
-                  // ✅ Custom bottom nav bar with NotificationButton badge
                   bottomNavigationBar: _BottomNavBar(
                     currentIndex: cubit.currentIndex,
-                    userId: userId,
+                    userId: _userId,
                     localizations: localizations,
                     onOrdersTap: () => cubit.changeTab(0),
                     onNotificationsTap: () =>
-                        showNotificationsDialog(context, userId),
+                        showNotificationsDialog(context, _userId),
                   ),
                 ),
               );
@@ -610,7 +616,6 @@ class _BottomNavBar extends StatelessWidget {
                                   ? AppColors.kPrimaryColor
                                   : Colors.grey,
                             ),
-                            const SizedBox(height: 4),
                             Text(
                               localizations.orders,
                               style: TextStyle(
@@ -629,14 +634,20 @@ class _BottomNavBar extends StatelessWidget {
                       ),
                     ),
 
-                    // ✅ Notifications tab — uses NotificationButton for live badge
+                    // ✅ Notifications tab — only render NotificationButton once userId is ready
                     Expanded(
                       child: InkWell(
                         onTap: onNotificationsTap,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            NotificationButton(userId: userId),
+                            if (userId.isNotEmpty)
+                              NotificationButton(userId: userId)
+                            else
+                              Icon(
+                                Icons.notifications_none,
+                                color: Colors.grey,
+                              ),
                             Text(
                               localizations.notifications,
                               style: const TextStyle(

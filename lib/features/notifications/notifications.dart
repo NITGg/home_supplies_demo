@@ -590,17 +590,14 @@ class NotificationButton extends StatelessWidget {
         return InkWell(
           onTap: () => showNotificationsDialog(context, userId),
           customBorder: const CircleBorder(),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Badge.count(
-              backgroundColor: AppColors.kSecondaryColor,
-              textColor: AppColors.kPrimaryColor,
-              isLabelVisible: unreadCount>0,
-              largeSize: 10,
-              alignment: Alignment.topRight,
-              count: unreadCount,
-              child: Icon(unreadCount > 0 ?Icons.notifications:Icons.notifications_none,color: Colors.grey,),
-            ),
+          child: Badge.count(
+            backgroundColor: AppColors.kSecondaryColor,
+            textColor: AppColors.kPrimaryColor,
+            isLabelVisible: unreadCount>0,
+            largeSize: 10,
+            alignment: Alignment.topRight,
+            count: unreadCount,
+            child: Icon(unreadCount > 0 ?Icons.notifications:Icons.notifications_none,color: Colors.grey,),
           ),
         );
       },
