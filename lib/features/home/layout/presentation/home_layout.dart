@@ -1,8 +1,8 @@
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/features/coupons/manager/coupons_cubit.dart';
@@ -23,6 +23,7 @@ import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
+import '../../../notifications/notifications.dart';
 import '../../../orders/presentation/orders_list_screen.dart';
 import '../../../orders/presentation/widgets/sheets/create_order_sheet/create_order_sheet.dart';
 import '../../../static_text/app_dynamic_info.dart';
@@ -52,7 +53,6 @@ class _HomeLayoutState extends State<HomeLayout> {
           accessToken: token,
         );
       }
-      // Fetch wallet data so badge info is available in the drawer
       if (mounted) {
         context.read<WalletCubit>().fetchWalletData();
       }
@@ -95,24 +95,13 @@ class _HomeLayoutState extends State<HomeLayout> {
       child: BlocBuilder<HomeCubit, HomeState>(
         builder: (context, state) {
           final cubit = context.read<HomeCubit>();
-          final itemsList = [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.receipt_long),
-              activeIcon: const Icon(Icons.receipt),
-              label: localizations.orders,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.notifications_none_rounded),
-              activeIcon: const Icon(Icons.notifications),
-              label: localizations.notifications,
-            ),
-          ];
 
           return FutureBuilder<UserProfileModel?>(
             future: _userProfileFuture,
             builder: (context, snapshot) {
               final profile = snapshot.data;
-
+              final userId = profile?.id.toString() ?? '';
+log('userId: $userId');
               return BlocListener<AuthCubit, AuthState>(
                 listener: (context, state) {
                   if (state is AuthUpdateSuccess) {
@@ -159,7 +148,6 @@ class _HomeLayoutState extends State<HomeLayout> {
                               child: ListView(
                                 padding: EdgeInsets.zero,
                                 children: [
-                                  // ── Drawer header: avatar + badge ────────
                                   BlocBuilder<WalletCubit, WalletState>(
                                     builder: (context, walletState) {
                                       final walletCubit =
@@ -189,7 +177,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                                         ),
                                         child: GestureDetector(
                                           onTap: () {
-                                              context.push('/ProfileScreen');
+                                            context.push('/ProfileScreen');
                                           },
                                           child: Row(
                                             spacing: 10,
@@ -282,17 +270,17 @@ class _HomeLayoutState extends State<HomeLayout> {
                                                             .toggleLocale(),
                                                     trackOutlineColor:
                                                     WidgetStateProperty
-                                                        .resolveWith(
-                                                            (_) => AppColors
-                                                            .kPrimaryColor),
-                                                    activeThumbColor:
-                                                    AppColors.kPrimaryColor,
+                                                        .resolveWith((_) =>
+                                                    AppColors
+                                                        .kPrimaryColor),
+                                                    activeThumbColor: AppColors
+                                                        .kPrimaryColor,
                                                     activeTrackColor:
                                                     Colors.white,
                                                     inactiveTrackColor:
                                                     Colors.white,
-                                                    inactiveThumbColor:
-                                                    AppColors.kPrimaryColor,
+                                                    inactiveThumbColor: AppColors
+                                                        .kPrimaryColor,
                                                   ),
                                                   Text('AR',
                                                       style: AppTextStyles
@@ -306,8 +294,8 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () =>
-                                                context.push('/WalletScreen'),
+                                            onTap: () => context
+                                                .push('/WalletScreen'),
                                             leading: const Icon(Icons
                                                 .account_balance_wallet_rounded),
                                             title: Text(localizations.wallet,
@@ -324,8 +312,8 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () =>
-                                                context.push('/ProfileScreen'),
+                                            onTap: () => context
+                                                .push('/ProfileScreen'),
                                             leading:
                                             const Icon(Icons.person),
                                             title: Text(localizations.profile,
@@ -333,8 +321,8 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () =>
-                                                context.push('/ReviewsScreen'),
+                                            onTap: () => context
+                                                .push('/ReviewsScreen'),
                                             leading:
                                             const Icon(Icons.star_half),
                                             title: Text(localizations.reviews,
@@ -353,8 +341,10 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           ListTile(
                                             onTap: () {
                                               launchUrl(
-                                                Uri.parse("https://wa.me/${AppInfoManager().data!.supportPhone.replaceAll(' ', '')}"),
-                                                mode: LaunchMode.externalApplication,
+                                                Uri.parse(
+                                                    "https://wa.me/${AppInfoManager().data!.supportPhone.replaceAll(' ', '')}"),
+                                                mode: LaunchMode
+                                                    .externalApplication,
                                               );
                                             },
                                             leading: const Icon(
@@ -457,95 +447,14 @@ class _HomeLayoutState extends State<HomeLayout> {
                     ),
                   ),
                   body: screens[cubit.currentIndex],
-                  bottomNavigationBar: Directionality(
-                    textDirection: Directionality.of(context),
-                    child: Container(
-                      height: 90,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 6,
-                            offset: const Offset(0, -2),
-                          ),
-                        ],
-                      ),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final totalWidth = constraints.maxWidth;
-                          final itemCount = itemsList.length;
-                          final itemWidth = totalWidth / itemCount;
-
-                          final textDirection = Directionality.of(context);
-                          final logicalIndex =
-                          textDirection == TextDirection.ltr
-                              ? cubit.currentIndex
-                              : (itemCount - 1 - cubit.currentIndex);
-
-                          const indicatorWidth = 65.0;
-                          final leftPos = logicalIndex * itemWidth +
-                              (itemWidth - indicatorWidth) / 2;
-
-                          return Container(
-                            color: Colors.white,
-                            child: Stack(
-                              alignment: Alignment.topCenter,
-                              children: [
-                                Theme(
-                                  data: Theme.of(context).copyWith(
-                                    splashColor: Colors.transparent,
-                                    highlightColor: Colors.transparent,
-                                  ),
-                                  child: Positioned.fill(
-                                    top: 8,
-                                    child: BottomNavigationBar(
-                                      backgroundColor: Colors.white,
-                                      currentIndex: cubit.currentIndex,
-                                      onTap: (index) {
-                                        if (index == 4) {
-                                          scaffoldKey.currentState
-                                              ?.openEndDrawer();
-                                          return;
-                                        }
-                                        cubit.changeTab(index);
-                                      },
-                                      selectedItemColor:
-                                      AppColors.kPrimaryColor,
-                                      unselectedItemColor: Colors.grey,
-                                      type: BottomNavigationBarType.fixed,
-                                      selectedLabelStyle: const TextStyle(
-                                        height: 2,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                      unselectedLabelStyle: const TextStyle(
-                                        height: 2,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      showUnselectedLabels: true,
-                                      items: itemsList,
-                                    ),
-                                  ),
-                                ),
-                                AnimatedPositioned(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                  top: 2,
-                                  left: leftPos,
-                                  child: SvgPicture.asset(
-                                    'assets/images/navbar/indicator.svg',
-                                    height: 10,
-                                    width: indicatorWidth,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+                  // ✅ Custom bottom nav bar with NotificationButton badge
+                  bottomNavigationBar: _BottomNavBar(
+                    currentIndex: cubit.currentIndex,
+                    userId: userId,
+                    localizations: localizations,
+                    onOrdersTap: () => cubit.changeTab(0),
+                    onNotificationsTap: () =>
+                        showNotificationsDialog(context, userId),
                   ),
                 ),
               );
@@ -610,7 +519,6 @@ class _HomeLayoutState extends State<HomeLayout> {
               AppCustomButton(
                 onPressed: () {
                   if (formKey.currentState!.validate()) {
-                    log(phoneController.text.toString());
                     Navigator.pop(context);
                   }
                 },
@@ -629,6 +537,140 @@ class _HomeLayoutState extends State<HomeLayout> {
           ),
         );
       },
+    );
+  }
+}
+
+// ✅ Extracted bottom nav bar widget — uses NotificationButton for badge support
+class _BottomNavBar extends StatelessWidget {
+  final int currentIndex;
+  final String userId;
+  final AppLocalizations localizations;
+  final VoidCallback onOrdersTap;
+  final VoidCallback onNotificationsTap;
+
+  const _BottomNavBar({
+    required this.currentIndex,
+    required this.userId,
+    required this.localizations,
+    required this.onOrdersTap,
+    required this.onNotificationsTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const itemCount = 2;
+
+    return Container(
+      height: 90,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final totalWidth = constraints.maxWidth;
+          final itemWidth = totalWidth / itemCount;
+
+          final textDirection = Directionality.of(context);
+          final logicalIndex = textDirection == TextDirection.ltr
+              ? currentIndex
+              : (itemCount - 1 - currentIndex);
+
+          const indicatorWidth = 65.0;
+          final leftPos =
+              logicalIndex * itemWidth + (itemWidth - indicatorWidth) / 2;
+
+          return Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              // Nav items
+              Positioned.fill(
+                top: 8,
+                child: Row(
+                  children: [
+                    // Orders tab
+                    Expanded(
+                      child: InkWell(
+                        onTap: onOrdersTap,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              currentIndex == 0
+                                  ? Icons.receipt
+                                  : Icons.receipt_long,
+                              color: currentIndex == 0
+                                  ? AppColors.kPrimaryColor
+                                  : Colors.grey,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              localizations.orders,
+                              style: TextStyle(
+                                height: 2,
+                                fontSize: 10,
+                                fontWeight: currentIndex == 0
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: currentIndex == 0
+                                    ? AppColors.kPrimaryColor
+                                    : Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // ✅ Notifications tab — uses NotificationButton for live badge
+                    Expanded(
+                      child: InkWell(
+                        onTap: onNotificationsTap,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            NotificationButton(userId: userId),
+                            Text(
+                              localizations.notifications,
+                              style: const TextStyle(
+                                height: 2,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Animated indicator — only shows under orders tab (index 0)
+              // since notifications tab opens a dialog, not a screen
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                top: 2,
+                left: leftPos,
+                child: SvgPicture.asset(
+                  'assets/images/navbar/indicator.svg',
+                  height: 10,
+                  width: indicatorWidth,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -661,7 +703,7 @@ class _ProfileAvatar extends StatelessWidget {
             ],
           ),
           child: Hero(
-            tag:'profile-avatar',
+            tag: 'profile-avatar',
             child: ClipOval(
               child: imageUrl != null && imageUrl!.isNotEmpty
                   ? Image.network(
@@ -698,7 +740,7 @@ class _ProfileAvatar extends StatelessWidget {
   }
 }
 
-// ── AppLayoutAppBar (unchanged) ───────────────────────────────────────────────
+// ── AppLayoutAppBar ───────────────────────────────────────────────────────────
 
 class AppLayoutAppBar extends StatefulWidget {
   const AppLayoutAppBar({

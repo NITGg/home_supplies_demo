@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "574537141674",
+    "project_id": "tawreedat-go",
+    "storage_bucket": "tawreedat-go.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:574537141674:android:d3fd3653c34d9828ddafd3",
+        "android_client_info": {
+          "package_name": "com.nit.tawreedat.courier"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCs3hMXszq3X1QaXb0vRqWIdHpN8O6gt8w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:574537141674:android:aa40d62c10c00df0ddafd3",
+        "android_client_info": {
+          "package_name": "com.nit.tawreedat.go"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCs3hMXszq3X1QaXb0vRqWIdHpN8O6gt8w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

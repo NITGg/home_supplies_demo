@@ -210,6 +210,8 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                 orderId: widget.order.id!,
                 proposalId: proposal.id,
               );
+              Navigator.pop(context);
+
             },
             icon: const Icon(Icons.check, size: 18),
             label: Text(
