@@ -243,7 +243,9 @@ class NotificationsDialog extends StatelessWidget {
                             : null,
                         icon: Icon(
                           Icons.done_all,
-                          color: hasUnread ? AppColors.kPrimaryColor : Colors.grey[300],
+                          color: hasUnread
+                              ? AppColors.kPrimaryColor
+                              : Colors.grey[300],
                         ),
                         tooltip: 'Mark all as read',
                       ),
@@ -252,10 +254,10 @@ class NotificationsDialog extends StatelessWidget {
                         onPressed: hasNotifications
                             ? () async {
                                 if (context.mounted) {
+                                  Navigator.of(context).pop();
                                   await context
                                       .read<NotificationsCubit>()
                                       .clearAllNotifications();
-                                  Navigator.of(context).pop();
                                 }
                               }
                             : null,
@@ -593,11 +595,14 @@ class NotificationButton extends StatelessWidget {
           child: Badge.count(
             backgroundColor: AppColors.kSecondaryColor,
             textColor: AppColors.kPrimaryColor,
-            isLabelVisible: unreadCount>0,
+            isLabelVisible: unreadCount > 0,
             largeSize: 10,
             alignment: Alignment.topRight,
             count: unreadCount,
-            child: Icon(unreadCount > 0 ?Icons.notifications:Icons.notifications_none,color: Colors.grey,),
+            child: Icon(
+              unreadCount > 0 ? Icons.notifications : Icons.notifications_none,
+              color: Colors.grey,
+            ),
           ),
         );
       },
