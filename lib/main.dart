@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
@@ -186,23 +187,33 @@ Future<void> _initializeFirebaseMessaging() async {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       log('✅ User granted notification permission');
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
       log('⚠️ User granted provisional notification permission');
     } else {
       log('❌ User declined notification permission');
       return;
     }
 
-    // ✅ Get FCM token
+    // ✅ Get FCM token (just log it here — actual registration happens after login via AuthCubit)
     final token = await messaging.getToken();
     log('📱 FCM Token: $token');
-    // TODO: Send this token to your backend server
 
-    // ✅ Listen to token refresh
-    messaging.onTokenRefresh.listen((newToken) {
+    // ✅ When FCM rotates the token, re-send it to the backend if user is logged in
+    messaging.onTokenRefresh.listen((newToken) async {
       log('🔄 FCM Token refreshed: $newToken');
-      // TODO: Update token on your backend server
+      try {
+        // kAuthtoken is set by AuthCubit after login — only POST if user is authenticated
+        if (kAuthtoken.isNotEmpty) {
+          await ApiClient.instance.dio.post(
+            '/api/users/fcm-token',
+            data: {'fcmToken': newToken},
+            options: Options(headers: {'Authorization': 'Bearer $kAuthtoken'}),
+          );
+          log('✅ Refreshed FCM token sent to backend');
+        }
+      } catch (e) {
+        log('⚠️ Failed to update refreshed FCM token: $e');
+      }
     });
 
     // ✅ Handle background messages
@@ -215,7 +226,6 @@ Future<void> _initializeFirebaseMessaging() async {
       log('Body: ${message.notification?.body}');
       log('Data: ${message.data}');
 
-      // Show local notification when app is in foreground
       if (message.notification != null) {
         NotificationService.showNotification(
           message.notification!.title ?? 'New Notification',
@@ -235,7 +245,6 @@ Future<void> _initializeFirebaseMessaging() async {
     final initialMessage = await messaging.getInitialMessage();
     if (initialMessage != null) {
       log('App opened from terminated via notification');
-
       pendingNotificationData = initialMessage.data;
     }
   } catch (e) {
