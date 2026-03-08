@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/features/coupons/manager/coupons_cubit.dart';
 import 'package:tawreedat_go/features/wallet/manager/wallet_cubit.dart';
 import 'package:tawreedat_go/features/wallet/manager/wallet_state.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/utils/socket_service.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -24,6 +25,7 @@ import '../../../auth/manager/auth_state.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
 import '../../../orders/presentation/orders_list_screen.dart';
 import '../../../orders/presentation/widgets/sheets/create_order_sheet/create_order_sheet.dart';
+import '../../../static_text/app_dynamic_info.dart';
 import '../manager/home_cubit.dart';
 import 'go_button.dart';
 
@@ -349,8 +351,12 @@ class _HomeLayoutState extends State<HomeLayout> {
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () =>
-                                                context.push('/SupportPage'),
+                                            onTap: () {
+                                              launchUrl(
+                                                Uri.parse("https://wa.me/${AppInfoManager().data!.supportPhone.replaceAll(' ', '')}"),
+                                                mode: LaunchMode.externalApplication,
+                                              );
+                                            },
                                             leading: const Icon(
                                                 Icons.support_agent_rounded),
                                             title: Text(localizations.support,

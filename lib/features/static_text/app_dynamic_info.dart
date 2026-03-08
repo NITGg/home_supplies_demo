@@ -17,7 +17,7 @@ class AppInfoModel {
   final String visionAr;
   final String digitalCard;
   final String digitalCardAr;
-  final String phone;
+  final String supportPhone;
   final String email;
   final String facebook;
   final String instagram;
@@ -45,7 +45,7 @@ class AppInfoModel {
     required this.visionAr,
     required this.digitalCard,
     required this.digitalCardAr,
-    required this.phone,
+    required this.supportPhone,
     required this.email,
     required this.facebook,
     required this.instagram,
@@ -75,7 +75,7 @@ class AppInfoModel {
       visionAr: json['vision_ar'] ?? '',
       digitalCard: json['digital_card'] ?? '',
       digitalCardAr: json['digital_card_ar'] ?? '',
-      phone: json['phone'] ?? '',
+      supportPhone: json['customer_support_number'] ?? '',
       email: json['email'] ?? '',
       facebook: json['facebook'] ?? '',
       instagram: json['instagram'] ?? '',
