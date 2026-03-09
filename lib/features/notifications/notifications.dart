@@ -58,7 +58,6 @@ class NotificationsCubit extends Cubit<NotificationsState> {
                 final data = doc.data() as Map<String, dynamic>?;
                 return data != null && !(data['is_read'] ?? false);
               }).length;
-
               emit(NotificationsLoaded(snapshot.docs, unreadCount));
             }
           },

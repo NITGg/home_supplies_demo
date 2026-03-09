@@ -65,7 +65,7 @@ class FaqManager {
 
   Future<void> loadFaqs() async {
     try {
-      final response = await _dio.get('/faqs?sort=sort_id&target_user=CUSTOMER&is_active=true');
+      final response = await _dio.get('/faqs?sort=sort_id?target_user[in]=["ALL", "CUSTOMER"]&is_active=true');
       if (response.statusCode == 200 && response.data['faqs'] != null) {
         _faqsResponse = FaqsResponse.fromJson(response.data);
         log('✅ FAQs loaded successfully');
