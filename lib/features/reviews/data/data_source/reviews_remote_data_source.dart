@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/reviews_model.dart';
 
 class ReviewsRemoteDataSource {
@@ -13,7 +14,7 @@ class ReviewsRemoteDataSource {
   }) async {
     try {
       final response = await _dio.get(
-        '/courier-reviews?lang=ar',
+        '/courier-reviews?lang=${LocaleManager.currentLocale}',
         queryParameters: {
           'skip': skip,
           'limit': limit,

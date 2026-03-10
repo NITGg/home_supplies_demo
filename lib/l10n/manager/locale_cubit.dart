@@ -41,3 +41,11 @@ class LocaleCubit extends Cubit<LocaleState> {
     emit(LocaleState(locale));
   }
 }
+
+class LocaleManager {
+  static late LocaleCubit cubit;
+  static String get currentLocale => cubit.state.locale.languageCode;
+
+  static bool get isArabic => cubit.state.locale.languageCode == 'ar';
+  static bool get isEnglish => cubit.state.locale.languageCode == 'en';
+}

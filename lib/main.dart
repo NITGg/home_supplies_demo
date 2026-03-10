@@ -331,8 +331,13 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => LocaleCubit(SecureStorageService())),
-        BlocProvider<AuthCubit>(
+        BlocProvider(
+          create: (_) {
+            final cubit = LocaleCubit(SecureStorageService());
+            LocaleManager.cubit = cubit;
+            return cubit;
+          },
+        ),        BlocProvider<AuthCubit>(
           create: (_) => AuthCubit(
             AuthRepository(AuthRemoteDataSource(), SecureStorageService()),
           ),

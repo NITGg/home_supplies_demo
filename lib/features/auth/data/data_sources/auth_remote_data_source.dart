@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/utils/api_client.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/auth_response_model.dart';
 import '../models/user_profile_model.dart';
 
@@ -18,8 +19,6 @@ class AuthRemoteDataSource {
     required String password,
     String? email,
   }) async {
-    final locale = AppLocalizations.of(context)?.localeName ?? 'en';
-
     final Map<String, dynamic> data = {
       'full_name': fullName,
       'phone': phone,
@@ -31,10 +30,10 @@ class AuthRemoteDataSource {
     }
 
     final response = await _dio.post(
-      '/auth/register?lang=ar',
+      '/auth/register?lang=${LocaleManager.currentLocale}',
       data: data,
       options: Options(
-        headers: {'Accept-Language': locale},
+        headers: {'Accept-Language': LocaleManager.currentLocale},
       ),
     );
 
@@ -47,13 +46,13 @@ class AuthRemoteDataSource {
     String locale = 'en',
   }) async {
     final response = await _dio.post(
-      '/auth/login?lang=ar',
+      '/auth/login?lang=${LocaleManager.currentLocale}',
       data: {
         'phone': phone,
         'password': password,
       },
       options: Options(
-        headers: {'Accept-Language': locale},
+        headers: {'Accept-Language': LocaleManager.currentLocale},
       ),
     );
 
@@ -62,7 +61,7 @@ class AuthRemoteDataSource {
 
   Future<ProfileResponseModel> getProfile(String token) async {
     final response = await _dio.get(
-      '/profile?lang=ar',
+      '/profile?lang=${LocaleManager.currentLocale}',
       options: Options(
         headers: {'Authorization': 'Bearer $token'},
       ),
@@ -73,7 +72,7 @@ class AuthRemoteDataSource {
 
   Future<DeleteProfileResponseModel> deleteProfile(String token) async {
     final response = await _dio.delete(
-      '/profile?lang=ar',
+      '/profile?lang=${LocaleManager.currentLocale}',
       options: Options(
         headers: {'Authorization': 'Bearer $token'},
       ),
@@ -84,7 +83,7 @@ class AuthRemoteDataSource {
 
   Future<LongAuthResponseModel> verifyGoogleToken(String idToken) async {
     final response = await _dio.post(
-      '/auth/google/verify?lang=ar',
+      '/auth/google/verify?lang=${LocaleManager.currentLocale}',
       data: {'idToken': idToken},
     );
 
@@ -98,7 +97,7 @@ class AuthRemoteDataSource {
       String? fullName,
       ) async {
     final response = await _dio.post(
-      '/auth/apple/verify?lang=ar',
+      '/auth/apple/verify?lang=${LocaleManager.currentLocale}',
       data: {
         'idToken': idToken,
         'fullname': fullName,
@@ -139,7 +138,7 @@ class AuthRemoteDataSource {
     }
 
     final response = await _dio.put(
-      '/profile?lang=ar',
+      '/profile?lang=${LocaleManager.currentLocale}',
       data: formData,
       options: Options(
         headers: {'Authorization': 'Bearer $token'},
@@ -164,7 +163,7 @@ class AuthRemoteDataSource {
     required String newPassword,
   }) async {
     final response = await _dio.patch(
-      '/api/profile/change-password?lang=ar', // Keep old endpoint if unchanged
+      '/api/profile/change-password?lang=${LocaleManager.currentLocale}', // Keep old endpoint if unchanged
       data: {
         'oldPassword': oldPassword,
         'newPassword': newPassword,

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/user_profile_model.dart';
 
 class ProfileRemoteDataSource {
@@ -12,7 +13,7 @@ class ProfileRemoteDataSource {
   Future<ProfileResponseModel> getProfile(String token) async {
     try {
       final response = await _dio.get(
-        '/profile?lang=ar',
+        '/profile?lang=${LocaleManager.currentLocale}',
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
@@ -41,7 +42,7 @@ class ProfileRemoteDataSource {
       if (lang != null) data['lang'] = lang;
 
       final response = await _dio.put(
-        '/profile',
+        '/profile?lang=${LocaleManager.currentLocale}',
         data: data,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
@@ -87,7 +88,7 @@ class ProfileRemoteDataSource {
       }
 
       final response = await _dio.put(
-        '/profile?lang=ar',
+        '/profile?lang=${LocaleManager.currentLocale}',
         data: formData,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},

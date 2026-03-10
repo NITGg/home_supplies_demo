@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/order_model.dart';
 import '../models/proposal_model.dart';
 import '../models/qr_model.dart';
@@ -35,7 +36,7 @@ class OrderRemoteDataSource {
         formData = FormData.fromMap(order.toJson());
       }
 
-      final response = await _dio.post('/orders', data: formData);
+      final response = await _dio.post('/orders?lang=${LocaleManager.currentLocale}', data: formData);
 
       log('Create order response: ${response.data}');
 
@@ -60,6 +61,7 @@ class OrderRemoteDataSource {
         queryParameters: {
           'skip': skip,
           'limit': limit,
+          'lang': LocaleManager.currentLocale,
           if (status != null) 'status': status,
         },
       );
@@ -79,7 +81,7 @@ class OrderRemoteDataSource {
       log('Cancelling order $orderId with reason: $reason');
 
       final response = await _dio.post(
-        '/orders/$orderId/cancel',
+        '/orders/$orderId/cancel?lang=${LocaleManager.currentLocale}',
         data: {'cancelled_reason': reason},
       );
 
@@ -96,7 +98,7 @@ class OrderRemoteDataSource {
   Future<ProposalsResponse> getOrderProposals(int orderId) async {
       log('Fetching proposals for order $orderId');
 
-      final response = await _dio.get('/orders/$orderId/proposals');
+      final response = await _dio.get('/orders/$orderId/proposals?lang=${LocaleManager.currentLocale}');
 
       log('Get proposals response: ${response.data}');
 
@@ -117,7 +119,7 @@ class OrderRemoteDataSource {
       log('Updating proposal $proposalId status to $status');
 
       final response = await _dio.put(
-        '/orders/$orderId/proposals/$proposalId',
+        '/orders/$orderId/proposals/$proposalId?lang=${LocaleManager.currentLocale}',
         data: {'status': status},
       );
 
@@ -143,7 +145,7 @@ class OrderRemoteDataSource {
       );
 
       final response = await _dio.post(
-        '/orders/confirm-delivery',
+        '/orders/confirm-delivery?lang=${LocaleManager.currentLocale}',
         data: request.toJson(),
       );
 
@@ -159,7 +161,7 @@ class OrderRemoteDataSource {
   // Validate coupon
   Future<Map<String, dynamic>> validateCoupon(String code) async {
     final response = await _dio.post(
-      '/customer-coupons/validate',
+      '/customer-coupons/validate?lang=${LocaleManager.currentLocale}',
       data: {'code': code},
     );
     if (response.statusCode == 200) {
@@ -177,7 +179,7 @@ class OrderRemoteDataSource {
     log('Responding to price adjustment for order $orderId with status: $status');
 
     final response = await _dio.put(
-      '/orders/$orderId/price-adjustment',
+      '/orders/$orderId/price-adjustment?lang=${LocaleManager.currentLocale}',
       data: {'status': status},
     );
 
@@ -193,7 +195,7 @@ class OrderRemoteDataSource {
 // Redeem coupon
   Future<Map<String, dynamic>> redeemCoupon(String code) async {
     final response = await _dio.post(
-      '/profile/wallet/coupon/redeem',
+      '/profile/wallet/coupon/redeem?lang=${LocaleManager.currentLocale}',
       data: {'code': code},
     );
     if (response.statusCode == 200) {

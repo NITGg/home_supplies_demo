@@ -4,6 +4,7 @@ import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/wallet_model.dart';
 import '../models/recharge_model.dart';
 
@@ -11,7 +12,7 @@ class WalletRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
 
   Future<WalletModel> getWalletData() async {
-    final response = await _dio.get('/profile/wallet?lang=ar');
+    final response = await _dio.get('/profile/wallet?lang=${LocaleManager.currentLocale}');
     if (response.statusCode == 200) {
       log(response.data.toString());
       return WalletModel.fromJson(response.data);
@@ -25,7 +26,7 @@ class WalletRemoteDataSource {
 
   Future<RechargeModel> initiateRecharge(int amountCents) async {
     final response = await _dio.post(
-      '/profile/wallet/recharge/initiate?lang=ar',
+      '/profile/wallet/recharge/initiate?lang=${LocaleManager.currentLocale}',
       data: {'amount_cents': amountCents.toString()},
     );
     if (response.statusCode == 201) {
