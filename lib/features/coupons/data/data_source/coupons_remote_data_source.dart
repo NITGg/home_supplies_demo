@@ -15,7 +15,7 @@ class CouponRemoteDataSourceImpl implements CouponRemoteDataSource {
   // Replace entire try/catch with nothing:
   Future<CouponsResponse> getCoupons({int page = 1, int limit = 20}) async {
     final response = await _apiClient.dio.get(
-      '/customer-coupons',
+      '/customer-coupons?lang=ar',
       queryParameters: {'page': page, 'limit': limit},
     );
     return CouponsResponse.fromJson(response.data as Map<String, dynamic>);

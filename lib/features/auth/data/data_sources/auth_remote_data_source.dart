@@ -31,7 +31,7 @@ class AuthRemoteDataSource {
     }
 
     final response = await _dio.post(
-      '/auth/register',
+      '/auth/register?lang=ar',
       data: data,
       options: Options(
         headers: {'Accept-Language': locale},
@@ -47,7 +47,7 @@ class AuthRemoteDataSource {
     String locale = 'en',
   }) async {
     final response = await _dio.post(
-      '/auth/login',
+      '/auth/login?lang=ar',
       data: {
         'phone': phone,
         'password': password,
@@ -62,7 +62,7 @@ class AuthRemoteDataSource {
 
   Future<ProfileResponseModel> getProfile(String token) async {
     final response = await _dio.get(
-      '/profile',
+      '/profile?lang=ar',
       options: Options(
         headers: {'Authorization': 'Bearer $token'},
       ),
@@ -73,7 +73,7 @@ class AuthRemoteDataSource {
 
   Future<DeleteProfileResponseModel> deleteProfile(String token) async {
     final response = await _dio.delete(
-      '/profile',
+      '/profile?lang=ar',
       options: Options(
         headers: {'Authorization': 'Bearer $token'},
       ),
@@ -84,7 +84,7 @@ class AuthRemoteDataSource {
 
   Future<LongAuthResponseModel> verifyGoogleToken(String idToken) async {
     final response = await _dio.post(
-      '/auth/google/verify',
+      '/auth/google/verify?lang=ar',
       data: {'idToken': idToken},
     );
 
@@ -98,7 +98,7 @@ class AuthRemoteDataSource {
       String? fullName,
       ) async {
     final response = await _dio.post(
-      '/auth/apple/verify',
+      '/auth/apple/verify?lang=ar',
       data: {
         'idToken': idToken,
         'fullname': fullName,
@@ -139,7 +139,7 @@ class AuthRemoteDataSource {
     }
 
     final response = await _dio.put(
-      '/profile',
+      '/profile?lang=ar',
       data: formData,
       options: Options(
         headers: {'Authorization': 'Bearer $token'},
@@ -164,7 +164,7 @@ class AuthRemoteDataSource {
     required String newPassword,
   }) async {
     final response = await _dio.patch(
-      '/api/profile/change-password', // Keep old endpoint if unchanged
+      '/api/profile/change-password?lang=ar', // Keep old endpoint if unchanged
       data: {
         'oldPassword': oldPassword,
         'newPassword': newPassword,

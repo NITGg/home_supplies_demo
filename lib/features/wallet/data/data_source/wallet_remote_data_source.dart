@@ -11,7 +11,7 @@ class WalletRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
 
   Future<WalletModel> getWalletData() async {
-    final response = await _dio.get('/profile/wallet');
+    final response = await _dio.get('/profile/wallet?lang=ar');
     if (response.statusCode == 200) {
       log(response.data.toString());
       return WalletModel.fromJson(response.data);
@@ -25,7 +25,7 @@ class WalletRemoteDataSource {
 
   Future<RechargeModel> initiateRecharge(int amountCents) async {
     final response = await _dio.post(
-      '/profile/wallet/recharge/initiate',
+      '/profile/wallet/recharge/initiate?lang=ar',
       data: {'amount_cents': amountCents.toString()},
     );
     if (response.statusCode == 201) {

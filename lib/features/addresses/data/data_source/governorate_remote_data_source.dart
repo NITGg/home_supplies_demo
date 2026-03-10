@@ -6,7 +6,7 @@ class GovernorateRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
 
   Future<GovernoratesResponse> getGovernoratesWithAreas() async {
-    final response = await _dio.get('/governorates?includes=areas');
+    final response = await _dio.get('/governorates?includes=areas?lang=ar');
     if (response.statusCode == 200) {
       return GovernoratesResponse.fromJson(response.data);
     }

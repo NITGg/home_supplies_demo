@@ -12,7 +12,7 @@ class ProfileRemoteDataSource {
   Future<ProfileResponseModel> getProfile(String token) async {
     try {
       final response = await _dio.get(
-        '/profile',
+        '/profile?lang=ar',
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
@@ -87,7 +87,7 @@ class ProfileRemoteDataSource {
       }
 
       final response = await _dio.put(
-        '/profile',
+        '/profile?lang=ar',
         data: formData,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
