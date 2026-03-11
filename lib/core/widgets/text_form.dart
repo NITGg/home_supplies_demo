@@ -221,12 +221,16 @@ String normalizeEgyptPhone(String phone) {
   phone = phone.trim();
 
   if (phone.startsWith('+200')) {
-    return phone.replaceFirst('+200', '0');
+    return '+2${phone.substring(3)}'; // "+2" + "01145862131" = "+201145862131" ✓
   }
 
   if (phone.startsWith('+20')) {
-    return phone.replaceFirst('+20', '0');
+    return phone;
   }
 
-  return '+2$phone';
+  if (phone.startsWith('01')) {
+    return '+20${phone.substring(1)}';
+  }
+
+  return phone;
 }
