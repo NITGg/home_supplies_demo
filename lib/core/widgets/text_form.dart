@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../style/app_colors.dart';
 
 class AppTextFormField extends StatefulWidget {
@@ -53,9 +54,11 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
     _focusNode = widget.focusNode ?? FocusNode();
 
     _focusNode.addListener(() {
-      setState(() {
-        _isFocused = _focusNode.hasFocus;
-      });
+      if (mounted) {
+        setState(() {
+          _isFocused = _focusNode.hasFocus;
+        });
+      }
     });
   }
 
@@ -86,9 +89,11 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
     }
 
     if (widget.isPhone) {
-      final phoneRegex = RegExp(r'^01[0-2,5]{1}[0-9]{8}$');
+      final phoneRegex = RegExp(
+        r'^(01[0-2,5][0-9]{8}|\+201[0-2,5][0-9]{8}|\+2001[0-2,5][0-9]{8})$',
+      );
       if (!phoneRegex.hasMatch(value.trim())) {
-        return 'Enter a valid Egyptian phone number';
+        return AppLocalizations.of(context)?.invalidPhoneNumber;
       }
     }
 
@@ -120,6 +125,9 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
         ],
       ),
       child: TextFormField(
+        textDirection: (widget.isPassword || widget.isPhone || widget.isEmail)
+            ? TextDirection.ltr
+            : null,
         onChanged: widget.onChanged,
         textInputAction: widget.textInputAction,
         onFieldSubmitted: widget.onFieldSubmitted,
@@ -131,7 +139,9 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
         keyboardType: widget.isPhone
             ? TextInputType.phone
             : widget.keyboardType,
-        inputFormatters: widget.keyboardType == TextInputType.number
+        inputFormatters: widget.isPhone
+            ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9+]'))]
+            : widget.keyboardType == TextInputType.number
             ? [FilteringTextInputFormatter.digitsOnly]
             : null,
         validator: widget.validator ?? _defaultValidate,
@@ -205,4 +215,18 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
       ),
     );
   }
+}
+
+String normalizeEgyptPhone(String phone) {
+  phone = phone.trim();
+
+  if (phone.startsWith('+200')) {
+    return phone.replaceFirst('+200', '0');
+  }
+
+  if (phone.startsWith('+20')) {
+    return phone.replaceFirst('+20', '0');
+  }
+
+  return '+2$phone';
 }

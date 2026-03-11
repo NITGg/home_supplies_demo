@@ -65,10 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      String phone = phoneController.text;
-      if (!phone.startsWith('+2')) {
-        phone = '+2$phone';
-      }
+      String phone = normalizeEgyptPhone(phoneController.text.trim());
 
       context.read<AuthCubit>().register(
         context: context,

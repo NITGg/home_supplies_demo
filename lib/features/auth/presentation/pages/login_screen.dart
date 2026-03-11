@@ -120,7 +120,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             AppTextFormField(
                               textInputAction: TextInputAction.next,
                               onFieldSubmitted: (_) {
-                                FocusScope.of(context).requestFocus(passwordFocus);
+                                FocusScope.of(
+                                  context,
+                                ).requestFocus(passwordFocus);
                               },
                               focusNode: phoneFocus,
                               controller: phoneController,
@@ -142,8 +144,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               textInputAction: TextInputAction.done,
                               onFieldSubmitted: (_) {
                                 if (_formKey.currentState!.validate()) {
-                                  String phone = phoneController.text.trim();
-                                  if (!phone.startsWith('+2')) phone = '+2$phone';
+                                  String phone = normalizeEgyptPhone(
+                                    phoneController.text.trim(),
+                                  );
 
                                   context.read<AuthCubit>().login(
                                     phone: phone,
