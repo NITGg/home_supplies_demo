@@ -373,6 +373,18 @@ class _MyAppState extends State<MyApp> {
             child: MaterialApp.router(
               routerConfig: widget.router,
               debugShowCheckedModeBanner: false,
+              builder: (context, child) {
+                final mediaQuery = MediaQuery.of(context);
+
+                return MediaQuery(
+                  data: mediaQuery.copyWith(
+                    textScaler: mediaQuery.textScaler.clamp(
+                      maxScaleFactor: 1.1,
+                    ),
+                  ),
+                  child: child!,
+                );
+              },
               localizationsDelegates: const [
                 AppLocalizations.delegate,
                 GlobalMaterialLocalizations.delegate,

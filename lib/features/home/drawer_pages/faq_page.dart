@@ -43,6 +43,9 @@ class _FaqPageState extends State<FaqPage> {
           centerTitle: true,
           automaticallyImplyLeading: false,
           backgroundColor: AppColors.kPrimaryColor,
+          leading: BackButton(color:
+            Colors.black,
+          ),
         ),
         body: Column(
           children: [
@@ -101,6 +104,9 @@ class _FaqPageState extends State<FaqPage> {
         title: Text(AppLocalizations.of(context)!.faq),
         centerTitle: true,
         automaticallyImplyLeading: false,
+        leading: BackButton(color:
+        Colors.black,
+        ),
         backgroundColor: AppColors.kPrimaryColor,
       ),
       body: Column(

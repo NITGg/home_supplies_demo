@@ -19,6 +19,9 @@ class PrivacyPage extends StatelessWidget {
         : AppInfoManager().data!.privacyPolicy;
 
     return Scaffold(
+      appBar: AppBar(
+        leading: BackButton(color: Colors.black,),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Directionality(
