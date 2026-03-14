@@ -138,10 +138,22 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
           },
           onNext: (GeocodingResult? result) {
             if (result != null) {
+
+              String? administrativeArea;
+
+              for (final component in result.addressComponents ?? []) {
+                if (component.types.contains('administrative_area_level_1') ||
+                    component.types.contains('administrative_area_level_2')) {
+                  administrativeArea = component.longName;
+                  break;
+                }
+              }
+
               Navigator.pop(context, {
                 'latitude':  result.geometry?.location.lat.toString() ?? '',
                 'longitude': result.geometry?.location.lng.toString() ?? '',
                 'address':   result.formattedAddress ?? '',
+                'administrativeArea': administrativeArea ?? '',
               });
             }
           },

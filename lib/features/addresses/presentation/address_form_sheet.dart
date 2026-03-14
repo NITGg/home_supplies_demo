@@ -44,6 +44,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
 
   late final GovernorateCubit _governorateCubit; // ← ADD
   GovernoratesResponse? _governoratesResponse;
+  String? _pickedAdministrativeArea;
 
   int? _selectedAreaId;
   bool _isDefault = false;
@@ -99,6 +100,9 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
       setState(() {
         _latController.text = result['latitude'] ?? '';
         _longController.text = result['longitude'] ?? '';
+        _pickedAdministrativeArea = result['administrativeArea']; // ← ADD
+
+        log('📍 Location picked: ${result['administrativeArea']} - area selected : ${_governoratesResponse!.findAreaById(_selectedAreaId!)?.nameAr}');
 
         if (_detailedAddressController.text.isEmpty &&
             result['address'] != null &&
@@ -134,56 +138,98 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
         return;
       }
 
-      // ── Boundary validation ───────────────────────────────────────────────
+      // ── Validation ────────────────────────────────────────────────────────
       if (_governoratesResponse != null && _selectedAreaId != null) {
         final area = _governoratesResponse!.findAreaById(_selectedAreaId!);
 
-        log('🗺️ Boundary validation start');
+        log('🗺️ Validation start');
         log('   selectedAreaId : $_selectedAreaId');
-        log('   area found     : ${area != null ? "yes (id=${area.id}, name=${area.name})" : "NO — findAreaById returned null"}');
+        log('   area found     : ${area != null ? "yes (id=${area.id}, name=${area.name})" : "NO"}');
 
         if (area != null) {
           final lat = double.tryParse(_latController.text.trim());
           final lng = double.tryParse(_longController.text.trim());
 
-          log('   pin lat        : $lat');
-          log('   pin lng        : $lng');
-          log('   boundaries     : ${area.boundaries}');
+          log('   pin lat    : $lat');
+          log('   pin lng    : $lng');
 
           if (lat != null && lng != null) {
-            final isInside = AreaBoundaryValidator.isPointInArea(
-              lat: lat,
-              lng: lng,
-              boundaries: area.boundaries,
-            );
 
-            log('   isInside       : $isInside');
+            // ── Step 1: Name check ──────────────────────────────────────────
+            bool nameMatches = false;
 
-            if (!isInside) {
-              log('🚫 Rejected — pin is outside area boundaries');
-              Fluttertoast.showToast(
-                msg: AppLocalizations.of(context)!.addressOutsideArea,
-                toastLength: Toast.LENGTH_LONG,
-                gravity: ToastGravity.BOTTOM,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
-              );
-              return;
+            if (_pickedAdministrativeArea != null &&
+                _pickedAdministrativeArea!.isNotEmpty) {
+              final pickedNormalized = _pickedAdministrativeArea!
+                  .toLowerCase()
+                  .replaceAll(' ', '');
+              final areaNameAr = area.nameAr
+                  .toLowerCase()
+                  .replaceAll(' ', '');
+              final areaNameEn = area.name
+                  .toLowerCase()
+                  .replaceAll(' ', '');
+
+              final matchesAr = areaNameAr.contains(pickedNormalized) ||
+                  pickedNormalized.contains(areaNameAr);
+              final matchesEn = areaNameEn.contains(pickedNormalized) ||
+                  pickedNormalized.contains(areaNameEn);
+
+              nameMatches = matchesAr || matchesEn;
+
+              log('   Step 1 — name check:');
+              log('   picked     : "$_pickedAdministrativeArea" → "$pickedNormalized"');
+              log('   nameAr     : "$areaNameAr" → matches: $matchesAr');
+              log('   nameEn     : "$areaNameEn" → matches: $matchesEn');
+              log('   nameMatches: $nameMatches');
+            } else {
+              log('   Step 1 — name check: skipped (no administrativeArea from map)');
             }
 
-            log('✅ Pin is inside area — proceeding to save');
+            // ── Step 2: Boundary check (only if name didn't match) ──────────
+            if (!nameMatches) {
+              log('   Step 2 — name did not match, falling back to boundary check');
+              log('   boundaries : ${area.boundaries}');
+
+              final isInside = AreaBoundaryValidator.isPointInArea(
+                lat: lat,
+                lng: lng,
+                boundaries: area.boundaries,
+              );
+
+              log('   isInside   : $isInside');
+
+              if (!isInside) {
+                log('🚫 Rejected — name mismatch AND outside boundaries');
+                Fluttertoast.showToast(
+                  msg: AppLocalizations.of(context)!.addressOutsideArea,
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.BOTTOM,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                );
+                return;
+              }
+
+              log('✅ Name did not match but pin is inside boundaries — accepted');
+            } else {
+              log('✅ Name matched — skipping boundary check');
+            }
+
+            log('✅ Validation passed — proceeding to save');
+
           } else {
-            log('⚠️ Could not parse lat/lng — skipping boundary check');
+            log('⚠️ Could not parse lat/lng — skipping validation');
           }
         } else {
-          log('⚠️ Area not found in governoratesResponse — skipping boundary check');
-          log('   available area ids: ${_governoratesResponse!.governorates.expand((g) => g.areas).map((a) => a.id).toList()}');
+          log('⚠️ Area not found — skipping validation');
+          log('   available ids: ${_governoratesResponse!.governorates.expand((g) => g.areas).map((a) => a.id).toList()}');
         }
       } else {
-        log('⚠️ Boundary check skipped — governoratesResponse=${_governoratesResponse != null ? "loaded" : "NULL"}, selectedAreaId=$_selectedAreaId');
+        log('⚠️ Validation skipped — governoratesResponse=${_governoratesResponse != null ? "loaded" : "NULL"}, selectedAreaId=$_selectedAreaId');
       }
 
-      // ── Build address object ──────────────────────────────────────────────
+      // ── Build address object ────────────────────────────────────────────────
       final address = Address(
         id: widget.address?.id,
         areaId: _selectedAreaId!,
