@@ -17,7 +17,9 @@ class AppInfoModel {
   final String visionAr;
   final String digitalCard;
   final String digitalCardAr;
-  final String supportPhone;
+  final String supportNumber;
+  final String instaPayNumber;
+  final String vodafonCashNumber;
   final String email;
   final String facebook;
   final String instagram;
@@ -45,7 +47,6 @@ class AppInfoModel {
     required this.visionAr,
     required this.digitalCard,
     required this.digitalCardAr,
-    required this.supportPhone,
     required this.email,
     required this.facebook,
     required this.instagram,
@@ -58,6 +59,9 @@ class AppInfoModel {
     required this.twitter,
     required this.whatsapp,
     required this.youtube,
+    required this.supportNumber,
+    required this.instaPayNumber,
+    required this.vodafonCashNumber,
   });
 
   factory AppInfoModel.fromJson(Map<String, dynamic> json) {
@@ -75,7 +79,9 @@ class AppInfoModel {
       visionAr: json['vision_ar'] ?? '',
       digitalCard: json['digital_card'] ?? '',
       digitalCardAr: json['digital_card_ar'] ?? '',
-      supportPhone: json['customer_support_number'] ?? '',
+      supportNumber: json['customer_support_number'] ?? '',
+      instaPayNumber: json['instapay_number'] ?? '',
+      vodafonCashNumber: json['vodafon_cash_number'] ?? '',
       email: json['email'] ?? '',
       facebook: json['facebook'] ?? '',
       instagram: json['instagram'] ?? '',

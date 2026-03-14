@@ -13,7 +13,7 @@ class SocialAuthButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 50.0),
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: Column(
         spacing: 20,
         mainAxisAlignment: MainAxisAlignment.center,

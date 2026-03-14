@@ -200,18 +200,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         '${AppLocalizations.of(context)!.phone} *',
                                     controller: phoneController,
                                     isPhone: true,
-                                    validator: (v) {
-                                      if (v!.isEmpty) {
-                                        return AppLocalizations.of(
-                                          context,
-                                        )!.enterPhoneNumber;
-                                      } else if (v.length < 9) {
-                                        return AppLocalizations.of(
-                                          context,
-                                        )!.invalidPhoneNumber;
-                                      }
-                                      return null;
-                                    },
                                   ),
                                   const SizedBox(height: 18),
                                   AppTextFormField(
@@ -262,7 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 16),
                             Text(
                               AppLocalizations.of(context)!.orRegisterwith,
                               style: AppTextStyles.regular14.copyWith(
@@ -271,6 +259,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const SizedBox(height: 16),
                             const SocialAuthButtons(),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(AppLocalizations.of(context)!.iAgreeTo, style: AppTextStyles.regular14),
+                                const SizedBox(width: 4),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    AppTextButton(
+                                      text: AppLocalizations.of(context)!.termsAndConditions,
+                                      color: AppColors.kPrimaryColor,
+                                      underline: true,
+                                      onPressed: () => context.push('/Terms'),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                                      child: Text('&', style: AppTextStyles.regular14),
+                                    ),
+                                    AppTextButton(
+                                      text: AppLocalizations.of(context)!.privecyPolicy,
+                                      color: AppColors.kPrimaryColor,
+                                      underline: true,
+                                      onPressed: () => context.push('/PrivacyPage'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+
                           ],
                         ),
                       ),

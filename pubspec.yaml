@@ -74,6 +74,7 @@ dependencies:
   retrofit: 4.8.0
   socket_io_client: ^3.1.4
   flutter_html: ^3.0.0
+  floating_draggable_widget: ^2.3.0
 
 dev_dependencies:
   flutter_test:

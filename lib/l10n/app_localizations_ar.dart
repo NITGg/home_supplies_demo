@@ -1191,5 +1191,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get km => 'كم';
 
   @override
+  String get iAgreeTo => 'بالتسجيل أو إنشاء حساب أنت توافق على';
+
+  @override
+  String get okay => 'Ok';
+
+  @override
+  String get pickupAddressOutOfArea => 'عنوان الاستلام خارج المنطقة';
+
+  @override
+  String get deliveryAddressOutOfArea => 'عنوان التوصيل خارج المنطقة';
+
+  @override
+  String get addressOutsideArea => 'الموقع المحدد خارج النطاق المختار. يرجى اختيار موقع داخل المنطقة المحددة.';
+
+  @override
   String get ratingExcellent => 'ممتاز';
 }

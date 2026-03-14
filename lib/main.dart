@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:floating_draggable_widget/floating_draggable_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tawreedat_go/features/addresses/data/repo/address_repo.dart';
 import 'package:tawreedat_go/features/orders/manager/order_cubit.dart';
 import 'package:tawreedat_go/features/wallet/manager/wallet_cubit.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'core/connectivity/connectivity_manager.dart';
 import 'core/connectivity/network_aware_widget.dart';
 import 'core/connectivity/offline_screen.dart';
@@ -25,6 +27,7 @@ import 'core/utils/app_dynamic_settings.dart';
 import 'core/utils/constants.dart';
 import 'core/utils/secure_storage_service.dart';
 import 'core/style/app_colors.dart';
+import 'core/widgets/animated_support_fab.dart';
 import 'core/widgets/loading_screen.dart';
 import 'features/addresses/data/data_source/address_remote_data_source.dart';
 import 'features/addresses/manager/address_cubit.dart';
@@ -33,7 +36,9 @@ import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/data/repositories/profile_repository.dart';
 import 'features/auth/manager/profile_cubit.dart';
 import 'features/deep_links/deep_link_manager.dart';
+import 'features/home/layout/manager/home_cubit.dart';
 import 'features/notifications/manager/notification_services.dart';
+import 'features/notifications/notifications.dart';
 import 'features/static_text/app_dynamic_info.dart';
 import 'features/wallet/data/data_source/wallet_remote_data_source.dart';
 import 'features/wallet/data/repositories/wallet_repo.dart';
@@ -43,17 +48,21 @@ import 'features/auth/manager/auth_cubit.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/manager/locale_cubit.dart';
 
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+final ValueNotifier<bool> showFloatingButton = ValueNotifier(true);
+
+/// Payload from a notification tap that arrived before the home screen was
+/// ready. HomeLayout checks this on first build and consumes it.
 Map<String, dynamic>? pendingNotificationData;
+
+/// Set to true to show the notifications dialog once HomeLayout is mounted.
 bool shouldShowNotificationDialog = false;
 
-// ✅ Background message handler (MUST be top-level function)
+// ── Background message handler (must be top-level) ────────────────────────────
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   log('📬 Background message received: ${message.messageId}');
-  log('Title: ${message.notification?.title}');
-  log('Body: ${message.notification?.body}');
 }
 
 Future<void> main() async {
@@ -121,63 +130,41 @@ Future<void> main() async {
   );
 }
 
-/// Initialize Firebase with proper error handling for iOS simulator
 Future<void> _initializeFirebase() async {
   try {
     await Firebase.initializeApp();
     log('✅ Firebase initialized successfully');
   } catch (e) {
     log('⚠️ Firebase initialization failed: $e');
-
-    // Check if it's a specific iOS simulator error
     if (e.toString().contains('FirebaseApp') ||
         e.toString().contains('duplicate') ||
         e.toString().contains('no Firebase App')) {
-      // Try to get the default app (might already be initialized)
       try {
         final app = Firebase.app();
         log('✅ Firebase app already exists: ${app.name}');
         return;
       } catch (_) {
-        // App doesn't exist, log and continue without Firebase
         log('⚠️ Running without Firebase services');
       }
     }
-
-    // For iOS simulator specific issues
-    if (defaultTargetPlatform == TargetPlatform.iOS && kDebugMode) {
-      log('⚠️ iOS Simulator detected - Firebase may not be fully configured');
-      log('💡 Ensure GoogleService-Info.plist is present in ios/Runner/');
-    }
-
-    // Don't rethrow - allow app to continue without Firebase
-    // If your app absolutely requires Firebase, uncomment the line below:
-    // rethrow;
   }
 }
 
-/// Initialize Notification Services
 Future<void> _initializeNotifications() async {
   try {
-    // ✅ Initialize local notifications
     await NotificationService.initialize();
     log('✅ Local notifications initialized');
-
-    // ✅ Initialize Firebase Messaging
     await _initializeFirebaseMessaging();
     log('✅ Firebase Messaging initialized');
   } catch (e) {
     log('⚠️ Notification initialization failed: $e');
-    // Continue app initialization even if notifications fail
   }
 }
 
-/// Initialize Firebase Cloud Messaging
 Future<void> _initializeFirebaseMessaging() async {
   try {
     final messaging = FirebaseMessaging.instance;
 
-    // ✅ Request permission for iOS
     final settings = await messaging.requestPermission(
       alert: true,
       badge: true,
@@ -187,22 +174,20 @@ Future<void> _initializeFirebaseMessaging() async {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       log('✅ User granted notification permission');
-    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
       log('⚠️ User granted provisional notification permission');
     } else {
       log('❌ User declined notification permission');
       return;
     }
 
-    // ✅ Get FCM token (just log it here — actual registration happens after login via AuthCubit)
     final token = await messaging.getToken();
     log('📱 FCM Token: $token');
 
-    // ✅ When FCM rotates the token, re-send it to the backend if user is logged in
     messaging.onTokenRefresh.listen((newToken) async {
       log('🔄 FCM Token refreshed: $newToken');
       try {
-        // kAuthtoken is set by AuthCubit after login — only POST if user is authenticated
         if (kAuthtoken.isNotEmpty) {
           await ApiClient.instance.dio.post(
             '/api/users/fcm-token',
@@ -216,16 +201,11 @@ Future<void> _initializeFirebaseMessaging() async {
       }
     });
 
-    // ✅ Handle background messages
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // ✅ Handle foreground messages
+    // Foreground FCM messages → show local notification
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      log('📬 Foreground message received: ${message.messageId}');
-      log('Title: ${message.notification?.title}');
-      log('Body: ${message.notification?.body}');
-      log('Data: ${message.data}');
-
+      log('📬 Foreground message: ${message.messageId}');
       if (message.notification != null) {
         NotificationService.showNotification(
           message.notification!.title ?? 'New Notification',
@@ -235,16 +215,17 @@ Future<void> _initializeFirebaseMessaging() async {
       }
     });
 
-    // ✅ Handle notification tap when app is in background
+    // App was in background — user tapped the system notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      log('🔔 Notification tapped (app in background): ${message.messageId}');
+      log('🔔 Notification tapped (background): ${message.messageId}');
       handleNotificationTap(message.data);
     });
 
-    // ✅ Handle notification tap when app was terminated
+    // App was terminated — user tapped the system notification
     final initialMessage = await messaging.getInitialMessage();
     if (initialMessage != null) {
-      log('App opened from terminated via notification');
+      log('🚀 App opened from terminated state via notification');
+      // Store as pending; HomeLayout will consume it after mounting.
       pendingNotificationData = initialMessage.data;
     }
   } catch (e) {
@@ -252,17 +233,63 @@ Future<void> _initializeFirebaseMessaging() async {
   }
 }
 
-/// Handle notification tap navigation
+/// Central entry-point for ALL notification taps (FCM background/terminated,
+/// local notification tap from the OS notification centre).
+///
+/// Strategy:
+///   • Navigate to /mainHome so HomeLayout is on screen.
+///   • Store the payload so HomeLayout (or the dialog) can act on it.
+///   • Set [shouldShowNotificationDialog] = true so HomeLayout opens the dialog.
 void handleNotificationTap(Map<String, dynamic> data) {
-  log('Handling notification tap: $data');
-  log('Navigator ready: ${_rootNavigatorKey.currentContext != null}');
+  log('🔔 handleNotificationTap called');
+  log('📦 Raw payload: $data');
+
+  // Always store so HomeLayout cold-start path still works
+  pendingNotificationData = data;
   shouldShowNotificationDialog = true;
-  final context = _rootNavigatorKey.currentContext;
+
+  final context = rootNavigatorKey.currentContext;
+
   if (context == null) {
-    log('Context not ready. Skipping tap handling.');
+    log('⚠️ Context NULL — stored as pending, HomeLayout will consume it');
     return;
   }
-  context.go('/mainHome');
+
+  final currentUri = GoRouter.of(
+    context,
+  ).routerDelegate.currentConfiguration.uri.toString();
+  log('🧭 Current route: $currentUri');
+
+  if (currentUri == '/mainHome') {
+    // Already on home — show the dialog directly
+    log('🏠 Already on /mainHome — showing dialog directly');
+    shouldShowNotificationDialog = false;
+    pendingNotificationData = null;
+
+    HomeCubit? homeCubit;
+    try {
+      homeCubit = context.read<HomeCubit>();
+    } catch (e) {
+      log('⚠️ HomeCubit not found: $e');
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (rootNavigatorKey.currentContext?.mounted ?? false) {
+        final ctx = rootNavigatorKey.currentContext!;
+        final profile = ctx.read<ProfileCubit>().currentProfile;
+        final userId = profile?.id.toString() ?? '';
+        log('🎯 Showing dialog for userId: $userId');
+        showNotificationsDialog(ctx, userId);
+      }
+    });
+  } else if (currentUri == '/splash' || currentUri == '/') {
+    // App is still booting — HomeLayout will consume pendingNotificationData
+    log('⏳ App initialising — dialog will show after HomeLayout mounts');
+  } else {
+    // On login / onboarding / any other known route — navigate home
+    log('🚀 Navigating to /mainHome');
+    context.go('/mainHome');
+  }
 }
 
 // ✅ Wrapper widget to create router after initialization
@@ -272,7 +299,7 @@ class MyAppWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<GoRouter>(
-      future: createAppRouter(rootNavigatorKey: _rootNavigatorKey),
+      future: createAppRouter(rootNavigatorKey: rootNavigatorKey),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return MaterialApp(
@@ -337,7 +364,8 @@ class _MyAppState extends State<MyApp> {
             LocaleManager.cubit = cubit;
             return cubit;
           },
-        ),        BlocProvider<AuthCubit>(
+        ),
+        BlocProvider<AuthCubit>(
           create: (_) => AuthCubit(
             AuthRepository(AuthRemoteDataSource(), SecureStorageService()),
           ),
@@ -368,61 +396,108 @@ class _MyAppState extends State<MyApp> {
       ],
       child: BlocBuilder<LocaleCubit, LocaleState>(
         builder: (context, state) {
-          return NetworkAwareWidget(
-            offlineWidget: OfflineScreen(),
-            child: MaterialApp.router(
-              routerConfig: widget.router,
-              debugShowCheckedModeBanner: false,
-              builder: (context, child) {
-                final mediaQuery = MediaQuery.of(context);
+          return Directionality(
+            textDirection: state.locale.languageCode == 'ar'
+                ? TextDirection.rtl
+                : TextDirection.ltr,
+            child: ValueListenableBuilder<bool>(
+              valueListenable: showFloatingButton,
+              builder: (context, show, child) {
+                final mainScreenWidget= NetworkAwareWidget(
+                  offlineWidget: OfflineScreen(),
+                  child: MaterialApp.router(
+                    routerConfig: widget.router,
+                    debugShowCheckedModeBanner: false,
+                    builder: (context, child) {
+                      final mediaQuery = MediaQuery.of(context);
 
-                return MediaQuery(
-                  data: mediaQuery.copyWith(
-                    textScaler: mediaQuery.textScaler.clamp(
-                      maxScaleFactor: 1.1,
+                      return MediaQuery(
+                        data: mediaQuery.copyWith(
+                          textScaler: mediaQuery.textScaler.clamp(
+                            maxScaleFactor: 1.1,
+                          ),
+                        ),
+                        child: child!,
+                      );
+                    },
+                    localizationsDelegates: const [
+                      AppLocalizations.delegate,
+                      GlobalMaterialLocalizations.delegate,
+                      GlobalWidgetsLocalizations.delegate,
+                      GlobalCupertinoLocalizations.delegate,
+                    ],
+                    supportedLocales: const [Locale('en'), Locale('ar')],
+                    locale: state.locale,
+                    title: 'Tawreedat',
+                    theme: ThemeData(
+                      pageTransitionsTheme: PageTransitionsTheme(
+                        builders: {
+                          TargetPlatform.android:
+                          CupertinoPageTransitionsBuilder(),
+                          TargetPlatform.iOS:
+                          CupertinoPageTransitionsBuilder(),
+                        },
+                      ),
+                      cupertinoOverrideTheme: const CupertinoThemeData(
+                        primaryColor: AppColors.kSecondaryColor,
+                      ),
+                      appBarTheme: AppBarTheme(
+                        backgroundColor: AppColors.kBackgroundColor,
+                        elevation: 0,
+                      ),
+                      elevatedButtonTheme: ElevatedButtonThemeData(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.kSecondaryColor,
+                          foregroundColor: AppColors.kPrimaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                      ),
+                      scaffoldBackgroundColor: AppColors.kBackgroundColor,
+                      textTheme: Theme.of(
+                        context,
+                      ).textTheme.apply(fontFamily: 'Cairo'),
+                      primaryColor: AppColors.kPrimaryColor,
                     ),
                   ),
-                  child: child!,
+                );
+                if (!show) {
+                  // On map screen — render without FloatingDraggableWidget entirely
+                  return mainScreenWidget;
+                }
+                return FloatingDraggableWidget(
+                  floatingWidget: show
+                      ? Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.kSecondaryColor.withValues(
+                              alpha: 0.8,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () {
+                              launchUrl(
+                                Uri.parse(
+                                  "https://wa.me/${AppInfoManager().data!.supportNumber.replaceAll(' ', '')}",
+                                ),
+                                mode: LaunchMode.externalApplication,
+                              );
+                            },
+                            child: AnimatedFAB(),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                  // ← invisible, no gesture surface
+                  floatingWidgetWidth: show ? 40 : 0,
+                  floatingWidgetHeight: show ? 40 : 0,
+                  dy: 400,
+                  autoAlign: true,
+                  autoAlignType: AlignmentType.both,
+                  mainScreenWidget: mainScreenWidget,
                 );
               },
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              supportedLocales: const [Locale('en'), Locale('ar')],
-              locale: state.locale,
-              title: 'Tawreedat',
-              theme: ThemeData(
-                pageTransitionsTheme: PageTransitionsTheme(
-                  builders: {
-                    TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-                    TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-                  },
-                ),
-                cupertinoOverrideTheme: const CupertinoThemeData(
-                  primaryColor: AppColors.kSecondaryColor,
-                ),
-                appBarTheme: AppBarTheme(
-                  backgroundColor: AppColors.kBackgroundColor,
-                  elevation: 0,
-                ),
-                elevatedButtonTheme: ElevatedButtonThemeData(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.kSecondaryColor,
-                    foregroundColor: AppColors.kPrimaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                ),
-                scaffoldBackgroundColor: AppColors.kBackgroundColor,
-                textTheme: Theme.of(
-                  context,
-                ).textTheme.apply(fontFamily: 'Cairo'),
-                primaryColor: AppColors.kPrimaryColor,
-              ),
             ),
           );
         },

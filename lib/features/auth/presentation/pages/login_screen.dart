@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tawreedat_go/core/widgets/banners.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
@@ -79,6 +80,9 @@ class _LoginScreenState extends State<LoginScreen> {
             }
             // Navigate to OTP verification screen
             context.push('/auth/verify-otp', extra: state.phone);
+          } else if (state is AuthRoleNotAllowed) {
+            showErrorBanner(context, state.message);
+            context.pop();
           } else if (state is AuthSuccess) {
             if (Navigator.of(context, rootNavigator: true).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
@@ -212,6 +216,47 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
 
                       const SizedBox(height: 24),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context)!.iAgreeTo,
+                            style: AppTextStyles.regular14,
+                          ),
+                          const SizedBox(width: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              AppTextButton(
+                                text: AppLocalizations.of(
+                                  context,
+                                )!.termsAndConditions,
+                                color: AppColors.kPrimaryColor,
+                                underline: true,
+                                onPressed: () => context.push('/Terms'),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                child: Text(
+                                  '&',
+                                  style: AppTextStyles.regular14,
+                                ),
+                              ),
+                              AppTextButton(
+                                text: AppLocalizations.of(
+                                  context,
+                                )!.privecyPolicy,
+                                color: AppColors.kPrimaryColor,
+                                underline: true,
+                                onPressed: () => context.push('/PrivacyPage'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,

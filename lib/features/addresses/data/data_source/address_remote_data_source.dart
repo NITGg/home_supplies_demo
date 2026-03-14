@@ -40,7 +40,7 @@ class AddressRemoteDataSource {
   }
 
   Future<void> deleteAddress(int addressId) async {
-    final response = await _dio.delete('/profile/addresses/$addressId?lang=${LocaleManager.currentLocale}');
+    final response = await _dio.delete('/profile/addresses/$addressId');
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete address');
     }

@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/style/app_colors.dart';
+import '../../../core/widgets/banners.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../static_text/app_dynamic_info.dart';
 
 class ManualTopUpScreen extends StatelessWidget {
   final int amount;
@@ -52,7 +54,7 @@ class ManualTopUpScreen extends StatelessWidget {
             _PaymentDetailCard(
               asset: 'assets/images/vodaCash.png',
               title: l10n.vodafoneCash,
-              detail: '01145862133',
+              detail: AppInfoManager().data!.vodafonCashNumber,
               color: const Color(0xFFE60000),
             ),
 
@@ -62,7 +64,7 @@ class ManualTopUpScreen extends StatelessWidget {
             _PaymentDetailCard(
               asset: 'assets/images/instaPay.png',
               title: l10n.instaPay,
-              detail: 'tawreedat@instapay.eg',
+              detail: AppInfoManager().data!.instaPayNumber,
               color: const Color(0xFF6C5CE7),
             ),
 
@@ -81,7 +83,7 @@ class ManualTopUpScreen extends StatelessWidget {
               isWhatsapp: true,
               icon: Icons.support_agent_rounded,
               title: l10n.support,
-              detail: '01145862133',
+              detail: AppInfoManager().data!.supportNumber,
               color: AppColors.kPrimaryColor,
             ),
 
@@ -242,6 +244,7 @@ class _PaymentDetailCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
+                  textDirection: TextDirection.ltr,
                   detail,
                   style: const TextStyle(
                     fontSize: 16,
@@ -255,7 +258,7 @@ class _PaymentDetailCard extends StatelessWidget {
             IconButton(
               onPressed: () {
                 launchUrl(
-                  Uri.parse("https://wa.me/+2$detail?text=عملية شحن جديدة"),
+                  Uri.parse("https://wa.me/${detail.replaceAll(' ', '')}?text=عملية شحن جديدة"),
                   mode: LaunchMode.externalApplication,
                 );
               },
@@ -270,12 +273,7 @@ class _PaymentDetailCard extends StatelessWidget {
           IconButton(
             onPressed: () {
               Clipboard.setData(ClipboardData(text: detail));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(l10n.copiedToClipboard),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+              showInfoBanner(context, l10n.copiedToClipboard);
             },
             icon: Icon(Icons.copy, color: color),
           ),

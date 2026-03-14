@@ -29,7 +29,12 @@ class AuthCubit extends Cubit<AuthState> {
         await ApiClient.instance.dio.post(
           '/profile/fcm-token',
           data: {'fcmToken': fcmToken},
-          options: Options(headers: {'Authorization': 'Bearer ${await SecureStorageService().getToken()}'}),
+          options: Options(
+            headers: {
+              'Authorization':
+                  'Bearer ${await SecureStorageService().getToken()}',
+            },
+          ),
         );
         log('✅ FCM token registered successfully');
       }
@@ -90,8 +95,14 @@ class AuthCubit extends Cubit<AuthState> {
         locale: locale,
       );
 
-      await _initializeUserSession();
+      // ✅ Check role before proceeding
+      final userRole = result.user.role ?? '';
+      if (userRole == 'Courier') {
+        emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
+        return;
+      }
 
+      await _initializeUserSession();
       emit(AuthSuccess(shortAuthResponse: result));
     } catch (e) {
       emit(AuthFailure(extractErrorMessage(e)));
@@ -115,7 +126,12 @@ class AuthCubit extends Cubit<AuthState> {
       final idToken = await SocialAuthService.signInWithGoogle();
       if (idToken != null) {
         final result = await _repository.verifyGoogleToken(idToken);
-
+        // ✅ Check role before proceeding
+        final userRole = result.user.role ?? '';
+        if (userRole == 'Courier') {
+          emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
+          return;
+        }
         await _initializeUserSession();
 
         emit(AuthSuccess(longAuthResponse: result));
@@ -150,10 +166,10 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> changePassword(
-      String oldPassword,
-      String newPassword,
-      var context,
-      ) async {
+    String oldPassword,
+    String newPassword,
+    var context,
+  ) async {
     emit(AuthLoading());
     try {
       final token = await _repository.getSavedToken();
@@ -184,7 +200,12 @@ class AuthCubit extends Cubit<AuthState> {
         }
 
         final result = await _repository.verifyAppleToken(token, fullName);
-
+        // ✅ Check role before proceeding
+        final userRole = result.user.role ?? '';
+        if (userRole == 'Courier') {
+          emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
+          return;
+        }
         await _initializeUserSession();
 
         emit(AuthSuccess(longAuthResponse: result));

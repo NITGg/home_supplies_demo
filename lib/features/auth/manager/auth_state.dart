@@ -11,6 +11,11 @@ class AuthLoggedOut extends AuthState {}
 
 class AuthLoading extends AuthState {}
 
+class AuthRoleNotAllowed extends AuthState {
+  final String message;
+  AuthRoleNotAllowed(this.message);
+}
+
 class AuthSuccess extends AuthState {
   final ShortAuthResponseModel? shortAuthResponse;
   final LongAuthResponseModel? longAuthResponse;

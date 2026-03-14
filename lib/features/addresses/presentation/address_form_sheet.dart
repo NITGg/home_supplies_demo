@@ -1,12 +1,17 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../../core/style/app_colors.dart';
+import '../../../core/utils/area_boundry_validator.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../../core/widgets/text_form.dart';
 import '../../../l10n/app_localizations.dart';
 
 import '../data/models/address_model.dart';
+import '../data/models/governorate_model.dart';
 import '../manager/address_cubit.dart';
 import '../manager/address_states.dart';
 import '../manager/governorate_cubit.dart';
@@ -37,6 +42,9 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
   late TextEditingController _latController;
   late TextEditingController _longController;
 
+  late final GovernorateCubit _governorateCubit; // ← ADD
+  GovernoratesResponse? _governoratesResponse;
+
   int? _selectedAreaId;
   bool _isDefault = false;
   bool _hasLocation = false;
@@ -44,18 +52,17 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _nameController =
-        TextEditingController(text: widget.address?.name);
-    _detailedAddressController =
-        TextEditingController(text: widget.address?.detailedAddress);
-    _latController =
-        TextEditingController(text: widget.address?.addressLat);
-    _longController =
-        TextEditingController(text: widget.address?.addressLong);
+    _nameController = TextEditingController(text: widget.address?.name);
+    _detailedAddressController = TextEditingController(
+      text: widget.address?.detailedAddress,
+    );
+    _latController = TextEditingController(text: widget.address?.addressLat);
+    _longController = TextEditingController(text: widget.address?.addressLong);
     _selectedAreaId = widget.address?.areaId;
     _isDefault = widget.address?.isDefault ?? false;
-    _hasLocation = _latController.text.isNotEmpty &&
-        _longController.text.isNotEmpty;
+    _hasLocation =
+        _latController.text.isNotEmpty && _longController.text.isNotEmpty;
+    _governorateCubit = GovernorateCubit()..loadGovernorates(); // ← ADD
   }
 
   @override
@@ -64,22 +71,28 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
     _detailedAddressController.dispose();
     _latController.dispose();
     _longController.dispose();
+    _governorateCubit.close(); // ← ADD
     super.dispose();
   }
 
   Future<void> _pickLocationFromMap() async {
-    final result = await Navigator.push<Map<String, String>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MapLocationPickerScreen(
-          initialLat: _latController.text.isEmpty ? null : _latController.text,
-          initialLong:
-          _longController.text.isEmpty ? null : _longController.text,
-          initialAddress: _detailedAddressController.text.isEmpty
-              ? null
-              : _detailedAddressController.text,
-        ),
-      ),
+    Map<String, dynamic>? areaBoundaries;
+    if (_selectedAreaId != null && _governoratesResponse != null) {
+      areaBoundaries = _governoratesResponse!
+          .findAreaById(_selectedAreaId!)
+          ?.boundaries;
+    }
+
+    final result = await Navigator.of(context, rootNavigator: true)
+        .push<Map<String, String>>(
+      MaterialPageRoute(builder: (_) => MapLocationPickerScreen(
+        initialLat: _latController.text.isEmpty ? null : _latController.text,
+        initialLong: _longController.text.isEmpty ? null : _longController.text,
+        initialAddress: _detailedAddressController.text.isEmpty
+            ? null
+            : _detailedAddressController.text,
+        areaBoundaries: areaBoundaries,
+      ),),
     );
 
     if (result != null && mounted) {
@@ -87,15 +100,14 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
         _latController.text = result['latitude'] ?? '';
         _longController.text = result['longitude'] ?? '';
 
-        // Pre-fill detailed address if empty
         if (_detailedAddressController.text.isEmpty &&
             result['address'] != null &&
             result['address']!.isNotEmpty) {
           _detailedAddressController.text = result['address']!;
         }
 
-        _hasLocation = _latController.text.isNotEmpty &&
-            _longController.text.isNotEmpty;
+        _hasLocation =
+            _latController.text.isNotEmpty && _longController.text.isNotEmpty;
       });
     }
   }
@@ -105,9 +117,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
       if (_selectedAreaId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.pleaseSelectArea,
-            ),
+            content: Text(AppLocalizations.of(context)!.pleaseSelectArea),
           ),
         );
         return;
@@ -117,15 +127,63 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
           _longController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.pleaseSelectLocation,
-            ),
+            content: Text(AppLocalizations.of(context)!.pleaseSelectLocation),
             backgroundColor: Colors.orange,
           ),
         );
         return;
       }
 
+      // ── Boundary validation ───────────────────────────────────────────────
+      if (_governoratesResponse != null && _selectedAreaId != null) {
+        final area = _governoratesResponse!.findAreaById(_selectedAreaId!);
+
+        log('🗺️ Boundary validation start');
+        log('   selectedAreaId : $_selectedAreaId');
+        log('   area found     : ${area != null ? "yes (id=${area.id}, name=${area.name})" : "NO — findAreaById returned null"}');
+
+        if (area != null) {
+          final lat = double.tryParse(_latController.text.trim());
+          final lng = double.tryParse(_longController.text.trim());
+
+          log('   pin lat        : $lat');
+          log('   pin lng        : $lng');
+          log('   boundaries     : ${area.boundaries}');
+
+          if (lat != null && lng != null) {
+            final isInside = AreaBoundaryValidator.isPointInArea(
+              lat: lat,
+              lng: lng,
+              boundaries: area.boundaries,
+            );
+
+            log('   isInside       : $isInside');
+
+            if (!isInside) {
+              log('🚫 Rejected — pin is outside area boundaries');
+              Fluttertoast.showToast(
+                msg: AppLocalizations.of(context)!.addressOutsideArea,
+                toastLength: Toast.LENGTH_LONG,
+                gravity: ToastGravity.BOTTOM,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+              );
+              return;
+            }
+
+            log('✅ Pin is inside area — proceeding to save');
+          } else {
+            log('⚠️ Could not parse lat/lng — skipping boundary check');
+          }
+        } else {
+          log('⚠️ Area not found in governoratesResponse — skipping boundary check');
+          log('   available area ids: ${_governoratesResponse!.governorates.expand((g) => g.areas).map((a) => a.id).toList()}');
+        }
+      } else {
+        log('⚠️ Boundary check skipped — governoratesResponse=${_governoratesResponse != null ? "loaded" : "NULL"}, selectedAreaId=$_selectedAreaId');
+      }
+
+      // ── Build address object ──────────────────────────────────────────────
       final address = Address(
         id: widget.address?.id,
         areaId: _selectedAreaId!,
@@ -163,20 +221,20 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
     return MultiBlocListener(
       listeners: [
         // if (widget.saveAddress)
-          BlocListener<AddressCubit, AddressState>(
-            listener: (context, state) {
-              if (state is AddressOperationSuccess) {
-                Navigator.pop(context, state.address);
-              } else if (state is AddressError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-          ),
+        BlocListener<AddressCubit, AddressState>(
+          listener: (context, state) {
+            if (state is AddressOperationSuccess) {
+              Navigator.pop(context, state.address);
+            } else if (state is AddressError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        ),
       ],
       child: DraggableScrollableSheet(
         initialChildSize: 0.75,
@@ -246,108 +304,108 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                         ],
 
                         // ── Area Selection ───────────────────────────────────
-                        BlocProvider(
-                          create: (_) =>
-                          GovernorateCubit()..loadGovernorates(),
-                          child: BlocBuilder<GovernorateCubit,
-                              GovernorateState>(
-                            builder: (context, state) {
-                              if (state is GovernorateLoading) {
-                                return const Center(
-                                  child: LoadingScreen(isOne: true, asWidget: true),
-                                );
-                              }
+                        BlocBuilder<GovernorateCubit, GovernorateState>(
+                          bloc: _governorateCubit, // ← explicit bloc
+                          builder: (context, state) {
+                            if (state is GovernorateLoading) {
+                              return const Center(
+                                child: LoadingScreen(
+                                  isOne: true,
+                                  asWidget: true,
+                                ),
+                              );
+                            }
 
-                              if (state is GovernorateError) {
-                                return Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.shade50,
-                                    borderRadius:
-                                    BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.red.shade200,
-                                    ),
+                            if (state is GovernorateError) {
+                              return Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.red.shade200,
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.error_outline,
-                                          color: Colors.red.shade700),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          state.message,
-                                          style: TextStyle(
-                                            color: Colors.red.shade900,
-                                          ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline,
+                                      color: Colors.red.shade700,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        state.message,
+                                        style: TextStyle(
+                                          color: Colors.red.shade900,
                                         ),
                                       ),
-                                      TextButton(
-                                        onPressed: () => context
-                                            .read<GovernorateCubit>()
-                                            .loadGovernorates(),
-                                        child: Text(l10n.retry),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => context
+                                          .read<GovernorateCubit>()
+                                          .loadGovernorates(),
+                                      child: Text(l10n.retry),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            if (state is GovernoratesLoaded) {
+                              // Cache so _submit and _pickLocationFromMap can access it
+                              _governoratesResponse = state
+                                  .response; // ← direct assign, no setState needed
+
+                              final areas = state.response.allAreas;
+
+                              if (areas.isEmpty) {
+                                return Text(
+                                  l10n.noAreasAvailable,
+                                  style: const TextStyle(color: Colors.grey),
                                 );
                               }
 
-                              if (state is GovernoratesLoaded) {
-                                final areas = state.response.allAreas;
-
-                                if (areas.isEmpty) {
-                                  return Text(
-                                    l10n.noAreasAvailable,
-                                    style: const TextStyle(
-                                        color: Colors.grey),
+                              return DropdownButtonFormField<int>(
+                                initialValue: _selectedAreaId,
+                                decoration: InputDecoration(
+                                  labelText: l10n.selectArea,
+                                  labelStyle: TextStyle(color: Colors.black),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: const BorderSide(
+                                      color: AppColors.kPrimaryColor,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  prefixIcon: const Icon(Icons.location_city),
+                                ),
+                                items: areas.map((area) {
+                                  final governorate = state.response
+                                      .getGovernorateForArea(area.id);
+                                  return DropdownMenuItem(
+                                    value: area.id,
+                                    child: Text(
+                                      '${governorate?.getLocalizedName(isArabic) ?? ''} - ${area.getLocalizedName(isArabic)}',
+                                    ),
                                   );
-                                }
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() => _selectedAreaId = value);
+                                },
+                                validator: (value) {
+                                  if (value == null) {
+                                    return l10n.pleaseSelectArea;
+                                  }
+                                  return null;
+                                },
+                              );
+                            }
 
-                                return DropdownButtonFormField<int>(
-                                  initialValue: _selectedAreaId,
-                                  decoration: InputDecoration(
-                                    labelText: l10n.selectArea,
-                                    labelStyle: TextStyle(color: Colors.black),
-                                    focusedBorder:  OutlineInputBorder(
-                                      borderSide: const BorderSide(
-                                          color: AppColors.kPrimaryColor),
-                                      borderRadius:
-                                      BorderRadius.circular(12),
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius:
-                                      BorderRadius.circular(12),
-                                    ),
-                                    prefixIcon: const Icon(
-                                        Icons.location_city),
-                                  ),
-                                  items: areas.map((area) {
-                                    final governorate = state.response
-                                        .getGovernorateForArea(area.id);
-                                    return DropdownMenuItem(
-                                      value: area.id,
-                                      child: Text(
-                                        '${governorate?.getLocalizedName(isArabic) ?? ''} - ${area.getLocalizedName(isArabic)}',
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    setState(
-                                            () => _selectedAreaId = value);
-                                  },
-                                  validator: (value) {
-                                    if (value == null) {
-                                      return l10n.pleaseSelectArea;
-                                    }
-                                    return null;
-                                  },
-                                );
-                              }
-
-                              return const SizedBox();
-                            },
-                          ),
+                            return const SizedBox();
+                          },
                         ),
                         const SizedBox(height: 16),
 
@@ -372,12 +430,10 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                             title: Text(l10n.setAsDefault),
                             value: _isDefault,
                             onChanged: (value) {
-                              setState(
-                                      () => _isDefault = value ?? false);
+                              setState(() => _isDefault = value ?? false);
                             },
                             contentPadding: EdgeInsets.zero,
-                            controlAffinity:
-                            ListTileControlAffinity.leading,
+                            controlAffinity: ListTileControlAffinity.leading,
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -388,50 +444,49 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                             // Success indicator
                             if (_hasLocation)
                               TweenAnimationBuilder<double>(
-                                duration:
-                                const Duration(milliseconds: 600),
+                                duration: const Duration(milliseconds: 600),
                                 tween: Tween(begin: 0.0, end: 1.0),
                                 builder: (context, value, child) {
                                   return Transform.scale(
                                     scale: value,
                                     child: Container(
-                                      margin:
-                                      const EdgeInsets.fromLTRB(
-                                          8, 0, 8, 10),
-                                      padding:
-                                      const EdgeInsets.all(16),
+                                      margin: const EdgeInsets.fromLTRB(
+                                        8,
+                                        0,
+                                        8,
+                                        10,
+                                      ),
+                                      padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
                                         color: Colors.green.shade50,
-                                        borderRadius:
-                                        BorderRadius.circular(6),
+                                        borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
-                                          color:
-                                          Colors.green.shade200,
+                                          color: Colors.green.shade200,
                                           width: 2,
                                         ),
                                       ),
                                       child: Row(
                                         mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                            MainAxisAlignment.center,
                                         children: [
-                                          Icon(Icons.location_on,
-                                              color: Colors
-                                                  .green.shade700,
-                                              size: 24),
+                                          Icon(
+                                            Icons.location_on,
+                                            color: Colors.green.shade700,
+                                            size: 24,
+                                          ),
                                           const SizedBox(width: 8),
-                                          Icon(Icons.check_circle,
-                                              color: Colors
-                                                  .green.shade700,
-                                              size: 24),
+                                          Icon(
+                                            Icons.check_circle,
+                                            color: Colors.green.shade700,
+                                            size: 24,
+                                          ),
                                           const SizedBox(width: 12),
                                           Text(
                                             l10n.locationObtained,
                                             style: TextStyle(
-                                              color:
-                                              Colors.green.shade700,
+                                              color: Colors.green.shade700,
                                               fontSize: 16,
-                                              fontWeight:
-                                              FontWeight.w600,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
                                         ],
@@ -444,14 +499,14 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                             // Location required warning
                             if (!_hasLocation)
                               Padding(
-                                padding:
-                                const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.only(bottom: 8),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.info_outline,
-                                        size: 14,
-                                        color:
-                                        Colors.orange.shade700),
+                                    Icon(
+                                      Icons.info_outline,
+                                      size: 14,
+                                      color: Colors.orange.shade700,
+                                    ),
                                     const SizedBox(width: 6),
                                     Text(
                                       l10n.locationRequired,
@@ -466,6 +521,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
 
                             // Single "Pick on Map" button (full width)
                             AppCustomButton(
+                              enabled: _selectedAreaId != null,
                               isSecondary: true,
                               onPressed: _pickLocationFromMap,
                               text: l10n.pickOnMaps,
@@ -484,23 +540,21 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                     padding: const EdgeInsets.all(16),
                     child: widget.saveAddress
                         ? BlocBuilder<AddressCubit, AddressState>(
-                      builder: (context, state) {
-                        final isLoading =
-                        state is AddressLoading;
-                        return AppCustomButton(
-                          onPressed:
-                          isLoading ? () {} : _submit,
-                          text: widget.address != null
-                              ? l10n.updateAddress
-                              : l10n.addAddress,
-                          isLoading: isLoading,
-                        );
-                      },
-                    )
+                            builder: (context, state) {
+                              final isLoading = state is AddressLoading;
+                              return AppCustomButton(
+                                onPressed: isLoading ? () {} : _submit,
+                                text: widget.address != null
+                                    ? l10n.updateAddress
+                                    : l10n.addAddress,
+                                isLoading: isLoading,
+                              );
+                            },
+                          )
                         : AppCustomButton(
-                      onPressed: _submit,
-                      text: l10n.useThisAddress,
-                    ),
+                            onPressed: _submit,
+                            text: l10n.useThisAddress,
+                          ),
                   ),
                 ),
               ],

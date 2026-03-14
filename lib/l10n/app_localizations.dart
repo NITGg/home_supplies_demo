@@ -2405,6 +2405,36 @@ abstract class AppLocalizations {
   /// **'km'**
   String get km;
 
+  /// No description provided for @iAgreeTo.
+  ///
+  /// In en, this message translates to:
+  /// **'By signing in or signing up, you agree to'**
+  String get iAgreeTo;
+
+  /// No description provided for @okay.
+  ///
+  /// In en, this message translates to:
+  /// **'Ok'**
+  String get okay;
+
+  /// No description provided for @pickupAddressOutOfArea.
+  ///
+  /// In en, this message translates to:
+  /// **'pickup Address Out Of Area'**
+  String get pickupAddressOutOfArea;
+
+  /// No description provided for @deliveryAddressOutOfArea.
+  ///
+  /// In en, this message translates to:
+  /// **'delivery Address Out Of Area'**
+  String get deliveryAddressOutOfArea;
+
+  /// No description provided for @addressOutsideArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected location is outside the chosen area. Please pick a location within the area.'**
+  String get addressOutsideArea;
+
   /// No description provided for @ratingExcellent.
   ///
   /// In en, this message translates to:

@@ -8,10 +8,12 @@ import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/create_order_sheet/select_address.dart';
 import 'package:tawreedat_go/l10n/app_localizations.dart';
 
+import '../../../../../../core/utils/area_boundry_validator.dart';
 import '../../../../../../core/utils/calculate_distance.dart';
 import '../../../../../../core/widgets/custom_button.dart';
 import '../../../../../../core/widgets/text_form.dart';
 import '../../../../../addresses/data/models/address_model.dart';
+import '../../../../../addresses/data/models/governorate_model.dart';
 import '../../../../../addresses/manager/address_cubit.dart';
 import '../../../../../addresses/manager/address_states.dart';
 import '../../../../data/models/order_model.dart';
@@ -22,7 +24,14 @@ import 'product_image_picker.dart';
 import 'toggle_tab.dart';
 
 class CreateOrderBottomSheet extends StatefulWidget {
-  const CreateOrderBottomSheet({super.key});
+  /// Pass the already-loaded governorates response so we can look up area
+  /// boundaries without an extra network call.
+  final GovernoratesResponse governorates;
+
+  const CreateOrderBottomSheet({
+    super.key,
+    required this.governorates,
+  });
 
   @override
   State<CreateOrderBottomSheet> createState() => _CreateOrderBottomSheetState();
@@ -50,6 +59,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   late final AddressCubit _initCubit;
 
+  // ── Life-cycle ─────────────────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
@@ -62,7 +73,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (!mounted) return;
       if (state is AddressesLoaded && state.addresses.isNotEmpty) {
         final defaultAddr = state.addresses.firstWhere(
-          (a) => a.isDefault,
+              (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
         if (_deliveryAddress == null) {
@@ -83,6 +94,24 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     _budgetFocus.dispose();
     _couponFocus.dispose();
     super.dispose();
+  }
+
+  // ── Boundary validation ────────────────────────────────────────────────────
+
+  /// Returns the [Area] whose id matches [address.areaId], or null.
+  Area? _areaFor(Address address) =>
+      widget.governorates.findAreaById(address.areaId);
+
+  /// True when the address coordinates sit inside the area's declared
+  /// boundaries.  Permissive (returns true) when no area / boundaries found.
+  bool _isAddressInArea(Address address) {
+    final area = _areaFor(address);
+    if (area == null) return true;
+    return AreaBoundaryValidator.isPointInArea(
+      lat: double.parse(address.addressLat),
+      lng: double.parse(address.addressLong),
+      boundaries: area.boundaries,
+    );
   }
 
   // ── Coupon ─────────────────────────────────────────────────────────────────
@@ -139,26 +168,26 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
   }
 
-  // ── Shipping Fee ───────────────────────────────────────────────────────────
-  static final double _feePerKm =
-  (double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000);
-
-  static final double _minFee =
-      (double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000) / 100;
+  // ── Shipping fee estimate ──────────────────────────────────────────────────
 
   Widget _buildShippingFeeEstimate() {
     if (_pickupAddress == null || _deliveryAddress == null) {
       return const SizedBox.shrink();
     }
+
     log('─── _buildShippingFeeEstimate ───────────────────────');
 
-    final rawFeePerKm = double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000;
-    final rawMinFee   = double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000;
+    final rawFeePerKm =
+        double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000;
+    final rawMinFee =
+        double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000;
+
     log('AppSettings.delivery_price_for_each_1km (raw): ${AppSettings.delivery_price_for_each_1km}');
     log('AppSettings.min_delivery_fee (raw):             ${AppSettings.min_delivery_fee}');
 
     final double feePerKm = rawFeePerKm / 100;
-    final double minFee   = rawMinFee / 100;
+    final double minFee = rawMinFee / 100;
+
     log('feePerKm (EGP/km): $feePerKm');
     log('minFee   (EGP):    $minFee');
 
@@ -169,14 +198,18 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       double.parse(_deliveryAddress!.addressLong),
     );
     final distanceKm = (distanceInMeters / 1000).round();
+
     log('distanceInMeters: $distanceInMeters');
     log('distanceKm:       $distanceKm');
 
     final calculatedFee = distanceKm * feePerKm;
     final fee = calculatedFee < minFee ? minFee : calculatedFee;
+
     log('calculatedFee: $calculatedFee');
-    log('fee (after min clamp): $fee ${calculatedFee < minFee ? "(clamped to min)" : "(used calculated)"}');
+    log('fee (after min clamp): $fee '
+        '${calculatedFee < minFee ? "(clamped to min)" : "(used calculated)"}');
     log('─────────────────────────────────────────────────────');
+
     return Container(
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -187,26 +220,21 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       ),
       child: Row(
         children: [
-          Icon(Icons.local_shipping_outlined, color: Colors.white),
+          const Icon(Icons.local_shipping_outlined, color: Colors.white),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppLocalizations.of(context)!.estimatedShippingFee,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+            child: Text(
+              AppLocalizations.of(context)!.estimatedShippingFee,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontSize: 13,
+              ),
             ),
           ),
           Text(
             '${fee.ceil()} ${AppLocalizations.of(context)!.egp}',
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
               color: Colors.white,
@@ -220,71 +248,96 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   void _submit() {
-    if (_formKey.currentState!.validate()) {
-      if (!_isShopping && _productImage == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.tapToSelectImage),
-          ),
-        );
-        return;
-      }
+    final l10n = AppLocalizations.of(context)!;
 
-      if (_pickupAddress == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.pleaseSelectLocation),
-          ),
-        );
-        return;
-      }
-      if (_deliveryAddress == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.pleaseSelectLocation),
-          ),
-        );
-        return;
-      }
+    if (!_formKey.currentState!.validate()) return;
 
-      final distance = calculateDistance(
-        double.parse(_pickupAddress!.addressLat),
-        double.parse(_pickupAddress!.addressLong),
-        double.parse(_deliveryAddress!.addressLat),
-        double.parse(_deliveryAddress!.addressLong),
+    if (!_isShopping && _productImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.tapToSelectImage)),
       );
-
-      if (distance <
-          (double.tryParse(AppSettings.min_delivery_distance ?? '2') ?? 2) *
-              1000) {
-        Fluttertoast.showToast(
-          msg: AppLocalizations.of(context)!.distanceTooClose,
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-        );
-        return;
-      }
-
-      context.read<OrderCubit>().createOrder(
-        Order(
-          productDescription: _productDescriptionController.text.trim(),
-          productImageFile: _productImage,
-          budget: _isShopping
-              ? (double.parse(_budgetController.text.trim()) * 100)
-                    .round()
-                    .toString()
-              : '1',
-          pickupAreaId: _pickupAddress!.areaId,
-          pickupAddressDescription: _pickupAddress!.detailedAddress,
-          pickupLat: _pickupAddress!.addressLat,
-          pickupLong: _pickupAddress!.addressLong,
-          deliveryAreaId: _deliveryAddress!.areaId,
-          deliveryAddressDescription: _deliveryAddress!.detailedAddress,
-          deliveryLat: _deliveryAddress!.addressLat,
-          deliveryLong: _deliveryAddress!.addressLong,
-        ),
-      );
+      return;
     }
+
+    if (_pickupAddress == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.pleaseSelectLocation)),
+      );
+      return;
+    }
+
+    if (_deliveryAddress == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.pleaseSelectLocation)),
+      );
+      return;
+    }
+
+    // ── Boundary validation ────────────────────────────────────────────────
+
+    if (!_isAddressInArea(_pickupAddress!)) {
+      Fluttertoast.showToast(
+        msg: l10n.pickupAddressOutOfArea,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.orange,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    if (!_isAddressInArea(_deliveryAddress!)) {
+      Fluttertoast.showToast(
+        msg: l10n.deliveryAddressOutOfArea,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.orange,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    // ── Distance validation ────────────────────────────────────────────────
+
+    final distance = calculateDistance(
+      double.parse(_pickupAddress!.addressLat),
+      double.parse(_pickupAddress!.addressLong),
+      double.parse(_deliveryAddress!.addressLat),
+      double.parse(_deliveryAddress!.addressLong),
+    );
+
+    if (distance <
+        (double.tryParse(AppSettings.min_delivery_distance ?? '2') ?? 2) *
+            1000) {
+      Fluttertoast.showToast(
+        msg: l10n.distanceTooClose,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
+      return;
+    }
+
+    // ── Create order ───────────────────────────────────────────────────────
+
+    context.read<OrderCubit>().createOrder(
+      Order(
+        productDescription: _productDescriptionController.text.trim(),
+        productImageFile: _productImage,
+        budget: _isShopping
+            ? (double.parse(_budgetController.text.trim()) * 100)
+            .round()
+            .toString()
+            : '1',
+        pickupAreaId: _pickupAddress!.areaId,
+        pickupAddressDescription: _pickupAddress!.detailedAddress,
+        pickupLat: _pickupAddress!.addressLat,
+        pickupLong: _pickupAddress!.addressLong,
+        deliveryAreaId: _deliveryAddress!.areaId,
+        deliveryAddressDescription: _deliveryAddress!.detailedAddress,
+        deliveryLat: _deliveryAddress!.addressLat,
+        deliveryLong: _deliveryAddress!.addressLong,
+      ),
+    );
   }
 
   // ── Widgets ────────────────────────────────────────────────────────────────
@@ -325,12 +378,30 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final color = isPickup ? Colors.green : Colors.blue;
     final icon = isPickup ? Icons.store_outlined : Icons.location_on;
 
+    // Eager boundary check — shows warning as soon as address is picked
+    final bool outOfBounds = address != null && !_isAddressInArea(address);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            if (outOfBounds) ...[
+              const SizedBox(width: 8),
+              Tooltip(
+                message: 'Address may be outside the selected area',
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  size: 18,
+                  color: Colors.orange.shade700,
+                ),
+              ),
+            ],
+          ],
         ),
         const SizedBox(height: 8),
         InkWell(
@@ -341,23 +412,52 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               border: Border.all(
-                color: address == null
+                color: outOfBounds
+                    ? Colors.orange.shade400
+                    : address == null
                     ? Colors.red.shade200
                     : color.withOpacity(0.4),
               ),
               borderRadius: BorderRadius.circular(8),
-              color: address == null ? null : color.withOpacity(0.05),
+              color: outOfBounds
+                  ? Colors.orange.withOpacity(0.05)
+                  : address == null
+                  ? null
+                  : color.withOpacity(0.05),
             ),
             child: Row(
               children: [
-                Icon(icon, color: address == null ? Colors.grey : color),
+                Icon(
+                  icon,
+                  color: outOfBounds
+                      ? Colors.orange
+                      : address == null
+                      ? Colors.grey
+                      : color,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    address?.displayAddress ?? label,
-                    style: TextStyle(
-                      color: address == null ? Colors.grey : Colors.black87,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        address?.displayAddress ?? label,
+                        style: TextStyle(
+                          color:
+                          address == null ? Colors.grey : Colors.black87,
+                        ),
+                      ),
+                      if (outOfBounds) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Address may be outside selected area',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.orange.shade700,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 const Icon(
@@ -423,7 +523,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           );
         } else if (state is OrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       },
@@ -440,6 +543,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             ),
             child: Column(
               children: [
+                // Drag handle
                 Container(
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   width: 40,
@@ -449,6 +553,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
+
+                // Header
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
@@ -471,7 +577,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     ],
                   ),
                 ),
+
                 const Divider(height: 1),
+
+                // Scrollable body
                 Expanded(
                   child: Form(
                     key: _formKey,
@@ -479,6 +588,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       controller: scrollController,
                       padding: const EdgeInsets.all(16),
                       children: [
+                        // Product description
                         AppTextFormField(
                           focusNode: _productDescriptionFocus,
                           textInputAction: _isShopping
@@ -486,17 +596,21 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               : TextInputAction.done,
                           onFieldSubmitted: (_) {
                             if (_isShopping) {
-                              FocusScope.of(context).requestFocus(_budgetFocus);
+                              FocusScope.of(context)
+                                  .requestFocus(_budgetFocus);
                             } else {
                               FocusScope.of(context).unfocus();
                             }
                           },
                           controller: _productDescriptionController,
                           label: l10n.productDetails,
-                          validator: (v) => (v == null || v.trim().isEmpty)
+                          validator: (v) =>
+                          (v == null || v.trim().isEmpty)
                               ? 'Please enter product description'
                               : null,
                         ),
+
+                        // Budget (shopping only)
                         if (_isShopping) ...[
                           const SizedBox(height: 16),
                           AppTextFormField(
@@ -517,31 +631,45 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                             },
                           ),
                         ],
+
                         const SizedBox(height: 16),
+
+                        // Image picker
                         ProductImagePicker(
                           isRequired: !_isShopping,
                           productImage: _productImage,
                           onImagePicked: (file) =>
                               setState(() => _productImage = file),
                         ),
+
                         const SizedBox(height: 24),
+
+                        // Pickup address
                         _buildAddressTile(
                           label: l10n.pickupLocation,
                           address: _pickupAddress,
                           onTap: _selectPickupAddress,
                           isPickup: true,
                         ),
+
                         const SizedBox(height: 24),
+
+                        // Delivery address
                         _buildAddressTile(
                           label: l10n.deliveryLocation,
                           address: _deliveryAddress,
                           onTap: _selectDeliveryAddress,
                           isPickup: false,
                         ),
-                        // ── Shipping Fee Estimate ──────────────────────────
-                        const SizedBox(height: 12),
+
+                        // Shipping fee estimate — recalculates on every rebuild
+                        // triggered by setState in _selectPickupAddress /
+                        // _selectDeliveryAddress.
                         _buildShippingFeeEstimate(),
+
                         const SizedBox(height: 24),
+
+                        // Coupon
                         CouponSection(
                           couponController: _couponController,
                           couponFocus: _couponFocus,
@@ -550,17 +678,20 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           onValidate: _validateCoupon,
                           onRemove: _removeCoupon,
                         ),
+
                         const SizedBox(height: 16),
                       ],
                     ),
                   ),
                 ),
+
+                // Confirm button
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: BlocBuilder<OrderCubit, OrderState>(
                       buildWhen: (_, s) =>
-                          s is OrderOperationLoading ||
+                      s is OrderOperationLoading ||
                           s is OrdersLoaded ||
                           s is OrderError ||
                           s is OrderSuccess,

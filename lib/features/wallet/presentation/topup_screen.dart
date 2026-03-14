@@ -303,14 +303,14 @@ class _PaymentMethodSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          _PaymentMethodTile(
-            asset: 'assets/images/Paymob.jpg',
-            title: l10n.creditDebitCard,
-            subtitle: l10n.onlinePayment,
-            color: AppColors.kSecondaryColor,
-            onTap: onOnlinePayment,
-          ),
+          // const SizedBox(height: 24),
+          // _PaymentMethodTile(
+          //   asset: 'assets/images/Paymob.jpg',
+          //   title: l10n.creditDebitCard,
+          //   subtitle: l10n.onlinePayment,
+          //   color: AppColors.kSecondaryColor,
+          //   onTap: onOnlinePayment,
+          // ),
           const SizedBox(height: 12),
           _PaymentMethodTile(
             asset: 'assets/images/InstaPayVodaCash.png',

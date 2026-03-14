@@ -8,7 +8,7 @@ class UserProfileModel {
   final String? lang;
   final bool? isActive;
   final DateTime? deletedAt;
-  final RoleModel? role;
+  final String? role;
 
   UserProfileModel({
     required this.id,
@@ -37,9 +37,7 @@ class UserProfileModel {
       deletedAt: user['deleted_at'] != null
           ? DateTime.parse(user['deleted_at'])
           : null,
-      role: user['role'] != null
-          ? RoleModel.fromJson(user['role'] as Map<String, dynamic>)
-          : null,
+      role: user['role'],
     );
   }
 
@@ -54,7 +52,7 @@ class UserProfileModel {
       "lang": lang,
       "is_active": isActive,
       "deleted_at": deletedAt?.toIso8601String(),
-      "role": role?.toJson(),
+      "role": role,
     };
   }
 }

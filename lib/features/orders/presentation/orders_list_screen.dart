@@ -320,6 +320,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           },
         ),
         actions: [
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: CircleAvatar(

@@ -253,7 +253,7 @@ class NotificationsDialog extends StatelessWidget {
                         onPressed: hasNotifications
                             ? () async {
                                 if (context.mounted) {
-                                  Navigator.of(context).pop();
+                                  // Navigator.of(context).pop();
                                   await context
                                       .read<NotificationsCubit>()
                                       .clearAllNotifications();

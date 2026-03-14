@@ -521,6 +521,11 @@
                 "availableBalance": "الرصيد المتاح",
 "estimatedShippingFee": "رسوم الشحن التقديرية",
     "km": "كم",
+"iAgreeTo": "بالتسجيل أو إنشاء حساب أنت توافق على",
+"okey": "حسناً",
+"pickupAddressOutOfArea": "عنوان الاستلام خارج المنطقة",
+"deliveryAddressOutOfArea": "عنوان التوصيل خارج المنطقة",
+"addressOutsideArea": "الموقع المحدد خارج النطاق المختار. يرجى اختيار موقع داخل المنطقة المحددة.",
 
     "ratingExcellent": "ممتاز"
 

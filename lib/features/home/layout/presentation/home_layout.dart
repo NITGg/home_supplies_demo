@@ -14,6 +14,10 @@ import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/loading_screen.dart';
 import '../../../../core/widgets/text_form.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../main.dart';
+import '../../../addresses/data/models/governorate_model.dart';
+import '../../../addresses/manager/governorate_cubit.dart';
+import '../../../addresses/manager/governorate_states.dart';
 import '../../../auth/data/models/user_profile_model.dart';
 import '../../../auth/manager/auth_cubit.dart';
 import '../../../../core/utils/secure_storage_service.dart';
@@ -36,14 +40,16 @@ class HomeLayout extends StatefulWidget {
   State<HomeLayout> createState() => _HomeLayoutState();
 }
 
-class _HomeLayoutState extends State<HomeLayout> {
+class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   late Future<UserProfileModel?> _userProfileFuture;
-  String _userId = ''; // ✅ initialized empty, set once profile loads
+  String _userId = '';
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // 👈 add observer
     _userProfileFuture = _loadUserProfile();
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final token = await SecureStorageService().getToken();
       if (token != null && token.isNotEmpty) {
@@ -56,7 +62,67 @@ class _HomeLayoutState extends State<HomeLayout> {
       if (mounted) {
         context.read<WalletCubit>().fetchWalletData();
       }
+
+      // ── Wait for profile to load, then show pending notification ─────────
+      _userProfileFuture.then((_) {
+        if (!mounted) return;
+        // Killed-state: profile just loaded — show dialog now if pending
+        _showPendingNotificationDialog();
+      });
+
+      // ── Background-tap fast path ──────────────────────────────────────────
+      // If profile was already loaded (user was using the app), show immediately
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
+      if (_userId.isNotEmpty) {
+        _showPendingNotificationDialog();
+      }
     });
+  }
+
+  /// Shows the notifications dialog if there is a pending notification.
+  /// Safe to call multiple times — clears the flags on first successful call.
+  void _showPendingNotificationDialog() {
+    if (!mounted) return;
+    if (pendingNotificationData == null && !shouldShowNotificationDialog) return;
+
+    // Clear flags immediately to prevent double-showing
+    shouldShowNotificationDialog = false;
+    pendingNotificationData = null;
+
+    showNotificationsDialog(context, _userId);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // 👈 remove observer
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _ensureSocketConnection();
+    }
+  }
+
+  Future<void> _ensureSocketConnection() async {
+    try {
+      final socketService = SocketService();
+      if (!socketService.isConnected) {
+        debugPrint('🔄 Socket disconnected, attempting to reconnect...');
+        final token = await SecureStorageService().getToken();
+        if (token != null && token.isNotEmpty) {
+          socketService.connect(
+            baseUrl: 'https://tawreedat.nitg-eg.com',
+            accessToken: token,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error ensuring socket connection: $e');
+    }
   }
 
   Future<UserProfileModel?> _loadUserProfile() async {
@@ -98,6 +164,9 @@ class _HomeLayoutState extends State<HomeLayout> {
       providers: [
         BlocProvider<HomeCubit>(create: (_) => HomeCubit()),
         BlocProvider<CouponCubit>(create: (_) => CouponCubit()..loadCoupons()),
+        BlocProvider<GovernorateCubit>(
+          create: (_) => GovernorateCubit()..loadGovernorates(),
+        ),
       ],
       child: BlocBuilder<HomeCubit, HomeState>(
         builder: (context, state) {
@@ -133,11 +202,21 @@ class _HomeLayoutState extends State<HomeLayout> {
                   FloatingActionButtonLocation.centerDocked,
                   floatingActionButton: FloatingActionButton.large(
                     onPressed: () {
+                      // Read the already-loaded response; fall back to empty if not ready
+                      final govState = context.read<GovernorateCubit>().state;
+                      final governorates = govState is GovernoratesLoaded
+                          ? govState.response
+                          : GovernoratesResponse(
+                        governorates: [],
+                        totalCount: 0,
+                        totalPages: 0,
+                      );
+
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
-                        builder: (_) => const CreateOrderBottomSheet(),
+                        builder: (_) => CreateOrderBottomSheet(governorates: governorates,),
                       );
                     },
                     backgroundColor: AppColors.kSecondaryColor,
@@ -349,7 +428,7 @@ class _HomeLayoutState extends State<HomeLayout> {
                                             onTap: () {
                                               launchUrl(
                                                 Uri.parse(
-                                                    "https://wa.me/${AppInfoManager().data!.supportPhone.replaceAll(' ', '')}"),
+                                                    "https://wa.me/${AppInfoManager().data!.supportNumber.replaceAll(' ', '')}"),
                                                 mode: LaunchMode
                                                     .externalApplication,
                                               );
@@ -511,14 +590,6 @@ class _HomeLayoutState extends State<HomeLayout> {
                   label: AppLocalizations.of(context)!.phone,
                   controller: phoneController,
                   isPhone: true,
-                  validator: (v) {
-                    if (v!.isEmpty) {
-                      return AppLocalizations.of(context)!.enterPhoneNumber;
-                    } else if (v.length != 11) {
-                      return AppLocalizations.of(context)!.invalidPhoneNumber;
-                    }
-                    return null;
-                  },
                 ),
               ),
               const SizedBox(height: 20),
@@ -530,14 +601,14 @@ class _HomeLayoutState extends State<HomeLayout> {
                 },
                 text: localizations.confirm,
               ),
-              const SizedBox(height: 10),
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(localizations.maybeLater,
-                      style: AppTextStyles.bold16),
-                ),
-              ),
+              // const SizedBox(height: 10),
+              // Center(
+              //   child: TextButton(
+              //     onPressed: () => Navigator.pop(context),
+              //     child: Text(localizations.maybeLater,
+              //         style: AppTextStyles.bold16),
+              //   ),
+              // ),
               const SizedBox(height: 20),
             ],
           ),

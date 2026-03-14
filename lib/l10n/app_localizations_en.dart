@@ -1191,5 +1191,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get km => 'km';
 
   @override
+  String get iAgreeTo => 'By signing in or signing up, you agree to';
+
+  @override
+  String get okay => 'Ok';
+
+  @override
+  String get pickupAddressOutOfArea => 'pickup Address Out Of Area';
+
+  @override
+  String get deliveryAddressOutOfArea => 'delivery Address Out Of Area';
+
+  @override
+  String get addressOutsideArea => 'Selected location is outside the chosen area. Please pick a location within the area.';
+
+  @override
   String get ratingExcellent => 'Excellent';
 }
