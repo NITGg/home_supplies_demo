@@ -1,5 +1,5 @@
 import 'dart:developer';
-
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -42,7 +42,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
   late TextEditingController _latController;
   late TextEditingController _longController;
 
-  late final GovernorateCubit _governorateCubit; // ← ADD
+  late final GovernorateCubit _governorateCubit;
   GovernoratesResponse? _governoratesResponse;
   String? _pickedAdministrativeArea;
 
@@ -63,7 +63,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
     _isDefault = widget.address?.isDefault ?? false;
     _hasLocation =
         _latController.text.isNotEmpty && _longController.text.isNotEmpty;
-    _governorateCubit = GovernorateCubit()..loadGovernorates(); // ← ADD
+    _governorateCubit = GovernorateCubit()..loadGovernorates();
   }
 
   @override
@@ -72,7 +72,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
     _detailedAddressController.dispose();
     _latController.dispose();
     _longController.dispose();
-    _governorateCubit.close(); // ← ADD
+    _governorateCubit.close();
     super.dispose();
   }
 
@@ -86,23 +86,26 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
 
     final result = await Navigator.of(context, rootNavigator: true)
         .push<Map<String, String>>(
-      MaterialPageRoute(builder: (_) => MapLocationPickerScreen(
-        initialLat: _latController.text.isEmpty ? null : _latController.text,
-        initialLong: _longController.text.isEmpty ? null : _longController.text,
-        initialAddress: _detailedAddressController.text.isEmpty
-            ? null
-            : _detailedAddressController.text,
-        areaBoundaries: areaBoundaries,
-      ),),
+      MaterialPageRoute(
+        builder: (_) => MapLocationPickerScreen(
+          initialLat: _latController.text.isEmpty ? null : _latController.text,
+          initialLong:
+          _longController.text.isEmpty ? null : _longController.text,
+          initialAddress: _detailedAddressController.text.isEmpty
+              ? null
+              : _detailedAddressController.text,
+          areaBoundaries: areaBoundaries,
+        ),
+      ),
     );
 
     if (result != null && mounted) {
       setState(() {
         _latController.text = result['latitude'] ?? '';
         _longController.text = result['longitude'] ?? '';
-        _pickedAdministrativeArea = result['administrativeArea']; // ← ADD
+        _pickedAdministrativeArea = result['administrativeArea'];
 
-        log('📍 Location picked: ${result['administrativeArea']} - area selected : ${_governoratesResponse!.findAreaById(_selectedAreaId!)?.nameAr}');
+        log('📍 Location picked: ${result['administrativeArea']} - area selected : ${_governoratesResponse?.findAreaById(_selectedAreaId!)?.nameAr}');
 
         if (_detailedAddressController.text.isEmpty &&
             result['address'] != null &&
@@ -138,7 +141,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
         return;
       }
 
-      // ── Validation ────────────────────────────────────────────────────────
+      // ── Validation ──────────────────────────────────────────────────────
       if (_governoratesResponse != null && _selectedAreaId != null) {
         final area = _governoratesResponse!.findAreaById(_selectedAreaId!);
 
@@ -154,8 +157,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
           log('   pin lng    : $lng');
 
           if (lat != null && lng != null) {
-
-            // ── Step 1: Name check ──────────────────────────────────────────
+            // ── Step 1: Name check against selected area ──────────────────
             bool nameMatches = false;
 
             if (_pickedAdministrativeArea != null &&
@@ -163,12 +165,8 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
               final pickedNormalized = _pickedAdministrativeArea!
                   .toLowerCase()
                   .replaceAll(' ', '');
-              final areaNameAr = area.nameAr
-                  .toLowerCase()
-                  .replaceAll(' ', '');
-              final areaNameEn = area.name
-                  .toLowerCase()
-                  .replaceAll(' ', '');
+              final areaNameAr = area.nameAr.toLowerCase().replaceAll(' ', '');
+              final areaNameEn = area.name.toLowerCase().replaceAll(' ', '');
 
               final matchesAr = areaNameAr.contains(pickedNormalized) ||
                   pickedNormalized.contains(areaNameAr);
@@ -186,9 +184,45 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
               log('   Step 1 — name check: skipped (no administrativeArea from map)');
             }
 
-            // ── Step 2: Boundary check (only if name didn't match) ──────────
+            // ── Step 2: If name didn't match, search ALL areas for a match ─
+            if (!nameMatches && _pickedAdministrativeArea != null &&
+                _pickedAdministrativeArea!.isNotEmpty) {
+              log('   Step 2 — searching all areas for a name match with "$_pickedAdministrativeArea"');
+
+              final pickedNormalized = _pickedAdministrativeArea!
+                  .toLowerCase()
+                  .replaceAll(' ', '');
+
+              final allAreas = _governoratesResponse!.governorates
+                  .expand((g) => g.areas)
+                  .toList();
+
+              // Find the first area whose name (Ar or En) matches the picked administrative area
+              // Cleaner alternative if using Dart 2.18+:
+              final matchedArea = allAreas.firstWhereOrNull(
+                    (a) {
+                  final nameAr = a.nameAr.toLowerCase().replaceAll(' ', '');
+                  final nameEn = a.name.toLowerCase().replaceAll(' ', '');
+                  return nameAr.contains(pickedNormalized) ||
+                      pickedNormalized.contains(nameAr) ||
+                      nameEn.contains(pickedNormalized) ||
+                      pickedNormalized.contains(nameEn);
+                },
+              );
+
+              if (matchedArea != null) {
+                log('✅ Step 2 — found matching area: id=${matchedArea.id}, name=${matchedArea.name}');
+                // Auto-correct the selected area and treat as matched
+                setState(() => _selectedAreaId = matchedArea.id);
+                nameMatches = true;
+              } else {
+                log('   Step 2 — no area name match found, falling back to boundary check');
+              }
+            }
+
+            // ── Step 3: Boundary check (only if name still didn't match) ──
             if (!nameMatches) {
-              log('   Step 2 — name did not match, falling back to boundary check');
+              log('   Step 3 — boundary check');
               log('   boundaries : ${area.boundaries}');
 
               final isInside = AreaBoundaryValidator.isPointInArea(
@@ -211,13 +245,12 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                 return;
               }
 
-              log('✅ Name did not match but pin is inside boundaries — accepted');
+              log('✅ Pin is inside boundaries — accepted');
             } else {
               log('✅ Name matched — skipping boundary check');
             }
 
             log('✅ Validation passed — proceeding to save');
-
           } else {
             log('⚠️ Could not parse lat/lng — skipping validation');
           }
@@ -229,7 +262,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
         log('⚠️ Validation skipped — governoratesResponse=${_governoratesResponse != null ? "loaded" : "NULL"}, selectedAreaId=$_selectedAreaId');
       }
 
-      // ── Build address object ────────────────────────────────────────────────
+      // ── Build address object — uses _selectedAreaId which may have been auto-corrected ──
       final address = Address(
         id: widget.address?.id,
         areaId: _selectedAreaId!,
@@ -266,7 +299,6 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
 
     return MultiBlocListener(
       listeners: [
-        // if (widget.saveAddress)
         BlocListener<AddressCubit, AddressState>(
           listener: (context, state) {
             if (state is AddressOperationSuccess) {
@@ -278,6 +310,16 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                   backgroundColor: Colors.red,
                 ),
               );
+            }
+          },
+        ),
+        // ✅ FIX 1: Cache _governoratesResponse reliably via listener,
+        //    not as a side-effect inside build().
+        BlocListener<GovernorateCubit, GovernorateState>(
+          bloc: _governorateCubit,
+          listener: (context, state) {
+            if (state is GovernoratesLoaded) {
+              _governoratesResponse = state.response;
             }
           },
         ),
@@ -339,7 +381,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                       controller: scrollController,
                       padding: const EdgeInsets.all(16),
                       children: [
-                        // ── Address Name (only when saving) ──────────────────
+                        // ── Address Name (only when saving) ────────────────
                         if (widget.saveAddress) ...[
                           AppTextFormField(
                             controller: _nameController,
@@ -349,9 +391,9 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                           const SizedBox(height: 16),
                         ],
 
-                        // ── Area Selection ───────────────────────────────────
+                        // ── Area Selection ─────────────────────────────────
                         BlocBuilder<GovernorateCubit, GovernorateState>(
-                          bloc: _governorateCubit, // ← explicit bloc
+                          bloc: _governorateCubit,
                           builder: (context, state) {
                             if (state is GovernorateLoading) {
                               return const Center(
@@ -388,9 +430,10 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                       ),
                                     ),
                                     TextButton(
-                                      onPressed: () => context
-                                          .read<GovernorateCubit>()
-                                          .loadGovernorates(),
+                                      // ✅ FIX 2: Use _governorateCubit directly —
+                                      //    GovernorateCubit is not in the widget tree.
+                                      onPressed: () =>
+                                          _governorateCubit.loadGovernorates(),
                                       child: Text(l10n.retry),
                                     ),
                                   ],
@@ -399,9 +442,8 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                             }
 
                             if (state is GovernoratesLoaded) {
-                              // Cache so _submit and _pickLocationFromMap can access it
-                              _governoratesResponse = state
-                                  .response; // ← direct assign, no setState needed
+                              // ✅ FIX 3: Removed side-effect assignment here.
+                              //    _governoratesResponse is now set in the BlocListener above.
 
                               final areas = state.response.allAreas;
 
@@ -416,7 +458,8 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                 initialValue: _selectedAreaId,
                                 decoration: InputDecoration(
                                   labelText: l10n.selectArea,
-                                  labelStyle: TextStyle(color: Colors.black),
+                                  labelStyle:
+                                  const TextStyle(color: Colors.black),
                                   focusedBorder: OutlineInputBorder(
                                     borderSide: const BorderSide(
                                       color: AppColors.kPrimaryColor,
@@ -426,7 +469,8 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  prefixIcon: const Icon(Icons.location_city),
+                                  prefixIcon:
+                                  const Icon(Icons.location_city),
                                 ),
                                 items: areas.map((area) {
                                   final governorate = state.response
@@ -455,7 +499,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                         ),
                         const SizedBox(height: 16),
 
-                        // ── Detailed Address ─────────────────────────────────
+                        // ── Detailed Address ───────────────────────────────
                         AppTextFormField(
                           enabled: false,
                           controller: _detailedAddressController,
@@ -469,7 +513,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                         ),
                         const SizedBox(height: 16),
 
-                        // ── Set as Default (only when saving) ────────────────
+                        // ── Set as Default (only when saving) ──────────────
                         if (widget.saveAddress) ...[
                           CheckboxListTile(
                             activeColor: Colors.orangeAccent,
@@ -484,10 +528,9 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                           const SizedBox(height: 16),
                         ],
 
-                        // ── Location status + pick on map button ─────────────
+                        // ── Location status + pick on map button ───────────
                         Column(
                           children: [
-                            // Success indicator
                             if (_hasLocation)
                               TweenAnimationBuilder<double>(
                                 duration: const Duration(milliseconds: 600),
@@ -497,15 +540,12 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                     scale: value,
                                     child: Container(
                                       margin: const EdgeInsets.fromLTRB(
-                                        8,
-                                        0,
-                                        8,
-                                        10,
-                                      ),
+                                          8, 0, 8, 10),
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
                                         color: Colors.green.shade50,
-                                        borderRadius: BorderRadius.circular(6),
+                                        borderRadius:
+                                        BorderRadius.circular(6),
                                         border: Border.all(
                                           color: Colors.green.shade200,
                                           width: 2,
@@ -513,19 +553,15 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                       ),
                                       child: Row(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        MainAxisAlignment.center,
                                         children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            color: Colors.green.shade700,
-                                            size: 24,
-                                          ),
+                                          Icon(Icons.location_on,
+                                              color: Colors.green.shade700,
+                                              size: 24),
                                           const SizedBox(width: 8),
-                                          Icon(
-                                            Icons.check_circle,
-                                            color: Colors.green.shade700,
-                                            size: 24,
-                                          ),
+                                          Icon(Icons.check_circle,
+                                              color: Colors.green.shade700,
+                                              size: 24),
                                           const SizedBox(width: 12),
                                           Text(
                                             l10n.locationObtained,
@@ -542,17 +578,14 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                 },
                               ),
 
-                            // Location required warning
                             if (!_hasLocation)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Row(
                                   children: [
-                                    Icon(
-                                      Icons.info_outline,
-                                      size: 14,
-                                      color: Colors.orange.shade700,
-                                    ),
+                                    Icon(Icons.info_outline,
+                                        size: 14,
+                                        color: Colors.orange.shade700),
                                     const SizedBox(width: 6),
                                     Text(
                                       l10n.locationRequired,
@@ -565,7 +598,6 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                 ),
                               ),
 
-                            // Single "Pick on Map" button (full width)
                             AppCustomButton(
                               enabled: _selectedAreaId != null,
                               isSecondary: true,
@@ -580,27 +612,27 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                   ),
                 ),
 
-                // ── Submit Button ─────────────────────────────────────────────
+                // ── Submit Button ───────────────────────────────────────────
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: widget.saveAddress
                         ? BlocBuilder<AddressCubit, AddressState>(
-                            builder: (context, state) {
-                              final isLoading = state is AddressLoading;
-                              return AppCustomButton(
-                                onPressed: isLoading ? () {} : _submit,
-                                text: widget.address != null
-                                    ? l10n.updateAddress
-                                    : l10n.addAddress,
-                                isLoading: isLoading,
-                              );
-                            },
-                          )
+                      builder: (context, state) {
+                        final isLoading = state is AddressLoading;
+                        return AppCustomButton(
+                          onPressed: isLoading ? () {} : _submit,
+                          text: widget.address != null
+                              ? l10n.updateAddress
+                              : l10n.addAddress,
+                          isLoading: isLoading,
+                        );
+                      },
+                    )
                         : AppCustomButton(
-                            onPressed: _submit,
-                            text: l10n.useThisAddress,
-                          ),
+                      onPressed: _submit,
+                      text: l10n.useThisAddress,
+                    ),
                   ),
                 ),
               ],
