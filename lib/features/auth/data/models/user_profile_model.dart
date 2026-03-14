@@ -8,7 +8,7 @@ class UserProfileModel {
   final String? lang;
   final bool? isActive;
   final DateTime? deletedAt;
-  final String? role;
+  final RoleModel? role;
 
   UserProfileModel({
     required this.id,
@@ -24,7 +24,8 @@ class UserProfileModel {
   });
 
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
-    final user = json['user'] ?? json; // handle both {user:{...}} or {...}
+    final user = json['user'] ?? json;
+
     return UserProfileModel(
       id: user['id'] as int,
       email: user['email'] as String?,
@@ -35,9 +36,11 @@ class UserProfileModel {
       lang: user['lang'] as String?,
       isActive: user['is_active'] as bool?,
       deletedAt: user['deleted_at'] != null
-          ? DateTime.parse(user['deleted_at'])
+          ? DateTime.tryParse(user['deleted_at'])
           : null,
-      role: user['role'],
+      role: user['role'] != null && user['role'] is Map<String, dynamic>
+          ? RoleModel.fromJson(user['role'])
+          : null,
     );
   }
 
@@ -52,7 +55,7 @@ class UserProfileModel {
       "lang": lang,
       "is_active": isActive,
       "deleted_at": deletedAt?.toIso8601String(),
-      "role": role,
+      "role": role?.toJson(),
     };
   }
 }
@@ -84,7 +87,9 @@ class ProfileResponseModel {
 
   factory ProfileResponseModel.fromJson(Map<String, dynamic> json) {
     return ProfileResponseModel(
-      user: UserProfileModel.fromJson(json['user'] as Map<String, dynamic>),
+      user: UserProfileModel.fromJson(
+        json['user'] as Map<String, dynamic>,
+      ),
     );
   }
 }
@@ -101,7 +106,9 @@ class UpdateProfileResponseModel {
   factory UpdateProfileResponseModel.fromJson(Map<String, dynamic> json) {
     return UpdateProfileResponseModel(
       message: json['message'] as String,
-      user: UserProfileModel.fromJson(json['user'] as Map<String, dynamic>),
+      user: UserProfileModel.fromJson(
+        json['user'] as Map<String, dynamic>,
+      ),
     );
   }
 }

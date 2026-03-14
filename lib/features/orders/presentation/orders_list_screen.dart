@@ -320,20 +320,38 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           },
         ),
         actions: [
+          BlocBuilder<OrderCubit, OrderState>(
+            buildWhen: (_, current) =>
+            current is OrdersLoaded || current is OrderLoading,
+            builder: (context, state) {
+              // Add this temporarily
+              debugPrint('AppBar BlocBuilder state: $state');
+              if (state is OrdersLoaded) {
+                debugPrint('viewMode: ${state.viewMode}');
+                debugPrint('orders: ${state.orders.map((o) => '${o.id}:${o.status}').toList()}');
+                debugPrint('any accepted: ${state.orders.any((o) => o.isAccepted)}');
+              }
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.grey.shade200,
-              child: IconButton(
-                icon: const Icon(Icons.qr_code_scanner),
-                color: Colors.grey.shade700,
-                onPressed: _navigateToQRScanner,
-              ),
-            ),
-          ),
-        ],
+              final hasActiveOrders = state is OrdersLoaded &&
+                  state.viewMode == OrderViewMode.active &&
+                  state.orders.any((o) => o.isInProgress);
+
+              if (!hasActiveOrders) return const SizedBox.shrink();
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.grey.shade200,
+                  child: IconButton(
+                    icon: const Icon(Icons.qr_code_scanner),
+                    color: Colors.grey.shade700,
+                    onPressed: _navigateToQRScanner,
+                  ),
+                ),
+              );
+            },
+          ),        ],
       ),
       body: RefreshIndicator(
         onRefresh: () {

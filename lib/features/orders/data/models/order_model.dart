@@ -153,6 +153,7 @@ class Order {
   bool get isPending => status == 'PENDING';
 
   bool get isAccepted => status == 'ACCEPTED';
+  bool get isInProgress => status == 'IN_PROGRESS';
 
   bool get isDelivered => status == 'DELIVERED';
 

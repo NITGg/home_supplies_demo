@@ -96,7 +96,7 @@ class AuthCubit extends Cubit<AuthState> {
       );
 
       // ✅ Check role before proceeding
-      final userRole = result.user.role ?? '';
+      final userRole = result.user.role?? '';
       if (userRole == 'Courier') {
         emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
         return;
