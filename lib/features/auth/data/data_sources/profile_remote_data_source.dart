@@ -33,6 +33,7 @@ class ProfileRemoteDataSource {
     String? fullName,
     String? gender,
     String? lang,
+    String? phone,
   }) async {
     try {
       final Map<String, dynamic> data = {};
@@ -40,6 +41,7 @@ class ProfileRemoteDataSource {
       if (fullName != null) data['full_name'] = fullName;
       if (gender != null) data['gender'] = gender;
       if (lang != null) data['lang'] = lang;
+      if (phone != null) data['phone'] = phone;
 
       final response = await _dio.put(
         '/profile?lang=${LocaleManager.currentLocale}',

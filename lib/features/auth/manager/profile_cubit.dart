@@ -80,6 +80,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     String? fullName,
     String? gender,
     String? lang,
+    String? phone,
   }) async {
     emit(ProfileLoading());
     try {
@@ -94,6 +95,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         fullName: fullName,
         gender: gender,
         lang: lang,
+        phone: phone,
       );
 
       // Update local profile

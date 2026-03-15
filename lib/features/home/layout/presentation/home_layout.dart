@@ -25,6 +25,7 @@ import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
+import '../../../auth/manager/profile_cubit.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
 import '../../../notifications/notifications.dart';
 import '../../../orders/presentation/orders_list_screen.dart';
@@ -600,6 +601,9 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                 onPressed: () {
                   if (formKey.currentState!.validate()) {
                     Navigator.pop(context);
+                    context.read<ProfileCubit>().updateProfile(
+                      phone: phoneController.text,
+                    );
                   }
                 },
                 text: localizations.confirm,

@@ -19,12 +19,14 @@ class ProfileRepository {
     String? fullName,
     String? gender,
     String? lang,
+    String? phone,
   }) async {
     return await _remoteDataSource.updateProfile(
       token: token,
       fullName: fullName,
       gender: gender,
       lang: lang,
+      phone: phone,
     );
   }
 
