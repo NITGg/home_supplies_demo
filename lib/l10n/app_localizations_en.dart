@@ -1206,5 +1206,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addressOutsideArea => 'Selected location is outside the chosen area. Please pick a location within the area.';
 
   @override
+  String get cod => 'COD';
+
+  @override
   String get ratingExcellent => 'Excellent';
 }

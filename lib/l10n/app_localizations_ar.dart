@@ -1206,5 +1206,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addressOutsideArea => 'الموقع المحدد خارج النطاق المختار. يرجى اختيار موقع داخل المنطقة المحددة.';
 
   @override
+  String get cod => 'الدفع عند الاستلام';
+
+  @override
   String get ratingExcellent => 'ممتاز';
 }

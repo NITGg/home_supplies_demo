@@ -523,6 +523,7 @@
 "pickupAddressOutOfArea": "pickup Address Out Of Area",
 "deliveryAddressOutOfArea": "delivery Address Out Of Area",
 "addressOutsideArea": "Selected location is outside the chosen area. Please pick a location within the area.",
+    "cod": "COD",
 
 "ratingExcellent": "Excellent"
 

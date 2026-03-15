@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
+import 'package:tawreedat_go/core/style/text_styles.dart';
 import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/create_order_sheet/select_address.dart';
 import 'package:tawreedat_go/l10n/app_localizations.dart';
@@ -28,10 +29,7 @@ class CreateOrderBottomSheet extends StatefulWidget {
   /// boundaries without an extra network call.
   final GovernoratesResponse governorates;
 
-  const CreateOrderBottomSheet({
-    super.key,
-    required this.governorates,
-  });
+  const CreateOrderBottomSheet({super.key, required this.governorates});
 
   @override
   State<CreateOrderBottomSheet> createState() => _CreateOrderBottomSheetState();
@@ -52,6 +50,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   File? _productImage;
 
   bool _isShopping = true;
+  String _paymentMethod = 'CASH'; // 'CASH' or 'WALLET'
 
   // Coupon state
   CouponValid? _appliedCoupon;
@@ -73,7 +72,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (!mounted) return;
       if (state is AddressesLoaded && state.addresses.isNotEmpty) {
         final defaultAddr = state.addresses.firstWhere(
-              (a) => a.isDefault,
+          (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
         if (_deliveryAddress == null) {
@@ -182,8 +181,12 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final rawMinFee =
         double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000;
 
-    log('AppSettings.delivery_price_for_each_1km (raw): ${AppSettings.delivery_price_for_each_1km}');
-    log('AppSettings.min_delivery_fee (raw):             ${AppSettings.min_delivery_fee}');
+    log(
+      'AppSettings.delivery_price_for_each_1km (raw): ${AppSettings.delivery_price_for_each_1km}',
+    );
+    log(
+      'AppSettings.min_delivery_fee (raw):             ${AppSettings.min_delivery_fee}',
+    );
 
     final double feePerKm = rawFeePerKm / 100;
     final double minFee = rawMinFee / 100;
@@ -206,8 +209,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final fee = calculatedFee < minFee ? minFee : calculatedFee;
 
     log('calculatedFee: $calculatedFee');
-    log('fee (after min clamp): $fee '
-        '${calculatedFee < minFee ? "(clamped to min)" : "(used calculated)"}');
+    log(
+      'fee (after min clamp): $fee '
+      '${calculatedFee < minFee ? "(clamped to min)" : "(used calculated)"}',
+    );
     log('─────────────────────────────────────────────────────');
 
     return Container(
@@ -245,6 +250,126 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
   }
 
+  // ── Payment method toggle ──────────────────────────────────────────────────
+
+  Widget _buildPaymentToggle() {
+    final l10n = AppLocalizations.of(context)!;
+    final isCash = _paymentMethod == 'CASH';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.paymentMethod,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Stack(
+            children: [
+              // Animated sliding pill
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  alignment: isCash
+                      ? Alignment.centerLeft
+                      : Alignment.centerRight,
+                  child: FractionallySizedBox(
+                    widthFactor: 0.5,
+                    child: Container(
+                      margin: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(11),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.10),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Tap targets
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => setState(() => _paymentMethod = 'CASH'),
+                        child: _buildPaymentOption(
+                          icon: Icons.payments_outlined,
+                          label: l10n.cod,
+                          selected: isCash,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => setState(() => _paymentMethod = 'WALLET'),
+                        child: _buildPaymentOption(
+                          icon: Icons.account_balance_wallet_outlined,
+                          label: l10n.wallet,
+                          selected: !isCash,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentOption({
+    required IconData icon,
+    required String label,
+    required bool selected,
+  }) {
+    return Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              icon,
+              key: ValueKey('$icon-$selected'),
+              size: 20,
+              color: selected
+                  ? AppColors.kSecondaryColor
+                  : Colors.grey.shade400,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: selected
+                ? AppTextStyles.bold14
+                : AppTextStyles.regular14.copyWith(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   void _submit() {
@@ -253,23 +378,23 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_isShopping && _productImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.tapToSelectImage)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.tapToSelectImage)));
       return;
     }
 
     if (_pickupAddress == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.pleaseSelectLocation)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
     }
 
     if (_deliveryAddress == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.pleaseSelectLocation)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
     }
 
@@ -325,8 +450,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         productImageFile: _productImage,
         budget: _isShopping
             ? (double.parse(_budgetController.text.trim()) * 100)
-            .round()
-            .toString()
+                  .round()
+                  .toString()
             : '1',
         pickupAreaId: _pickupAddress!.areaId,
         pickupAddressDescription: _pickupAddress!.detailedAddress,
@@ -337,6 +462,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         deliveryLat: _deliveryAddress!.addressLat,
         deliveryLong: _deliveryAddress!.addressLong,
       ),
+      _isShopping ? _paymentMethod : 'WALLET', // 'CASH' or 'WALLET'
     );
   }
 
@@ -443,8 +569,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       Text(
                         address?.displayAddress ?? label,
                         style: TextStyle(
-                          color:
-                          address == null ? Colors.grey : Colors.black87,
+                          color: address == null ? Colors.grey : Colors.black87,
                         ),
                       ),
                       if (outOfBounds) ...[
@@ -523,10 +648,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           );
         } else if (state is OrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
@@ -596,16 +718,14 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               : TextInputAction.done,
                           onFieldSubmitted: (_) {
                             if (_isShopping) {
-                              FocusScope.of(context)
-                                  .requestFocus(_budgetFocus);
+                              FocusScope.of(context).requestFocus(_budgetFocus);
                             } else {
                               FocusScope.of(context).unfocus();
                             }
                           },
                           controller: _productDescriptionController,
                           label: l10n.productDetails,
-                          validator: (v) =>
-                          (v == null || v.trim().isEmpty)
+                          validator: (v) => (v == null || v.trim().isEmpty)
                               ? 'Please enter product description'
                               : null,
                         ),
@@ -668,7 +788,12 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                         _buildShippingFeeEstimate(),
 
                         const SizedBox(height: 24),
+                        if (_isShopping) ...[
+                          // Payment method
+                          _buildPaymentToggle(),
 
+                          const SizedBox(height: 24),
+                        ],
                         // Coupon
                         CouponSection(
                           couponController: _couponController,
@@ -691,7 +816,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     padding: const EdgeInsets.all(16),
                     child: BlocBuilder<OrderCubit, OrderState>(
                       buildWhen: (_, s) =>
-                      s is OrderOperationLoading ||
+                          s is OrderOperationLoading ||
                           s is OrdersLoaded ||
                           s is OrderError ||
                           s is OrderSuccess,

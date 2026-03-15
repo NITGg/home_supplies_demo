@@ -213,11 +213,11 @@ class OrderCubit extends Cubit<OrderState> {
 
   // ── Create Order ───────────────────────────────────────────────────────────
 
-  Future<void> createOrder(Order order) async {
+  Future<void> createOrder(Order order,String paymentMethod) async {
     emit(OrderOperationLoading());
     try {
       log('OrderCubit: Creating order');
-      final response = await _repository.createOrder(order);
+      final response = await _repository.createOrder(order,paymentMethod);
       log('OrderCubit: Order created — ${response.order.orderNumber}');
 
       emit(OrderSuccess(message: response.message, order: response.order));

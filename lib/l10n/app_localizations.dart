@@ -2435,6 +2435,12 @@ abstract class AppLocalizations {
   /// **'Selected location is outside the chosen area. Please pick a location within the area.'**
   String get addressOutsideArea;
 
+  /// No description provided for @cod.
+  ///
+  /// In en, this message translates to:
+  /// **'COD'**
+  String get cod;
+
   /// No description provided for @ratingExcellent.
   ///
   /// In en, this message translates to:

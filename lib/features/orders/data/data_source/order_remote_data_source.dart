@@ -10,8 +10,8 @@ class OrderRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
 
   // Create Order
-  Future<OrderResponse> createOrder(Order order) async {
-      log('Creating order: ${order.toJson()}');
+  Future<OrderResponse> createOrder(Order order,String paymentMethod) async {
+      log('Creating order: ${order.toJson()} payment method: $paymentMethod');
 
       FormData formData;
 
@@ -27,14 +27,17 @@ class OrderRemoteDataSource {
           'delivery_address_description': order.deliveryAddressDescription,
           'delivery_lat': order.deliveryLat,
           'delivery_long': order.deliveryLong,
+          'payment_method': paymentMethod,
           'product_image': await MultipartFile.fromFile(
             order.productImageFile!.path,
             filename: 'product_${DateTime.now().millisecondsSinceEpoch}.jpg',
           ),
         });
       } else {
-        formData = FormData.fromMap(order.toJson());
-      }
+        formData = FormData.fromMap({
+          ...order.toJson(),
+          'payment_method': paymentMethod,
+        });      }
 
       final response = await _dio.post('/orders?lang=${LocaleManager.currentLocale}', data: formData);
 
