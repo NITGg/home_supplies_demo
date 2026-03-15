@@ -211,12 +211,15 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                         totalCount: 0,
                         totalPages: 0,
                       );
+                      final balance = context.read<WalletCubit>().state is WalletLoaded
+                          ? (context.read<WalletCubit>().state as WalletLoaded).walletData.wallet.balance
+                          : 0.0;
 
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
-                        builder: (_) => CreateOrderBottomSheet(governorates: governorates,),
+                        builder: (_) => CreateOrderBottomSheet(governorates: governorates,walletBalance: balance,),
                       );
                     },
                     backgroundColor: AppColors.kSecondaryColor,

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 import 'package:tawreedat_go/core/style/text_styles.dart';
 import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
@@ -17,6 +18,8 @@ import '../../../../../addresses/data/models/address_model.dart';
 import '../../../../../addresses/data/models/governorate_model.dart';
 import '../../../../../addresses/manager/address_cubit.dart';
 import '../../../../../addresses/manager/address_states.dart';
+import '../../../../../wallet/manager/wallet_cubit.dart';
+import '../../../../../wallet/manager/wallet_state.dart';
 import '../../../../data/models/order_model.dart';
 import '../../../../manager/order_cubit.dart';
 import '../../../../manager/order_states.dart';
@@ -29,7 +32,14 @@ class CreateOrderBottomSheet extends StatefulWidget {
   /// boundaries without an extra network call.
   final GovernoratesResponse governorates;
 
-  const CreateOrderBottomSheet({super.key, required this.governorates});
+  /// Current wallet balance (in EGP). Pass null to skip balance checks.
+  final double? walletBalance;
+
+  const CreateOrderBottomSheet({
+    super.key,
+    required this.governorates,
+    this.walletBalance,
+  });
 
   @override
   State<CreateOrderBottomSheet> createState() => _CreateOrderBottomSheetState();
@@ -56,6 +66,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   CouponValid? _appliedCoupon;
   bool _couponValidating = false;
 
+  // Wallet balance — mutable so we can refresh after returning from TopUp
+  late double _walletBalance;
+
   late final AddressCubit _initCubit;
 
   // ── Life-cycle ─────────────────────────────────────────────────────────────
@@ -63,6 +76,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   @override
   void initState() {
     super.initState();
+    _walletBalance = widget.walletBalance ?? 0.0;
     _initCubit = AddressCubit();
     _preloadDefaultDelivery();
   }
@@ -72,7 +86,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (!mounted) return;
       if (state is AddressesLoaded && state.addresses.isNotEmpty) {
         final defaultAddr = state.addresses.firstWhere(
-          (a) => a.isDefault,
+              (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
         if (_deliveryAddress == null) {
@@ -97,12 +111,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   // ── Boundary validation ────────────────────────────────────────────────────
 
-  /// Returns the [Area] whose id matches [address.areaId], or null.
   Area? _areaFor(Address address) =>
       widget.governorates.findAreaById(address.areaId);
 
-  /// True when the address coordinates sit inside the area's declared
-  /// boundaries.  Permissive (returns true) when no area / boundaries found.
   bool _isAddressInArea(Address address) {
     final area = _areaFor(address);
     if (area == null) return true;
@@ -111,6 +122,63 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       lng: double.parse(address.addressLong),
       boundaries: area.boundaries,
     );
+  }
+
+  // ── Fee calculation ────────────────────────────────────────────────────────
+
+  /// Calculates the estimated shipping fee in EGP (already ceiled).
+  /// Returns null when pickup or delivery address is not set yet.
+  double? _calculateShippingFee() {
+    if (_pickupAddress == null || _deliveryAddress == null) return null;
+
+    final rawFeePerKm =
+        double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000;
+    final rawMinFee =
+        double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000;
+
+    final double feePerKm = rawFeePerKm / 100;
+    final double minFee = rawMinFee / 100;
+
+    final distanceInMeters = calculateDistance(
+      double.parse(_pickupAddress!.addressLat),
+      double.parse(_pickupAddress!.addressLong),
+      double.parse(_deliveryAddress!.addressLat),
+      double.parse(_deliveryAddress!.addressLong),
+    );
+    final distanceKm = (distanceInMeters / 1000).round();
+    final calculatedFee = distanceKm * feePerKm;
+    final fee = calculatedFee < minFee ? minFee : calculatedFee;
+
+    return fee.ceilToDouble();
+  }
+
+  /// Returns the total wallet amount required for this order in EGP.
+  ///
+  /// Shopping + wallet → fee + budget
+  /// Shipping          → fee only (budget is irrelevant / set to 1 cent)
+  double _requiredWalletAmount() {
+    final fee = _calculateShippingFee() ?? 0.0;
+    if (_isShopping) {
+      final budget = double.tryParse(_budgetController.text.trim()) ?? 0.0;
+      return fee + budget;
+    }
+    return fee;
+  }
+
+  // ── Wallet balance helpers ─────────────────────────────────────────────────
+
+  /// Tries to read the latest balance from WalletCubit (if it is in the tree
+  /// above this sheet) and updates [_walletBalance] accordingly.
+  void _tryRefreshWalletBalance() {
+    try {
+      final cubit = context.read<WalletCubit>();
+      final s = cubit.state;
+      if (s is WalletLoaded) {
+        setState(() => _walletBalance = s.walletData.wallet.balance);
+      }
+    } catch (_) {
+      // WalletCubit not in tree — silently ignore.
+    }
   }
 
   // ── Coupon ─────────────────────────────────────────────────────────────────
@@ -170,50 +238,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   // ── Shipping fee estimate ──────────────────────────────────────────────────
 
   Widget _buildShippingFeeEstimate() {
-    if (_pickupAddress == null || _deliveryAddress == null) {
-      return const SizedBox.shrink();
-    }
+    final fee = _calculateShippingFee();
+    if (fee == null) return const SizedBox.shrink();
 
-    log('─── _buildShippingFeeEstimate ───────────────────────');
-
-    final rawFeePerKm =
-        double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000;
-    final rawMinFee =
-        double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000;
-
-    log(
-      'AppSettings.delivery_price_for_each_1km (raw): ${AppSettings.delivery_price_for_each_1km}',
-    );
-    log(
-      'AppSettings.min_delivery_fee (raw):             ${AppSettings.min_delivery_fee}',
-    );
-
-    final double feePerKm = rawFeePerKm / 100;
-    final double minFee = rawMinFee / 100;
-
-    log('feePerKm (EGP/km): $feePerKm');
-    log('minFee   (EGP):    $minFee');
-
-    final distanceInMeters = calculateDistance(
-      double.parse(_pickupAddress!.addressLat),
-      double.parse(_pickupAddress!.addressLong),
-      double.parse(_deliveryAddress!.addressLat),
-      double.parse(_deliveryAddress!.addressLong),
-    );
-    final distanceKm = (distanceInMeters / 1000).round();
-
-    log('distanceInMeters: $distanceInMeters');
-    log('distanceKm:       $distanceKm');
-
-    final calculatedFee = distanceKm * feePerKm;
-    final fee = calculatedFee < minFee ? minFee : calculatedFee;
-
-    log('calculatedFee: $calculatedFee');
-    log(
-      'fee (after min clamp): $fee '
-      '${calculatedFee < minFee ? "(clamped to min)" : "(used calculated)"}',
-    );
-    log('─────────────────────────────────────────────────────');
+    log('─── _buildShippingFeeEstimate → fee: $fee EGP ───────────────────────');
 
     return Container(
       margin: const EdgeInsets.only(top: 16),
@@ -238,7 +266,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             ),
           ),
           Text(
-            '${fee.ceil()} ${AppLocalizations.of(context)!.egp}',
+            '${fee.toInt()} ${AppLocalizations.of(context)!.egp}',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
@@ -279,9 +307,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                 child: AnimatedAlign(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOut,
-                  alignment: isCash
-                      ? Alignment.centerLeft
-                      : Alignment.centerRight,
+                  alignment:
+                  isCash ? Alignment.centerLeft : Alignment.centerRight,
                   child: FractionallySizedBox(
                     widthFactor: 0.5,
                     child: Container(
@@ -353,9 +380,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               icon,
               key: ValueKey('$icon-$selected'),
               size: 20,
-              color: selected
-                  ? AppColors.kSecondaryColor
-                  : Colors.grey.shade400,
+              color:
+              selected ? AppColors.kSecondaryColor : Colors.grey.shade400,
             ),
           ),
           const SizedBox(width: 6),
@@ -370,6 +396,41 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
   }
 
+  // ── Insufficient balance dialog ────────────────────────────────────────────
+
+  /// Shows a modal bottom-sheet explaining the balance shortfall and offering
+  /// a direct link to the Top Up screen.  The sheet is left open so all form
+  /// data is preserved; balance is refreshed when the user navigates back.
+  void _showInsufficientBalanceDialog({
+    required double required,
+    required double balance,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final shortfall = (required - balance).ceilToDouble();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetCtx) {
+        return _InsufficientBalanceSheet(
+          currentBalance: balance,
+          requiredAmount: required,
+          shortfall: shortfall,
+          isShopping: _isShopping,
+          egpLabel: l10n.egp,
+          onTopUp: () async {
+            Navigator.pop(sheetCtx); // close this dialog
+            // Navigate to top-up; order sheet stays alive underneath.
+            await context.push('/wallet/topup');
+            // Back from top-up — refresh balance from cubit if available.
+            if (mounted) _tryRefreshWalletBalance();
+          },
+        );
+      },
+    );
+  }
+
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   void _submit() {
@@ -378,23 +439,20 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_isShopping && _productImage == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.tapToSelectImage)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.tapToSelectImage)));
       return;
     }
 
     if (_pickupAddress == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
     }
 
     if (_deliveryAddress == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
     }
 
@@ -442,6 +500,24 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       return;
     }
 
+    // ── Wallet balance validation ──────────────────────────────────────────
+    // Applies when:
+    //   • Shopping and the user chose Wallet as payment method, OR
+    //   • Shipping (always deducted from wallet)
+
+    final bool usesWallet = _paymentMethod == 'WALLET' || !_isShopping;
+
+    if (usesWallet) {
+      final required = _requiredWalletAmount();
+      if (_walletBalance < required) {
+        _showInsufficientBalanceDialog(
+          required: required,
+          balance: _walletBalance,
+        );
+        return;
+      }
+    }
+
     // ── Create order ───────────────────────────────────────────────────────
 
     context.read<OrderCubit>().createOrder(
@@ -450,8 +526,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         productImageFile: _productImage,
         budget: _isShopping
             ? (double.parse(_budgetController.text.trim()) * 100)
-                  .round()
-                  .toString()
+            .round()
+            .toString()
             : '1',
         pickupAreaId: _pickupAddress!.areaId,
         pickupAddressDescription: _pickupAddress!.detailedAddress,
@@ -462,7 +538,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         deliveryLat: _deliveryAddress!.addressLat,
         deliveryLong: _deliveryAddress!.addressLong,
       ),
-      _isShopping ? _paymentMethod : 'WALLET', // 'CASH' or 'WALLET'
+      _isShopping ? _paymentMethod : 'WALLET',
     );
   }
 
@@ -504,7 +580,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final color = isPickup ? Colors.green : Colors.blue;
     final icon = isPickup ? Icons.store_outlined : Icons.location_on;
 
-    // Eager boundary check — shows warning as soon as address is picked
     final bool outOfBounds = address != null && !_isAddressInArea(address);
 
     return Column(
@@ -569,7 +644,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       Text(
                         address?.displayAddress ?? label,
                         style: TextStyle(
-                          color: address == null ? Colors.grey : Colors.black87,
+                          color:
+                          address == null ? Colors.grey : Colors.black87,
                         ),
                       ),
                       if (outOfBounds) ...[
@@ -648,7 +724,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           );
         } else if (state is OrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(
+                content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
@@ -718,7 +795,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               : TextInputAction.done,
                           onFieldSubmitted: (_) {
                             if (_isShopping) {
-                              FocusScope.of(context).requestFocus(_budgetFocus);
+                              FocusScope.of(context)
+                                  .requestFocus(_budgetFocus);
                             } else {
                               FocusScope.of(context).unfocus();
                             }
@@ -782,18 +860,16 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           isPickup: false,
                         ),
 
-                        // Shipping fee estimate — recalculates on every rebuild
-                        // triggered by setState in _selectPickupAddress /
-                        // _selectDeliveryAddress.
+                        // Shipping fee estimate
                         _buildShippingFeeEstimate(),
 
                         const SizedBox(height: 24),
                         if (_isShopping) ...[
                           // Payment method
                           _buildPaymentToggle(),
-
                           const SizedBox(height: 24),
                         ],
+
                         // Coupon
                         CouponSection(
                           couponController: _couponController,
@@ -816,7 +892,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     padding: const EdgeInsets.all(16),
                     child: BlocBuilder<OrderCubit, OrderState>(
                       buildWhen: (_, s) =>
-                          s is OrderOperationLoading ||
+                      s is OrderOperationLoading ||
                           s is OrdersLoaded ||
                           s is OrderError ||
                           s is OrderSuccess,
@@ -834,6 +910,235 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// ── Insufficient Balance Bottom Sheet ─────────────────────────────────────────
+
+class _InsufficientBalanceSheet extends StatelessWidget {
+  final double currentBalance;
+  final double requiredAmount;
+  final double shortfall;
+  final bool isShopping;
+  final String egpLabel;
+  final VoidCallback onTopUp;
+
+  const _InsufficientBalanceSheet({
+    required this.currentBalance,
+    required this.requiredAmount,
+    required this.shortfall,
+    required this.isShopping,
+    required this.egpLabel,
+    required this.onTopUp,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Icon
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.account_balance_wallet_outlined,
+              size: 32,
+              color: Colors.orange.shade700,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Title
+          Text(
+            isArabic ? 'رصيد غير كافٍ' : 'Insufficient Balance',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Subtitle
+          Text(
+            isArabic
+                ? (isShopping
+                ? 'رصيد محفظتك لا يغطي تكلفة التوصيل والميزانية'
+                : 'رصيد محفظتك لا يغطي تكلفة التوصيل')
+                : (isShopping
+                ? 'Your wallet balance does not cover the shipping fee and budget'
+                : 'Your wallet balance does not cover the shipping fee'),
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 24),
+
+          // Balance breakdown card
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Column(
+              children: [
+                _BalanceRow(
+                  label: isArabic ? 'الرصيد الحالي' : 'Current Balance',
+                  amount: currentBalance,
+                  egpLabel: egpLabel,
+                  color: Colors.green.shade700,
+                  icon: Icons.account_balance_wallet,
+                ),
+                Divider(height: 1, color: Colors.grey.shade200),
+                _BalanceRow(
+                  label: isArabic ? 'المبلغ المطلوب' : 'Required Amount',
+                  amount: requiredAmount,
+                  egpLabel: egpLabel,
+                  color: Colors.blue.shade700,
+                  icon: Icons.receipt_long_outlined,
+                ),
+                Divider(height: 1, color: Colors.grey.shade200),
+                _BalanceRow(
+                  label: isArabic ? 'المبلغ الناقص' : 'Shortfall',
+                  amount: shortfall,
+                  egpLabel: egpLabel,
+                  color: Colors.red.shade700,
+                  icon: Icons.arrow_downward_rounded,
+                  highlight: true,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Top Up button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onTopUp,
+              icon: const Icon(Icons.add_card_rounded),
+              label: Text(
+                isArabic
+                    ? 'شحن المحفظة الآن'
+                    : 'Top Up Wallet Now',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.kPrimaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Dismiss
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              isArabic ? 'ليس الآن' : 'Not Now',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BalanceRow extends StatelessWidget {
+  final String label;
+  final double amount;
+  final String egpLabel;
+  final Color color;
+  final IconData icon;
+  final bool highlight;
+
+  const _BalanceRow({
+    required this.label,
+    required this.amount,
+    required this.egpLabel,
+    required this.color,
+    required this.icon,
+    this.highlight = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: highlight
+          ? BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(16),
+        ),
+      )
+          : null,
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade700,
+                fontWeight:
+                highlight ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ),
+          Text(
+            '${amount.toStringAsFixed(2)} $egpLabel',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

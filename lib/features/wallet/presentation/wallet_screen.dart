@@ -36,6 +36,11 @@ class _WalletScreenState extends State<WalletScreen> {
           isArabic ? 'المحفظة' : 'Wallet',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        leading: BackButton(
+          color: Colors.black,
+          onPressed: () =>
+          context.canPop() ? context.pop() : context.go('/mainHome'),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
