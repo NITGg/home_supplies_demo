@@ -96,6 +96,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get points => 'Points';
 
   @override
+  String get point => 'Point';
+
+  @override
   String get search => 'Search';
 
   @override

@@ -269,6 +269,12 @@ abstract class AppLocalizations {
   /// **'Points'**
   String get points;
 
+  /// No description provided for @point.
+  ///
+  /// In en, this message translates to:
+  /// **'Point'**
+  String get point;
+
   /// No description provided for @search.
   ///
   /// In en, this message translates to:

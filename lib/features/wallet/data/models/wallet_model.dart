@@ -37,6 +37,7 @@ class WalletModel {
 class Wallet {
   final int id;
   final double balance;
+  final double points;
   final String status;
   final String ownerType;
   final String? freezeReason;
@@ -45,6 +46,7 @@ class Wallet {
   Wallet({
     required this.id,
     required this.balance,
+    required this.points,
     required this.status,
     required this.ownerType,
     this.freezeReason,
@@ -55,6 +57,7 @@ class Wallet {
     return Wallet(
       id: json['id'],
       balance: ((num.tryParse(json['balance']?.toString() ?? '0') ?? 0) / 100)
+      , points: (num.tryParse(json['points']?.toString() ?? '0') ?? 0)/1
       ,
       status: json['status'] ?? 'ACTIVE',
       ownerType: json['owner_type'] ?? 'CUSTOMER',

@@ -33,6 +33,8 @@
   "haveAccount": "Already have an account?",
 
   "points": "Points",
+    "point": "Point",
+
   "search": "Search",
     "searchFor": "search for a place, address, landmark....",
   "showAll": "Show All",

@@ -96,6 +96,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get points => 'النقاط';
 
   @override
+  String get point => 'نقطة';
+
+  @override
   String get search => 'بحث';
 
   @override

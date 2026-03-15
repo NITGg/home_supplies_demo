@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -6,6 +5,7 @@ import '../../../../l10n/app_localizations.dart';
 
 class WalletBalanceCard extends StatelessWidget {
   final double balance;
+  final double points;
   final bool isActive;
   final String? freezeReason;
   final double totalUnpaid;
@@ -15,6 +15,7 @@ class WalletBalanceCard extends StatelessWidget {
   const WalletBalanceCard({
     super.key,
     required this.balance,
+    required this.points,
     required this.isActive,
     this.freezeReason,
     required this.totalUnpaid,
@@ -82,6 +83,15 @@ class WalletBalanceCard extends StatelessWidget {
                       currencyFormatter.format(balance),
                       style: const TextStyle(
                         fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '+ ${points.toStringAsFixed(0)} ${AppLocalizations.of(context)!.point}',
+                      style: const TextStyle(
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
