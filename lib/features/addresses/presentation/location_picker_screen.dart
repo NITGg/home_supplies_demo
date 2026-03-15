@@ -38,15 +38,16 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
     // Defer notifier update to after the current build frame completes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       showFloatingButton.value = false;
-    });    if (widget.initialLat != null && widget.initialLong != null) {
-      _initialLat  = double.tryParse(widget.initialLat!)  ?? 30.0444;
+    });
+    if (widget.initialLat != null && widget.initialLong != null) {
+      _initialLat = double.tryParse(widget.initialLat!) ?? 30.0444;
       _initialLong = double.tryParse(widget.initialLong!) ?? 31.2357;
     } else if (widget.areaBoundaries != null) {
       final c = AreaBoundaryValidator.centroid(widget.areaBoundaries!);
-      _initialLat  = c?.lat ?? 30.0444;
+      _initialLat = c?.lat ?? 30.0444;
       _initialLong = c?.lng ?? 31.2357;
     } else {
-      _initialLat  = 30.0444;
+      _initialLat = 30.0444;
       _initialLong = 31.2357;
     }
   }
@@ -58,7 +59,12 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.pickOnMaps),
-        leading: BackButton(onPressed: () => Navigator.pop(context)),
+        leading: BackButton(
+          onPressed: () {
+            showFloatingButton.value = true;
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: MapLocationPicker(
         config: MapLocationPickerConfig(
@@ -85,60 +91,57 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
               ),
             );
           },
-          bottomCardBuilder: (
-              context,
-              geoResult,
-              results,
-              address,
-              isLoading,
-              onNext,
-              searchBar,
+          bottomCardBuilder:
+              (
+                context,
+                geoResult,
+                results,
+                address,
+                isLoading,
+                onNext,
+                searchBar,
               ) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-                boxShadow: [
-                  BoxShadow(color: Colors.black12, blurRadius: 8),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        color: AppColors.kSecondaryColor,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          address,
-                          maxLines: 2,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black12, blurRadius: 8),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  AppCustomButton(
-                    onPressed: onNext,
-                    text: l10n.confirm,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: AppColors.kSecondaryColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              address,
+                              maxLines: 2,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      AppCustomButton(onPressed: onNext, text: l10n.confirm),
+                    ],
                   ),
-                ],
-              ),
-            );
-          },
+                );
+              },
           onNext: (GeocodingResult? result) {
             if (result != null) {
-
               String? administrativeArea;
 
               for (final component in result.addressComponents ?? []) {
@@ -148,11 +151,11 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
                   break;
                 }
               }
-
+              showFloatingButton.value = true;
               Navigator.pop(context, {
-                'latitude':  result.geometry?.location.lat.toString() ?? '',
+                'latitude': result.geometry?.location.lat.toString() ?? '',
                 'longitude': result.geometry?.location.lng.toString() ?? '',
-                'address':   result.formattedAddress ?? '',
+                'address': result.formattedAddress ?? '',
                 'administrativeArea': administrativeArea ?? '',
               });
             }
