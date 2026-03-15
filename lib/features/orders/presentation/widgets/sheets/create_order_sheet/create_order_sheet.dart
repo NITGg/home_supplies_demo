@@ -32,7 +32,7 @@ class CreateOrderBottomSheet extends StatefulWidget {
   /// boundaries without an extra network call.
   final GovernoratesResponse governorates;
 
-  /// Current wallet balance (in EGP). Pass null to skip balance checks.
+  /// Current wallet balance in EGP. Pass null to skip balance checks.
   final double? walletBalance;
 
   const CreateOrderBottomSheet({
@@ -241,7 +241,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final fee = _calculateShippingFee();
     if (fee == null) return const SizedBox.shrink();
 
-    log('─── _buildShippingFeeEstimate → fee: $fee EGP ───────────────────────');
+    log('─── _buildShippingFeeEstimate → fee: $fee EGP ───');
 
     return Container(
       margin: const EdgeInsets.only(top: 16),
@@ -399,7 +399,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   // ── Insufficient balance dialog ────────────────────────────────────────────
 
   /// Shows a modal bottom-sheet explaining the balance shortfall and offering
-  /// a direct link to the Top Up screen.  The sheet is left open so all form
+  /// a direct link to the Top Up screen. The sheet is left open so all form
   /// data is preserved; balance is refreshed when the user navigates back.
   void _showInsufficientBalanceDialog({
     required double required,
@@ -418,9 +418,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           requiredAmount: required,
           shortfall: shortfall,
           isShopping: _isShopping,
-          egpLabel: l10n.egp,
+          l10n: l10n,
           onTopUp: () async {
-            Navigator.pop(sheetCtx); // close this dialog
+            Navigator.pop(sheetCtx);
             // Navigate to top-up; order sheet stays alive underneath.
             await context.push('/wallet/topup');
             // Back from top-up — refresh balance from cubit if available.
@@ -577,6 +577,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     required VoidCallback onTap,
     required bool isPickup,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final color = isPickup ? Colors.green : Colors.blue;
     final icon = isPickup ? Icons.store_outlined : Icons.location_on;
 
@@ -594,7 +595,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             if (outOfBounds) ...[
               const SizedBox(width: 8),
               Tooltip(
-                message: 'Address may be outside the selected area',
+                message: l10n.addressMayBeOutsideArea,
                 child: Icon(
                   Icons.warning_amber_rounded,
                   size: 18,
@@ -651,7 +652,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       if (outOfBounds) ...[
                         const SizedBox(height: 4),
                         Text(
-                          'Address may be outside selected area',
+                          l10n.addressMayBeOutsideArea,
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.orange.shade700,
@@ -779,6 +780,32 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
                 const Divider(height: 1),
 
+                // Wallet balance hint
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 14,
+                        color: Colors.grey.shade500,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          _isShopping
+                              ? l10n.walletBalanceHintShopping
+                              : l10n.walletBalanceHintShipping,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 // Scrollable body
                 Expanded(
                   child: Form(
@@ -804,7 +831,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           controller: _productDescriptionController,
                           label: l10n.productDetails,
                           validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Please enter product description'
+                              ? l10n.pleaseEnterProductDescription
                               : null,
                         ),
 
@@ -820,10 +847,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                             validator: (v) {
                               if (!_isShopping) return null;
                               if (v == null || v.trim().isEmpty) {
-                                return 'Please enter budget';
+                                return l10n.pleaseEnterBudget;
                               }
                               if (double.tryParse(v) == null) {
-                                return 'Please enter a valid number';
+                                return l10n.pleaseEnterValidNumber;
                               }
                               return null;
                             },
@@ -922,7 +949,7 @@ class _InsufficientBalanceSheet extends StatelessWidget {
   final double requiredAmount;
   final double shortfall;
   final bool isShopping;
-  final String egpLabel;
+  final AppLocalizations l10n;
   final VoidCallback onTopUp;
 
   const _InsufficientBalanceSheet({
@@ -930,14 +957,12 @@ class _InsufficientBalanceSheet extends StatelessWidget {
     required this.requiredAmount,
     required this.shortfall,
     required this.isShopping,
-    required this.egpLabel,
+    required this.l10n,
     required this.onTopUp,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -976,23 +1001,16 @@ class _InsufficientBalanceSheet extends StatelessWidget {
 
           // Title
           Text(
-            isArabic ? 'رصيد غير كافٍ' : 'Insufficient Balance',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            l10n.insufficientBalance,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
 
-          // Subtitle
+          // Subtitle — context-aware (shopping vs shipping)
           Text(
-            isArabic
-                ? (isShopping
-                ? 'رصيد محفظتك لا يغطي تكلفة التوصيل والميزانية'
-                : 'رصيد محفظتك لا يغطي تكلفة التوصيل')
-                : (isShopping
-                ? 'Your wallet balance does not cover the shipping fee and budget'
-                : 'Your wallet balance does not cover the shipping fee'),
+            isShopping
+                ? l10n.insufficientBalanceShoppingDesc
+                : l10n.insufficientBalanceShippingDesc,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           ),
@@ -1008,25 +1026,25 @@ class _InsufficientBalanceSheet extends StatelessWidget {
             child: Column(
               children: [
                 _BalanceRow(
-                  label: isArabic ? 'الرصيد الحالي' : 'Current Balance',
+                  label: l10n.currentBalance,
                   amount: currentBalance,
-                  egpLabel: egpLabel,
+                  egpLabel: l10n.egp,
                   color: Colors.green.shade700,
                   icon: Icons.account_balance_wallet,
                 ),
                 Divider(height: 1, color: Colors.grey.shade200),
                 _BalanceRow(
-                  label: isArabic ? 'المبلغ المطلوب' : 'Required Amount',
+                  label: l10n.requiredAmount,
                   amount: requiredAmount,
-                  egpLabel: egpLabel,
+                  egpLabel: l10n.egp,
                   color: Colors.blue.shade700,
                   icon: Icons.receipt_long_outlined,
                 ),
                 Divider(height: 1, color: Colors.grey.shade200),
                 _BalanceRow(
-                  label: isArabic ? 'المبلغ الناقص' : 'Shortfall',
+                  label: l10n.shortfall,
                   amount: shortfall,
-                  egpLabel: egpLabel,
+                  egpLabel: l10n.egp,
                   color: Colors.red.shade700,
                   icon: Icons.arrow_downward_rounded,
                   highlight: true,
@@ -1043,9 +1061,7 @@ class _InsufficientBalanceSheet extends StatelessWidget {
               onPressed: onTopUp,
               icon: const Icon(Icons.add_card_rounded),
               label: Text(
-                isArabic
-                    ? 'شحن المحفظة الآن'
-                    : 'Top Up Wallet Now',
+                l10n.topUpNow,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1068,7 +1084,7 @@ class _InsufficientBalanceSheet extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              isArabic ? 'ليس الآن' : 'Not Now',
+              l10n.notNow,
               style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
             ),
           ),
@@ -1125,8 +1141,7 @@ class _BalanceRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade700,
-                fontWeight:
-                highlight ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: highlight ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ),

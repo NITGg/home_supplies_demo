@@ -2435,6 +2435,84 @@ abstract class AppLocalizations {
   /// **'Selected location is outside the chosen area. Please pick a location within the area.'**
   String get addressOutsideArea;
 
+  /// No description provided for @insufficientBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient Balance'**
+  String get insufficientBalance;
+
+  /// No description provided for @insufficientBalanceShoppingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wallet balance does not cover the shipping fee and budget'**
+  String get insufficientBalanceShoppingDesc;
+
+  /// No description provided for @insufficientBalanceShippingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wallet balance does not cover the shipping fee'**
+  String get insufficientBalanceShippingDesc;
+
+  /// No description provided for @currentBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Balance'**
+  String get currentBalance;
+
+  /// No description provided for @requiredAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Required Amount'**
+  String get requiredAmount;
+
+  /// No description provided for @shortfall.
+  ///
+  /// In en, this message translates to:
+  /// **'Shortfall'**
+  String get shortfall;
+
+  /// No description provided for @topUpNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Up Wallet Now'**
+  String get topUpNow;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Now'**
+  String get notNow;
+
+  /// No description provided for @addressMayBeOutsideArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Address may be outside the selected area'**
+  String get addressMayBeOutsideArea;
+
+  /// No description provided for @pleaseEnterProductDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter product description'**
+  String get pleaseEnterProductDescription;
+
+  /// No description provided for @pleaseEnterBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter budget'**
+  String get pleaseEnterBudget;
+
+  /// No description provided for @walletBalanceHintShipping.
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure you have enough wallet balance to cover the shipping fee'**
+  String get walletBalanceHintShipping;
+
+  /// No description provided for @walletBalanceHintShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure you have enough wallet balance if you want to use it to pay for your order'**
+  String get walletBalanceHintShopping;
+
   /// No description provided for @cod.
   ///
   /// In en, this message translates to:

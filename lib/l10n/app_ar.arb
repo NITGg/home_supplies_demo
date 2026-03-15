@@ -526,7 +526,19 @@
 "pickupAddressOutOfArea": "عنوان الاستلام خارج المنطقة",
 "deliveryAddressOutOfArea": "عنوان التوصيل خارج المنطقة",
 "addressOutsideArea": "الموقع المحدد خارج النطاق المختار. يرجى اختيار موقع داخل المنطقة المحددة.",
-
+ "insufficientBalance": "رصيد غير كافٍ",
+  "insufficientBalanceShoppingDesc": "رصيد محفظتك لا يغطي تكلفة التوصيل والميزانية",
+  "insufficientBalanceShippingDesc": "رصيد محفظتك لا يغطي تكلفة التوصيل",
+  "currentBalance": "الرصيد الحالي",
+  "requiredAmount": "المبلغ المطلوب",
+  "shortfall": "المبلغ الناقص",
+  "topUpNow": "شحن المحفظة الآن",
+  "notNow": "ليس الآن",
+  "addressMayBeOutsideArea": "قد يكون العنوان خارج المنطقة المحددة",
+  "pleaseEnterProductDescription": "يرجى إدخال وصف المنتج",
+  "pleaseEnterBudget": "يرجى إدخال الميزانية",
+  "walletBalanceHintShipping": "تأكد من أن رصيد محفظتك كافٍ لتغطية رسوم التوصيل",
+  "walletBalanceHintShopping": "تأكد من أن رصيد محفظتك كافٍ إذا أردت استخدامه للدفع عن طريقه",
     "cod": "الدفع عند الاستلام",
     "ratingExcellent": "ممتاز"
 

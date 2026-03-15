@@ -1206,6 +1206,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addressOutsideArea => 'Selected location is outside the chosen area. Please pick a location within the area.';
 
   @override
+  String get insufficientBalance => 'Insufficient Balance';
+
+  @override
+  String get insufficientBalanceShoppingDesc => 'Your wallet balance does not cover the shipping fee and budget';
+
+  @override
+  String get insufficientBalanceShippingDesc => 'Your wallet balance does not cover the shipping fee';
+
+  @override
+  String get currentBalance => 'Current Balance';
+
+  @override
+  String get requiredAmount => 'Required Amount';
+
+  @override
+  String get shortfall => 'Shortfall';
+
+  @override
+  String get topUpNow => 'Top Up Wallet Now';
+
+  @override
+  String get notNow => 'Not Now';
+
+  @override
+  String get addressMayBeOutsideArea => 'Address may be outside the selected area';
+
+  @override
+  String get pleaseEnterProductDescription => 'Please enter product description';
+
+  @override
+  String get pleaseEnterBudget => 'Please enter budget';
+
+  @override
+  String get walletBalanceHintShipping => 'Make sure you have enough wallet balance to cover the shipping fee';
+
+  @override
+  String get walletBalanceHintShopping => 'Make sure you have enough wallet balance if you want to use it to pay for your order';
+
+  @override
   String get cod => 'COD';
 
   @override

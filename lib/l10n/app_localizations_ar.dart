@@ -1206,6 +1206,45 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addressOutsideArea => 'الموقع المحدد خارج النطاق المختار. يرجى اختيار موقع داخل المنطقة المحددة.';
 
   @override
+  String get insufficientBalance => 'رصيد غير كافٍ';
+
+  @override
+  String get insufficientBalanceShoppingDesc => 'رصيد محفظتك لا يغطي تكلفة التوصيل والميزانية';
+
+  @override
+  String get insufficientBalanceShippingDesc => 'رصيد محفظتك لا يغطي تكلفة التوصيل';
+
+  @override
+  String get currentBalance => 'الرصيد الحالي';
+
+  @override
+  String get requiredAmount => 'المبلغ المطلوب';
+
+  @override
+  String get shortfall => 'المبلغ الناقص';
+
+  @override
+  String get topUpNow => 'شحن المحفظة الآن';
+
+  @override
+  String get notNow => 'ليس الآن';
+
+  @override
+  String get addressMayBeOutsideArea => 'قد يكون العنوان خارج المنطقة المحددة';
+
+  @override
+  String get pleaseEnterProductDescription => 'يرجى إدخال وصف المنتج';
+
+  @override
+  String get pleaseEnterBudget => 'يرجى إدخال الميزانية';
+
+  @override
+  String get walletBalanceHintShipping => 'تأكد من أن رصيد محفظتك كافٍ لتغطية رسوم التوصيل';
+
+  @override
+  String get walletBalanceHintShopping => 'تأكد من أن رصيد محفظتك كافٍ إذا أردت استخدامه للدفع عن طريقه';
+
+  @override
   String get cod => 'الدفع عند الاستلام';
 
   @override
