@@ -7,6 +7,7 @@ import 'package:tawreedat_go/features/auth/manager/profile_states.dart';
 import 'package:tawreedat_go/core/utils/secure_storage_service.dart';
 
 import '../../../core/utils/extract_error_message.dart';
+import '../../../l10n/manager/locale_cubit.dart';
 import '../data/models/user_profile_model.dart';
 import '../data/repositories/profile_repository.dart';
 import '../data/repositories/auth_repository.dart';
@@ -61,6 +62,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       log('ProfileCubit: Fetching profile with token');
       final result = await _authRepository.getProfile(token);
       _currentProfile = result.user;
+      // Sync local locale to match profile lang (no backend call).
+      await LocaleManager.syncFromProfile(_currentProfile?.lang??'AR');
       emit(ProfileLoaded(profile: result.user));
       log('ProfileCubit: Profile loaded successfully');
     } on DioException catch (e) {

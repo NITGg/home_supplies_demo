@@ -354,11 +354,14 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final profileRepository = ProfileRepository(ProfileRemoteDataSource());
     return MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (_) {
             final cubit = LocaleCubit(SecureStorageService());
+            cubit.profileRepository = profileRepository;
+
             LocaleManager.cubit = cubit;
             return cubit;
           },
