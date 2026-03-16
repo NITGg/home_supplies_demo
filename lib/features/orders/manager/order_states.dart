@@ -194,7 +194,6 @@ class CouponInvalid extends OrderState {
   List<Object?> get props => [message];
 }
 
-class CouponRedeeming extends OrderState {}
 
 class CouponRedeemed extends OrderState {
   final String message;

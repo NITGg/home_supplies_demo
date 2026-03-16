@@ -684,7 +684,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
     return BlocListener<OrderCubit, OrderState>(
       listener: (context, state) {
-        if (state is CouponValidating || state is CouponRedeeming) {
+        if (state is CouponValidating) {
           if (!_couponValidating) setState(() => _couponValidating = true);
         } else if (state is CouponRedeemed) {
           setState(() {

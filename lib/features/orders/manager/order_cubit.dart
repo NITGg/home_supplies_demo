@@ -346,8 +346,7 @@ class OrderCubit extends Cubit<OrderState> {
         walletPoints: coupon['wallet_points'] as int?,
       );
 
-      emit(CouponRedeeming());
-      await _redeemAfterValidation(code, validState);
+      emit(CouponRedeemed(message: 'Coupon redeemed successfully!', coupon: validState));
     } catch (e) {
       // This handles 4xx/5xx from validate endpoint (e.g. errors.not_found)
       log('OrderCubit: Coupon validation error: $e');
@@ -355,17 +354,6 @@ class OrderCubit extends Cubit<OrderState> {
     }
   }
 
-  Future<void> _redeemAfterValidation(String code, CouponValid validState) async {
-    try {
-      log('OrderCubit: Redeeming coupon $code');
-      await _repository.redeemCoupon(code);
-      log('OrderCubit: Coupon redeemed');
-      emit(CouponRedeemed(message: 'Coupon redeemed successfully!', coupon: validState));
-    } catch (e) {
-      log('OrderCubit: Coupon redeem error: $e');
-      emit(CouponRedeemError(extractErrorMessage(e)));
-    }
-  }
   // ── Confirm Delivery ───────────────────────────────────────────────────────
 
   Future<void> confirmDelivery({
