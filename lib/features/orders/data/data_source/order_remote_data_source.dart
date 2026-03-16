@@ -10,45 +10,54 @@ class OrderRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
 
   // Create Order
-  Future<OrderResponse> createOrder(Order order,String paymentMethod) async {
-      log('Creating order: ${order.toJson()} payment method: $paymentMethod');
+  Future<OrderResponse> createOrder(
+    Order order,
+    String paymentMethod, {
+    String? couponCode,
+  }) async {
+    log('Creating order: ${order.toJson()} payment method: $paymentMethod');
 
-      FormData formData;
+    FormData formData;
 
-      if (order.productImageFile != null) {
-        formData = FormData.fromMap({
-          'product_description': order.productDescription,
-          'budget': order.budget,
-          'pickup_area_id': order.pickupAreaId,
-          'pickup_address_description': order.pickupAddressDescription,
-          'pickup_lat': order.pickupLat,
-          'pickup_long': order.pickupLong,
-          'delivery_area_id': order.deliveryAreaId,
-          'delivery_address_description': order.deliveryAddressDescription,
-          'delivery_lat': order.deliveryLat,
-          'delivery_long': order.deliveryLong,
-          'payment_method': paymentMethod,
-          'product_image': await MultipartFile.fromFile(
-            order.productImageFile!.path,
-            filename: 'product_${DateTime.now().millisecondsSinceEpoch}.jpg',
-          ),
-        });
-      } else {
-        formData = FormData.fromMap({
-          ...order.toJson(),
-          'payment_method': paymentMethod,
-        });      }
+    if (order.productImageFile != null) {
+      formData = FormData.fromMap({
+        'product_description': order.productDescription,
+        'budget': order.budget,
+        'pickup_area_id': order.pickupAreaId,
+        'pickup_address_description': order.pickupAddressDescription,
+        'pickup_lat': order.pickupLat,
+        'pickup_long': order.pickupLong,
+        'delivery_area_id': order.deliveryAreaId,
+        'delivery_address_description': order.deliveryAddressDescription,
+        'delivery_lat': order.deliveryLat,
+        'delivery_long': order.deliveryLong,
+        'payment_method': paymentMethod,
+        if (couponCode != null) 'coupon_code': couponCode,
+        'product_image': await MultipartFile.fromFile(
+          order.productImageFile!.path,
+          filename: 'product_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        ),
+      });
+    } else {
+      formData = FormData.fromMap({
+        ...order.toJson(),
+        'payment_method': paymentMethod,
+        if (couponCode != null) 'coupon_code': couponCode,
+      });
+    }
 
-      final response = await _dio.post('/orders?lang=${LocaleManager.currentLocale}', data: formData);
+    final response = await _dio.post(
+      '/orders?lang=${LocaleManager.currentLocale}',
+      data: formData,
+    );
 
-      log('Create order response: ${response.data}');
+    log('Create order response: ${response.data}');
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return OrderResponse.fromJson(response.data);
-      } else {
-        throw Exception('Failed to create order');
-      }
-
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return OrderResponse.fromJson(response.data);
+    } else {
+      throw Exception('Failed to create order');
+    }
   }
 
   // Get All Orders
@@ -57,60 +66,59 @@ class OrderRemoteDataSource {
     int limit = 20,
     String? status,
   }) async {
-      log('Fetching orders - skip: $skip, limit: $limit, status: $status');
+    log('Fetching orders - skip: $skip, limit: $limit, status: $status');
 
-      final response = await _dio.get(
-        '/orders?includes=courier=user',
-        queryParameters: {
-          'skip': skip,
-          'limit': limit,
-          'lang': LocaleManager.currentLocale,
-          if (status != null) 'status': status,
-        },
-      );
+    final response = await _dio.get(
+      '/orders?includes=courier=user',
+      queryParameters: {
+        'skip': skip,
+        'limit': limit,
+        'lang': LocaleManager.currentLocale,
+        if (status != null) 'status': status,
+      },
+    );
 
-      log('Get orders response: ${response.data}');
+    log('Get orders response: ${response.data}');
 
-      if (response.statusCode == 200) {
-        return OrdersListResponse.fromJson(response.data);
-      } else {
-        throw Exception('Failed to load orders');
-      }
-
+    if (response.statusCode == 200) {
+      return OrdersListResponse.fromJson(response.data);
+    } else {
+      throw Exception('Failed to load orders');
+    }
   }
 
   // Cancel Order
   Future<void> cancelOrder(int orderId, String reason) async {
-      log('Cancelling order $orderId with reason: $reason');
+    log('Cancelling order $orderId with reason: $reason');
 
-      final response = await _dio.post(
-        '/orders/$orderId/cancel?lang=${LocaleManager.currentLocale}',
-        data: {'cancelled_reason': reason},
-      );
+    final response = await _dio.post(
+      '/orders/$orderId/cancel?lang=${LocaleManager.currentLocale}',
+      data: {'cancelled_reason': reason},
+    );
 
-      log('Cancel order response: ${response.data}');
+    log('Cancel order response: ${response.data}');
 
-      if (response.statusCode == 200) {
-      } else {
-        throw Exception('Failed to cancel order');
-      }
-
+    if (response.statusCode == 200) {
+    } else {
+      throw Exception('Failed to cancel order');
+    }
   }
 
   // Get Proposals for an Order
   Future<ProposalsResponse> getOrderProposals(int orderId) async {
-      log('Fetching proposals for order $orderId');
+    log('Fetching proposals for order $orderId');
 
-      final response = await _dio.get('/orders/$orderId/proposals?lang=${LocaleManager.currentLocale}');
+    final response = await _dio.get(
+      '/orders/$orderId/proposals?lang=${LocaleManager.currentLocale}',
+    );
 
-      log('Get proposals response: ${response.data}');
+    log('Get proposals response: ${response.data}');
 
-      if (response.statusCode == 200) {
-        return ProposalsResponse.fromJson(response.data);
-      } else {
-        throw Exception('Failed to load proposals');
-      }
-
+    if (response.statusCode == 200) {
+      return ProposalsResponse.fromJson(response.data);
+    } else {
+      throw Exception('Failed to load proposals');
+    }
   }
 
   // Accept or Reject Proposal
@@ -119,20 +127,20 @@ class OrderRemoteDataSource {
     required int proposalId,
     required String status, // ACCEPTED or REJECTED
   }) async {
-      log('Updating proposal $proposalId status to $status');
+    log('Updating proposal $proposalId status to $status');
 
-      final response = await _dio.put(
-        '/orders/$orderId/proposals/$proposalId?lang=${LocaleManager.currentLocale}',
-        data: {'status': status},
-      );
+    final response = await _dio.put(
+      '/orders/$orderId/proposals/$proposalId?lang=${LocaleManager.currentLocale}',
+      data: {'status': status},
+    );
 
-      log('Update proposal response: ${response.data}');
+    log('Update proposal response: ${response.data}');
 
-      if (response.statusCode == 200) {
-        return response.data;
-      } else {
-        throw Exception('Failed to update proposal');
-      }
+    if (response.statusCode == 200) {
+      return response.data;
+    } else {
+      throw Exception('Failed to update proposal');
+    }
   }
 
   // Confirm Delivery (from QR Code scan)
@@ -140,26 +148,26 @@ class OrderRemoteDataSource {
     required int orderId,
     required int courierId,
   }) async {
-      log('Confirming delivery for order $orderId by courier $courierId');
+    log('Confirming delivery for order $orderId by courier $courierId');
 
-      final request = ConfirmDeliveryRequest(
-        orderId: orderId,
-        courierId: courierId,
-      );
+    final request = ConfirmDeliveryRequest(
+      orderId: orderId,
+      courierId: courierId,
+    );
 
-      final response = await _dio.post(
-        '/orders/confirm-delivery?lang=${LocaleManager.currentLocale}',
-        data: request.toJson(),
-      );
+    final response = await _dio.post(
+      '/orders/confirm-delivery?lang=${LocaleManager.currentLocale}',
+      data: request.toJson(),
+    );
 
-      log('Confirm delivery response: ${response.data}');
+    log('Confirm delivery response: ${response.data}');
 
-      if (response.statusCode == 200) {
-        return response.data;
-      } else {
-        throw Exception('Failed to confirm delivery');
-      }
+    if (response.statusCode == 200) {
+      return response.data;
+    } else {
+      throw Exception('Failed to confirm delivery');
     }
+  }
 
   // Validate coupon
   Future<Map<String, dynamic>> validateCoupon(String code) async {
@@ -173,13 +181,16 @@ class OrderRemoteDataSource {
       throw Exception('Failed to validate coupon');
     }
   }
+
   // Add this method to OrderRemoteDataSource
 
   Future<Map<String, dynamic>> respondToPriceAdjustment({
     required int orderId,
     required String status, // 'ACCEPTED' or 'REJECTED'
   }) async {
-    log('Responding to price adjustment for order $orderId with status: $status');
+    log(
+      'Responding to price adjustment for order $orderId with status: $status',
+    );
 
     final response = await _dio.put(
       '/orders/$orderId/price-adjustment?lang=${LocaleManager.currentLocale}',
@@ -195,7 +206,7 @@ class OrderRemoteDataSource {
     }
   }
 
-// Redeem coupon
+  // Redeem coupon
   Future<Map<String, dynamic>> redeemCoupon(String code) async {
     final response = await _dio.post(
       '/profile/wallet/coupon/redeem?lang=${LocaleManager.currentLocale}',
@@ -207,5 +218,4 @@ class OrderRemoteDataSource {
       throw Exception('Failed to redeem coupon');
     }
   }
-  }
-
+}

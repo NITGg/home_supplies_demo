@@ -9,8 +9,8 @@ class OrderRepository {
     : _remoteDataSource = remoteDataSource ?? OrderRemoteDataSource();
 
   // Create Order
-  Future<OrderResponse> createOrder(Order order,String paymentMethod) async {
-    return await _remoteDataSource.createOrder(order,paymentMethod);
+  Future<OrderResponse> createOrder(Order order, String paymentMethod, {String? couponCode}) async {
+    return await _remoteDataSource.createOrder(order, paymentMethod, couponCode: couponCode);
   }
 
   // Get All Orders (with pagination)

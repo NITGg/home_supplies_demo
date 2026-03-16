@@ -539,6 +539,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         deliveryLong: _deliveryAddress!.addressLong,
       ),
       _isShopping ? _paymentMethod : 'WALLET',
+      couponCode: _appliedCoupon?.code,
     );
   }
 
