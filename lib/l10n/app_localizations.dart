@@ -275,6 +275,12 @@ abstract class AppLocalizations {
   /// **'Point'**
   String get point;
 
+  /// No description provided for @extraPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra Phone'**
+  String get extraPhone;
+
   /// No description provided for @search.
   ///
   /// In en, this message translates to:
@@ -316,6 +322,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Categories'**
   String get groups;
+
+  /// No description provided for @packageDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'PackageDetails'**
+  String get packageDetails;
 
   /// No description provided for @myPersonalInfo.
   ///

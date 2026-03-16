@@ -14,6 +14,7 @@
 ///
 /// For CI/CD (GitHub Actions example):
 ///   flutter build apk --dart-define=MAPS_API_KEY=${{ secrets.MAPS_API_KEY }}
+library;
 
 class AppConstants {
   AppConstants._();

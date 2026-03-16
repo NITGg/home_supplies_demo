@@ -81,6 +81,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     String? gender,
     String? lang,
     String? phone,
+    String? extraPhones, // 👈 new
   }) async {
     emit(ProfileLoading());
     try {
@@ -96,19 +97,14 @@ class ProfileCubit extends Cubit<ProfileState> {
         gender: gender,
         lang: lang,
         phone: phone,
+        extraPhones: extraPhones, // 👈 new
       );
 
-      // Update local profile
       _currentProfile = result.user;
-
-      // Refresh profile data after update
       await fetchProfile();
-
       emit(ProfileUpdateSuccess(message: result.message));
     } on DioException catch (e) {
       log('ProfileCubit updateProfile DioException: $e');
-      log('Response data: ${e.response?.data}');
-      log('Status code: ${e.response?.statusCode}');
       emit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
       log('ProfileCubit updateProfile error: $e');
@@ -122,13 +118,8 @@ class ProfileCubit extends Cubit<ProfileState> {
     String? gender,
     String? lang,
     File? personalPhoto,
+    String? extraPhones,
   }) async {
-    log('ProfileCubit updateProfileWithPhoto called');
-    log('fullName: $fullName');
-    log('gender: $gender');
-    log('lang: $lang');
-    log('personalPhoto: ${personalPhoto?.path}');
-
     emit(ProfileLoading());
     try {
       final token = await _authRepository.getSavedToken();
@@ -137,40 +128,62 @@ class ProfileCubit extends Cubit<ProfileState> {
         return;
       }
 
-      log('Calling repository.updateProfileWithPhoto...');
       final result = await _profileRepository.updateProfileWithPhoto(
         token: token,
         fullName: fullName,
         gender: gender,
         lang: lang,
         personalPhoto: personalPhoto,
+        extraPhones: extraPhones, // 👈 new
       );
 
-      log('Update profile with photo successful: ${result.message}');
-
-      // Update local profile
       _currentProfile = result.user;
-
-      // Refresh profile data after update
-      log('Fetching updated profile...');
       await fetchProfile();
-
       emit(ProfileUpdateSuccess(message: result.message));
     } on DioException catch (e) {
       log('ProfileCubit updateProfileWithPhoto DioException: $e');
-      log('DioException type: ${e.type}');
-      log('Response data: ${e.response?.data}');
-      log('Status code: ${e.response?.statusCode}');
-      log('Request data: ${e.requestOptions.data}');
-      log('Request headers: ${e.requestOptions.headers}');
       emit(ProfileFailure(extractErrorMessage(e)));
     } catch (e, stackTrace) {
-      log('ProfileCubit updateProfileWithPhoto error: $e');
-      log('Stack trace: $stackTrace');
+      log('ProfileCubit updateProfileWithPhoto error: $e\n$stackTrace');
       emit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
+  Future<void> changePhone({required String phone}) async {
+    emit(ProfileLoading());
+    try {
+      final token = await _authRepository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+      final result = await _profileRepository.changePhone(token: token, phone: phone);
+      await fetchProfile();
+      emit(ProfileChangePhoneSuccess(message: result['message'] as String? ?? ''));
+    } on DioException catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    } catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    }
+  }
+
+  Future<void> changeEmail({required String email}) async {
+    emit(ProfileLoading());
+    try {
+      final token = await _authRepository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        emit( ProfileFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+      final result = await _profileRepository.changeEmail(token: token, email: email);
+      await fetchProfile();
+      emit(ProfileChangeEmailSuccess(message: result['message'] as String? ?? ''));
+    } on DioException catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    } catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    }
+  }
   void reset() {
     _currentProfile = null;
     emit(ProfileInitial());

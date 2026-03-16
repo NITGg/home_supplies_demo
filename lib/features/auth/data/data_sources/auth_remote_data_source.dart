@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/utils/api_client.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/auth_response_model.dart';
 import '../models/user_profile_model.dart';
@@ -162,8 +161,8 @@ class AuthRemoteDataSource {
     required String oldPassword,
     required String newPassword,
   }) async {
-    final response = await _dio.patch(
-      '/api/profile/change-password?lang=${LocaleManager.currentLocale}', // Keep old endpoint if unchanged
+    final response = await _dio.post(
+      '/profile/change-password?lang=${LocaleManager.currentLocale}',
       data: {
         'oldPassword': oldPassword,
         'newPassword': newPassword,
@@ -173,7 +172,7 @@ class AuthRemoteDataSource {
       ),
     );
 
-    if (response.data['success'] != true) {
+    if (response.statusCode != 200) {
       throw Exception(response.data['message'] ?? 'Failed to change password');
     }
   }

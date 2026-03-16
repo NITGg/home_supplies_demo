@@ -14,7 +14,7 @@ import '../widgets/auth_header.dart';
 import '../widgets/social_auth_button_row.dart';
 
 class RegisterScreen extends StatefulWidget {
-  RegisterScreen({super.key});
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();

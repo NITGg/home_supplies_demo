@@ -829,7 +829,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                             }
                           },
                           controller: _productDescriptionController,
-                          label: l10n.productDetails,
+                          label: _isShopping ? l10n.productDetails: l10n.packageDetails,
                           validator: (v) => (v == null || v.trim().isEmpty)
                               ? l10n.pleaseEnterProductDescription
                               : null,
@@ -846,7 +846,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                             keyboardType: TextInputType.number,
                             validator: (v) {
                               if (!_isShopping) return null;
-                              if (v == null || v.trim().isEmpty) {
+                              if (v == null || v.trim().isEmpty || v == '0') {
                                 return l10n.pleaseEnterBudget;
                               }
                               if (double.tryParse(v) == null) {

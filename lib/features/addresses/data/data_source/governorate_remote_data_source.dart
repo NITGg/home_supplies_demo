@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
-import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/governorate_model.dart';
 
 class GovernorateRemoteDataSource {

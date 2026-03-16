@@ -42,7 +42,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
 
     setState(() => _isLoading = true);
 
-    bool _navigatedAway = false; // ← track if we popped
+    bool navigatedAway = false; // ← track if we popped
 
     final payload = {
       "order_id": widget.orderId,
@@ -62,7 +62,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
       log('✅ Response: ${response.statusCode} — ${response.data}');
 
       if (response.statusCode == 201 && mounted) {
-        _navigatedAway = true; // ← set BEFORE popping
+        navigatedAway = true; // ← set BEFORE popping
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.reviewSubmitted), backgroundColor: Colors.green),
         );
@@ -81,7 +81,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
       log('❌ Unexpected: $e');
     } finally {
       // Only reset if we're still on screen
-      if (mounted && !_navigatedAway) {
+      if (mounted && !navigatedAway) {
         setState(() => _isLoading = false);
       }
     }

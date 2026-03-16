@@ -91,7 +91,7 @@ class WalletBalanceCard extends StatelessWidget {
                     Text(
                       '+ ${points.toStringAsFixed(0)} ${AppLocalizations.of(context)!.point}',
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),

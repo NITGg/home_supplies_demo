@@ -12,6 +12,7 @@ class AppTextFormField extends StatefulWidget {
   final bool isEmail;
   final bool enabled;
   final bool isPhone;
+  final bool isRequired;
   final String? Function(String?)? validator;
   final Widget? prefixIcon;
   final String? hintText;
@@ -29,6 +30,7 @@ class AppTextFormField extends StatefulWidget {
     this.isEmail = false,
     this.enabled = true,
     this.isPhone = false,
+    this.isRequired = true,
     this.validator,
     this.prefixIcon,
     this.hintText,
@@ -71,19 +73,22 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
   }
 
   String? _defaultValidate(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'This field is required';
+    final trimmed = value?.trim() ?? '';
+
+    // 👇 only block empty when field is required
+    if (trimmed.isEmpty) {
+      return widget.isRequired ? 'This field is required' : null;
     }
 
     if (widget.isPassword) {
-      if (value.length < 6) {
+      if (trimmed.length < 6) {
         return 'Password must be at least 6 characters';
       }
     }
 
     if (widget.isEmail) {
       final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$');
-      if (!emailRegex.hasMatch(value.trim())) {
+      if (!emailRegex.hasMatch(trimmed)) {
         return 'Enter a valid email address';
       }
     }
@@ -92,7 +97,7 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
       final phoneRegex = RegExp(
         r'^(01[0-2,5][0-9]{8}|\+201[0-2,5][0-9]{8}|\+2001[0-2,5][0-9]{8})$',
       );
-      if (!phoneRegex.hasMatch(value.trim())) {
+      if (!phoneRegex.hasMatch(trimmed)) {
         return AppLocalizations.of(context)?.invalidPhoneNumber;
       }
     }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:map_location_picker/map_location_picker.dart';
 import 'package:tawreedat_go/core/widgets/custom_button.dart';
 import '../../../core/style/app_colors.dart';

@@ -14,6 +14,11 @@ void showChangePasswordBottomSheet(BuildContext context) {
   final newPasswordController = TextEditingController();
   final confirmNewPasswordController = TextEditingController();
 
+  // Add focus nodes
+  final oldPasswordFocus = FocusNode();
+  final newPasswordFocus = FocusNode();
+  final confirmPasswordFocus = FocusNode();
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -71,6 +76,10 @@ void showChangePasswordBottomSheet(BuildContext context) {
                   label: AppLocalizations.of(context)!.oldPassword,
                   controller: oldPasswordController,
                   isPassword: true,
+                  focusNode: oldPasswordFocus,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) =>
+                  FocusScope.of(context).requestFocus(newPasswordFocus),
                   validator: (v) =>
                   v!.isEmpty ? localizations.enterPassword : null,
                 ),
@@ -80,6 +89,10 @@ void showChangePasswordBottomSheet(BuildContext context) {
                   label: localizations.password,
                   controller: newPasswordController,
                   isPassword: true,
+                  focusNode: newPasswordFocus,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) =>
+                  FocusScope.of(context).requestFocus(confirmPasswordFocus),
                   validator: (v) {
                     if (v!.isEmpty) return localizations.enterPassword;
                     if (v.length < 6) return localizations.shortPassword;
@@ -92,6 +105,17 @@ void showChangePasswordBottomSheet(BuildContext context) {
                   label: localizations.confirmPassword,
                   controller: confirmNewPasswordController,
                   isPassword: true,
+                  focusNode: confirmPasswordFocus,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) {
+                    if (changePasswordFormKey.currentState!.validate()) {
+                      context.read<AuthCubit>().changePassword(
+                        oldPasswordController.text,
+                        newPasswordController.text,
+                        context,
+                      );
+                    }
+                  },
                   validator: (v) {
                     if (v != newPasswordController.text) {
                       return AppLocalizations.of(context)!.passwordMismatch;

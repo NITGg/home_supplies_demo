@@ -26,7 +26,6 @@ class ProfileRemoteDataSource {
       rethrow;
     }
   }
-
   /// UPDATE PROFILE (basic info)
   Future<UpdateProfileResponseModel> updateProfile({
     required String token,
@@ -34,6 +33,7 @@ class ProfileRemoteDataSource {
     String? gender,
     String? lang,
     String? phone,
+    String? extraPhones,
   }) async {
     try {
       final Map<String, dynamic> data = {};
@@ -42,19 +42,55 @@ class ProfileRemoteDataSource {
       if (gender != null) data['gender'] = gender;
       if (lang != null) data['lang'] = lang;
       if (phone != null) data['phone'] = phone;
+      if (extraPhones != null) data['extra_phones'] = extraPhones;
 
       final response = await _dio.put(
         '/profile?lang=${LocaleManager.currentLocale}',
         data: data,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       log('Update profile response: ${response.data}');
       return UpdateProfileResponseModel.fromJson(response.data);
     } catch (e) {
       log('Update profile error: $e');
+      rethrow;
+    }
+  }
+  /// CHANGE MAIN PHONE (triggers OTP)
+  Future<Map<String, dynamic>> changePhone({
+    required String token,
+    required String phone,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/profile/change-phone?lang=${LocaleManager.currentLocale}',
+        data: {'phone': phone},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      log('Change phone response: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      log('Change phone error: $e');
+      rethrow;
+    }
+  }
+
+  /// CHANGE EMAIL (triggers OTP)
+  Future<Map<String, dynamic>> changeEmail({
+    required String token,
+    required String email,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/profile/change-email?lang=${LocaleManager.currentLocale}',
+        data: {'email': email},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      log('Change email response: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      log('Change email error: $e');
       rethrow;
     }
   }
@@ -66,19 +102,15 @@ class ProfileRemoteDataSource {
     String? gender,
     String? lang,
     File? personalPhoto,
+    String? extraPhones,
   }) async {
     try {
       final formData = FormData();
 
-      if (fullName != null) {
-        formData.fields.add(MapEntry('full_name', fullName));
-      }
-      if (gender != null) {
-        formData.fields.add(MapEntry('gender', gender));
-      }
-      if (lang != null) {
-        formData.fields.add(MapEntry('lang', lang));
-      }
+      if (fullName != null) formData.fields.add(MapEntry('full_name', fullName));
+      if (gender != null) formData.fields.add(MapEntry('gender', gender));
+      if (lang != null) formData.fields.add(MapEntry('lang', lang));
+      if (extraPhones != null) formData.fields.add(MapEntry('extra_phones', extraPhones));
       if (personalPhoto != null) {
         formData.files.add(MapEntry(
           'personal_photo',
@@ -92,9 +124,7 @@ class ProfileRemoteDataSource {
       final response = await _dio.put(
         '/profile?lang=${LocaleManager.currentLocale}',
         data: formData,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       log('Update profile with photo response: ${response.data}');

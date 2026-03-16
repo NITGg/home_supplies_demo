@@ -180,6 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: Column(
                             children: [
+                              if(profile.loginType == 'LOCAL')
                               AppCustomButton(
                                 onPressed: () {
                                   showChangePasswordBottomSheet(context);
@@ -255,6 +256,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             profile.phone ?? 'N/A',
             textDirection: TextDirection.ltr,
           ),
+
+          if (profile.extraPhones != null && profile.extraPhones!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildInfoRow(
+              context,
+              Icons.add_ic_call_outlined,
+              localizations.extraPhone,
+              profile.extraPhones!,
+              textDirection: TextDirection.ltr,
+            ),
+          ],
+
           if (profile.email != null && profile.email!.isNotEmpty) ...[
             const SizedBox(height: 12),
             _buildInfoRow(

@@ -34,6 +34,7 @@
 
   "points": "Points",
     "point": "Point",
+    "extraPhone": "Extra Phone",
 
   "search": "Search",
     "searchFor": "search for a place, address, landmark....",
@@ -43,6 +44,7 @@
   "filterBy": "Filter By",
   "filter": "Filter",
   "groups": "Categories",
+  "packageDetails": "PackageDetails",
 
   "myPersonalInfo": "My Personal Info",
   "myInfo": "My Info",

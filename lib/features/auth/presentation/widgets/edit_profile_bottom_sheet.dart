@@ -21,18 +21,35 @@ class EditProfileBottomSheet extends StatefulWidget {
 class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
+  late TextEditingController _extraPhoneController;
+  late TextEditingController _phoneController;
+  late TextEditingController _emailController;
   bool isMale = true;
+
+  bool get _isLocalLogin => widget.profile.loginType == 'LOCAL';
+
+  bool get _phoneChanged =>
+      _phoneController.text.trim() != (widget.profile.phone ?? '');
+
+  bool get _emailChanged =>
+      _emailController.text.trim() != (widget.profile.email ?? '');
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.profile.fullName);
+    _nameController       = TextEditingController(text: widget.profile.fullName);
+    _extraPhoneController = TextEditingController(text: widget.profile.extraPhones ?? '');
+    _phoneController      = TextEditingController(text: widget.profile.phone ?? '');
+    _emailController      = TextEditingController(text: widget.profile.email ?? '');
     isMale = widget.profile.gender == 'MALE';
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _extraPhoneController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -41,80 +58,139 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
     final localizations = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Directionality(
-      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(2),
+    return BlocListener<ProfileCubit, ProfileState>(
+      listener: (context, state) {
+        if (state is ProfileUpdateSuccess ||
+            state is ProfileChangePhoneSuccess ||
+            state is ProfileChangeEmailSuccess) {
+          final msg = state is ProfileUpdateSuccess
+              ? state.message
+              : state is ProfileChangePhoneSuccess
+              ? state.message
+              : (state as ProfileChangeEmailSuccess).message;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg), backgroundColor: Colors.green),
+          );
+          Navigator.pop(context);
+        } else if (state is ProfileFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+      },
+      child: Directionality(
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        localizations.edit,
-                        style: AppTextStyles.bold14.copyWith(
-                          fontSize: 24,
-                          color: const Color(0xFF2D3436),
+                        const SizedBox(height: 24),
+                        Text(
+                          localizations.edit,
+                          style: AppTextStyles.bold14.copyWith(
+                            fontSize: 24,
+                            color: const Color(0xFF2D3436),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      AppTextFormField(
-                        label: '${localizations.name} *',
-                        controller: _nameController,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return localizations.required;
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildGenderSwitch(localizations),
+                        const SizedBox(height: 24),
 
-                      const SizedBox(height: 32),
-                      Row(
-                        children: [
-                          Flexible(
-                            child: AppCustomButton(
-                              isSecondary: true,
-                              onPressed: () => Navigator.pop(context),
-                              text: localizations.cancel,
-                            ),
+                        // ── Full name ──────────────────────────────────────
+                        AppTextFormField(
+                          label: '${localizations.name} *',
+                          controller: _nameController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return localizations.required;
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // ── Extra phone ────────────────────────────────────
+                        // AppTextFormField(
+                        //   isRequired: false,
+                        //   label: localizations.extraPhone,
+                        //   controller: _extraPhoneController,
+                        //   isPhone: true,
+                        // ),
+                        // const SizedBox(height: 16),
+
+                        // ── Email (LOCAL only) ─────────────────────────────
+                        if (_isLocalLogin) ...[
+                          AppTextFormField(
+                            isRequired: false,
+                            label: localizations.email,
+                            controller: _emailController,
+                            onChanged: (_) => setState(() {}),
                           ),
-                          const SizedBox(width: 12),
-                          Flexible(
-                            child: AppCustomButton(
-                              isLoading: context.watch<ProfileCubit>().state is ProfileLoading,
-                              onPressed: _saveChanges,
-                              text: localizations.confirm,
-                            ),
-                          ),
+                          const SizedBox(height: 16),
                         ],
-                      ),
-                    ],
+
+                        // ── Main phone (social login only) ─────────────────
+                        if (!_isLocalLogin) ...[
+                          AppTextFormField(
+                            isRequired: false,
+                            label: localizations.phone,
+                            controller: _phoneController,
+                            isPhone: true,
+                            onChanged: (_) => setState(() {}),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // ── Gender ─────────────────────────────────────────
+                        _buildGenderSwitch(localizations),
+                        const SizedBox(height: 32),
+
+                        // ── Action buttons ─────────────────────────────────
+                        Row(
+                          children: [
+                            Flexible(
+                              child: AppCustomButton(
+                                isSecondary: true,
+                                onPressed: () => Navigator.pop(context),
+                                text: localizations.cancel,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: AppCustomButton(
+                                isLoading: context.watch<ProfileCubit>().state
+                                is ProfileLoading,
+                                onPressed: _saveChanges,
+                                text: localizations.confirm,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -140,10 +216,7 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              localizations.gender,
-              style: AppTextStyles.regular14,
-            ),
+            child: Text(localizations.gender, style: AppTextStyles.regular14),
           ),
           Row(
             children: [
@@ -176,16 +249,31 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
     );
   }
 
-
   Future<void> _saveChanges() async {
-    if (_formKey.currentState!.validate()) {
-      await context.read<ProfileCubit>().updateProfile(
+    if (!_formKey.currentState!.validate()) return;
+
+    final cubit = context.read<ProfileCubit>();
+    final extraPhone = _extraPhoneController.text.trim();
+
+    // Always update base profile fields
+    final futures = <Future>[
+      cubit.updateProfile(
         fullName: _nameController.text.trim(),
         gender: isMale ? 'MALE' : 'FEMALE',
-      );
-      if (context.mounted) {
-        Navigator.pop(context);
-      }
+        extraPhones: extraPhone.isEmpty ? null : extraPhone,
+      ),
+    ];
+
+    // If email changed and user is LOCAL, fire change-email in parallel
+    if (_isLocalLogin && _emailChanged) {
+      futures.add(cubit.changeEmail(email: _emailController.text.trim()));
     }
+
+    // If phone changed and user is social login, fire change-phone in parallel
+    if (!_isLocalLogin && _phoneChanged) {
+      futures.add(cubit.changePhone(phone: _phoneController.text.trim()));
+    }
+
+    await Future.wait(futures);
   }
 }

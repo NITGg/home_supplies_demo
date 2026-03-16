@@ -24,3 +24,14 @@ class ProfileFailure extends ProfileState {
   ProfileFailure(this.message);
 }
 
+class ProfileChangePhoneSuccess extends ProfileState {
+  final String message;
+
+  ProfileChangePhoneSuccess({required this.message});
+}
+
+class ProfileChangeEmailSuccess extends ProfileState {
+  final String message;
+
+  ProfileChangeEmailSuccess({required this.message});
+}

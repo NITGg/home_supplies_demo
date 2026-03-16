@@ -601,7 +601,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                 onPressed: () {
                   if (formKey.currentState!.validate()) {
                     Navigator.pop(context);
-                    context.read<ProfileCubit>().updateProfile(
+                    context.read<ProfileCubit>().changePhone(
                       phone: phoneController.text,
                     );
                   }

@@ -99,6 +99,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get point => 'نقطة';
 
   @override
+  String get extraPhone => 'رقم هاتف إضافي';
+
+  @override
   String get search => 'بحث';
 
   @override
@@ -118,6 +121,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get groups => 'فئات';
+
+  @override
+  String get packageDetails => 'تفاصيل الشحنة';
 
   @override
   String get myPersonalInfo => 'بياناتي الشخصية';

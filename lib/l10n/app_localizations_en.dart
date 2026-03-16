@@ -99,6 +99,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get point => 'Point';
 
   @override
+  String get extraPhone => 'Extra Phone';
+
+  @override
   String get search => 'Search';
 
   @override
@@ -118,6 +121,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groups => 'Categories';
+
+  @override
+  String get packageDetails => 'PackageDetails';
 
   @override
   String get myPersonalInfo => 'My Personal Info';
