@@ -48,6 +48,7 @@ import 'l10n/manager/locale_cubit.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 final ValueNotifier<bool> showFloatingButton = ValueNotifier(true);
+final ValueNotifier<int> notificationDialogTrigger = ValueNotifier(0);
 
 /// Payload from a notification tap that arrived before the home screen was
 /// ready. HomeLayout checks this on first build and consumes it.
@@ -188,7 +189,7 @@ Future<void> _initializeFirebaseMessaging() async {
       try {
         if (kAuthtoken.isNotEmpty) {
           await ApiClient.instance.dio.post(
-            '/api/users/fcm-token',
+            '/profile/fcm-token',
             data: {'fcmToken': newToken},
             options: Options(headers: {'Authorization': 'Bearer $kAuthtoken'}),
           );
@@ -242,7 +243,6 @@ void handleNotificationTap(Map<String, dynamic> data) {
   log('🔔 handleNotificationTap called');
   log('📦 Raw payload: $data');
 
-  // Always store so HomeLayout cold-start path still works
   pendingNotificationData = data;
   shouldShowNotificationDialog = true;
 
@@ -253,38 +253,24 @@ void handleNotificationTap(Map<String, dynamic> data) {
     return;
   }
 
-  final currentUri = GoRouter.of(
-    context,
-  ).routerDelegate.currentConfiguration.uri.toString();
+  final currentUri = GoRouter.of(context)
+      .routerDelegate
+      .currentConfiguration
+      .uri
+      .toString();
   log('🧭 Current route: $currentUri');
 
   if (currentUri == '/mainHome') {
-    // Already on home — show the dialog directly
-    log('🏠 Already on /mainHome — showing dialog directly');
+    log('🏠 Already on /mainHome — triggering HomeLayout listener');
+    // ✅ Don't try to read HomeCubit/ProfileCubit from root context.
+    // Flip the notifier; HomeLayout's listener will show the dialog
+    // using its own scoped context where everything is available.
     shouldShowNotificationDialog = false;
     pendingNotificationData = null;
-
-    HomeCubit? homeCubit;
-    try {
-      homeCubit = context.read<HomeCubit>();
-    } catch (e) {
-      log('⚠️ HomeCubit not found: $e');
-    }
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (rootNavigatorKey.currentContext?.mounted ?? false) {
-        final ctx = rootNavigatorKey.currentContext!;
-        final profile = ctx.read<ProfileCubit>().currentProfile;
-        final userId = profile?.id.toString() ?? '';
-        log('🎯 Showing dialog for userId: $userId');
-        showNotificationsDialog(ctx, userId);
-      }
-    });
+    notificationDialogTrigger.value++;          // ← triggers HomeLayout
   } else if (currentUri == '/splash' || currentUri == '/') {
-    // App is still booting — HomeLayout will consume pendingNotificationData
     log('⏳ App initialising — dialog will show after HomeLayout mounts');
   } else {
-    // On login / onboarding / any other known route — navigate home
     log('🚀 Navigating to /mainHome');
     context.go('/mainHome');
   }

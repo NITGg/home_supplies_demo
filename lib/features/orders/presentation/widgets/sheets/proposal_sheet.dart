@@ -93,9 +93,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Container(
@@ -146,11 +144,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                 children: [
                   Row(
                     children: [
-                      const Icon(
-                        Icons.person,
-                        size: 18,
-                        color: Colors.green,
-                      ),
+                      const Icon(Icons.person, size: 18, color: Colors.green),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -211,7 +205,6 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                 proposalId: proposal.id,
               );
               Navigator.pop(context);
-
             },
             icon: const Icon(Icons.check, size: 18),
             label: Text(
@@ -239,9 +232,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Container(
@@ -250,11 +241,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                 color: Colors.red.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
-                Icons.cancel,
-                color: Colors.red,
-                size: 24,
-              ),
+              child: const Icon(Icons.cancel, color: Colors.red, size: 24),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -290,11 +277,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.person,
-                    size: 18,
-                    color: Colors.red,
-                  ),
+                  const Icon(Icons.person, size: 18, color: Colors.red),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -393,7 +376,10 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                           const SizedBox(width: 8),
                           // Show refresh indicator when refreshing
                           if (_isRefreshing)
-                            LoadingScreen(isOne: true, asWidget: true),
+                            CircularProgressIndicator(
+                              color: AppColors.kPrimaryColor,
+                              strokeWidth: 2,
+                            ),
                         ],
                       ),
                       Text(
@@ -429,9 +415,10 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
               },
               buildWhen: (previous, current) {
                 // Only rebuild on initial load, not on refresh
-                return _isInitialLoad && (current is ProposalsLoading ||
-                    current is ProposalsLoaded ||
-                    current is ProposalsError);
+                return _isInitialLoad &&
+                    (current is ProposalsLoading ||
+                        current is ProposalsLoaded ||
+                        current is ProposalsError);
               },
               builder: (context, state) {
                 // Show loading only on initial load
@@ -460,9 +447,9 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                             setState(() {
                               _isInitialLoad = true;
                             });
-                            context
-                                .read<OrderCubit>()
-                                .loadProposals(widget.order.id!);
+                            context.read<OrderCubit>().loadProposals(
+                              widget.order.id!,
+                            );
                           },
                           child: Text(l10n.retry),
                         ),
@@ -542,6 +529,7 @@ class _ProposalCard extends StatelessWidget {
     if (proposal.isRejected) return Colors.red;
     return Colors.orange;
   }
+
   String _getStatusText(context) {
     if (proposal.isAccepted) return AppLocalizations.of(context)!.accepted;
     if (proposal.isRejected) return AppLocalizations.of(context)!.rejected;
@@ -563,9 +551,7 @@ class _ProposalCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 3,
       shadowColor: statusColor.withOpacity(0.2),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -588,14 +574,15 @@ class _ProposalCard extends StatelessWidget {
   }
 
   Widget _buildHeader(
-      BuildContext context, AppLocalizations l10n, Color statusColor) {
+    BuildContext context,
+    AppLocalizations l10n,
+    Color statusColor,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: statusColor.withOpacity(0.07),
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(16),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Row(
         children: [
@@ -609,11 +596,7 @@ class _ProposalCard extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            child: Icon(
-              Icons.person,
-              color: AppColors.kPrimaryColor,
-              size: 24,
-            ),
+            child: Icon(Icons.person, color: AppColors.kPrimaryColor, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -627,11 +610,7 @@ class _ProposalCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Icon(
-                      Icons.phone,
-                      size: 14,
-                      color: Colors.grey.shade600,
-                    ),
+                    Icon(Icons.phone, size: 14, color: Colors.grey.shade600),
                     const SizedBox(width: 4),
                     Text(
                       textDirection: TextDirection.ltr,
@@ -647,10 +626,7 @@ class _ProposalCard extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: statusColor,
               borderRadius: BorderRadius.circular(20),

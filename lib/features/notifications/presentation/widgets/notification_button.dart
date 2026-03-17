@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../notifications.dart';
+import 'notification_dialog.dart';
 
 class NotificationButton extends StatelessWidget {
   final String userId;

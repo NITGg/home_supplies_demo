@@ -28,6 +28,7 @@ import '../../../auth/manager/auth_state.dart';
 import '../../../auth/manager/profile_cubit.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
 import '../../../notifications/notifications.dart';
+import '../../../notifications/presentation/widgets/notification_dialog.dart';
 import '../../../orders/presentation/orders_list_screen.dart';
 import '../../../orders/presentation/widgets/sheets/create_order_sheet/create_order_sheet.dart';
 import '../../../static_text/app_dynamic_info.dart';
@@ -50,6 +51,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this); // 👈 add observer
     _userProfileFuture = _loadUserProfile();
+    notificationDialogTrigger.addListener(_onExternalNotificationTrigger);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final token = await SecureStorageService().getToken();
@@ -81,19 +83,54 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     });
   }
 
+  void _onExternalNotificationTrigger() {
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // No flags to check — handleNotificationTap already cleared them.
+      // Just show the dialog directly using this scope's context.
+      HomeCubit? homeCubit;
+      CouponCubit? couponCubit;
+      try {
+        homeCubit = context.read<HomeCubit>();
+        couponCubit = context.read<CouponCubit>();
+      } catch (e) {
+        debugPrint('⚠️ Could not read cubits in HomeLayout: $e');
+      }
+      showNotificationsDialog(
+        context,
+        _userId,
+        homeCubit: homeCubit,
+        couponCubit: couponCubit,
+      );
+    });
+  }
+
   /// Shows the notifications dialog if there is a pending notification.
   /// Safe to call multiple times — clears the flags on first successful call.
   void _showPendingNotificationDialog() {
     if (!mounted) return;
     if (pendingNotificationData == null && !shouldShowNotificationDialog) return;
 
-    // Clear flags immediately to prevent double-showing
     shouldShowNotificationDialog = false;
     pendingNotificationData = null;
 
-    showNotificationsDialog(context, _userId);
-  }
+    HomeCubit? homeCubit;
+    CouponCubit? couponCubit;
+    try {
+      homeCubit = context.read<HomeCubit>();
+      couponCubit = context.read<CouponCubit>();
+    } catch (e) {
+      debugPrint('⚠️ Could not read cubits in HomeLayout: $e');
+    }
 
+    showNotificationsDialog(
+      context,
+      _userId,
+      homeCubit: homeCubit,
+      couponCubit: couponCubit,
+    );
+  }
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this); // 👈 remove observer

@@ -8,6 +8,7 @@ import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
 import '../../../core/utils/socket_service.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../home/layout/manager/home_cubit.dart';
 import '../data/models/order_model.dart';
 import '../manager/order_cubit.dart';
 import '../manager/order_states.dart';
@@ -103,6 +104,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     //   originalPrice: originalPrice,
     // );
   }
+
   void _handleNewOffer(Map<String, dynamic> data) {
     final l10n = AppLocalizations.of(context);
 
@@ -308,123 +310,135 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        titleSpacing: 16,
-        title: OrderToggleButton(
-          active: _viewMode == ViewMode.active,
-          onToggle: (isActive) {
-            _onTabChanged(isActive ? ViewMode.active : ViewMode.history);
-          },
+    return BlocListener<HomeCubit, HomeState>(
+      listenWhen: (_, current) => current is HomeHistoryTabRequested,
+      listener: (context, state) {
+        _onTabChanged(ViewMode.history);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          scrolledUnderElevation: 0,
+          titleSpacing: 16,
+          title: OrderToggleButton(
+            active: _viewMode == ViewMode.active,
+            onToggle: (isActive) {
+              _onTabChanged(isActive ? ViewMode.active : ViewMode.history);
+            },
+          ),
+          actions: [
+            BlocBuilder<OrderCubit, OrderState>(
+              buildWhen: (_, current) =>
+                  current is OrdersLoaded || current is OrderLoading,
+              builder: (context, state) {
+                // Add this temporarily
+                debugPrint('AppBar BlocBuilder state: $state');
+                if (state is OrdersLoaded) {
+                  debugPrint('viewMode: ${state.viewMode}');
+                  debugPrint(
+                    'orders: ${state.orders.map((o) => '${o.id}:${o.status}').toList()}',
+                  );
+                  debugPrint(
+                    'any accepted: ${state.orders.any((o) => o.isAccepted)}',
+                  );
+                }
+
+                final hasActiveOrders =
+                    state is OrdersLoaded &&
+                    state.viewMode == OrderViewMode.active &&
+                    state.orders.any((o) => o.isInProgress);
+
+                if (!hasActiveOrders) return const SizedBox.shrink();
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.grey.shade200,
+                    child: IconButton(
+                      icon: const Icon(Icons.qr_code_scanner),
+                      color: Colors.grey.shade700,
+                      onPressed: _navigateToQRScanner,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
-        actions: [
-          BlocBuilder<OrderCubit, OrderState>(
-            buildWhen: (_, current) =>
-            current is OrdersLoaded || current is OrderLoading,
-            builder: (context, state) {
-              // Add this temporarily
-              debugPrint('AppBar BlocBuilder state: $state');
-              if (state is OrdersLoaded) {
-                debugPrint('viewMode: ${state.viewMode}');
-                debugPrint('orders: ${state.orders.map((o) => '${o.id}:${o.status}').toList()}');
-                debugPrint('any accepted: ${state.orders.any((o) => o.isAccepted)}');
+        body: RefreshIndicator(
+          onRefresh: () {
+            setState(() => _isLoadingMore = false);
+            final cubit = context.read<OrderCubit>();
+            return _viewMode == ViewMode.active
+                ? cubit.loadActiveOrders(loadMore: false)
+                : cubit.loadHistoryOrders(
+                    loadMore: false,
+                    filter: _currentFilter,
+                  );
+          },
+          color: AppColors.kPrimaryColor,
+          child: BlocConsumer<OrderCubit, OrderState>(
+            // Include OrdersLoaded so the listener can reliably clear
+            // _isLoadingMore the moment new data arrives — whether the
+            // network is fast or slow.
+            listenWhen: (_, current) =>
+                current is OrdersLoaded ||
+                current is OrderCancelled ||
+                current is OrderCancelError ||
+                current is DeliveryConfirmed ||
+                current is OrderError ||
+                current is OrderSuccess,
+            listener: (context, state) {
+              // ── Pagination: clear in-flight flag as a proper side-effect.
+              // The listener runs outside the build phase, so setState here
+              // is safe and guaranteed to schedule a new frame AFTER the
+              // current one renders — meaning the spinner is visible for at
+              // least one frame before disappearing.
+              if (state is OrderSuccess) {
+                _onTabChanged(ViewMode.active);
               }
 
-              final hasActiveOrders = state is OrdersLoaded &&
-                  state.viewMode == OrderViewMode.active &&
-                  state.orders.any((o) => o.isInProgress);
+              if (state is OrdersLoaded && _isLoadingMore) {
+                setState(() => _isLoadingMore = false);
+              }
 
-              if (!hasActiveOrders) return const SizedBox.shrink();
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.grey.shade200,
-                  child: IconButton(
-                    icon: const Icon(Icons.qr_code_scanner),
-                    color: Colors.grey.shade700,
-                    onPressed: _navigateToQRScanner,
+              if (state is OrderCancelled) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.orderCancelled),
+                    backgroundColor: Colors.green,
                   ),
-                ),
-              );
-            },
-          ),        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () {
-          setState(() => _isLoadingMore = false);
-          final cubit = context.read<OrderCubit>();
-          return _viewMode == ViewMode.active
-              ? cubit.loadActiveOrders(loadMore: false)
-              : cubit.loadHistoryOrders(
-                  loadMore: false,
-                  filter: _currentFilter,
                 );
-        },
-        color: AppColors.kPrimaryColor,
-        child: BlocConsumer<OrderCubit, OrderState>(
-          // Include OrdersLoaded so the listener can reliably clear
-          // _isLoadingMore the moment new data arrives — whether the
-          // network is fast or slow.
-          listenWhen: (_, current) =>
-              current is OrdersLoaded ||
-              current is OrderCancelled ||
-              current is OrderCancelError ||
-              current is DeliveryConfirmed ||
-              current is OrderError ||
-              current is OrderSuccess,
-          listener: (context, state) {
-            // ── Pagination: clear in-flight flag as a proper side-effect.
-            // The listener runs outside the build phase, so setState here
-            // is safe and guaranteed to schedule a new frame AFTER the
-            // current one renders — meaning the spinner is visible for at
-            // least one frame before disappearing.
-            if (state is OrderSuccess) {
-              _onTabChanged(ViewMode.active);
-            }
-
-            if (state is OrdersLoaded && _isLoadingMore) {
-              setState(() => _isLoadingMore = false);
-            }
-
-            if (state is OrderCancelled) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(AppLocalizations.of(context)!.orderCancelled),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            } else if (state is DeliveryConfirmed) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(AppLocalizations.of(context)!.delivered),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            } else if (state is OrderError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          },
-          buildWhen: (_, current) =>
-              current is OrderLoading ||
-              current is OrdersLoaded ||
-              current is OrderError,
-          builder: (context, state) {
-            if (state is OrderLoading) return _buildShimmerView();
-            if (state is OrderError) return _buildErrorView(state);
-            if (state is OrdersLoaded) {
-              if (_viewMode == ViewMode.active) _joinOrderRooms(state.orders);
-              return _buildOrdersList(state);
-            }
-            return const SizedBox();
-          },
+              } else if (state is DeliveryConfirmed) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.delivered),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } else if (state is OrderError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            buildWhen: (_, current) =>
+                current is OrderLoading ||
+                current is OrdersLoaded ||
+                current is OrderError,
+            builder: (context, state) {
+              if (state is OrderLoading) return _buildShimmerView();
+              if (state is OrderError) return _buildErrorView(state);
+              if (state is OrdersLoaded) {
+                if (_viewMode == ViewMode.active) _joinOrderRooms(state.orders);
+                return _buildOrdersList(state);
+              }
+              return const SizedBox();
+            },
+          ),
         ),
       ),
     );

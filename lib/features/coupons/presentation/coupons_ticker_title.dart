@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/core/style/app_colors.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../data/models/coupons_model.dart';
@@ -58,7 +59,7 @@ class _CouponTickerTitleState extends State<CouponTickerTitle>
           return FadeTransition(
             opacity: _fadeAnimation,
             child: GestureDetector(
-              onTap: () => _showCouponsDialog(context, state.activeCoupons),
+              onTap: () => showCouponsDialog(context, state.activeCoupons),
               child: _ContinuousTicker(coupons: state.activeCoupons),
             ),
           );
@@ -68,11 +69,11 @@ class _CouponTickerTitleState extends State<CouponTickerTitle>
     );
   }
 
-  void _showCouponsDialog(BuildContext context, List<Coupon> coupons) {
+  void showCouponsDialog(BuildContext context, List<Coupon> coupons) {
     final isAr = AppLocalizations.of(context)?.localeName == 'ar';
     showDialog(
       context: context,
-      builder: (_) => _CouponsDialog(coupons: coupons, isAr: isAr ?? false),
+      builder: (_) => CouponsDialog(coupons: coupons, isAr: isAr ?? false),
     );
   }
 }
@@ -81,11 +82,11 @@ class _CouponTickerTitleState extends State<CouponTickerTitle>
 // Coupons Dialog
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _CouponsDialog extends StatelessWidget {
+class CouponsDialog extends StatelessWidget {
   final List<Coupon> coupons;
   final bool isAr;
 
-  const _CouponsDialog({required this.coupons, required this.isAr});
+  const CouponsDialog({required this.coupons, required this.isAr});
 
   @override
   Widget build(BuildContext context) {
@@ -270,7 +271,7 @@ class _CouponCardState extends State<_CouponCard> {
                     padding: const EdgeInsets.symmetric(
                         vertical: 9, horizontal: 14),
                     decoration: BoxDecoration(
-                      color: Colors.orangeAccent,
+                      color: AppColors.kPrimaryColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(

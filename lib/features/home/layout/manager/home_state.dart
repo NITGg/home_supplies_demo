@@ -9,3 +9,4 @@ class HomeTabChanged extends HomeState {
 
   HomeTabChanged(this.index);
 }
+class HomeHistoryTabRequested extends HomeState {}

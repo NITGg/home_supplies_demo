@@ -8,12 +8,16 @@ import '../../../main.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
+
+  /// Holds a payload that arrived before the navigator was ready
+  /// (cold-start tap from the OS notification centre).
+  static Map<String, dynamic>? pendingTapPayload;
 
   static Future<void> initialize() async {
-    // Android notification channel
+    // ── Android notification channel ────────────────────────────────────────
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'high_importance_channel', // Must match AndroidManifest.xml
+      'high_importance_channel',
       'High Importance Notifications',
       description: 'This channel is used for important notifications.',
       importance: Importance.max,
@@ -24,59 +28,73 @@ class NotificationService {
     if (Platform.isAndroid) {
       await _notificationsPlugin
           .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >()
+          AndroidFlutterLocalNotificationsPlugin
+      >()
           ?.createNotificationChannel(channel);
 
-      // Request notification permission for Android 13+
       await _notificationsPlugin
           .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >()
+          AndroidFlutterLocalNotificationsPlugin
+      >()
           ?.requestNotificationsPermission();
     }
 
-    // Initialize the plugin
+    // ── Initialization settings ─────────────────────────────────────────────
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const DarwinInitializationSettings initializationSettingsDarwin =
-        DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        );
+    DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
 
     const InitializationSettings initializationSettings =
-        InitializationSettings(
-          android: initializationSettingsAndroid,
-          iOS: initializationSettingsDarwin,
-        );
+    InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
 
     await _notificationsPlugin.initialize(
       initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        if (response.payload != null) {
-          try {
-            final data = jsonDecode(response.payload!);
-            handleNotificationTap(Map<String, dynamic>.from(data));
-          } catch (e) {
-            debugPrint("Error decoding payload: $e");
-          }
-        }
-      },
+      onDidReceiveNotificationResponse: _onNotificationTap,
+      // Handles taps when the app is terminated (cold start via local notif)
+      onDidReceiveBackgroundNotificationResponse: _onNotificationTapBackground,
     );
   }
 
-  // Show local notification for foreground messages
+  // ── Tap handler (foreground / background) ──────────────────────────────────
+
+  static void _onNotificationTap(NotificationResponse response) {
+    _processResponse(response);
+  }
+
+  @pragma('vm:entry-point')
+  static void _onNotificationTapBackground(NotificationResponse response) {
+    _processResponse(response);
+  }
+
+  static void _processResponse(NotificationResponse response) {
+    if (response.payload == null) return;
+    try {
+      final data = jsonDecode(response.payload!) as Map<String, dynamic>;
+      handleNotificationTap(data);
+    } catch (e) {
+      debugPrint('⚠️ Error decoding notification payload: $e');
+    }
+  }
+
+  // ── Show local notification ────────────────────────────────────────────────
+
   static Future<void> showNotification(
-    String title,
-    String body,
-    Map<String, dynamic> data,
-  ) async {
+      String title,
+      String body,
+      Map<String, dynamic> data,
+      ) async {
     try {
       const androidDetails = AndroidNotificationDetails(
-        'high_importance_channel', // must match the channel you created
+        'high_importance_channel',
         'High Importance Notifications',
         channelDescription: 'This channel is used for important notifications.',
         importance: Importance.max,
@@ -95,6 +113,7 @@ class NotificationService {
         android: androidDetails,
         iOS: iosDetails,
       );
+
       final int notificationId = _safeNotificationId(data);
 
       await _notificationsPlugin.show(
@@ -116,8 +135,3 @@ class NotificationService {
     return DateTime.now().millisecondsSinceEpoch.remainder(100000);
   }
 }
-
-// =====================================================
-// Call this in main() AFTER Firebase.initializeApp()
-// =====================================================
-// await NotificationService.initialize();
