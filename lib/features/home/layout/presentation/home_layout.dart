@@ -27,7 +27,6 @@ import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
 import '../../../auth/manager/profile_cubit.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
-import '../../../notifications/notifications.dart';
 import '../../../notifications/presentation/widgets/notification_dialog.dart';
 import '../../../orders/presentation/orders_list_screen.dart';
 import '../../../orders/presentation/widgets/sheets/create_order_sheet/create_order_sheet.dart';
