@@ -4,9 +4,11 @@ class WalletModel {
   final int completedCount;
   final UserBadge? nextBadge;
   final int remainingToNext;
+  final double totalFines;
 
   WalletModel({
     required this.wallet,
+    required this.totalFines,
     required this.badge,
     required this.completedCount,
     this.nextBadge,
@@ -15,6 +17,8 @@ class WalletModel {
 
   factory WalletModel.fromJson(Map<String, dynamic> json) {
     return WalletModel(
+
+        totalFines: ((num.tryParse(json['totalFines']?.toString() ?? '0') ?? 0) / 100),
       wallet: Wallet.fromJson(json['wallet']),
       badge: UserBadge.fromJson(json['badge']),
       completedCount: json['completedCount'] ?? 0,

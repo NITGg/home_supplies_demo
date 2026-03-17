@@ -114,6 +114,30 @@ class AppLocalizationsAr extends AppLocalizations {
   String get show_All => 'عرض الجميع';
 
   @override
+  String get selectDate => 'اختر التاريخ';
+
+  @override
+  String get to => 'من';
+
+  @override
+  String get from => 'إلى';
+
+  @override
+  String get today => 'اليوم';
+
+  @override
+  String get thisWeek => 'هذا الأسبوع';
+
+  @override
+  String get thisMonth => 'هذا الشهر';
+
+  @override
+  String get lastMonth => 'الشهر الماضي';
+
+  @override
+  String get custom => 'مخصص';
+
+  @override
   String get filterBy => 'تصفية حسب';
 
   @override
@@ -156,10 +180,64 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clearAll => 'حذف الكل';
 
   @override
+  String get clear => 'مسح';
+
+  @override
+  String get paidDate => 'تاريخ الدفع:';
+
+  @override
+  String get waivedDate => 'تاريخ الإلغاء:';
+
+  @override
+  String get paid => 'مدفوع';
+
+  @override
+  String get waived => 'ملغى';
+
+  @override
+  String get viewAll => 'عرض الكل';
+
+  @override
+  String get order => 'الطلب';
+
+  @override
+  String get errorOccurred => 'حدث خطأ';
+
+  @override
   String get deleteAccount => 'حذف الحساب';
 
   @override
   String get all => 'الجميع';
+
+  @override
+  String get apply => 'تطبيق';
+
+  @override
+  String get penalty => 'جزاء';
+
+  @override
+  String get youreInGoodStanding => 'أنت بحالة جيدة!';
+
+  @override
+  String get withdrawal => 'سحب';
+
+  @override
+  String get failed => 'فشل';
+
+  @override
+  String get escrowRelease => 'رد الأموال المحجوزة';
+
+  @override
+  String get noTransactionsYet => 'لا توجد معاملات';
+
+  @override
+  String get penalties => 'الجزاءات';
+
+  @override
+  String get noPenalties => 'لا توجد جزاءات';
+
+  @override
+  String get pendingPenalties => 'الجزاءات المعلقة';
 
   @override
   String get subtotal => 'المجموع الكلي:';
@@ -1186,9 +1264,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get frozen => 'مجمدة';
-
-  @override
-  String get pendingPenalties => 'الجزاءات المعلقة';
 
   @override
   String get availableBalance => 'الرصيد المتاح';

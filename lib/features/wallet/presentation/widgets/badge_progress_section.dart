@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/widgets/image_with_fallback.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../data/models/wallet_model.dart';
+import '../../../../../core/widgets/image_with_fallback.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../data/models/wallet_model.dart';
 import 'all_badges_dialog.dart';
 
 class WalletBadgeProgressSection extends StatelessWidget {

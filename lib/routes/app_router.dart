@@ -24,7 +24,9 @@ import '../features/reviews/presentation/reviews_screen.dart';
 import '../features/wallet/presentation/manual_topup_screen.dart';
 import '../features/wallet/presentation/payment_success_screen.dart';
 import '../features/wallet/presentation/paymob_webview.dart';
+import '../features/wallet/presentation/penalties_screen.dart';
 import '../features/wallet/presentation/topup_screen.dart';
+import '../features/wallet/presentation/transaction_history_screen.dart';
 import '../features/wallet/presentation/wallet_screen.dart';
 
 Future<GoRouter> createAppRouter({
@@ -189,6 +191,14 @@ Future<GoRouter> createAppRouter({
           final amount = state.extra as int;
           return ManualTopUpScreen(amount: amount);
         },
+      ),
+      GoRoute(
+        path: '/wallet/penalties',
+        builder: (context, state) => const PenaltiesScreen(),
+      ),
+      GoRoute(
+        path: '/wallet/transactions',
+        builder: (context, state) => const TransactionHistoryScreen(),
       ),
       GoRoute(
         path: '/mainHome',

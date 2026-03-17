@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tawreedat_go/core/widgets/loading_screen.dart';
+import 'package:tawreedat_go/features/wallet/presentation/widgets/penalty_card.dart';
+import 'package:tawreedat_go/features/wallet/presentation/widgets/section_header.dart';
+import 'package:tawreedat_go/features/wallet/presentation/widgets/transaction_card.dart';
+import 'package:tawreedat_go/features/wallet/presentation/widgets/wallet_shimmer.dart';
 import '../manager/wallet_cubit.dart';
 import '../manager/wallet_state.dart';
-import 'badge_progress_section.dart';
-import 'balance_card.dart';
+import 'widgets/balance_card.dart';
+import 'widgets/badge_progress_section.dart';
+import 'widgets/empty_section.dart';
+
+import 'widgets/section_error.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -18,11 +24,20 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<WalletCubit>().fetchWalletData();
+    final cubit = context.read<WalletCubit>();
+    cubit.fetchWalletData();
+    cubit.fetchTransactions(limit: 5);
+    cubit.fetchPenalties(limit: 5);
+    // cubit.fetchUnpaidCommissions(limit: 5); // if needed
   }
 
-  Future<void> _refreshWalletData() async {
-    await context.read<WalletCubit>().refreshWalletData();
+  Future<void> _refreshAll() async {
+    final cubit = context.read<WalletCubit>();
+    await Future.wait([
+      cubit.refreshWalletData(),
+      cubit.fetchTransactions(limit: 5),
+      cubit.fetchPenalties(limit: 5),
+    ]);
   }
 
   @override
@@ -45,122 +60,167 @@ class _WalletScreenState extends State<WalletScreen> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: BlocBuilder<WalletCubit, WalletState>(
-        builder: (context, state) {
-          if (state is WalletLoading) {
-            return const Center(child: LoadingScreen(isOne: true));
-          }
+      body: RefreshIndicator(
+        onRefresh: _refreshAll,
+        color: const Color(0xFFFDCB6E),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
 
-          if (state is WalletError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 60,
-                    color: Colors.red.withOpacity(0.7),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Text(
-                      state.message,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      context.read<WalletCubit>().fetchWalletData();
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
-                  ),
-                ],
+              // Wallet Balance Card
+              BlocBuilder<WalletCubit, WalletState>(
+                buildWhen: (prev, curr) =>
+                curr is WalletLoading || curr is WalletLoaded || curr is WalletError,
+                builder: (context, state) {
+                  if (state is WalletLoading) {
+                    return Column(
+                      children: [
+                        const BalanceCardShimmer(),
+                        const SizedBox(height: 24),
+                        const BadgeProgressSkeleton(),
+                        const SizedBox(height: 24),
+                      ],
+                    );
+                  }
+                  if (state is WalletError) {
+                    return SectionError(message: state.message);
+                  }
+                  if (state is WalletLoaded) {
+                    final wallet = state.walletData.wallet;
+                    final badge = state.walletData.badge;
+                    final totalFines = state.walletData.totalFines;
+                    return Column(
+                      children: [
+                        WalletBalanceCard(
+                          balance: wallet.balance,
+                          isActive: wallet.isActive,
+                          points: wallet.points,
+                          freezeReason: wallet.freezeReason,
+                          totalUnpaid: 0,
+                          totalPenalties: totalFines,
+                          availableBalance: wallet.balance - totalFines,
+                        ),
+                        const SizedBox(height: 24),
+                        WalletBadgeProgressSection(
+                          currentBadge: badge,
+                          nextBadge: state.walletData.nextBadge,
+                          completedCount: state.walletData.completedCount,
+                          remainingToNext: state.walletData.remainingToNext,
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    );
+                  }
+                  return Column(
+                    children: [
+                      const BalanceCardShimmer(),
+                      const SizedBox(height: 24),
+                      const BadgeProgressSkeleton(),
+                      const SizedBox(height: 24),
+
+                    ],
+                  );                },
               ),
-            );
-          }
 
-          if (state is TopUpInitiated ||
-              state is TopUpLoading ||
-              state is TopUpError) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              context.read<WalletCubit>().fetchWalletData();
-            });
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state is WalletLoaded) {
-            final walletData = state.walletData;
-            final wallet = walletData.wallet;
-            final badge = walletData.badge;
-
-            return RefreshIndicator(
-              onRefresh: _refreshWalletData,
-              color: const Color(0xFFFDCB6E),
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
+              // Quick Actions
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
                   children: [
-                    const SizedBox(height: 20),
-
-                    // Wallet Balance Card
-                    WalletBalanceCard(
-                      balance: wallet.balance,
-                      isActive: wallet.isActive,
-                      points:wallet.points,
-                      freezeReason: wallet.freezeReason,
-                      totalUnpaid: 0,
-                      totalPenalties: 0,
-                      availableBalance: wallet.balance,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Badge Progress Section
-                    WalletBadgeProgressSection(
-                      currentBadge: badge,
-                      nextBadge: walletData.nextBadge,
-                      completedCount: walletData.completedCount,
-                      remainingToNext: walletData.remainingToNext,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Quick Actions
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        spacing: 20,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _QuickActionButton(
-                                  icon: Icons.add_card_rounded,
-                                  label: isArabic ? 'شحن' : 'TopUp',
-                                  color: Colors.green.shade600,
-                                  onTap: () => context.push('/wallet/topup'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                    Expanded(
+                      child: _QuickActionButton(
+                        icon: Icons.add_card_rounded,
+                        label: isArabic ? 'شحن' : 'TopUp',
+                        color: Colors.green.shade600,
+                        onTap: () => context.push('/wallet/topup'),
                       ),
                     ),
-
-                    const SizedBox(height: 20),
+                    const SizedBox(width: 12),
                   ],
                 ),
               ),
-            );
-          }
+              const SizedBox(height: 20),
 
-          // Initial state
-          return const SizedBox.shrink();
-        },
+              // Recent Transactions Section
+              SectionHeader(
+                title: isArabic ? 'أحدث المعاملات' : 'Recent Transactions',
+                onViewAll: () => context.push('/wallet/transactions'),
+              ),
+              const SizedBox(height: 12),
+              BlocBuilder<WalletCubit, WalletState>(
+                buildWhen: (prev, curr) =>
+                curr is TransactionsLoading ||
+                    curr is TransactionsLoaded ||
+                    curr is TransactionsError,
+                builder: (context, state) {
+                  if (state is TransactionsLoading) {
+                    return const SectionCardsShimmer(itemCount: 5);
+                  }
+                  if (state is TransactionsError) {
+                    return SectionError(message: state.message);
+                  }
+                  if (state is TransactionsLoaded) {
+                    if (state.transactions.isEmpty) {
+                      return EmptySection(
+                        icon: Icons.receipt_long_outlined,
+                        message: isArabic ? 'لا توجد معاملات بعد' : 'No transactions yet',
+                      );
+                    }
+                    return Column(
+                      children: state.transactions.take(5).map((tx) {
+                        return TransactionCard(transaction: tx);
+                      }).toList(),
+                    );
+                  }
+                  return const SectionCardsShimmer(itemCount: 5);
+                },
+              ),
+
+              const SizedBox(height: 32),
+
+              // Penalties Section
+              SectionHeader(
+                title: isArabic ? 'الغرامات' : 'Penalties',
+                onViewAll: () => context.push('/wallet/penalties'),
+              ),
+              const SizedBox(height: 12),
+              BlocBuilder<WalletCubit, WalletState>(
+                buildWhen: (prev, curr) =>
+                curr is PenaltiesLoading ||
+                    curr is PenaltiesLoaded ||
+                    curr is PenaltiesError,
+                builder: (context, state) {
+                  if (state is PenaltiesLoading) {
+                    return const SectionCardsShimmer(itemCount: 3);
+                  }
+                  if (state is PenaltiesError) {
+                    return SectionError(message: state.message);
+                  }
+                  if (state is PenaltiesLoaded) {
+                    if (state.penalties.isEmpty) {
+                      return EmptySection(
+                        icon: Icons.verified_outlined,
+                        message: isArabic ? 'لا توجد غرامات' : 'No penalties',
+                        isPositive: true,
+                      );
+                    }
+                    return Column(
+                      children: state.penalties.take(3).map((p) {
+                        return PenaltyCard(penalty: p);
+                      }).toList(),
+                    );
+                  }
+                  return const SectionCardsShimmer(itemCount: 3);
+                },
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
       ),
     );
   }

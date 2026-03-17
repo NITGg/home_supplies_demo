@@ -305,6 +305,54 @@ abstract class AppLocalizations {
   /// **'Show All'**
   String get show_All;
 
+  /// No description provided for @selectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date'**
+  String get selectDate;
+
+  /// No description provided for @to.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get to;
+
+  /// No description provided for @from.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get from;
+
+  /// No description provided for @today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
+
+  /// No description provided for @thisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This Week'**
+  String get thisWeek;
+
+  /// No description provided for @thisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This Month'**
+  String get thisMonth;
+
+  /// No description provided for @lastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Month'**
+  String get lastMonth;
+
+  /// No description provided for @custom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get custom;
+
   /// No description provided for @filterBy.
   ///
   /// In en, this message translates to:
@@ -389,6 +437,54 @@ abstract class AppLocalizations {
   /// **'Clear All'**
   String get clearAll;
 
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
+  /// No description provided for @paidDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid:'**
+  String get paidDate;
+
+  /// No description provided for @waivedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Waived:'**
+  String get waivedDate;
+
+  /// No description provided for @paid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get paid;
+
+  /// No description provided for @waived.
+  ///
+  /// In en, this message translates to:
+  /// **'Waived'**
+  String get waived;
+
+  /// No description provided for @viewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get viewAll;
+
+  /// No description provided for @order.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get order;
+
+  /// No description provided for @errorOccurred.
+  ///
+  /// In en, this message translates to:
+  /// **'Error Occurred'**
+  String get errorOccurred;
+
   /// No description provided for @deleteAccount.
   ///
   /// In en, this message translates to:
@@ -400,6 +496,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All'**
   String get all;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
+
+  /// No description provided for @penalty.
+  ///
+  /// In en, this message translates to:
+  /// **'Penalty'**
+  String get penalty;
+
+  /// No description provided for @youreInGoodStanding.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re in good standing!'**
+  String get youreInGoodStanding;
+
+  /// No description provided for @withdrawal.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal'**
+  String get withdrawal;
+
+  /// No description provided for @failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get failed;
+
+  /// No description provided for @escrowRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow Release'**
+  String get escrowRelease;
+
+  /// No description provided for @noTransactionsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get noTransactionsYet;
+
+  /// No description provided for @penalties.
+  ///
+  /// In en, this message translates to:
+  /// **'Penalties'**
+  String get penalties;
+
+  /// No description provided for @noPenalties.
+  ///
+  /// In en, this message translates to:
+  /// **'No penalties'**
+  String get noPenalties;
+
+  /// No description provided for @pendingPenalties.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Penalties'**
+  String get pendingPenalties;
 
   /// No description provided for @subtotal.
   ///
@@ -2398,12 +2554,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Frozen'**
   String get frozen;
-
-  /// No description provided for @pendingPenalties.
-  ///
-  /// In en, this message translates to:
-  /// **'Pending Penalties'**
-  String get pendingPenalties;
 
   /// No description provided for @availableBalance.
   ///

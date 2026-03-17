@@ -16,4 +16,30 @@ class WalletRepository {
   Future<RechargeModel> initiateRecharge(int amountCents) async {
     return await remoteDataSource.initiateRecharge(amountCents);
   }
+
+  // ==================== Get Transactions ====================
+  Future<Map<String, dynamic>> getTransactions({
+    int page = 1,
+    int limit = 20,
+    String? startDate,
+    String? endDate,
+  }) async {
+    return await remoteDataSource.getTransactions(
+      page: page,
+      limit: limit,
+      startDate: startDate,
+      endDate: endDate,
+    );
+  }
+
+  // ==================== Get Penalties ====================
+  Future<Map<String, dynamic>> getPenalties({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    return await remoteDataSource.getPenalties(
+      page: page,
+      limit: limit,
+    );
+  }
 }

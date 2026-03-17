@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../l10n/app_localizations.dart';
+import '../../../../../l10n/app_localizations.dart';
 
 class WalletBalanceCard extends StatelessWidget {
   final double balance;
@@ -165,7 +165,7 @@ class WalletBalanceCard extends StatelessWidget {
             FinancialRow(
               label: l10n.availableBalance,
               value: currencyFormatter.format(availableBalance),
-              isNegative: availableBalance < 0,
+              isNegative: false,
               isBold: true,
             ),
           ],

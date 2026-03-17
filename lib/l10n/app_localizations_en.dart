@@ -114,6 +114,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get show_All => 'Show All';
 
   @override
+  String get selectDate => 'Select Date';
+
+  @override
+  String get to => 'To';
+
+  @override
+  String get from => 'From';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get thisWeek => 'This Week';
+
+  @override
+  String get thisMonth => 'This Month';
+
+  @override
+  String get lastMonth => 'Last Month';
+
+  @override
+  String get custom => 'Custom';
+
+  @override
   String get filterBy => 'Filter By';
 
   @override
@@ -156,10 +180,64 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearAll => 'Clear All';
 
   @override
+  String get clear => 'Clear';
+
+  @override
+  String get paidDate => 'Paid:';
+
+  @override
+  String get waivedDate => 'Waived:';
+
+  @override
+  String get paid => 'Paid';
+
+  @override
+  String get waived => 'Waived';
+
+  @override
+  String get viewAll => 'View All';
+
+  @override
+  String get order => 'Order';
+
+  @override
+  String get errorOccurred => 'Error Occurred';
+
+  @override
   String get deleteAccount => 'Delete Account';
 
   @override
   String get all => 'All';
+
+  @override
+  String get apply => 'Apply';
+
+  @override
+  String get penalty => 'Penalty';
+
+  @override
+  String get youreInGoodStanding => 'You\'re in good standing!';
+
+  @override
+  String get withdrawal => 'Withdrawal';
+
+  @override
+  String get failed => 'Failed';
+
+  @override
+  String get escrowRelease => 'Escrow Release';
+
+  @override
+  String get noTransactionsYet => 'No transactions yet';
+
+  @override
+  String get penalties => 'Penalties';
+
+  @override
+  String get noPenalties => 'No penalties';
+
+  @override
+  String get pendingPenalties => 'Pending Penalties';
 
   @override
   String get subtotal => 'Subtotal:';
@@ -1186,9 +1264,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get frozen => 'Frozen';
-
-  @override
-  String get pendingPenalties => 'Pending Penalties';
 
   @override
   String get availableBalance => 'Available Balance';
