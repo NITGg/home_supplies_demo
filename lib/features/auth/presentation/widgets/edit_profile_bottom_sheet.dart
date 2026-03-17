@@ -255,25 +255,27 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
     final cubit = context.read<ProfileCubit>();
     final extraPhone = _extraPhoneController.text.trim();
 
-    // Always update base profile fields
-    final futures = <Future>[
-      cubit.updateProfile(
-        fullName: _nameController.text.trim(),
-        gender: isMale ? 'MALE' : 'FEMALE',
-        extraPhones: extraPhone.isEmpty ? null : extraPhone,
-      ),
-    ];
-
-    // If email changed and user is LOCAL, fire change-email in parallel
+    // Step 1: If email changed and user is LOCAL, wait for result first
     if (_isLocalLogin && _emailChanged) {
-      futures.add(cubit.changeEmail(email: _emailController.text.trim()));
+      await cubit.changeEmail(email: _emailController.text.trim());
+      if (!mounted) return;
+      // Abort if email change failed — BlocListener will show the error
+      if (cubit.state is ProfileFailure) return;
     }
 
-    // If phone changed and user is social login, fire change-phone in parallel
+    // Step 2: If phone changed and user is social login, wait for result first
     if (!_isLocalLogin && _phoneChanged) {
-      futures.add(cubit.changePhone(phone: _phoneController.text.trim()));
+      await cubit.changePhone(phone: _phoneController.text.trim());
+      if (!mounted) return;
+      // Abort if phone change failed — BlocListener will show the error
+      if (cubit.state is ProfileFailure) return;
     }
 
-    await Future.wait(futures);
+    // Step 3: Only update base profile fields if all previous steps succeeded
+    await cubit.updateProfile(
+      fullName: _nameController.text.trim(),
+      gender: isMale ? 'MALE' : 'FEMALE',
+      extraPhones: extraPhone.isEmpty ? null : extraPhone,
+    );
   }
 }
