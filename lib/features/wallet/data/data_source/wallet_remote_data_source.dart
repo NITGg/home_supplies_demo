@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
@@ -49,9 +48,9 @@ class WalletRemoteDataSource {
       'page': page,
       'limit': limit,
     };
-    if (startDate != null) queryParameters['created_atFrom'] = startDate;
-    if (endDate != null) queryParameters['created_atTo'] = endDate;
-
+    if (startDate != null) queryParameters['created_at[gte]'] = startDate;
+    if (endDate != null) queryParameters['created_at[lte]'] = endDate;
+log(queryParameters.toString());
     final response = await _dio.get(
       '/profile/wallet/transactions?lang=${LocaleManager.currentLocale}',
       queryParameters: queryParameters,

@@ -755,13 +755,7 @@ class _BottomNavBar extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            if (userId.isNotEmpty)
-                              NotificationButton(userId: userId)
-                            else
-                              Icon(
-                                Icons.notifications_none,
-                                color: Colors.grey,
-                              ),
+                              NotificationButton(userId: userId),
                             Text(
                               localizations.notifications,
                               style: const TextStyle(
