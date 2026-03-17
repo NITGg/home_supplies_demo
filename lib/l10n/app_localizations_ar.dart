@@ -198,6 +198,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get viewAll => 'عرض الكل';
 
   @override
+  String get escrowHold => 'حجز الأموال';
+
+  @override
   String get order => 'الطلب';
 
   @override
@@ -213,7 +216,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get apply => 'تطبيق';
 
   @override
-  String get penalty => 'جزاء';
+  String get penalty => 'غرامة';
 
   @override
   String get youreInGoodStanding => 'أنت بحالة جيدة!';
@@ -231,10 +234,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noTransactionsYet => 'لا توجد معاملات';
 
   @override
-  String get penalties => 'الجزاءات';
+  String get penalties => 'الغرامات';
 
   @override
-  String get noPenalties => 'لا توجد جزاءات';
+  String get noPenalties => 'لا توجد غرامات';
 
   @override
   String get pendingPenalties => 'الجزاءات المعلقة';

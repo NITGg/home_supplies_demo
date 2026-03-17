@@ -457,19 +457,16 @@ class _TransactionCard extends StatelessWidget {
       case 'WITHDRAWAL':
         return l10n.withdrawal;
       case 'ESCROW_RELEASE':
+        return l10n.escrowRelease;case 'ESCROW_REMOVE':
         return l10n.escrowRelease;
+      case 'ESCROW_HOLD':
+        return l10n.escrowHold;
       case 'PENALTY':
         return l10n.penalty;
-      // case 'COMMISSION_DEDUCTION':
-      //   return l10n.commissionDeduction;
       case 'MANUAL_INCREASE':
         return l10n.topup;
       case 'MANUAL_DECREASE':
         return l10n.withdrawal;
-      // case 'PLATFORM_COD_COMMISSION':
-      //   return l10n.commissionDeduction;
-      // case 'COUPON_PURCHASE':
-      //   return l10n.couponPurchase;
       default:
         return transaction.type;
     }

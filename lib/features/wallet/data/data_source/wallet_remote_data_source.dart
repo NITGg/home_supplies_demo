@@ -1,4 +1,6 @@
 
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
@@ -47,22 +49,27 @@ class WalletRemoteDataSource {
       'page': page,
       'limit': limit,
     };
-
     if (startDate != null) queryParameters['created_atFrom'] = startDate;
     if (endDate != null) queryParameters['created_atTo'] = endDate;
 
     final response = await _dio.get(
-      '/admin/wallet/transactions?lang=${LocaleManager.currentLocale}',
+      '/profile/wallet/transactions?lang=${LocaleManager.currentLocale}',
       queryParameters: queryParameters,
     );
 
-    if (response.statusCode == 200 && response.data['data'] != null) {
-      final data = response.data['data'];
+    // Response is flat — no 'data' wrapper
+    if (response.statusCode == 200) {
+      final data = response.data as Map<String, dynamic>;
       return {
-        'transactions': (data['userTransactions'] as List)
+        'transactions': (data['transactions'] as List)
             .map((json) => WalletTransactionModel.fromJson(json))
             .toList(),
-        'pagination': PaginationModel.fromJson(data['pagination']),
+        'pagination': PaginationModel(
+          page: page,                                          // not in response, use request value
+          limit: limit,                                        // not in response, use request value
+          total: data['totalTransactions'] as int? ?? 0,
+          totalPages: data['totalPages'] as int? ?? 1,
+        ),
       };
     }
     throw DioException(
@@ -78,17 +85,22 @@ class WalletRemoteDataSource {
     int limit = 20,
   }) async {
     final response = await _dio.get(
-      '/admin/wallet/penalties?lang=${LocaleManager.currentLocale}',
+      '/profile/wallet/penalties?lang=${LocaleManager.currentLocale}',
       queryParameters: {'page': page, 'limit': limit},
     );
 
-    if (response.statusCode == 200 && response.data['data'] != null) {
-      final data = response.data['data'];
+    if (response.statusCode == 200) {
+      final data = response.data as Map<String, dynamic>;
       return {
         'penalties': (data['penalties'] as List)
             .map((json) => PenaltyModel.fromJson(json))
             .toList(),
-        'pagination': PaginationModel.fromJson(data['pagination']),
+        'pagination': PaginationModel(
+          page: page,
+          limit: limit,
+          total: data['totalPenalties'] as int? ?? 0,
+          totalPages: data['totalPages'] as int? ?? 1,
+        ),
       };
     }
     throw DioException(

@@ -80,6 +80,7 @@
   "failed": "فشل",
 
   "escrowRelease": "رد الأموال المحجوزة",
+  "escrowHold": "حجز الأموال",
   "notifications": "الإشعارات",
   "markAllAsRead": "تحديد الكل كمقروءة",
   "clearAll": "حذف الكل",

@@ -473,6 +473,12 @@ abstract class AppLocalizations {
   /// **'View All'**
   String get viewAll;
 
+  /// No description provided for @escrowHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow Hold'**
+  String get escrowHold;
+
   /// No description provided for @order.
   ///
   /// In en, this message translates to:

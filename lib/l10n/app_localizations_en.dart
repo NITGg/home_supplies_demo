@@ -198,6 +198,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewAll => 'View All';
 
   @override
+  String get escrowHold => 'Escrow Hold';
+
+  @override
   String get order => 'Order';
 
   @override

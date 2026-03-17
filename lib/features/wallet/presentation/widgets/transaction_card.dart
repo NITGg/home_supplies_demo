@@ -76,7 +76,10 @@ class TransactionCard extends StatelessWidget {
       case 'WITHDRAWAL':
         return l10n.withdrawal;
       case 'ESCROW_RELEASE':
+        return l10n.escrowRelease;case 'ESCROW_REMOVE':
         return l10n.escrowRelease;
+        case 'ESCROW_HOLD':
+        return l10n.escrowHold;
       case 'PENALTY':
         return l10n.penalty;
         case 'MANUAL_INCREASE':

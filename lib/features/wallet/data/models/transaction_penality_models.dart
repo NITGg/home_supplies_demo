@@ -61,6 +61,7 @@ class WalletTransactionModel {
           type == 'PENALTY' ||
           type == 'COUPON_PURCHASE' ||
           type == 'MANUAL_DECREASE' ||
+          type == 'ESCROW_HOLD' ||
           type == 'COMMISSION_DEDUCTION';
 
   bool get isCompleted => status == 'COMPLETED';
