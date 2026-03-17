@@ -8,6 +8,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../data/models/user_profile_model.dart';
 import '../../manager/profile_cubit.dart';
 import '../../manager/profile_states.dart';
+import '../pages/otp_screen.dart';
 
 class EditProfileBottomSheet extends StatefulWidget {
   final UserProfileModel profile;
@@ -60,16 +61,9 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
 
     return BlocListener<ProfileCubit, ProfileState>(
       listener: (context, state) {
-        if (state is ProfileUpdateSuccess ||
-            state is ProfileChangePhoneSuccess ||
-            state is ProfileChangeEmailSuccess) {
-          final msg = state is ProfileUpdateSuccess
-              ? state.message
-              : state is ProfileChangePhoneSuccess
-              ? state.message
-              : (state as ProfileChangeEmailSuccess).message;
+        if (state is ProfileUpdateSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.green),
+            SnackBar(content: Text(state.message), backgroundColor: Colors.green),
           );
           Navigator.pop(context);
         } else if (state is ProfileFailure) {
@@ -77,6 +71,8 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         }
+        // ProfileChangePhoneSuccess / ProfileChangeEmailSuccess are handled
+        // inside _saveChanges — we navigate to OTP from there.
       },
       child: Directionality(
         textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
@@ -252,30 +248,65 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
   Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final cubit = context.read<ProfileCubit>();
+    final cubit      = context.read<ProfileCubit>();
     final extraPhone = _extraPhoneController.text.trim();
 
-    // Step 1: If email changed and user is LOCAL, wait for result first
+    // Build the base-profile update as a reusable closure so we can call it
+    // either immediately (no credential change) or after OTP confirmation.
+    Future<void> doUpdateProfile() async {
+      await cubit.updateProfile(
+        fullName:    _nameController.text.trim(),
+        gender:      isMale ? 'MALE' : 'FEMALE',
+        extraPhones: extraPhone.isEmpty ? null : extraPhone,
+      );
+    }
+
+    // ── Email changed (LOCAL login) ──────────────────────────────────────────
     if (_isLocalLogin && _emailChanged) {
       await cubit.changeEmail(email: _emailController.text.trim());
       if (!mounted) return;
-      // Abort if email change failed — BlocListener will show the error
-      if (cubit.state is ProfileFailure) return;
+      if (cubit.state is ProfileFailure) return; // BlocListener shows the error
+
+      // Navigate to OTP screen; base-profile update runs after confirmation.
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: cubit,
+            child: ProfileOtpScreen(
+              destination: _emailController.text.trim(),
+              onConfirmed: doUpdateProfile,
+            ),
+          ),
+        ),
+      );
+      return; // bottom sheet stays open; OTP screen handles the rest
     }
 
-    // Step 2: If phone changed and user is social login, wait for result first
+    // ── Phone changed (social login) ─────────────────────────────────────────
     if (!_isLocalLogin && _phoneChanged) {
       await cubit.changePhone(phone: _phoneController.text.trim());
       if (!mounted) return;
-      // Abort if phone change failed — BlocListener will show the error
       if (cubit.state is ProfileFailure) return;
+
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: cubit,
+            child: ProfileOtpScreen(
+              destination: _phoneController.text.trim(),
+              onConfirmed: doUpdateProfile,
+            ),
+          ),
+        ),
+      );
+      return;
     }
 
-    // Step 3: Only update base profile fields if all previous steps succeeded
-    await cubit.updateProfile(
-      fullName: _nameController.text.trim(),
-      gender: isMale ? 'MALE' : 'FEMALE',
-      extraPhones: extraPhone.isEmpty ? null : extraPhone,
-    );
+    // ── No credential change — update name / gender directly ─────────────────
+    await doUpdateProfile();
   }
 }

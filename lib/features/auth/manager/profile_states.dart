@@ -35,3 +35,7 @@ class ProfileChangeEmailSuccess extends ProfileState {
 
   ProfileChangeEmailSuccess({required this.message});
 }
+class ProfileOtpConfirmSuccess extends ProfileState {
+  final String message;
+  ProfileOtpConfirmSuccess({required this.message});
+}

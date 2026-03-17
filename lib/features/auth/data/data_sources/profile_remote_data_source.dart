@@ -134,4 +134,23 @@ class ProfileRemoteDataSource {
       rethrow;
     }
   }
+
+  /// CONFIRM OTP (after change-phone or change-email)
+  Future<Map<String, dynamic>> confirmOtp({
+    required String token,
+    required String code,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/profile/confirm-otp?lang=${LocaleManager.currentLocale}',
+        data: {'code': code},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      log('Confirm OTP response: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      log('Confirm OTP error: $e');
+      rethrow;
+    }
+  }
 }

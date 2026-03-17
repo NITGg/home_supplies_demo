@@ -67,4 +67,11 @@ class ProfileRepository {
       extraPhones: extraPhones,
     );
   }
+
+  Future<Map<String, dynamic>> confirmOtp({
+    required String token,
+    required String code,
+  }) async {
+    return await _remoteDataSource.confirmOtp(token: token, code: code);
+  }
 }
