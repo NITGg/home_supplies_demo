@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -54,7 +56,7 @@ class _WalletScreenState extends State<WalletScreen> {
         leading: BackButton(
           color: Colors.black,
           onPressed: () =>
-          context.canPop() ? context.pop() : context.go('/mainHome'),
+              context.canPop() ? context.pop() : context.go('/mainHome'),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -73,7 +75,10 @@ class _WalletScreenState extends State<WalletScreen> {
               // Wallet Balance Card
               BlocBuilder<WalletCubit, WalletState>(
                 buildWhen: (prev, curr) =>
-                curr is WalletLoading || curr is WalletLoaded || curr is WalletError,
+                    curr is WalletLoading ||
+                    curr is WalletLoaded ||
+                    curr is PenaltiesLoaded ||
+                    curr is WalletError,
                 builder: (context, state) {
                   if (state is WalletLoading) {
                     return Column(
@@ -88,41 +93,47 @@ class _WalletScreenState extends State<WalletScreen> {
                   if (state is WalletError) {
                     return SectionError(message: state.message);
                   }
-                  if (state is WalletLoaded) {
-                    final wallet = state.walletData.wallet;
-                    final badge = state.walletData.badge;
-                    final totalFines = state.walletData.totalFines;
+
+                  final cubit = context.read<WalletCubit>();
+                  final walletData = cubit.cachedWalletData;
+
+                  if (walletData == null) {
                     return Column(
                       children: [
-                        WalletBalanceCard(
-                          balance: wallet.balance,
-                          isActive: wallet.isActive,
-                          points: wallet.points,
-                          freezeReason: wallet.freezeReason,
-                          totalUnpaid: 0,
-                          totalPenalties: totalFines,
-                          availableBalance: wallet.balance - totalFines,
-                        ),
+                        const BalanceCardShimmer(),
                         const SizedBox(height: 24),
-                        WalletBadgeProgressSection(
-                          currentBadge: badge,
-                          nextBadge: state.walletData.nextBadge,
-                          completedCount: state.walletData.completedCount,
-                          remainingToNext: state.walletData.remainingToNext,
-                        ),
+                        const BadgeProgressSkeleton(),
                         const SizedBox(height: 24),
                       ],
                     );
                   }
+
+                  final wallet = walletData.wallet;
+                  final badge = walletData.badge;
+                  final totalFines = cubit.totalPenaltyAmount;
+
                   return Column(
                     children: [
-                      const BalanceCardShimmer(),
+                      WalletBalanceCard(
+                        balance: wallet.balance,
+                        isActive: wallet.isActive,
+                        points: wallet.points,
+                        freezeReason: wallet.freezeReason,
+                        totalUnpaid: 0,
+                        totalPenalties: totalFines,
+                        availableBalance: wallet.balance - totalFines,
+                      ),
                       const SizedBox(height: 24),
-                      const BadgeProgressSkeleton(),
+                      WalletBadgeProgressSection(
+                        currentBadge: badge,
+                        nextBadge: walletData.nextBadge,
+                        completedCount: walletData.completedCount,
+                        remainingToNext: walletData.remainingToNext,
+                      ),
                       const SizedBox(height: 24),
-
                     ],
-                  );                },
+                  );
+                },
               ),
 
               // Quick Actions
@@ -152,7 +163,7 @@ class _WalletScreenState extends State<WalletScreen> {
               const SizedBox(height: 12),
               BlocBuilder<WalletCubit, WalletState>(
                 buildWhen: (prev, curr) =>
-                curr is TransactionsLoading ||
+                    curr is TransactionsLoading ||
                     curr is TransactionsLoaded ||
                     curr is TransactionsError,
                 builder: (context, state) {
@@ -166,7 +177,9 @@ class _WalletScreenState extends State<WalletScreen> {
                     if (state.transactions.isEmpty) {
                       return EmptySection(
                         icon: Icons.receipt_long_outlined,
-                        message: isArabic ? 'لا توجد معاملات بعد' : 'No transactions yet',
+                        message: isArabic
+                            ? 'لا توجد معاملات بعد'
+                            : 'No transactions yet',
                       );
                     }
                     return Column(
@@ -189,7 +202,7 @@ class _WalletScreenState extends State<WalletScreen> {
               const SizedBox(height: 12),
               BlocBuilder<WalletCubit, WalletState>(
                 buildWhen: (prev, curr) =>
-                curr is PenaltiesLoading ||
+                    curr is PenaltiesLoading ||
                     curr is PenaltiesLoaded ||
                     curr is PenaltiesError,
                 builder: (context, state) {

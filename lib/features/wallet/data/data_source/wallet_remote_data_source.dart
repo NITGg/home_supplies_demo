@@ -11,7 +11,9 @@ class WalletRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
 
   Future<WalletModel> getWalletData() async {
-    final response = await _dio.get('/profile/wallet?lang=${LocaleManager.currentLocale}');
+    final response = await _dio.get(
+      '/profile/wallet?lang=${LocaleManager.currentLocale}',
+    );
     if (response.statusCode == 200) {
       return WalletModel.fromJson(response.data);
     }
@@ -44,13 +46,10 @@ class WalletRemoteDataSource {
     String? startDate,
     String? endDate,
   }) async {
-    final queryParameters = <String, dynamic>{
-      'page': page,
-      'limit': limit,
-    };
+    final queryParameters = <String, dynamic>{'page': page, 'limit': limit};
     if (startDate != null) queryParameters['created_at[gte]'] = startDate;
     if (endDate != null) queryParameters['created_at[lte]'] = endDate;
-log(queryParameters.toString());
+    log(queryParameters.toString());
     final response = await _dio.get(
       '/profile/wallet/transactions?lang=${LocaleManager.currentLocale}',
       queryParameters: queryParameters,
@@ -64,8 +63,8 @@ log(queryParameters.toString());
             .map((json) => WalletTransactionModel.fromJson(json))
             .toList(),
         'pagination': PaginationModel(
-          page: page,                                          // not in response, use request value
-          limit: limit,                                        // not in response, use request value
+          page: page, // not in response, use request value
+          limit: limit, // not in response, use request value
           total: data['totalTransactions'] as int? ?? 0,
           totalPages: data['totalPages'] as int? ?? 1,
         ),
@@ -100,6 +99,10 @@ log(queryParameters.toString());
           total: data['totalPenalties'] as int? ?? 0,
           totalPages: data['totalPages'] as int? ?? 1,
         ),
+        'totalPenaltyAmount':
+            (num.tryParse(data['totalPenaltiesAmount']?.toString() ?? '0') ??
+                0) /
+            1,
       };
     }
     throw DioException(

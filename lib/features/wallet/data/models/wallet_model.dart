@@ -4,11 +4,9 @@ class WalletModel {
   final int completedCount;
   final UserBadge? nextBadge;
   final int remainingToNext;
-  final double totalFines;
 
   WalletModel({
     required this.wallet,
-    required this.totalFines,
     required this.badge,
     required this.completedCount,
     this.nextBadge,
@@ -17,12 +15,12 @@ class WalletModel {
 
   factory WalletModel.fromJson(Map<String, dynamic> json) {
     return WalletModel(
-
-        totalFines: ((num.tryParse(json['totalFines']?.toString() ?? '0') ?? 0) / 100),
       wallet: Wallet.fromJson(json['wallet']),
       badge: UserBadge.fromJson(json['badge']),
       completedCount: json['completedCount'] ?? 0,
-      nextBadge: json['nextBadge'] != null ? UserBadge.fromJson(json['nextBadge']) : null,
+      nextBadge: json['nextBadge'] != null
+          ? UserBadge.fromJson(json['nextBadge'])
+          : null,
       remainingToNext: json['remainingToNext'] ?? 0,
     );
   }
@@ -60,9 +58,8 @@ class Wallet {
   factory Wallet.fromJson(Map<String, dynamic> json) {
     return Wallet(
       id: json['id'],
-      balance: ((num.tryParse(json['balance']?.toString() ?? '0') ?? 0) / 100)
-      , points: (num.tryParse(json['points']?.toString() ?? '0') ?? 0)/1
-      ,
+      balance: ((num.tryParse(json['balance']?.toString() ?? '0') ?? 0) / 100),
+      points: (num.tryParse(json['points']?.toString() ?? '0') ?? 0) / 1,
       status: json['status'] ?? 'ACTIVE',
       ownerType: json['owner_type'] ?? 'CUSTOMER',
       freezeReason: json['freeze_reason'],
@@ -82,6 +79,7 @@ class Wallet {
   }
 
   bool get isActive => status == 'ACTIVE';
+
   bool get isFrozen => status == 'FROZEN';
 }
 

@@ -3,6 +3,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
 import '../data/models/transaction_penality_models.dart';
+import '../data/models/wallet_model.dart';
 import '../data/repositories/wallet_repo.dart';
 import 'wallet_state.dart';
 
@@ -14,20 +15,30 @@ class WalletCubit extends Cubit<WalletState> {
   List<PenaltyModel> _cachedPenalties = [];
   PaginationModel? _transactionsPagination;
   PaginationModel? _penaltiesPagination;
+  double _totalPenaltyAmount = 0.0;
+  WalletModel? _cachedWalletData;
+
+
 
   WalletCubit({required this.repository}) : super(WalletInitial());
+
+  WalletModel? get cachedWalletData => _cachedWalletData;
 
   dynamic get currentBadge {
     final s = state;
     if (s is WalletLoaded) return s.walletData.badge;
     return null;
   }
+  double get totalPenaltyAmount => _totalPenaltyAmount;
+
 
   // ==================== Wallet ====================
   Future<void> fetchWalletData() async {
     emit(WalletLoading());
     try {
       final walletData = await repository.getWalletData();
+      _cachedWalletData = walletData;
+
       emit(WalletLoaded(walletData: walletData));
     } catch (e) {
       emit(WalletError(message: extractErrorMessage(e)));
@@ -37,6 +48,7 @@ class WalletCubit extends Cubit<WalletState> {
   Future<void> refreshWalletData() async {
     try {
       final walletData = await repository.getWalletData();
+      _cachedWalletData = walletData;
       emit(WalletLoaded(walletData: walletData));
     } catch (e) {
       emit(WalletError(message: extractErrorMessage(e)));
@@ -94,6 +106,7 @@ class WalletCubit extends Cubit<WalletState> {
       emit(PenaltiesLoading());
     } else if (_penaltiesPagination != null) {
       emit(PenaltiesLoaded(
+        totalPenaltyAmount: 0,
         penalties: _cachedPenalties,
         pagination: _penaltiesPagination!,
         isLoadingMore: true,
@@ -108,6 +121,8 @@ class WalletCubit extends Cubit<WalletState> {
 
       final newPenalties = result['penalties'] as List<PenaltyModel>;
       final pagination = result['pagination'] as PaginationModel;
+      final totalPenaltyAmount = result['totalPenaltyAmount'] as double;
+      _totalPenaltyAmount = totalPenaltyAmount/100;
 
       if (page == 1) {
         _cachedPenalties = newPenalties;
@@ -118,6 +133,7 @@ class WalletCubit extends Cubit<WalletState> {
       _penaltiesPagination = pagination;
 
       emit(PenaltiesLoaded(
+        totalPenaltyAmount: totalPenaltyAmount,
         penalties: _cachedPenalties,
         pagination: pagination,
         isLoadingMore: false,

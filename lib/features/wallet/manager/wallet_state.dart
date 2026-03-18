@@ -39,10 +39,12 @@ class TransactionsLoaded extends WalletState {
 class PenaltiesLoaded extends WalletState {
   final List<PenaltyModel> penalties;
   final PaginationModel pagination;
+  final double totalPenaltyAmount;
   final bool isLoadingMore;
 
   PenaltiesLoaded({
     required this.penalties,
+    required this.totalPenaltyAmount,
     required this.pagination,
     this.isLoadingMore = false,
   });
