@@ -259,6 +259,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const SizedBox(height: 16),
                             const SocialAuthButtons(),
+                            const SizedBox(height: 16),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
