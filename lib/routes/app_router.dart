@@ -7,7 +7,10 @@ import '../core/utils/check_for_updates.dart';
 import '../core/widgets/loading_screen.dart';
 import '../features/addresses/manager/address_cubit.dart';
 import '../features/addresses/presentation/address_management_screen.dart';
+import '../features/auth/presentation/pages/auth_otp_screen.dart';
+import '../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../features/auth/presentation/pages/login_screen.dart';
+import '../features/auth/presentation/pages/new_password_screen.dart';
 import '../features/auth/presentation/pages/profile_screen.dart';
 import '../features/auth/presentation/pages/register_screen.dart';
 import '../features/home/drawer_pages/faq_page.dart';
@@ -42,18 +45,10 @@ Future<GoRouter> createAppRouter({
         builder: (context, state) => LoadingScreen(
           isSplash: true,
           onComplete: () async {
-            // First, check for update
             bool updateShown = await checkForUpdate(context);
-
-            // Only navigate if update was NOT shown
             if (!updateShown) {
               final storage = SecureStorageService();
               final token = await storage.getToken();
-              // kAuthtoken = await storage.getToken() ?? '';
-              var prof = await SecureStorageService().getUserProfile();
-              // if (prof != null) {
-              //   kUserId = UserProfileModel.fromJson(prof).id;
-              // }
               final destination = (token != null && token.isNotEmpty)
                   ? '/mainHome'
                   : await storage.shouldShowOnboarding()
@@ -86,14 +81,44 @@ Future<GoRouter> createAppRouter({
         ),
       ),
       ShellRoute(
-        builder: (context, state, child) {
-          return child;
-        },
+        builder: (context, state, child) => child,
         routes: [
           GoRoute(
             path: '/auth/login',
             name: 'login',
             builder: (context, state) => const LoginScreen(),
+          ),
+          GoRoute(
+            path: '/auth/loginDeleted',
+            name: 'loginDeleted',
+            builder: (context, state) =>
+            const LoginScreen(isAccountDeleted: true),
+          ),
+          GoRoute(
+            path: '/auth/register',
+            name: 'register',
+            builder: (context, state) => RegisterScreen(),
+          ),
+          GoRoute(
+            path: '/auth/forgot-password',
+            builder: (context, state) => const ForgotPasswordScreen(),
+          ),
+          GoRoute(
+            path: '/auth/verify-otp',
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>;
+              return OtpVerificationScreen(
+                destination: extra['destination'] as String,
+                isPasswordReset: (extra['isPasswordReset'] as bool?) ?? false,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/auth/new-password',
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>;
+              return NewPasswordScreen(otp: extra['otp'] as String);
+            },
           ),
           GoRoute(
             path: '/addressesManagement',
@@ -102,34 +127,6 @@ Future<GoRouter> createAppRouter({
               create: (_) => AddressCubit(),
               child: const AddressManagementScreen(),
             ),
-          ),
-          // GoRoute(
-          //   path: '/auth/verify-otp',
-          //   builder: (context, state) {
-          //     final phone = state.extra as String;
-          //     return OtpVerificationScreen(
-          //       phone: phone,
-          //       isPasswordReset: false,
-          //     );
-          //   },
-          // ),
-          // GoRoute(
-          //   path: '/auth/verify-otp-password-reset',
-          //   builder: (context, state) {
-          //     final phone = state.extra as String;
-          //     return OtpVerificationScreen(phone: phone, isPasswordReset: true);
-          //   },
-          // ),
-          GoRoute(
-            path: '/auth/register',
-            name: 'register',
-            builder: (context, state) => RegisterScreen(),
-          ),
-          GoRoute(
-            path: '/auth/loginDeleted',
-            name: 'loginDeleted',
-            builder: (context, state) =>
-                const LoginScreen(isAccountDeleted: true),
           ),
         ],
       ),
@@ -158,8 +155,6 @@ Future<GoRouter> createAppRouter({
         name: 'WalletScreen',
         builder: (context, state) => WalletScreen(),
       ),
-      // Add inside your GoRouter routes:
-
       GoRoute(
         path: '/wallet/topup',
         builder: (context, state) => const TopUpScreen(),
@@ -211,14 +206,4 @@ Future<GoRouter> createAppRouter({
       return Scaffold(body: Center(child: LoadingScreen()));
     },
   );
-}
-
-/// 🧩 Shell widget to group all auth-related routes under one BlocProvider
-class _AuthRouteShell extends StatelessWidget {
-  const _AuthRouteShell();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox.shrink();
-  }
 }

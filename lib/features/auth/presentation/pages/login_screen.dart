@@ -66,6 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       body: BlocListener<AuthCubit, AuthState>(
+        // in LoginScreen's BlocListener
         listener: (context, state) {
           if (state is AuthLoading) {
             showDialog(
@@ -78,7 +79,6 @@ class _LoginScreenState extends State<LoginScreen> {
             if (Navigator.of(context, rootNavigator: true).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
             }
-            // Navigate to OTP verification screen
             context.push('/auth/verify-otp', extra: state.phone);
           } else if (state is AuthRoleNotAllowed) {
             showErrorBanner(context, state.message);
@@ -87,8 +87,20 @@ class _LoginScreenState extends State<LoginScreen> {
             if (Navigator.of(context, rootNavigator: true).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
             }
-            if (mounted) {
-              context.go('/mainHome');
+            if (mounted) context.go('/mainHome');
+          } else if (state is AuthForgotPasswordOtpSent ||
+              state is AuthUpdateSuccess ||
+              state is AuthProfileDeleted ||
+              state is AuthInitial) {
+            // These states are handled by other screens in the stack.
+            // Just dismiss any loading dialog the login screen may have opened.
+            if (Navigator.of(context, rootNavigator: true).canPop()) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
+            // ← add this: dismiss dialog when forgot-password OTP is sent
+          } else if (state is AuthForgotPasswordOtpSent) {
+            if (Navigator.of(context, rootNavigator: true).canPop()) {
+              Navigator.of(context, rootNavigator: true).pop();
             }
           } else if (state is AuthFailure) {
             if (Navigator.of(context, rootNavigator: true).canPop()) {

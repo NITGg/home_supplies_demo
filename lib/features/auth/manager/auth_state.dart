@@ -25,32 +25,33 @@ class AuthSuccess extends AuthState {
 
 class AuthUpdateSuccess extends AuthState {
   final UserProfileModel? updatedUser;
-
   AuthUpdateSuccess({this.updatedUser});
 }
 
 class AuthFailure extends AuthState {
   final String message;
-
   AuthFailure(this.message);
 }
 
 class AuthProfileDeleted extends AuthState {
   final String message;
-
   AuthProfileDeleted(this.message);
 }
 
-// Keep for future OTP implementation
 class AuthOtpRequired extends AuthState {
   final String phone;
   final ShortAuthResponseModel authResponse;
-
   AuthOtpRequired({required this.phone, required this.authResponse});
 }
 
 class AuthOtpResent extends AuthState {
   final String message;
-
   AuthOtpResent({required this.message});
+}
+
+class AuthForgotPasswordOtpSent extends AuthState {
+  /// Phone number OR email — whatever the user entered.
+  final String destination;
+  final String message;
+  AuthForgotPasswordOtpSent({required this.destination, required this.message});
 }

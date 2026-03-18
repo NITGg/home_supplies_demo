@@ -117,15 +117,9 @@ class AuthRemoteDataSource {
   }) async {
     final formData = FormData();
 
-    if (fullName != null) {
-      formData.fields.add(MapEntry('full_name', fullName));
-    }
-    if (gender != null) {
-      formData.fields.add(MapEntry('gender', gender));
-    }
-    if (lang != null) {
-      formData.fields.add(MapEntry('lang', lang));
-    }
+    if (fullName != null) formData.fields.add(MapEntry('full_name', fullName));
+    if (gender != null) formData.fields.add(MapEntry('gender', gender));
+    if (lang != null) formData.fields.add(MapEntry('lang', lang));
     if (personalPhoto != null) {
       formData.files.add(MapEntry(
         'personal_photo',
@@ -175,5 +169,42 @@ class AuthRemoteDataSource {
     if (response.statusCode != 200) {
       throw Exception(response.data['message'] ?? 'Failed to change password');
     }
+  }
+
+  Future<void> forgotPassword({String? phone, String? email}) async {
+    final Map<String, dynamic> data = {};
+    if (phone != null) data['phone'] = phone;
+    if (email != null) data['email'] = email;
+
+    await _dio.post(
+      '/auth/forget-password?lang=${LocaleManager.currentLocale}',
+      data: data,
+      options: Options(
+        headers: {'Accept-Language': LocaleManager.currentLocale},
+      ),
+    );
+  }
+
+  Future<void> resetPassword({
+    required String code,
+    required String password,
+  }) async {
+    await _dio.post(
+      '/auth/reset-password?lang=${LocaleManager.currentLocale}',
+      data: {'code': code, 'password': password},
+      options: Options(
+        headers: {'Accept-Language': LocaleManager.currentLocale},
+      ),
+    );
+  }
+
+  Future<void> resendOtp({required String phone}) async {
+    await _dio.post(
+      '/auth/resend-otp?lang=${LocaleManager.currentLocale}',
+      data: {'phone': phone},
+      options: Options(
+        headers: {'Accept-Language': LocaleManager.currentLocale},
+      ),
+    );
   }
 }
