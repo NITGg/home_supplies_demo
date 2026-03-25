@@ -180,7 +180,7 @@ Future<void> _initializeFirebaseMessaging() async {
     }
 
     final token = await messaging.getToken();
-    log('📱 FCM Token: $token');
+    // log('📱 FCM Token: $token');
 
     messaging.onTokenRefresh.listen((newToken) async {
       log('🔄 FCM Token refreshed: $newToken');
