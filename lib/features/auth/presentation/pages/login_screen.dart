@@ -144,15 +144,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: phoneController,
                               label: loc.phone,
                               isPhone: true,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return loc.enterPhoneNumber;
-                                } else if (value.length != 11 ||
-                                    !value.startsWith('01')) {
-                                  return loc.invalidPhoneNumber;
-                                }
-                                return null;
-                              },
                             ),
                             const SizedBox(height: 18),
                             AppTextFormField(

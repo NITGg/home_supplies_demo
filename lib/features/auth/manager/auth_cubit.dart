@@ -89,7 +89,7 @@ class AuthCubit extends Cubit<AuthState> {
       );
 
       final userRole = result.user.role ?? '';
-      if (userRole == 'Courier') {
+      if (userRole == 'Courier' || userRole == 'Admin') {
         emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
         SecureStorageService().deleteToken();
         return;
@@ -120,7 +120,7 @@ class AuthCubit extends Cubit<AuthState> {
       if (idToken != null) {
         final result = await _repository.verifyGoogleToken(idToken);
         final userRole = result.user.role ?? '';
-        if (userRole == 'Courier') {
+        if (userRole == 'Courier' || userRole == 'Admin') {
           emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
           SecureStorageService().deleteToken();
           return;
@@ -151,7 +151,7 @@ class AuthCubit extends Cubit<AuthState> {
 
         final result = await _repository.verifyAppleToken(token, fullName);
         final userRole = result.user.role ?? '';
-        if (userRole == 'Courier') {
+        if (userRole == 'Courier' || userRole == 'Admin') {
           emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
           return;
         }
