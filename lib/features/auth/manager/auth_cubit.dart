@@ -122,6 +122,7 @@ class AuthCubit extends Cubit<AuthState> {
         final userRole = result.user.role ?? '';
         if (userRole == 'Courier') {
           emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
+          SecureStorageService().deleteToken();
           return;
         }
         await _initializeUserSession();
@@ -144,6 +145,7 @@ class AuthCubit extends Cubit<AuthState> {
 
         if (token == null) {
           emit(AuthFailure('فشل الحصول على بيانات Apple'));
+          SecureStorageService().deleteToken();
           return;
         }
 
