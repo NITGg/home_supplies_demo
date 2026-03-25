@@ -449,7 +449,7 @@
           "addressNameHint": "اسم العنوان",
           "addressNameOptional": "اسم العنوان",
           "pleaseSelectLocation": "يرجى اختيار الموقع",
-          "oneTimeAddress": "إدخال عنوان (لا تحفط)",
+          "oneTimeAddress": "إدخال عنوان (لا تحفظ)",
           "productImageOptional": "صورة المنتج (اختياري)",
           "newOrder": "طلب جديد",
           "invalidQrCode": "رمز الاستجابة السريع غير صالح: ليس رمز تأكيد التسليم",

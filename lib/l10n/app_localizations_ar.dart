@@ -1034,7 +1034,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pleaseSelectLocation => 'يرجى اختيار الموقع';
 
   @override
-  String get oneTimeAddress => 'إدخال عنوان (لا تحفط)';
+  String get oneTimeAddress => 'إدخال عنوان (لا تحفظ)';
 
   @override
   String get productImageOptional => 'صورة المنتج (اختياري)';
