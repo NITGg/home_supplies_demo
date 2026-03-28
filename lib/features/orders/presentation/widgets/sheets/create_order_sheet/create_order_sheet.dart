@@ -271,54 +271,304 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
   }
 
-  // ── Shipping fee estimate ──────────────────────────────────────────────────
-
-  Widget _buildShippingFeeEstimate() {
+  Widget _buildRouteSection(AppLocalizations l10n) {
     final fee = _calculateShippingFee();
-    if (fee == null) return const SizedBox.shrink();
+    final effectivePickup = _pickupNearMe ? _deliveryAddress : _pickupAddress;
 
-    log('─── _buildShippingFeeEstimate → fee: $fee EGP ───');
+    final pickupOutOfBounds =
+        effectivePickup != null && !_isAddressInArea(effectivePickup);
+    final deliveryOutOfBounds =
+        _deliveryAddress != null && !_isAddressInArea(_deliveryAddress!);
+
+    final distanceLabel = fee != null
+        ? (distanceInMeters >= 1000
+              ? '${(distanceInMeters / 1000).toStringAsFixed(1)} ${l10n.km}'
+              : '${distanceInMeters.toStringAsFixed(0)} ${l10n.m}')
+        : null;
 
     return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.kSecondaryColor,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.black),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Row(
-        children: [
-          const Icon(Icons.local_shipping_outlined, color: Colors.white),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              AppLocalizations.of(context)!.estimatedShippingFee,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontSize: 13,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Left: icon column with vertical dashed connector ──
+            SizedBox(
+              width: 64,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    _buildPinIcon(
+                      icon: _pickupNearMe
+                          ? Icons.my_location_rounded
+                          : Icons.store_outlined,
+                      color: const Color(0xFF0F6E56),
+                      bgColor: const Color(0xFFE1F5EE),
+                      warning: pickupOutOfBounds,
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: SizedBox(
+                          width: 2,
+                          child: CustomPaint(
+                            painter: _VerticalDashedLinePainter(
+                              color: Colors.grey.shade300,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    _buildPinIcon(
+                      icon: Icons.location_on,
+                      color: const Color(0xFF185FA5),
+                      bgColor: const Color(0xFFE6F1FB),
+                      warning: deliveryOutOfBounds,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          Text(
-            distanceInMeters >= 1000
-                ? '${(distanceInMeters / 1000).toStringAsFixed(1)} ${AppLocalizations.of(context)!.km}'
-                : '$distanceInMeters ${AppLocalizations.of(context)!.m}',
-            style: AppTextStyles.bold14.copyWith(
-              fontSize: 15,
-              color: Colors.white,
+
+            // ── Vertical divider ──
+            VerticalDivider(width: 1, color: Colors.grey.shade200),
+
+            // ── Right: address rows ──
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Pickup row
+                  if (!_pickupNearMe)
+                    Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _pickupNearMe ? null : _selectPickupAddress,
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        l10n.pickupLocation,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF0F6E56),
+                                        ),
+                                      ),
+                                      if (_pickupNearMe) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFE1F5EE),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            l10n.nearMe,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              color: Color(0xFF0F6E56),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                      if (pickupOutOfBounds) ...[
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          Icons.warning_amber_rounded,
+                                          size: 13,
+                                          color: Colors.orange.shade700,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    _pickupNearMe
+                                        ? (_deliveryAddress?.displayAddress ??
+                                              l10n.pickupLocation)
+                                        : (effectivePickup?.displayAddress ??
+                                              l10n.pickupLocation),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: effectivePickup == null
+                                          ? Colors.grey
+                                          : Colors.black87,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (!_pickupNearMe)
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: 13,
+                                color: Colors.grey.shade400,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // ── Fee badge divider ──
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Divider(height: 1, color: Colors.grey.shade200),
+                      if (distanceLabel != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.kSecondaryColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.route_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                distanceLabel,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                ),
+                                child: Container(
+                                  width: 3,
+                                  height: 3,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '~${fee!.toInt()} ${l10n.egp}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  // Delivery row
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _selectDeliveryAddress,
+                      borderRadius: const BorderRadius.only(
+                        bottomRight: Radius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        l10n.deliveryLocation,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF185FA5),
+                                        ),
+                                      ),
+                                      if (deliveryOutOfBounds) ...[
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          Icons.warning_amber_rounded,
+                                          size: 13,
+                                          color: Colors.orange.shade700,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    _deliveryAddress?.displayAddress ??
+                                        l10n.deliveryLocation,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: _deliveryAddress == null
+                                          ? Colors.grey
+                                          : Colors.black87,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (deliveryOutOfBounds) ...[
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      l10n.addressMayBeOutsideArea,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.orange.shade700,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 13,
+                              color: Colors.grey.shade400,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Text(
-            '  -  ${fee.toInt()} ${AppLocalizations.of(context)!.egp}',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: Colors.white,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -620,109 +870,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
   }
 
-  Widget _buildAddressTile({
-    required String label,
-    required Address? address,
-    required VoidCallback onTap,
-    required bool isPickup,
-  }) {
-    final l10n = AppLocalizations.of(context)!;
-    final color = isPickup ? Colors.green : Colors.blue;
-    final icon = isPickup ? Icons.store_outlined : Icons.location_on;
-
-    final bool outOfBounds = address != null && !_isAddressInArea(address);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            if (outOfBounds) ...[
-              const SizedBox(width: 8),
-              Tooltip(
-                message: l10n.addressMayBeOutsideArea,
-                child: Icon(
-                  Icons.warning_amber_rounded,
-                  size: 18,
-                  color: Colors.orange.shade700,
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: outOfBounds
-                    ? Colors.orange.shade400
-                    : address == null
-                    ? Colors.red.shade200
-                    : color.withOpacity(0.4),
-              ),
-              borderRadius: BorderRadius.circular(8),
-              color: outOfBounds
-                  ? Colors.orange.withOpacity(0.05)
-                  : address == null
-                  ? null
-                  : color.withOpacity(0.05),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  color: outOfBounds
-                      ? Colors.orange
-                      : address == null
-                      ? Colors.grey
-                      : color,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        address?.displayAddress ?? label,
-                        style: TextStyle(
-                          color: address == null ? Colors.grey : Colors.black87,
-                        ),
-                      ),
-                      if (outOfBounds) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.addressMayBeOutsideArea,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.orange.shade700,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Colors.grey,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   // ── Near Me checkbox ───────────────────────────────────────────────────────
 
   Widget _buildNearMeCheckbox(AppLocalizations l10n) {
@@ -968,30 +1115,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
                         // ── Near Me checkbox ──────────────────────────────
                         _buildNearMeCheckbox(l10n),
+                        const SizedBox(height: 16),
 
-                        // ── Pickup address (hidden when Near Me) ──────────
-                        if (!_pickupNearMe) ...[
-                          const SizedBox(height: 16),
-                          _buildAddressTile(
-                            label: l10n.pickupLocation,
-                            address: _pickupAddress,
-                            onTap: _selectPickupAddress,
-                            isPickup: true,
-                          ),
-                        ],
-
-                        const SizedBox(height: 24),
-
-                        // Delivery address
-                        _buildAddressTile(
-                          label: l10n.deliveryLocation,
-                          address: _deliveryAddress,
-                          onTap: _selectDeliveryAddress,
-                          isPickup: false,
-                        ),
-
-                        // Shipping fee estimate
-                        _buildShippingFeeEstimate(),
+                        // ── Route card (pickup + connector + delivery) ────
+                        _buildRouteSection(l10n),
 
                         const SizedBox(height: 24),
                         if (_isShopping) ...[
@@ -1260,4 +1387,76 @@ class _BalanceRow extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _buildPinIcon({
+  required IconData icon,
+  required Color color,
+  required Color bgColor,
+  bool warning = false,
+}) {
+  return Stack(
+    clipBehavior: Clip.none,
+    children: [
+      Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: bgColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: color.withOpacity(0.4)),
+        ),
+        child: Icon(icon, color: color, size: 18),
+      ),
+      if (warning)
+        Positioned(
+          right: -3,
+          top: -3,
+          child: Container(
+            width: 14,
+            height: 14,
+            decoration: BoxDecoration(
+              color: Colors.orange.shade700,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.warning_rounded,
+              size: 9,
+              color: Colors.white,
+            ),
+          ),
+        ),
+    ],
+  );
+}
+
+class _VerticalDashedLinePainter extends CustomPainter {
+  final Color color;
+
+  const _VerticalDashedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    const dashH = 4.0;
+    const gap = 4.0;
+    double y = 0;
+    final x = size.width / 2;
+
+    while (y < size.height) {
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(x, (y + dashH).clamp(0, size.height)),
+        paint,
+      );
+      y += dashH + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_VerticalDashedLinePainter old) => old.color != color;
 }
