@@ -62,6 +62,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   bool _isShopping = true;
   String _paymentMethod = 'CASH'; // 'CASH' or 'WALLET'
   bool _pickupNearMe = false; // when true, pickup == delivery address
+  late double distanceInMeters;
 
   // Coupon state
   CouponValid? _appliedCoupon;
@@ -87,7 +88,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (!mounted) return;
       if (state is AddressesLoaded && state.addresses.isNotEmpty) {
         final defaultAddr = state.addresses.firstWhere(
-              (a) => a.isDefault,
+          (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
         if (_deliveryAddress == null) {
@@ -130,29 +131,61 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   /// Calculates the estimated shipping fee in EGP (already ceiled).
   /// Returns null when pickup or delivery address is not set yet.
   double? _calculateShippingFee() {
+    log('🚚 [Shipping] Starting fee calculation');
+
     // Resolve the effective pickup address
     final effectivePickup = _pickupNearMe ? _deliveryAddress : _pickupAddress;
-    if (effectivePickup == null || _deliveryAddress == null) return null;
+
+    if (effectivePickup == null || _deliveryAddress == null) {
+      log(
+        '❌ [Shipping] Missing addresses -> pickup: $effectivePickup, delivery: $_deliveryAddress',
+      );
+      return null;
+    }
+
+    log(
+      '📍 [Shipping] Pickup: (${effectivePickup.addressLat}, ${effectivePickup.addressLong})',
+    );
+    log(
+      '📍 [Shipping] Delivery: (${_deliveryAddress!.addressLat}, ${_deliveryAddress!.addressLong})',
+    );
 
     final rawFeePerKm =
         double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000;
     final rawMinFee =
         double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000;
 
+    log('💰 [Shipping] Raw feePerKm: $rawFeePerKm');
+    log('💰 [Shipping] Raw minFee: $rawMinFee');
+
     final double feePerKm = rawFeePerKm / 100;
     final double minFee = rawMinFee / 100;
 
-    final distanceInMeters = calculateDistance(
+    log('💰 [Shipping] Parsed feePerKm: $feePerKm');
+    log('💰 [Shipping] Parsed minFee: $minFee');
+
+    distanceInMeters = calculateDistance(
       double.parse(effectivePickup.addressLat),
       double.parse(effectivePickup.addressLong),
       double.parse(_deliveryAddress!.addressLat),
       double.parse(_deliveryAddress!.addressLong),
     );
-    final distanceKm = (distanceInMeters / 1000).round();
-    final calculatedFee = distanceKm * feePerKm;
-    final fee = calculatedFee < minFee ? minFee : calculatedFee;
 
-    return fee.ceilToDouble();
+    log('📏 [Shipping] Distance (meters): $distanceInMeters');
+
+    final distanceKm = (distanceInMeters / 1000).round();
+    log('📏 [Shipping] Distance (km rounded): $distanceKm');
+
+    final calculatedFee = distanceInMeters * feePerKm / 1000;
+    log('🧮 [Shipping] Calculated fee before min check: $calculatedFee');
+
+    final fee = calculatedFee < minFee ? minFee : calculatedFee;
+    log('✅ [Shipping] Final fee after min check: $fee');
+
+    final finalFee = fee.ceilToDouble();
+    log('🎯 [Shipping] Final fee (ceil): $finalFee');
+
+    return finalFee;
   }
 
   /// Returns the total wallet amount required for this order in EGP.
@@ -269,7 +302,16 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             ),
           ),
           Text(
-            '${fee.toInt()} ${AppLocalizations.of(context)!.egp}',
+            distanceInMeters >= 1000
+                ? '${(distanceInMeters / 1000).toStringAsFixed(1)} ${AppLocalizations.of(context)!.km}'
+                : '$distanceInMeters ${AppLocalizations.of(context)!.m}',
+            style: AppTextStyles.bold14.copyWith(
+              fontSize: 15,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            '  -  ${fee.toInt()} ${AppLocalizations.of(context)!.egp}',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
@@ -310,8 +352,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                 child: AnimatedAlign(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOut,
-                  alignment:
-                  isCash ? Alignment.centerLeft : Alignment.centerRight,
+                  alignment: isCash
+                      ? Alignment.centerLeft
+                      : Alignment.centerRight,
                   child: FractionallySizedBox(
                     widthFactor: 0.5,
                     child: Container(
@@ -383,7 +426,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               icon,
               key: ValueKey('$icon-$selected'),
               size: 20,
-              color: selected ? AppColors.kSecondaryColor : Colors.grey.shade400,
+              color: selected
+                  ? AppColors.kSecondaryColor
+                  : Colors.grey.shade400,
             ),
           ),
           const SizedBox(width: 6),
@@ -436,27 +481,29 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_isShopping && _productImage == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.tapToSelectImage)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.tapToSelectImage)));
       return;
     }
 
     // Pickup is only required when "Near Me" is NOT checked
     if (!_pickupNearMe && _pickupAddress == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
     }
 
     if (_deliveryAddress == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
     }
 
     // Resolve the effective pickup address
-    final effectivePickup =
-    _pickupNearMe ? _deliveryAddress! : _pickupAddress!;
+    final effectivePickup = _pickupNearMe ? _deliveryAddress! : _pickupAddress!;
 
     // ── Boundary validation ──────────────────────────────────────────────────
 
@@ -493,7 +540,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       );
 
       if (distance <
-          (double.tryParse(AppSettings.min_delivery_distance ?? '200') ?? 200)) {
+          (double.tryParse(AppSettings.min_delivery_distance ?? '200') ??
+              200)) {
         Fluttertoast.showToast(
           msg: l10n.distanceTooClose,
           toastLength: Toast.LENGTH_SHORT,
@@ -526,8 +574,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         productImageFile: _productImage,
         budget: _isShopping
             ? (double.parse(_budgetController.text.trim()) * 100)
-            .round()
-            .toString()
+                  .round()
+                  .toString()
             : '1',
         pickupAreaId: effectivePickup.areaId,
         pickupAddressDescription: effectivePickup.detailedAddress,
@@ -719,17 +767,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   : Colors.grey.shade700,
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              l10n.nearMe,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade500,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
         ],
       ),
     );
@@ -785,8 +822,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           );
         } else if (state is OrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
@@ -882,8 +918,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               : TextInputAction.done,
                           onFieldSubmitted: (_) {
                             if (_isShopping) {
-                              FocusScope.of(context)
-                                  .requestFocus(_budgetFocus);
+                              FocusScope.of(context).requestFocus(_budgetFocus);
                             } else {
                               FocusScope.of(context).unfocus();
                             }
@@ -987,7 +1022,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     padding: const EdgeInsets.all(16),
                     child: BlocBuilder<OrderCubit, OrderState>(
                       buildWhen: (_, s) =>
-                      s is OrderOperationLoading ||
+                          s is OrderOperationLoading ||
                           s is OrdersLoaded ||
                           s is OrderError ||
                           s is OrderSuccess,
@@ -1185,11 +1220,11 @@ class _BalanceRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: highlight
           ? BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(16),
-        ),
-      )
+              color: Colors.red.shade50,
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(16),
+              ),
+            )
           : null,
       child: Row(
         children: [

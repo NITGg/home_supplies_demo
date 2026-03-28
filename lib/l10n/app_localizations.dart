@@ -2579,6 +2579,12 @@ abstract class AppLocalizations {
   /// **'km'**
   String get km;
 
+  /// No description provided for @m.
+  ///
+  /// In en, this message translates to:
+  /// **'M'**
+  String get m;
+
   /// No description provided for @iAgreeTo.
   ///
   /// In en, this message translates to:

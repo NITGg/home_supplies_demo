@@ -1278,6 +1278,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get km => 'km';
 
   @override
+  String get m => 'M';
+
+  @override
   String get iAgreeTo => 'By signing in or signing up, you agree to';
 
   @override

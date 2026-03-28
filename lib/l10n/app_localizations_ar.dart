@@ -1278,6 +1278,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get km => 'كم';
 
   @override
+  String get m => 'متر';
+
+  @override
   String get iAgreeTo => 'بالتسجيل أو إنشاء حساب أنت توافق على';
 
   @override
