@@ -346,93 +346,92 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   // Pickup row
                   if (!_pickupNearMe)
                     Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _pickupNearMe ? null : _selectPickupAddress,
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        l10n.pickupLocation,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF0F6E56),
-                                        ),
-                                      ),
-                                      if (_pickupNearMe) ...[
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 2,
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _pickupNearMe ? null : _selectPickupAddress,
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          l10n.pickupLocation,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF0F6E56),
                                           ),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFE1F5EE),
-                                            borderRadius: BorderRadius.circular(
-                                              4,
+                                        ),
+                                        if (_pickupNearMe) ...[
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFE1F5EE),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              l10n.nearMe,
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                color: Color(0xFF0F6E56),
+                                                fontWeight: FontWeight.w500,
+                                              ),
                                             ),
                                           ),
-                                          child: Text(
-                                            l10n.nearMe,
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              color: Color(0xFF0F6E56),
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                        ],
+                                        if (pickupOutOfBounds) ...[
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.warning_amber_rounded,
+                                            size: 13,
+                                            color: Colors.orange.shade700,
                                           ),
-                                        ),
+                                        ],
                                       ],
-                                      if (pickupOutOfBounds) ...[
-                                        const SizedBox(width: 4),
-                                        Icon(
-                                          Icons.warning_amber_rounded,
-                                          size: 13,
-                                          color: Colors.orange.shade700,
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    _pickupNearMe
-                                        ? (_deliveryAddress?.displayAddress ??
-                                              l10n.pickupLocation)
-                                        : (effectivePickup?.displayAddress ??
-                                              l10n.pickupLocation),
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: effectivePickup == null
-                                          ? Colors.grey
-                                          : Colors.black87,
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      _pickupNearMe
+                                          ? (_deliveryAddress?.displayAddress ??
+                                                l10n.pickupLocation)
+                                          : (effectivePickup?.displayAddress ??
+                                                l10n.pickupLocation),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: effectivePickup == null
+                                            ? Colors.grey
+                                            : Colors.black87,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            if (!_pickupNearMe)
-                              Icon(
-                                Icons.arrow_forward_ios,
-                                size: 13,
-                                color: Colors.grey.shade400,
-                              ),
-                          ],
+                              if (!_pickupNearMe)
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  size: 13,
+                                  color: Colors.grey.shade400,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
                   // ── Fee badge divider ──
                   Stack(
@@ -461,28 +460,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               Text(
                                 distanceLabel,
                                 style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                ),
-                                child: Container(
-                                  width: 3,
-                                  height: 3,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white54,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                '~${fee!.toInt()} ${l10n.egp}',
-                                style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
@@ -582,11 +560,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.paymentMethod,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
         Container(
           height: 56,
           decoration: BoxDecoration(
@@ -685,11 +658,69 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           Text(
             label,
             style: selected
-                ? AppTextStyles.bold14
-                : AppTextStyles.regular14.copyWith(color: Colors.grey),
+                ? AppTextStyles.bold14.copyWith(fontSize: 10)
+                : AppTextStyles.regular14.copyWith(color: Colors.grey,fontSize: 10),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFeeAndPaymentRow(AppLocalizations l10n) {
+    final fee = _calculateShippingFee();
+    if (fee == null) return const SizedBox.shrink();
+
+    final distanceLabel = distanceInMeters >= 1000
+        ? '${(distanceInMeters / 1000).toStringAsFixed(1)} ${l10n.km}'
+        : '${distanceInMeters.toStringAsFixed(0)} ${l10n.m}';
+
+    final feeChip = Container(
+      height: 56, // matches payment toggle height
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.kSecondaryColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.kSecondaryColor.withOpacity(0.25),
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            l10n.estimatedShippingFee,
+            style: TextStyle(
+              fontSize: 10,
+              color: AppColors.kSecondaryColor.withOpacity(0.8),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            textAlign: TextAlign.center,
+            '${fee.toInt()} ${l10n.egp}',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.kSecondaryColor,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // Shipping mode: fee chip full width, no payment toggle
+    if (!_isShopping) return feeChip;
+
+    // Shopping mode: fee chip + payment toggle side by side
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        feeChip,
+        const SizedBox(width: 10),
+        Expanded(child: _buildPaymentToggle()),
+      ],
     );
   }
 
@@ -1117,12 +1148,17 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                         _buildNearMeCheckbox(l10n),
                         const SizedBox(height: 16),
 
-                        // ── Route card (pickup + connector + delivery) ────
+                        // ── Route card ────
                         _buildRouteSection(l10n),
 
                         const SizedBox(height: 24),
-                        if (_isShopping) ...[
-                          // Payment method
+
+                        // ── Fee + payment row ─────────────────────────────────
+                        if (_calculateShippingFee() != null) ...[
+                          _buildFeeAndPaymentRow(l10n),
+                          const SizedBox(height: 24),
+                        ] else if (_isShopping) ...[
+                          // No fee yet (addresses not set) but still show payment toggle
                           _buildPaymentToggle(),
                           const SizedBox(height: 24),
                         ],
