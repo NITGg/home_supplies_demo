@@ -106,7 +106,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _fetchOnBoardingData() async {
     try {
-      final response = await ApiClient.instance.dio.get('/on-boarding?sort=sort_id&?target_user[in]=["ALL", "CUSTOMER"]');
+      final response = await ApiClient.instance.dio.get('/on-boarding?sort=sort_id&target_user[in]=["ALL", "CUSTOMER"]');
       if (mounted) {
         setState(() {
           final List<dynamic> onBoardingJson = response.data['items'];

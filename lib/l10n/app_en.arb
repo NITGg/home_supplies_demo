@@ -568,7 +568,8 @@
   "walletBalanceHintShopping": "Make sure you have enough wallet balance if you want to use it to pay for your order",
     "cod": "COD",
 
-"ratingExcellent": "Excellent"
+"ratingExcellent": "Excellent",
+"nearMe": "Near Me"
 
 
 }

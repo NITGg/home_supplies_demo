@@ -1336,4 +1336,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ratingExcellent => 'Excellent';
+
+  @override
+  String get nearMe => 'Near Me';
 }

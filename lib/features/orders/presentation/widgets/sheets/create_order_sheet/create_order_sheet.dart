@@ -61,6 +61,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   bool _isShopping = true;
   String _paymentMethod = 'CASH'; // 'CASH' or 'WALLET'
+  bool _pickupNearMe = false; // when true, pickup == delivery address
 
   // Coupon state
   CouponValid? _appliedCoupon;
@@ -129,7 +130,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   /// Calculates the estimated shipping fee in EGP (already ceiled).
   /// Returns null when pickup or delivery address is not set yet.
   double? _calculateShippingFee() {
-    if (_pickupAddress == null || _deliveryAddress == null) return null;
+    // Resolve the effective pickup address
+    final effectivePickup = _pickupNearMe ? _deliveryAddress : _pickupAddress;
+    if (effectivePickup == null || _deliveryAddress == null) return null;
 
     final rawFeePerKm =
         double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000;
@@ -140,8 +143,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final double minFee = rawMinFee / 100;
 
     final distanceInMeters = calculateDistance(
-      double.parse(_pickupAddress!.addressLat),
-      double.parse(_pickupAddress!.addressLong),
+      double.parse(effectivePickup.addressLat),
+      double.parse(effectivePickup.addressLong),
       double.parse(_deliveryAddress!.addressLat),
       double.parse(_deliveryAddress!.addressLong),
     );
@@ -380,8 +383,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               icon,
               key: ValueKey('$icon-$selected'),
               size: 20,
-              color:
-              selected ? AppColors.kSecondaryColor : Colors.grey.shade400,
+              color: selected ? AppColors.kSecondaryColor : Colors.grey.shade400,
             ),
           ),
           const SizedBox(width: 6),
@@ -398,9 +400,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   // ── Insufficient balance dialog ────────────────────────────────────────────
 
-  /// Shows a modal bottom-sheet explaining the balance shortfall and offering
-  /// a direct link to the Top Up screen. The sheet is left open so all form
-  /// data is preserved; balance is refreshed when the user navigates back.
   void _showInsufficientBalanceDialog({
     required double required,
     required double balance,
@@ -421,9 +420,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           l10n: l10n,
           onTopUp: () async {
             Navigator.pop(sheetCtx);
-            // Navigate to top-up; order sheet stays alive underneath.
             await context.push('/wallet/topup');
-            // Back from top-up — refresh balance from cubit if available.
             if (mounted) _tryRefreshWalletBalance();
           },
         );
@@ -444,7 +441,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       return;
     }
 
-    if (_pickupAddress == null) {
+    // Pickup is only required when "Near Me" is NOT checked
+    if (!_pickupNearMe && _pickupAddress == null) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
@@ -456,9 +454,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       return;
     }
 
-    // ── Boundary validation ────────────────────────────────────────────────
+    // Resolve the effective pickup address
+    final effectivePickup =
+    _pickupNearMe ? _deliveryAddress! : _pickupAddress!;
 
-    if (!_isAddressInArea(_pickupAddress!)) {
+    // ── Boundary validation ──────────────────────────────────────────────────
+
+    if (!_isAddressInArea(effectivePickup)) {
       Fluttertoast.showToast(
         msg: l10n.pickupAddressOutOfArea,
         toastLength: Toast.LENGTH_LONG,
@@ -480,30 +482,28 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       return;
     }
 
-    // ── Distance validation ────────────────────────────────────────────────
+    // ── Distance validation (skip when Near Me — distance is 0) ─────────────
 
-    final distance = calculateDistance(
-      double.parse(_pickupAddress!.addressLat),
-      double.parse(_pickupAddress!.addressLong),
-      double.parse(_deliveryAddress!.addressLat),
-      double.parse(_deliveryAddress!.addressLong),
-    );
-
-    if (distance <
-        (double.tryParse(AppSettings.min_delivery_distance ?? '2') ?? 2) *
-            1000) {
-      Fluttertoast.showToast(
-        msg: l10n.distanceTooClose,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
+    if (!_pickupNearMe) {
+      final distance = calculateDistance(
+        double.parse(effectivePickup.addressLat),
+        double.parse(effectivePickup.addressLong),
+        double.parse(_deliveryAddress!.addressLat),
+        double.parse(_deliveryAddress!.addressLong),
       );
-      return;
+
+      if (distance <
+          (double.tryParse(AppSettings.min_delivery_distance ?? '200') ?? 200)) {
+        Fluttertoast.showToast(
+          msg: l10n.distanceTooClose,
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+        );
+        return;
+      }
     }
 
-    // ── Wallet balance validation ──────────────────────────────────────────
-    // Applies when:
-    //   • Shopping and the user chose Wallet as payment method, OR
-    //   • Shipping (always deducted from wallet)
+    // ── Wallet balance validation ────────────────────────────────────────────
 
     final bool usesWallet = _paymentMethod == 'WALLET' || !_isShopping;
 
@@ -518,7 +518,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       }
     }
 
-    // ── Create order ───────────────────────────────────────────────────────
+    // ── Create order ─────────────────────────────────────────────────────────
 
     context.read<OrderCubit>().createOrder(
       Order(
@@ -529,10 +529,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             .round()
             .toString()
             : '1',
-        pickupAreaId: _pickupAddress!.areaId,
-        pickupAddressDescription: _pickupAddress!.detailedAddress,
-        pickupLat: _pickupAddress!.addressLat,
-        pickupLong: _pickupAddress!.addressLong,
+        pickupAreaId: effectivePickup.areaId,
+        pickupAddressDescription: effectivePickup.detailedAddress,
+        pickupLat: effectivePickup.addressLat,
+        pickupLong: effectivePickup.addressLong,
         deliveryAreaId: _deliveryAddress!.areaId,
         deliveryAddressDescription: _deliveryAddress!.detailedAddress,
         deliveryLat: _deliveryAddress!.addressLat,
@@ -646,8 +646,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       Text(
                         address?.displayAddress ?? label,
                         style: TextStyle(
-                          color:
-                          address == null ? Colors.grey : Colors.black87,
+                          color: address == null ? Colors.grey : Colors.black87,
                         ),
                       ),
                       if (outOfBounds) ...[
@@ -673,6 +672,66 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           ),
         ),
       ],
+    );
+  }
+
+  // ── Near Me checkbox ───────────────────────────────────────────────────────
+
+  Widget _buildNearMeCheckbox(AppLocalizations l10n) {
+    return GestureDetector(
+      onTap: () => setState(() {
+        _pickupNearMe = !_pickupNearMe;
+        if (_pickupNearMe) _pickupAddress = null;
+      }),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: Checkbox(
+              value: _pickupNearMe,
+              activeColor: AppColors.kSecondaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              onChanged: (val) => setState(() {
+                _pickupNearMe = val ?? false;
+                if (_pickupNearMe) _pickupAddress = null;
+              }),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Icon(
+            Icons.my_location_rounded,
+            size: 18,
+            color: _pickupNearMe
+                ? AppColors.kSecondaryColor
+                : Colors.grey.shade500,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            l10n.nearMe,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: _pickupNearMe
+                  ? AppColors.kSecondaryColor
+                  : Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              l10n.nearMe,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade500,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -830,7 +889,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                             }
                           },
                           controller: _productDescriptionController,
-                          label: _isShopping ? l10n.productDetails: l10n.packageDetails,
+                          label: _isShopping
+                              ? l10n.productDetails
+                              : l10n.packageDetails,
                           validator: (v) => (v == null || v.trim().isEmpty)
                               ? l10n.pleaseEnterProductDescription
                               : null,
@@ -870,13 +931,19 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
                         const SizedBox(height: 24),
 
-                        // Pickup address
-                        _buildAddressTile(
-                          label: l10n.pickupLocation,
-                          address: _pickupAddress,
-                          onTap: _selectPickupAddress,
-                          isPickup: true,
-                        ),
+                        // ── Near Me checkbox ──────────────────────────────
+                        _buildNearMeCheckbox(l10n),
+
+                        // ── Pickup address (hidden when Near Me) ──────────
+                        if (!_pickupNearMe) ...[
+                          const SizedBox(height: 16),
+                          _buildAddressTile(
+                            label: l10n.pickupLocation,
+                            address: _pickupAddress,
+                            onTap: _selectPickupAddress,
+                            isPickup: true,
+                          ),
+                        ],
 
                         const SizedBox(height: 24),
 
@@ -1007,7 +1074,7 @@ class _InsufficientBalanceSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // Subtitle — context-aware (shopping vs shipping)
+          // Subtitle
           Text(
             isShopping
                 ? l10n.insufficientBalanceShoppingDesc

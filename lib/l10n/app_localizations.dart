@@ -2698,6 +2698,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Excellent'**
   String get ratingExcellent;
+
+  /// No description provided for @nearMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Near Me'**
+  String get nearMe;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
