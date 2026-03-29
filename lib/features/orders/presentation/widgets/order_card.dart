@@ -158,7 +158,7 @@ class OrderCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(order.orderNumber ?? 'N/A', style: AppTextStyles.bold16),
+                Text(order.orderNumber ?? 'N/A', style: AppTextStyles.bold14.copyWith(fontSize: 12)),
                 Text(
                   _formatDate(context, order.createdAt ?? DateTime.now()),
                   style: AppTextStyles.regular14.copyWith(
