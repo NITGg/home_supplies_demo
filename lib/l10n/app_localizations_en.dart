@@ -1338,6 +1338,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cod => 'COD';
 
   @override
+  String get far => 'Far';
+
+  @override
   String get ratingExcellent => 'Excellent';
 
   @override

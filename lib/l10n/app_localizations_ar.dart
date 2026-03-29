@@ -1338,6 +1338,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cod => 'الدفع عند الاستلام';
 
   @override
+  String get far => 'يبعد';
+
+  @override
   String get ratingExcellent => 'ممتاز';
 
   @override

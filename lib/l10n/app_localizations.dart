@@ -2699,6 +2699,12 @@ abstract class AppLocalizations {
   /// **'COD'**
   String get cod;
 
+  /// No description provided for @far.
+  ///
+  /// In en, this message translates to:
+  /// **'Far'**
+  String get far;
+
   /// No description provided for @ratingExcellent.
   ///
   /// In en, this message translates to:

@@ -608,10 +608,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 
   Widget _buildFeeAndPaymentRow(AppLocalizations l10n, double fee) {
-    final distanceLabel = distanceInMeters >= 1000
-        ? '${(distanceInMeters / 1000).toStringAsFixed(1)} ${l10n.km}'
-        : '${distanceInMeters.toStringAsFixed(0)} ${l10n.m}';
-
     final feeChip = Container(
       height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 12),

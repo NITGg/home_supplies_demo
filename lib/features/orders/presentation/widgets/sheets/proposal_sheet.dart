@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/core/widgets/image_with_fallback.dart';
 
 import '../../../../../core/style/app_colors.dart';
 import '../../../../../core/style/text_styles.dart';
+import '../../../../../core/utils/phone_dialer.dart';
 import '../../../../../core/utils/socket_service.dart';
 import '../../../../../core/widgets/loading_screen.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -578,134 +580,209 @@ class _ProposalCard extends StatelessWidget {
     AppLocalizations l10n,
     Color statusColor,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.07),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.kPrimaryColor.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.kPrimaryColor.withOpacity(0.3),
-                width: 1.5,
+    return GestureDetector(
+      onTap: () => openPhoneApp(proposal.courier.user.phone),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: statusColor.withOpacity(0.07),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.kPrimaryColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.kPrimaryColor.withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Icon(Icons.person, color: AppColors.kPrimaryColor, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    proposal.courier.user.fullName,
+                    style: AppTextStyles.bold16.copyWith(fontSize: 15),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(Icons.phone, size: 14, color: Colors.grey.shade600),
+                      const SizedBox(width: 4),
+                      Text(
+                        textDirection: TextDirection.ltr,
+                        proposal.courier.user.phone,
+                        style: AppTextStyles.regular14.copyWith(
+                          fontSize: 13,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            child: Icon(Icons.person, color: AppColors.kPrimaryColor, size: 24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: statusColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(_getStatusIcon(), size: 12, color: Colors.white),
+                  const SizedBox(width: 4),
+                  Text(
+                    _getStatusText(context),
+                    style: AppTextStyles.bold14.copyWith(
+                      fontSize: 11,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _distanceLabel(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    if (proposal.distanceToPickupM >= 1000) {
+      return '${(proposal.distanceToPickupM / 1000).toStringAsFixed(1)} ${l10n.km}';
+    }
+    return '${proposal.distanceToPickupM.toStringAsFixed(0)} ${l10n.m}';
+  }
+
+  Widget _buildFeeSection(BuildContext context, AppLocalizations l10n) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final vehicleName = isArabic
+        ? proposal.vehicle.nameAr
+        : proposal.vehicle.name;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        children: [
+          // ── Vehicle + distance row ──────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
               children: [
-                Text(
-                  proposal.courier.user.fullName,
-                  style: AppTextStyles.bold16.copyWith(fontSize: 15),
+                // Vehicle icon
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: ImageWithIconFallback(imageUrl: proposal.vehicle.icon,height: 32,                    fit: BoxFit.contain,
+                  )
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(width: 10),
+                // Vehicle name
+                Expanded(
+                  child: Text(
+                    vehicleName,
+                    style: AppTextStyles.bold14.copyWith(
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                ),
+                // Distance to pickup badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.kPrimaryColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.kPrimaryColor.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.far,
+                        style: AppTextStyles.bold14.copyWith(
+                          fontSize: 12,
+                          color: AppColors.kPrimaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _distanceLabel(context),
+                        style: AppTextStyles.bold14.copyWith(
+                          fontSize: 12,
+                          color: AppColors.kPrimaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // ── Fee row ─────────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.kPrimaryColor.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 Row(
                   children: [
-                    Icon(Icons.phone, size: 14, color: Colors.grey.shade600),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 8),
                     Text(
-                      textDirection: TextDirection.ltr,
-                      proposal.courier.user.phone,
-                      style: AppTextStyles.regular14.copyWith(
-                        fontSize: 13,
-                        color: Colors.grey.shade600,
+                      l10n.deliveryFee,
+                      style: AppTextStyles.bold14.copyWith(
+                        color: Colors.grey.shade700,
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: statusColor,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: statusColor.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(_getStatusIcon(), size: 12, color: Colors.white),
-                const SizedBox(width: 4),
                 Text(
-                  _getStatusText(context),
-                  style: AppTextStyles.bold14.copyWith(
-                    fontSize: 11,
-                    color: Colors.white,
+                  '${proposal.totalFee} ${l10n.egp}',
+                  style: AppTextStyles.bold18.copyWith(
+                    color: AppColors.kPrimaryColor,
+                    fontSize: 20,
                   ),
                 ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFeeSection(BuildContext context, AppLocalizations l10n) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.kPrimaryColor.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.kPrimaryColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.local_shipping,
-                    size: 18,
-                    color: AppColors.kPrimaryColor,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.deliveryFee,
-                  style: AppTextStyles.bold14.copyWith(
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              '${proposal.totalFee} ${l10n.egp}',
-              style: AppTextStyles.bold18.copyWith(
-                color: AppColors.kPrimaryColor,
-                fontSize: 20,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

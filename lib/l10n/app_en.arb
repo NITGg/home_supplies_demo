@@ -568,6 +568,7 @@
   "walletBalanceHintShipping": "Make sure you have enough wallet balance to cover the shipping fee",
   "walletBalanceHintShopping": "Make sure you have enough wallet balance if you want to use it to pay for your order",
     "cod": "COD",
+    "far": "Away",
 
 "ratingExcellent": "Excellent",
 "nearMe": "Near Me"

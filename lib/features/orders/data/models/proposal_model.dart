@@ -35,15 +35,40 @@ class CourierInfo {
   }
 }
 
+class VehicleInfo {
+  final int id;
+  final String name;
+  final String nameAr;
+  final String icon;
+
+  VehicleInfo({
+    required this.id,
+    required this.name,
+    required this.nameAr,
+    required this.icon,
+  });
+
+  factory VehicleInfo.fromJson(Map<String, dynamic> json) {
+    return VehicleInfo(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      nameAr: json['name_ar'] as String,
+      icon: json['icon'] as String,
+    );
+  }
+}
+
 class Proposal {
   final int id;
   final int orderId;
   final int courierId;
   final String totalFee;
-  final String status; // PENDING, ACCEPTED, REJECTED
+  final String status;
+  final double distanceToPickupM; // always in meters
   final DateTime createdAt;
   final DateTime? confirmedAt;
   final CourierInfo courier;
+  final VehicleInfo vehicle;
 
   Proposal({
     required this.id,
@@ -51,9 +76,11 @@ class Proposal {
     required this.courierId,
     required this.totalFee,
     required this.status,
+    required this.distanceToPickupM,
     required this.createdAt,
     this.confirmedAt,
     required this.courier,
+    required this.vehicle,
   });
 
   factory Proposal.fromJson(Map<String, dynamic> json) {
@@ -64,11 +91,14 @@ class Proposal {
       totalFee: ((num.tryParse(json['total_fee']?.toString() ?? '0') ?? 0) / 100)
           .toStringAsFixed(0),
       status: json['status'] as String,
+      distanceToPickupM:
+      double.tryParse(json['distance_to_pickup']?.toString() ?? '0') ?? 0,
       createdAt: DateTime.parse(json['created_at']),
       confirmedAt: json['confirmed_at'] != null
           ? DateTime.parse(json['confirmed_at'])
           : null,
       courier: CourierInfo.fromJson(json['courier'] as Map<String, dynamic>),
+      vehicle: VehicleInfo.fromJson(json['vehicle'] as Map<String, dynamic>),
     );
   }
 
