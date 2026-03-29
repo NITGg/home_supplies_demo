@@ -600,7 +600,7 @@ class _ProposalCard extends StatelessWidget {
                   width: 1.5,
                 ),
               ),
-              child: Icon(Icons.person, color: AppColors.kPrimaryColor, size: 24),
+              child: Icon(Icons.phone, color: AppColors.kPrimaryColor, size: 24),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -614,8 +614,6 @@ class _ProposalCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      Icon(Icons.phone, size: 14, color: Colors.grey.shade600),
-                      const SizedBox(width: 4),
                       Text(
                         textDirection: TextDirection.ltr,
                         proposal.courier.user.phone,
