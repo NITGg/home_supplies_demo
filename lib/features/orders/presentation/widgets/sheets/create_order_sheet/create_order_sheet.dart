@@ -746,7 +746,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       );
 
       if (distance <
-          (double.tryParse(AppSettings.min_delivery_distance ?? '200') ?? 200)) {
+          (double.tryParse(AppSettings.min_delivery_distance ?? '0') ?? 0)) {
         Fluttertoast.showToast(
           msg: l10n.distanceTooClose,
           toastLength: Toast.LENGTH_SHORT,
