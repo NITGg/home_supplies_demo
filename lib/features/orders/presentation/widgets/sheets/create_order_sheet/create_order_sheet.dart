@@ -28,11 +28,7 @@ import 'product_image_picker.dart';
 import 'toggle_tab.dart';
 
 class CreateOrderBottomSheet extends StatefulWidget {
-  /// Pass the already-loaded governorates response so we can look up area
-  /// boundaries without an extra network call.
   final GovernoratesResponse governorates;
-
-  /// Current wallet balance in EGP. Pass null to skip balance checks.
   final double? walletBalance;
 
   const CreateOrderBottomSheet({
@@ -60,17 +56,14 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   File? _productImage;
 
   bool _isShopping = true;
-  String _paymentMethod = 'CASH'; // 'CASH' or 'WALLET'
-  bool _pickupNearMe = false; // when true, pickup == delivery address
+  String _paymentMethod = 'CASH';
+  bool _pickupNearMe = false;
   late double distanceInMeters;
 
-  // Coupon state
   CouponValid? _appliedCoupon;
   bool _couponValidating = false;
 
-  // Wallet balance — mutable so we can refresh after returning from TopUp
   late double _walletBalance;
-
   late final AddressCubit _initCubit;
 
   // ── Life-cycle ─────────────────────────────────────────────────────────────
@@ -88,7 +81,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (!mounted) return;
       if (state is AddressesLoaded && state.addresses.isNotEmpty) {
         final defaultAddr = state.addresses.firstWhere(
-          (a) => a.isDefault,
+              (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
         if (_deliveryAddress == null) {
@@ -111,7 +104,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     super.dispose();
   }
 
-  // ── Boundary validation ────────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Address get _effectivePickup =>
+      _pickupNearMe ? _deliveryAddress! : _pickupAddress!;
 
   Area? _areaFor(Address address) =>
       widget.governorates.findAreaById(address.areaId);
@@ -128,41 +124,28 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   // ── Fee calculation ────────────────────────────────────────────────────────
 
-  /// Calculates the estimated shipping fee in EGP (already ceiled).
-  /// Returns null when pickup or delivery address is not set yet.
   double? _calculateShippingFee() {
     log('🚚 [Shipping] Starting fee calculation');
 
-    // Resolve the effective pickup address
     final effectivePickup = _pickupNearMe ? _deliveryAddress : _pickupAddress;
 
     if (effectivePickup == null || _deliveryAddress == null) {
-      log(
-        '❌ [Shipping] Missing addresses -> pickup: $effectivePickup, delivery: $_deliveryAddress',
-      );
+      log('❌ [Shipping] Missing addresses -> pickup: $effectivePickup, delivery: $_deliveryAddress');
       return null;
     }
 
-    log(
-      '📍 [Shipping] Pickup: (${effectivePickup.addressLat}, ${effectivePickup.addressLong})',
-    );
-    log(
-      '📍 [Shipping] Delivery: (${_deliveryAddress!.addressLat}, ${_deliveryAddress!.addressLong})',
-    );
+    log('📍 [Shipping] Pickup: (${effectivePickup.addressLat}, ${effectivePickup.addressLong})');
+    log('📍 [Shipping] Delivery: (${_deliveryAddress!.addressLat}, ${_deliveryAddress!.addressLong})');
 
     final rawFeePerKm =
         double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000;
     final rawMinFee =
         double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000;
 
-    log('💰 [Shipping] Raw feePerKm: $rawFeePerKm');
-    log('💰 [Shipping] Raw minFee: $rawMinFee');
-
     final double feePerKm = rawFeePerKm / 100;
     final double minFee = rawMinFee / 100;
 
-    log('💰 [Shipping] Parsed feePerKm: $feePerKm');
-    log('💰 [Shipping] Parsed minFee: $minFee');
+    log('💰 [Shipping] feePerKm: $feePerKm, minFee: $minFee');
 
     distanceInMeters = calculateDistance(
       double.parse(effectivePickup.addressLat),
@@ -173,25 +156,14 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
     log('📏 [Shipping] Distance (meters): $distanceInMeters');
 
-    final distanceKm = (distanceInMeters / 1000).round();
-    log('📏 [Shipping] Distance (km rounded): $distanceKm');
-
     final calculatedFee = distanceInMeters * feePerKm / 1000;
-    log('🧮 [Shipping] Calculated fee before min check: $calculatedFee');
-
     final fee = calculatedFee < minFee ? minFee : calculatedFee;
-    log('✅ [Shipping] Final fee after min check: $fee');
-
     final finalFee = fee.ceilToDouble();
-    log('🎯 [Shipping] Final fee (ceil): $finalFee');
 
+    log('🎯 [Shipping] Final fee (ceil): $finalFee');
     return finalFee;
   }
 
-  /// Returns the total wallet amount required for this order in EGP.
-  ///
-  /// Shopping + wallet → fee + budget
-  /// Shipping          → fee only (budget is irrelevant / set to 1 cent)
   double _requiredWalletAmount() {
     final fee = _calculateShippingFee() ?? 0.0;
     if (_isShopping) {
@@ -203,8 +175,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   // ── Wallet balance helpers ─────────────────────────────────────────────────
 
-  /// Tries to read the latest balance from WalletCubit (if it is in the tree
-  /// above this sheet) and updates [_walletBalance] accordingly.
   void _tryRefreshWalletBalance() {
     try {
       final cubit = context.read<WalletCubit>();
@@ -212,9 +182,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (s is WalletLoaded) {
         setState(() => _walletBalance = s.walletData.wallet.balance);
       }
-    } catch (_) {
-      // WalletCubit not in tree — silently ignore.
-    }
+    } catch (_) {}
   }
 
   // ── Coupon ─────────────────────────────────────────────────────────────────
@@ -271,6 +239,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
   }
 
+  // ── Route section ──────────────────────────────────────────────────────────
+
   Widget _buildRouteSection(AppLocalizations l10n) {
     final fee = _calculateShippingFee();
     final effectivePickup = _pickupNearMe ? _deliveryAddress : _pickupAddress;
@@ -282,8 +252,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
     final distanceLabel = fee != null
         ? (distanceInMeters >= 1000
-              ? '${(distanceInMeters / 1000).toStringAsFixed(1)} ${l10n.km}'
-              : '${distanceInMeters.toStringAsFixed(0)} ${l10n.m}')
+        ? '${(distanceInMeters / 1000).toStringAsFixed(1)} ${l10n.km}'
+        : '${distanceInMeters.toStringAsFixed(0)} ${l10n.m}')
         : null;
 
     return Container(
@@ -304,14 +274,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    _buildPinIcon(
-                      icon: _pickupNearMe
-                          ? Icons.my_location_rounded
-                          : Icons.store_outlined,
-                      color: const Color(0xFF0F6E56),
-                      bgColor: const Color(0xFFE1F5EE),
-                      warning: pickupOutOfBounds,
-                    ),
+                    if (!_pickupNearMe)
+                      _buildPinIcon(
+                        icon: Icons.store_outlined,
+                        color: const Color(0xFF0F6E56),
+                        bgColor: const Color(0xFFE1F5EE),
+                        warning: pickupOutOfBounds,
+                      ),
                     Expanded(
                       child: Center(
                         child: SizedBox(
@@ -343,12 +312,12 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Pickup row
+                  // Pickup row — hidden when Near Me is active
                   if (!_pickupNearMe)
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: _pickupNearMe ? null : _selectPickupAddress,
+                        onTap: _selectPickupAddress,
                         borderRadius: const BorderRadius.only(
                           topRight: Radius.circular(12),
                         ),
@@ -370,28 +339,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                                             color: Color(0xFF0F6E56),
                                           ),
                                         ),
-                                        if (_pickupNearMe) ...[
-                                          const SizedBox(width: 6),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFE1F5EE),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                            child: Text(
-                                              l10n.nearMe,
-                                              style: const TextStyle(
-                                                fontSize: 10,
-                                                color: Color(0xFF0F6E56),
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
                                         if (pickupOutOfBounds) ...[
                                           const SizedBox(width: 4),
                                           Icon(
@@ -404,29 +351,25 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                                     ),
                                     const SizedBox(height: 3),
                                     Text(
-                                      _pickupNearMe
-                                          ? (_deliveryAddress?.displayAddress ??
-                                                l10n.pickupLocation)
-                                          : (effectivePickup?.displayAddress ??
-                                                l10n.pickupLocation),
+                                      effectivePickup?.displayAddress ??
+                                          l10n.pickupLocation,
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: effectivePickup == null
                                             ? Colors.grey
                                             : Colors.black87,
                                       ),
-                                      maxLines: 2,
+                                      maxLines: 3,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
                               ),
-                              if (!_pickupNearMe)
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 13,
-                                  color: Colors.grey.shade400,
-                                ),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: 13,
+                                color: Colors.grey.shade400,
+                              ),
                             ],
                           ),
                         ),
@@ -434,42 +377,44 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     ),
 
                   // ── Fee badge divider ──
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Divider(height: 1, color: Colors.grey.shade200),
-                      if (distanceLabel != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.kSecondaryColor,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.route_rounded,
-                                size: 12,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                distanceLabel,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
+                  if (!_pickupNearMe)
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Divider(height: 1, color: Colors.grey.shade200),
+                        if (distanceLabel != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.kSecondaryColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.route_rounded,
+                                  size: 12,
                                   color: Colors.white,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 5),
+                                Text(
+                                  distanceLabel,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                    ],
-                  ),
+                      ],
+                    ),
+
                   // Delivery row
                   Material(
                     color: Colors.transparent,
@@ -516,7 +461,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                                           ? Colors.grey
                                           : Colors.black87,
                                     ),
-                                    maxLines: 2,
+                                    maxLines: 3,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   if (deliveryOutOfBounds) ...[
@@ -569,15 +514,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           ),
           child: Stack(
             children: [
-              // Animated sliding pill
               Directionality(
                 textDirection: TextDirection.ltr,
                 child: AnimatedAlign(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOut,
-                  alignment: isCash
-                      ? Alignment.centerLeft
-                      : Alignment.centerRight,
+                  alignment:
+                  isCash ? Alignment.centerLeft : Alignment.centerRight,
                   child: FractionallySizedBox(
                     widthFactor: 0.5,
                     child: Container(
@@ -597,7 +540,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   ),
                 ),
               ),
-              // Tap targets
               Directionality(
                 textDirection: TextDirection.ltr,
                 child: Row(
@@ -649,9 +591,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               icon,
               key: ValueKey('$icon-$selected'),
               size: 20,
-              color: selected
-                  ? AppColors.kSecondaryColor
-                  : Colors.grey.shade400,
+              color: selected ? AppColors.kSecondaryColor : Colors.grey.shade400,
             ),
           ),
           const SizedBox(width: 6),
@@ -659,30 +599,26 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             label,
             style: selected
                 ? AppTextStyles.bold14.copyWith(fontSize: 10)
-                : AppTextStyles.regular14.copyWith(color: Colors.grey,fontSize: 10),
+                : AppTextStyles.regular14
+                .copyWith(color: Colors.grey, fontSize: 10),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFeeAndPaymentRow(AppLocalizations l10n) {
-    final fee = _calculateShippingFee();
-    if (fee == null) return const SizedBox.shrink();
-
+  Widget _buildFeeAndPaymentRow(AppLocalizations l10n, double fee) {
     final distanceLabel = distanceInMeters >= 1000
         ? '${(distanceInMeters / 1000).toStringAsFixed(1)} ${l10n.km}'
         : '${distanceInMeters.toStringAsFixed(0)} ${l10n.m}';
 
     final feeChip = Container(
-      height: 56, // matches payment toggle height
+      height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: AppColors.kSecondaryColor.withOpacity(0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.kSecondaryColor.withOpacity(0.25),
-        ),
+        border: Border.all(color: AppColors.kSecondaryColor.withOpacity(0.25)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -710,10 +646,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       ),
     );
 
-    // Shipping mode: fee chip full width, no payment toggle
     if (!_isShopping) return feeChip;
 
-    // Shopping mode: fee chip + payment toggle side by side
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -762,31 +696,24 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_isShopping && _productImage == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.tapToSelectImage)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.tapToSelectImage)));
       return;
     }
 
-    // Pickup is only required when "Near Me" is NOT checked
     if (!_pickupNearMe && _pickupAddress == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
     }
 
     if (_deliveryAddress == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
     }
 
-    // Resolve the effective pickup address
-    final effectivePickup = _pickupNearMe ? _deliveryAddress! : _pickupAddress!;
-
-    // ── Boundary validation ──────────────────────────────────────────────────
+    final effectivePickup = _effectivePickup;
 
     if (!_isAddressInArea(effectivePickup)) {
       Fluttertoast.showToast(
@@ -810,8 +737,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       return;
     }
 
-    // ── Distance validation (skip when Near Me — distance is 0) ─────────────
-
     if (!_pickupNearMe) {
       final distance = calculateDistance(
         double.parse(effectivePickup.addressLat),
@@ -821,8 +746,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       );
 
       if (distance <
-          (double.tryParse(AppSettings.min_delivery_distance ?? '200') ??
-              200)) {
+          (double.tryParse(AppSettings.min_delivery_distance ?? '200') ?? 200)) {
         Fluttertoast.showToast(
           msg: l10n.distanceTooClose,
           toastLength: Toast.LENGTH_SHORT,
@@ -832,10 +756,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       }
     }
 
-    // ── Wallet balance validation ────────────────────────────────────────────
-
     final bool usesWallet = _paymentMethod == 'WALLET' || !_isShopping;
-
     if (usesWallet) {
       final required = _requiredWalletAmount();
       if (_walletBalance < required) {
@@ -847,16 +768,14 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       }
     }
 
-    // ── Create order ─────────────────────────────────────────────────────────
-
     context.read<OrderCubit>().createOrder(
       Order(
         productDescription: _productDescriptionController.text.trim(),
         productImageFile: _productImage,
         budget: _isShopping
             ? (double.parse(_budgetController.text.trim()) * 100)
-                  .round()
-                  .toString()
+            .round()
+            .toString()
             : '1',
         pickupAreaId: effectivePickup.areaId,
         pickupAddressDescription: effectivePickup.detailedAddress,
@@ -900,8 +819,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       ),
     );
   }
-
-  // ── Near Me checkbox ───────────────────────────────────────────────────────
 
   Widget _buildNearMeCheckbox(AppLocalizations l10n) {
     return GestureDetector(
@@ -1000,7 +917,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           );
         } else if (state is OrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(
+                content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
@@ -1010,6 +928,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) {
+          // Compute fee once per build to avoid repeated calls in children
+          final shippingFee = _calculateShippingFee();
+
           return Container(
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -1017,7 +938,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             ),
             child: Column(
               children: [
-                // Drag handle
                 Container(
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   width: 40,
@@ -1027,8 +947,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-
-                // Header
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
@@ -1051,19 +969,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     ],
                   ),
                 ),
-
                 const Divider(height: 1),
-
-                // Wallet balance hint
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.info_outline_rounded,
-                        size: 14,
-                        color: Colors.grey.shade500,
-                      ),
+                      Icon(Icons.info_outline_rounded,
+                          size: 14, color: Colors.grey.shade500),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -1071,16 +983,12 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               ? l10n.walletBalanceHintShopping
                               : l10n.walletBalanceHintShipping,
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                          ),
+                              fontSize: 12, color: Colors.grey.shade500),
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                // Scrollable body
                 Expanded(
                   child: Form(
                     key: _formKey,
@@ -1088,7 +996,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       controller: scrollController,
                       padding: const EdgeInsets.all(16),
                       children: [
-                        // Product description
                         AppTextFormField(
                           focusNode: _productDescriptionFocus,
                           textInputAction: _isShopping
@@ -1105,12 +1012,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           label: _isShopping
                               ? l10n.productDetails
                               : l10n.packageDetails,
-                          validator: (v) => (v == null || v.trim().isEmpty)
+                          validator: (v) =>
+                          (v == null || v.trim().isEmpty)
                               ? l10n.pleaseEnterProductDescription
                               : null,
                         ),
-
-                        // Budget (shopping only)
                         if (_isShopping) ...[
                           const SizedBox(height: 16),
                           AppTextFormField(
@@ -1131,39 +1037,25 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                             },
                           ),
                         ],
-
                         const SizedBox(height: 16),
-
-                        // Image picker
                         ProductImagePicker(
                           isRequired: !_isShopping,
                           productImage: _productImage,
                           onImagePicked: (file) =>
                               setState(() => _productImage = file),
                         ),
-
                         const SizedBox(height: 24),
-
-                        // ── Near Me checkbox ──────────────────────────────
                         _buildNearMeCheckbox(l10n),
                         const SizedBox(height: 16),
-
-                        // ── Route card ────
                         _buildRouteSection(l10n),
-
                         const SizedBox(height: 24),
-
-                        // ── Fee + payment row ─────────────────────────────────
-                        if (_calculateShippingFee() != null) ...[
-                          _buildFeeAndPaymentRow(l10n),
+                        if (shippingFee != null) ...[
+                          _buildFeeAndPaymentRow(l10n, shippingFee),
                           const SizedBox(height: 24),
                         ] else if (_isShopping) ...[
-                          // No fee yet (addresses not set) but still show payment toggle
                           _buildPaymentToggle(),
                           const SizedBox(height: 24),
                         ],
-
-                        // Coupon
                         CouponSection(
                           couponController: _couponController,
                           couponFocus: _couponFocus,
@@ -1172,20 +1064,17 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           onValidate: _validateCoupon,
                           onRemove: _removeCoupon,
                         ),
-
                         const SizedBox(height: 16),
                       ],
                     ),
                   ),
                 ),
-
-                // Confirm button
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: BlocBuilder<OrderCubit, OrderState>(
                       buildWhen: (_, s) =>
-                          s is OrderOperationLoading ||
+                      s is OrderOperationLoading ||
                           s is OrdersLoaded ||
                           s is OrderError ||
                           s is OrderSuccess,
@@ -1238,7 +1127,6 @@ class _InsufficientBalanceSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
           Container(
             width: 40,
             height: 4,
@@ -1248,8 +1136,6 @@ class _InsufficientBalanceSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-
-          // Icon
           Container(
             width: 64,
             height: 64,
@@ -1264,15 +1150,11 @@ class _InsufficientBalanceSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Title
           Text(
             l10n.insufficientBalance,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-
-          // Subtitle
           Text(
             isShopping
                 ? l10n.insufficientBalanceShoppingDesc
@@ -1281,8 +1163,6 @@ class _InsufficientBalanceSheet extends StatelessWidget {
             style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 24),
-
-          // Balance breakdown card
           Container(
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
@@ -1319,8 +1199,6 @@ class _InsufficientBalanceSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-
-          // Top Up button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -1345,8 +1223,6 @@ class _InsufficientBalanceSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-
-          // Dismiss
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
@@ -1383,11 +1259,11 @@ class _BalanceRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: highlight
           ? BoxDecoration(
-              color: Colors.red.shade50,
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(16),
-              ),
-            )
+        color: Colors.red.shade50,
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(16),
+        ),
+      )
           : null,
       child: Row(
         children: [
@@ -1407,7 +1283,8 @@ class _BalanceRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade700,
-                fontWeight: highlight ? FontWeight.w600 : FontWeight.normal,
+                fontWeight:
+                highlight ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ),
@@ -1455,11 +1332,7 @@ Widget _buildPinIcon({
               color: Colors.orange.shade700,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.warning_rounded,
-              size: 9,
-              color: Colors.white,
-            ),
+            child: const Icon(Icons.warning_rounded, size: 9, color: Colors.white),
           ),
         ),
     ],
