@@ -38,10 +38,15 @@ class _AddressSelectionSheetState extends State<AddressSelectionSheet> {
       backgroundColor: Colors.transparent,
       builder: (_) => MultiBlocProvider(
         providers: [BlocProvider.value(value: addressCubit)],
-        child: AddressFormBottomSheet(saveAddress: saveAddress),
+        child: AddressFormBottomSheet(
+          saveAddress: saveAddress,
+          isPickup: widget.isPickup,
+        ),
       ),
     );
-    if (result != null && mounted) Navigator.pop(context, result);
+    if (result != null && mounted) {
+      Navigator.pop(context, result);
+    }
   }
 
   @override

@@ -142,20 +142,24 @@ class _MapLocationPickerScreenState extends State<MapLocationPickerScreen> {
           onNext: (GeocodingResult? result) {
             if (result != null) {
               String? administrativeArea;
+              String? governorate;
 
               for (final component in result.addressComponents ?? []) {
-                if (component.types.contains('administrative_area_level_1') ||
-                    component.types.contains('administrative_area_level_2')) {
-                  administrativeArea = component.longName;
-                  break;
+                if (component.types.contains('administrative_area_level_2')) {
+                  administrativeArea ??= component.longName; // district/area
+                }
+                if (component.types.contains('administrative_area_level_1')) {
+                  governorate ??= component.longName; // e.g. "القاهرة"
                 }
               }
+
               showFloatingButton.value = true;
               Navigator.pop(context, {
                 'latitude': result.geometry?.location.lat.toString() ?? '',
                 'longitude': result.geometry?.location.lng.toString() ?? '',
                 'address': result.formattedAddress ?? '',
                 'administrativeArea': administrativeArea ?? '',
+                'governorate': governorate ?? '',
               });
             }
           },

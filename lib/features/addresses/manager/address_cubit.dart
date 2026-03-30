@@ -102,4 +102,28 @@ class AddressCubit extends Cubit<AddressState> {
       }
     }
   }
+
+  Future<void> createAddressUnAvailableRequest(
+    bool isPickup,
+    String long,
+    String lat,
+    String address,
+    String area,
+    String governorate,
+  ) async {
+    try {
+      log('AddressCubit: Creating address unavailable request');
+      await _repository.createAddressUnAvailableRequest(
+        isPickup,
+        long,
+        lat,
+        address,
+        area,
+        governorate,
+      );
+      log('AddressCubit: Address unavailable request created successfully');
+    } catch (e) {
+      log('AddressCubit: Error creating address unavailable request: $e');
+    }
+  }
 }

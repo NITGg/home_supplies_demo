@@ -12,7 +12,7 @@ import 'address_form_sheet.dart';
 
 class AddressSelectionBottomSheet extends StatefulWidget {
   final Address? selectedAddress;
-
+  final bool isPickup;
   /// When true: sheet is purely for management (no selection / continue button).
   /// When false (default): sheet is for picking an address and returning it.
   final bool managementMode;
@@ -21,6 +21,7 @@ class AddressSelectionBottomSheet extends StatefulWidget {
     super.key,
     this.selectedAddress,
     this.managementMode = false,
+    this.isPickup = false,
   });
 
   @override
@@ -50,7 +51,7 @@ class _AddressSelectionBottomSheetState
         providers: [
           BlocProvider.value(value: addressCubit),
         ],
-        child: const AddressFormBottomSheet(),
+        child: AddressFormBottomSheet(isPickup: widget.isPickup),
       ),
     );
 
@@ -70,7 +71,7 @@ class _AddressSelectionBottomSheetState
         providers: [
           BlocProvider.value(value: addressCubit),
         ],
-        child: AddressFormBottomSheet(address: address),
+        child: AddressFormBottomSheet(address: address, isPickup: widget.isPickup),
       ),
     );
 
