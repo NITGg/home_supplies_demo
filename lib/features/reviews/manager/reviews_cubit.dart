@@ -30,7 +30,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
         reviews: List.unmodifiable(_reviews),
         totalReviews: response.totalReviews,
         totalPages: response.totalPages,
-        hasMore: _currentPage < response.totalPages,
+        hasMore: _reviews.length < response.totalReviews,
       ));
     } catch (e) {
       emit(ReviewsFailure(extractErrorMessage(e)));
@@ -55,7 +55,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
         reviews: List.unmodifiable(_reviews),
         totalReviews: response.totalReviews,
         totalPages: response.totalPages,
-        hasMore: _currentPage < response.totalPages,
+        hasMore: _reviews.length < response.totalReviews,
       ));
     } catch (e) {
       _currentPage--;

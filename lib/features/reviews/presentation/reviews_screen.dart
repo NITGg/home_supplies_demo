@@ -17,6 +17,7 @@ class ReviewsScreen extends StatefulWidget {
 
 class _ReviewsScreenState extends State<ReviewsScreen> {
   final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
 
   @override
   void initState() {
@@ -26,9 +27,17 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   }
 
   void _onScroll() {
+    if (_isFetchingMore) return;
+
+    final state = context.read<ReviewsCubit>().state;
+    if (state is! ReviewsLoaded || !state.hasMore) return;
+
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      context.read<ReviewsCubit>().fetchMore();
+      _isFetchingMore = true;
+      context.read<ReviewsCubit>().fetchMore().whenComplete(() {
+        if (mounted) setState(() => _isFetchingMore = false);
+      });
     }
   }
 
