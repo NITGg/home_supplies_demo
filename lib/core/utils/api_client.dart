@@ -56,7 +56,9 @@ class ApiClient {
         break;
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
-        if (statusCode != null && statusCode >= 500) {
+        if (statusCode == 502 || statusCode == 503 || statusCode == 504) {
+          message = 'الخادم غير متاح حالياً، يرجى المحاولة لاحقاً';
+        } else if (statusCode != null && statusCode >= 500) {
           message = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
         }
         break;
@@ -64,14 +66,20 @@ class ApiClient {
         message = 'تم إلغاء الطلب';
         break;
       default:
-        break; // leave message null → keep original error
+        break;
     }
 
     if (message == null) return error;
 
     return DioException(
       requestOptions: error.requestOptions,
-      response: error.response,
+      response: error.response != null
+          ? Response(
+              requestOptions: error.requestOptions,
+              statusCode: error.response!.statusCode,
+              data: message, // ← replaces raw HTML with the Arabic message
+            )
+          : null,
       type: error.type,
       error: message,
       message: message,
