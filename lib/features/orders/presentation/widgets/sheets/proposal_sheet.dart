@@ -101,6 +101,14 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
       case _SortOption.none:
         break;
     }
+
+    // ✅ Always push rejected to the bottom, regardless of sort option
+    list.sort((a, b) {
+      final aRejected = a.isRejected ? 1 : 0;
+      final bRejected = b.isRejected ? 1 : 0;
+      return aRejected.compareTo(bRejected);
+    });
+
     return list;
   }
 
