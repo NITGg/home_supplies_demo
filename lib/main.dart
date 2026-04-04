@@ -38,6 +38,7 @@ import 'features/notifications/manager/notification_services.dart';
 import 'features/static_text/app_dynamic_info.dart';
 import 'features/wallet/data/data_source/wallet_remote_data_source.dart';
 import 'features/wallet/data/repositories/wallet_repo.dart';
+import 'firebase_options.dart';
 import 'routes/app_router.dart';
 import 'features/auth/data/data_sources/auth_remote_data_source.dart';
 import 'features/auth/manager/auth_cubit.dart';
@@ -88,6 +89,7 @@ Future<void> main() async {
     RestartWidget(child: const MyAppWrapper()),
     onBeforeRunApp: () async {
       // All initialization happens here, inside the error-handling zone
+      WidgetsFlutterBinding.ensureInitialized();
 
       // Initialize Firebase with error handling
       await _initializeFirebase();
@@ -107,16 +109,16 @@ Future<void> main() async {
       }
 
       // Enable Hybrid Composition for Android Google Maps
-      AndroidGoogleMapsFlutter.useAndroidViewSurface = true;
+      // AndroidGoogleMapsFlutter.useAndroidViewSurface = true;
 
       SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,
       ]);
-      assert(
-        AppConstants.googleMapsApiKey.isNotEmpty,
-        'MAPS_API_KEY is not set. Add --dart-define=MAPS_API_KEY=... to your run config.',
-      );
+      // assert(
+      //   AppConstants.googleMapsApiKey.isNotEmpty,
+      //   'MAPS_API_KEY is not set. Add --dart-define=MAPS_API_KEY=... to your run config.',
+      // );
       ApiClient.instance.init();
       await ConnectivityManager.instance.init();
       if (ConnectivityManager.instance.isConnected) {
@@ -129,7 +131,9 @@ Future<void> main() async {
 
 Future<void> _initializeFirebase() async {
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform, // ✅ explicit options
+    );
     log('✅ Firebase initialized successfully');
   } catch (e) {
     log('⚠️ Firebase initialization failed: $e');
@@ -402,8 +406,7 @@ class _MyAppState extends State<MyApp> {
                             maxScaleFactor: 1.1,
                           ),
                         ),
-                        child: child!,
-                      );
+                        child: child ?? const SizedBox(),                      );
                     },
                     localizationsDelegates: const [
                       AppLocalizations.delegate,
