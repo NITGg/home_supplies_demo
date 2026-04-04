@@ -19,7 +19,7 @@ class LocaleCubit extends Cubit<LocaleState> {
 
   Future<void> _loadSavedLocale() async {
     final savedLocale = await _storage.getLocale();
-    if (savedLocale != null) {
+    if (savedLocale != null && !isClosed) {
       emit(LocaleState(Locale(savedLocale)));
     }
   }

@@ -31,6 +31,7 @@ class OrderCubit extends Cubit<OrderState> {
 
   Future<void> loadActiveOrders({bool loadMore = false}) async {
     if (_activeLoading) return;
+    _activeLoading = true; // ✅ guard BOTH paths immediately
 
     if (!loadMore) {
       emit(OrderLoading());
