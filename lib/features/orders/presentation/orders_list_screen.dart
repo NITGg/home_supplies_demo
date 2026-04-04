@@ -329,11 +329,16 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         appBar: AppBar(
           scrolledUnderElevation: 0,
           titleSpacing: 16,
-          title: OrderToggleButton(
-            active: _viewMode == ViewMode.active,
-            onToggle: (isActive) {
-              _onTabChanged(isActive ? ViewMode.active : ViewMode.history);
-            },
+          title: Row(
+            children: [
+              OrderToggleButton(
+                active: _viewMode == ViewMode.active,
+                onToggle: (isActive) {
+                  _onTabChanged(isActive ? ViewMode.active : ViewMode.history);
+                },
+              ),
+              Spacer()
+            ],
           ),
           actions: [
             BlocBuilder<OrderCubit, OrderState>(
