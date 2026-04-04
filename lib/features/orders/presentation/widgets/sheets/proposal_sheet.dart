@@ -87,13 +87,17 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
     final list = [...proposals];
     switch (_sortOption) {
       case _SortOption.feeAsc:
-        list.sort((a, b) =>
-            (double.tryParse(a.totalFee) ?? 0)
-                .compareTo(double.tryParse(b.totalFee) ?? 0));
+        list.sort(
+          (a, b) => (double.tryParse(a.totalFee) ?? 0).compareTo(
+            double.tryParse(b.totalFee) ?? 0,
+          ),
+        );
       case _SortOption.feeDesc:
-        list.sort((a, b) =>
-            (double.tryParse(b.totalFee) ?? 0)
-                .compareTo(double.tryParse(a.totalFee) ?? 0));
+        list.sort(
+          (a, b) => (double.tryParse(b.totalFee) ?? 0).compareTo(
+            double.tryParse(a.totalFee) ?? 0,
+          ),
+        );
       case _SortOption.distanceAsc:
         list.sort((a, b) => a.distanceToPickupM.compareTo(b.distanceToPickupM));
       case _SortOption.distanceDesc:
@@ -101,6 +105,14 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
       case _SortOption.none:
         break;
     }
+
+    // ✅ Always push rejected to the bottom, regardless of sort option
+    list.sort((a, b) {
+      final aRejected = a.isRejected ? 1 : 0;
+      final bRejected = b.isRejected ? 1 : 0;
+      return aRejected.compareTo(bRejected);
+    });
+
     return list;
   }
 
@@ -135,7 +147,11 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                 color: Colors.green.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.check_circle, color: Colors.green, size: 24),
+              child: const Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 24,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -175,8 +191,9 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                       Expanded(
                         child: Text(
                           proposal.courier.user.fullName,
-                          style: AppTextStyles.bold14
-                              .copyWith(color: Colors.grey.shade800),
+                          style: AppTextStyles.bold14.copyWith(
+                            color: Colors.grey.shade800,
+                          ),
                         ),
                       ),
                     ],
@@ -184,13 +201,18 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.account_balance_wallet,
-                          size: 18, color: Colors.green),
+                      const Icon(
+                        Icons.account_balance_wallet,
+                        size: 18,
+                        color: Colors.green,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         '${proposal.totalFee} ${l10n.egp}',
                         style: AppTextStyles.bold16.copyWith(
-                            color: Colors.green, fontSize: 17),
+                          color: Colors.green,
+                          fontSize: 17,
+                        ),
                       ),
                     ],
                   ),
@@ -206,13 +228,15 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.grey.shade700,
               side: BorderSide(color: Colors.grey.shade300, width: 1.5),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            child: Text(l10n.cancel,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           const SizedBox(width: 8),
           ElevatedButton.icon(
@@ -225,16 +249,18 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
               Navigator.pop(context);
             },
             icon: const Icon(Icons.check, size: 18),
-            label: Text(l10n.accept,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            label: Text(
+              l10n.accept,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
-              padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               elevation: 2,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ],
@@ -295,8 +321,9 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                   Expanded(
                     child: Text(
                       proposal.courier.user.fullName,
-                      style: AppTextStyles.bold14
-                          .copyWith(color: Colors.grey.shade800),
+                      style: AppTextStyles.bold14.copyWith(
+                        color: Colors.grey.shade800,
+                      ),
                     ),
                   ),
                 ],
@@ -311,13 +338,15 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.grey.shade700,
               side: BorderSide(color: Colors.grey.shade300, width: 1.5),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            child: Text(l10n.cancel,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           const SizedBox(width: 8),
           ElevatedButton.icon(
@@ -329,16 +358,18 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
               );
             },
             icon: const Icon(Icons.close, size: 18),
-            label: Text(l10n.reject,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            label: Text(
+              l10n.reject,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
-              padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               elevation: 2,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ],
@@ -395,8 +426,9 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                       ),
                       Text(
                         widget.order.orderNumber ?? 'N/A',
-                        style: AppTextStyles.regular14
-                            .copyWith(color: Colors.grey),
+                        style: AppTextStyles.regular14.copyWith(
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -417,7 +449,8 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                 _SortChip(
                   label: l10n.deliveryFee,
                   icon: Icons.account_balance_wallet_outlined,
-                  isActive: _sortOption == _SortOption.feeAsc ||
+                  isActive:
+                      _sortOption == _SortOption.feeAsc ||
                       _sortOption == _SortOption.feeDesc,
                   ascending: _sortOption == _SortOption.feeAsc,
                   onTap: _cycleFeeSort,
@@ -426,7 +459,8 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                 _SortChip(
                   label: l10n.nearMe,
                   icon: Icons.near_me_rounded,
-                  isActive: _sortOption == _SortOption.distanceAsc ||
+                  isActive:
+                      _sortOption == _SortOption.distanceAsc ||
                       _sortOption == _SortOption.distanceDesc,
                   ascending: _sortOption == _SortOption.distanceAsc,
                   onTap: _cycleDistanceSort,
@@ -467,17 +501,20 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline,
-                            size: 48, color: Colors.red),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
                         const SizedBox(height: 16),
                         Text(state.message),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () {
                             setState(() => _isInitialLoad = true);
-                            context
-                                .read<OrderCubit>()
-                                .loadProposals(widget.order.id!);
+                            context.read<OrderCubit>().loadProposals(
+                              widget.order.id!,
+                            );
                           },
                           child: Text(l10n.retry),
                         ),
@@ -496,19 +533,24 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.local_offer_outlined,
-                            size: 64, color: Colors.grey),
+                        const Icon(
+                          Icons.local_offer_outlined,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           l10n.noProposalsYet,
-                          style: AppTextStyles.regular14
-                              .copyWith(color: Colors.grey),
+                          style: AppTextStyles.regular14.copyWith(
+                            color: Colors.grey,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           l10n.couriersWillSendProposalsSoon,
-                          style: AppTextStyles.regular14
-                              .copyWith(color: Colors.grey[400]),
+                          style: AppTextStyles.regular14.copyWith(
+                            color: Colors.grey[400],
+                          ),
                         ),
                       ],
                     ),
@@ -591,7 +633,9 @@ class _SortChip extends StatelessWidget {
             if (isActive) ...[
               const SizedBox(width: 4),
               Icon(
-                ascending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                ascending
+                    ? Icons.arrow_upward_rounded
+                    : Icons.arrow_downward_rounded,
                 size: 13,
                 color: Colors.white,
               ),
@@ -631,8 +675,10 @@ class _ProposalCardState extends State<_ProposalCard> {
   }
 
   String _getStatusText(BuildContext context) {
-    if (widget.proposal.isAccepted) return AppLocalizations.of(context)!.accepted;
-    if (widget.proposal.isRejected) return AppLocalizations.of(context)!.rejected;
+    if (widget.proposal.isAccepted)
+      return AppLocalizations.of(context)!.accepted;
+    if (widget.proposal.isRejected)
+      return AppLocalizations.of(context)!.rejected;
     return AppLocalizations.of(context)!.pending;
   }
 
@@ -720,15 +766,14 @@ class _ProposalCardState extends State<_ProposalCard> {
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.kPrimaryColor.withOpacity(0.15),
+                  color: statusColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.kPrimaryColor.withOpacity(0.3),
+                    color: statusColor.withOpacity(0.3),
                     width: 1.5,
                   ),
                 ),
-                child: const Icon(Icons.phone,
-                    color: AppColors.kPrimaryColor, size: 22),
+                child: Icon(Icons.phone, color: statusColor, size: 22),
               ),
             ),
             const SizedBox(width: 12),
@@ -746,19 +791,25 @@ class _ProposalCardState extends State<_ProposalCard> {
                   // Fee + distance inline preview
                   Row(
                     children: [
-                      Icon(Icons.account_balance_wallet_outlined,
-                          size: 13, color: AppColors.kPrimaryColor),
+                      Icon(
+                        Icons.account_balance_wallet_outlined,
+                        size: 13,
+                        color: Colors.grey.shade500,
+                      ),
                       const SizedBox(width: 3),
                       Text(
                         '${widget.proposal.totalFee} ${l10n.egp}',
                         style: AppTextStyles.bold14.copyWith(
                           fontSize: 13,
-                          color: AppColors.kPrimaryColor,
+                          color: Colors.grey.shade600,
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Icon(Icons.near_me_rounded,
-                          size: 13, color: Colors.grey.shade500),
+                      Icon(
+                        Icons.near_me_rounded,
+                        size: 13,
+                        color: Colors.grey.shade500,
+                      ),
                       const SizedBox(width: 3),
                       Text(
                         _distanceLabel(context),
@@ -777,8 +828,7 @@ class _ProposalCardState extends State<_ProposalCard> {
 
             // Status badge
             Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               decoration: BoxDecoration(
                 color: statusColor,
                 borderRadius: BorderRadius.circular(20),
@@ -798,7 +848,9 @@ class _ProposalCardState extends State<_ProposalCard> {
                   Text(
                     _getStatusText(context),
                     style: AppTextStyles.bold14.copyWith(
-                        fontSize: 10, color: Colors.white),
+                      fontSize: 10,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -810,8 +862,11 @@ class _ProposalCardState extends State<_ProposalCard> {
             AnimatedRotation(
               turns: _expanded ? 0.5 : 0,
               duration: const Duration(milliseconds: 250),
-              child: Icon(Icons.expand_more_rounded,
-                  color: Colors.grey.shade500, size: 20),
+              child: Icon(
+                Icons.expand_more_rounded,
+                color: Colors.grey.shade500,
+                size: 20,
+              ),
             ),
           ],
         ),
@@ -822,8 +877,9 @@ class _ProposalCardState extends State<_ProposalCard> {
   Widget _buildFeeSection(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final vehicleName =
-    isArabic ? widget.proposal.vehicle.nameAr : widget.proposal.vehicle.name;
+    final vehicleName = isArabic
+        ? widget.proposal.vehicle.nameAr
+        : widget.proposal.vehicle.name;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -831,8 +887,7 @@ class _ProposalCardState extends State<_ProposalCard> {
         children: [
           // Vehicle + distance
           Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
               borderRadius: BorderRadius.circular(12),
@@ -852,18 +907,22 @@ class _ProposalCardState extends State<_ProposalCard> {
                 Expanded(
                   child: Text(
                     vehicleName,
-                    style: AppTextStyles.bold14
-                        .copyWith(color: Colors.grey.shade800),
+                    style: AppTextStyles.bold14.copyWith(
+                      color: Colors.grey.shade800,
+                    ),
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 5),
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.kPrimaryColor.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                        color: AppColors.kPrimaryColor.withOpacity(0.2)),
+                      color: AppColors.kPrimaryColor.withOpacity(0.2),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -871,13 +930,17 @@ class _ProposalCardState extends State<_ProposalCard> {
                       Text(
                         l10n.far,
                         style: AppTextStyles.bold14.copyWith(
-                            fontSize: 12, color: AppColors.kPrimaryColor),
+                          fontSize: 12,
+                          color: AppColors.kPrimaryColor,
+                        ),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _distanceLabel(context),
                         style: AppTextStyles.bold14.copyWith(
-                            fontSize: 12, color: AppColors.kPrimaryColor),
+                          fontSize: 12,
+                          color: AppColors.kPrimaryColor,
+                        ),
                       ),
                     ],
                   ),
@@ -895,20 +958,25 @@ class _ProposalCardState extends State<_ProposalCard> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: AppColors.kPrimaryColor.withOpacity(0.2), width: 1),
+                color: AppColors.kPrimaryColor.withOpacity(0.2),
+                width: 1,
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   l10n.deliveryFee,
-                  style: AppTextStyles.bold14
-                      .copyWith(color: Colors.grey.shade700),
+                  style: AppTextStyles.bold14.copyWith(
+                    color: Colors.grey.shade700,
+                  ),
                 ),
                 Text(
                   '${widget.proposal.totalFee} ${l10n.egp}',
                   style: AppTextStyles.bold18.copyWith(
-                      color: AppColors.kPrimaryColor, fontSize: 20),
+                    color: AppColors.kPrimaryColor,
+                    fontSize: 20,
+                  ),
                 ),
               ],
             ),
@@ -931,15 +999,17 @@ class _ProposalCardState extends State<_ProposalCard> {
                 child: OutlinedButton.icon(
                   onPressed: widget.onReject,
                   icon: const Icon(Icons.close, size: 18),
-                  label: Text(l10n.reject,
-                      style:
-                      const TextStyle(fontWeight: FontWeight.bold)),
+                  label: Text(
+                    l10n.reject,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     side: const BorderSide(color: Colors.red, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -948,16 +1018,18 @@ class _ProposalCardState extends State<_ProposalCard> {
                 child: ElevatedButton.icon(
                   onPressed: widget.onAccept,
                   icon: const Icon(Icons.check, size: 18),
-                  label: Text(l10n.accept,
-                      style:
-                      const TextStyle(fontWeight: FontWeight.bold)),
+                  label: Text(
+                    l10n.accept,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     elevation: 2,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),

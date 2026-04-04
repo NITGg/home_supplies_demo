@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/cancel_order_sheet.dart';
@@ -147,10 +148,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         ),
       ),
     );
-
-    if (_viewMode == ViewMode.active) {
-      context.read<OrderCubit>().loadActiveOrders(loadMore: false);
-    }
+    // if (_viewMode == ViewMode.active) {
+    //   context.read<OrderCubit>().loadActiveOrders(loadMore: false);
+    // }
   }
 
   void _handleOrderCancelled(Map<String, dynamic> data, String reason) {
@@ -222,6 +222,16 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       );
       _showProposals(order);
     }
+
+    // ✅ Fallback: state isn't ready yet — reload then show
+    cubit.loadActiveOrders(loadMore: false).then((_) {
+      if (!mounted) return;
+      final freshState = cubit.state;
+      if (freshState is OrdersLoaded) {
+        final order = freshState.orders.firstWhereOrNull((o) => o.id == orderId);
+        if (order != null) _showProposals(order);
+      }
+    });
   }
 
   // ================= SCROLL / PAGINATION =================
