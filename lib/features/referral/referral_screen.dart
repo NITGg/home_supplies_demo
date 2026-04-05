@@ -5,11 +5,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 
 import '../../core/style/app_colors.dart';
@@ -18,7 +16,6 @@ import '../../core/utils/api_client.dart';
 import '../../l10n/app_localizations.dart';
 import '../auth/manager/profile_cubit.dart';
 import '../auth/manager/profile_states.dart';
-import '../../core/widgets/banners.dart';
 
 class ReferralQrScreen extends StatefulWidget {
   const ReferralQrScreen({super.key});
@@ -30,34 +27,61 @@ class ReferralQrScreen extends StatefulWidget {
 class _ReferralQrScreenState extends State<ReferralQrScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _copiedIos = false;
-  bool _copiedAndroid = false;
 
+  // ── Referral link state
+  String? _referralLink;
+  String? _referralCode;
+  bool _linkLoading = false;
+  String? _linkError;
+
+  // ── Stats state
   Map<String, dynamic>? _stats;
   bool _statsLoading = false;
   String? _statsError;
 
-  String _buildAndroidUrl(String referralCode) {
-    final encoded = Uri.encodeComponent('ref_code=$referralCode');
-    return '${AppSettings.android_url}&referrer=$encoded';
-  }
-
-  String _buildIosUrl(String referralCode) {
-    final encoded = Uri.encodeComponent('ref_code=$referralCode');
-    return '${AppSettings.ios_url}?referral=$encoded';
-  }
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchStats());
+    _tabController = TabController(length: 2, vsync: this, initialIndex: 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchReferralLink();
+      _fetchStats();
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchReferralLink() async {
+    final profileState = context.read<ProfileCubit>().state;
+    if (profileState is! ProfileLoaded) return;
+
+    final userId = profileState.profile.id;
+    setState(() {
+      _linkLoading = true;
+      _linkError = null;
+    });
+
+    try {
+      final response = await ApiClient.instance.dio.get(
+        '/admin/manage-seller/generate-referral-link/$userId',
+      );
+
+      setState(() {
+        _referralLink = response.data['data']['referral_link'] as String?;
+        _referralCode = response.data['data']['referral_code'] as String?;
+        _linkLoading = false;
+      });
+    } on DioException catch (e) {
+      log('ReferralQrScreen: link error: $e');
+      setState(() {
+        _linkError = e.message ?? 'Something went wrong';
+        _linkLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchStats() async {
@@ -88,26 +112,6 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
     }
   }
 
-  Future<void> _copyToClipboard(String url, bool isIos) async {
-    await Clipboard.setData(ClipboardData(text: url));
-    showInfoBanner(context, AppLocalizations.of(context)!.copiedToClipboard);
-    setState(() {
-      if (isIos)
-        _copiedIos = true;
-      else
-        _copiedAndroid = true;
-    });
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      setState(() {
-        if (isIos)
-          _copiedIos = false;
-        else
-          _copiedAndroid = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
@@ -119,10 +123,6 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
             body: Center(child: LoadingScreen(asWidget: true, isOne: true)),
           );
         }
-
-        final referralCode = profileState.profile.referralCode ?? '';
-        final androidUrl = _buildAndroidUrl(referralCode);
-        final iosUrl = _buildIosUrl(referralCode);
 
         return Scaffold(
           backgroundColor: const Color(0xFFF5F5F7),
@@ -147,36 +147,33 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
               ),
               tabs: [
                 Tab(
+                  icon: const Icon(Icons.qr_code_rounded, size: 20),
+                  text: localizations.referral,
+                ),
+                Tab(
                   icon: const Icon(Icons.bar_chart_rounded, size: 20),
                   text: localizations.statistics,
                 ),
-                const Tab(icon: Icon(Icons.android, size: 20), text: 'Android'),
-                const Tab(icon: Icon(Icons.apple, size: 20), text: 'iOS'),
               ],
             ),
           ),
           body: TabBarView(
             controller: _tabController,
             children: [
+              // ── QR Tab
+              _QrTab(
+                referralLink: _referralLink,
+                referralCode: _referralCode,
+                loading: _linkLoading,
+                error: _linkError,
+                onRetry: _fetchReferralLink,
+              ),
+              // ── Stats Tab
               _StatsTab(
                 stats: _stats,
                 loading: _statsLoading,
                 error: _statsError,
                 onRetry: _fetchStats,
-              ),
-              _QrTab(
-                url: androidUrl,
-                copied: _copiedAndroid,
-                platform: 'Android',
-                platformColor: const Color(0xFF3DDC84),
-                onCopy: () => _copyToClipboard(androidUrl, false),
-              ),
-              _QrTab(
-                url: iosUrl,
-                copied: _copiedIos,
-                platform: 'iOS',
-                platformColor: Colors.black,
-                onCopy: () => _copyToClipboard(iosUrl, true),
               ),
             ],
           ),
@@ -189,18 +186,18 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
 // ── QR Tab ────────────────────────────────────────────────────────────────────
 
 class _QrTab extends StatefulWidget {
-  final String url;
-  final bool copied;
-  final String platform;
-  final Color platformColor;
-  final VoidCallback onCopy;
+  final String? referralLink;
+  final String? referralCode;
+  final bool loading;
+  final String? error;
+  final VoidCallback onRetry;
 
   const _QrTab({
-    required this.url,
-    required this.copied,
-    required this.platform,
-    required this.platformColor,
-    required this.onCopy,
+    required this.referralLink,
+    required this.referralCode,
+    required this.loading,
+    required this.error,
+    required this.onRetry,
   });
 
   @override
@@ -211,11 +208,12 @@ class _QrTabState extends State<_QrTab> {
   final GlobalKey _qrKey = GlobalKey();
   bool _sharing = false;
 
-  Future<void> _shareToWhatsApp() async {
+  Future<void> _shareQr() async {
+    if (widget.referralLink == null) return;
     setState(() => _sharing = true);
     try {
       final boundary =
-      _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+          _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return;
 
       final image = await boundary.toImage(pixelRatio: 3.0);
@@ -223,14 +221,12 @@ class _QrTabState extends State<_QrTab> {
       if (byteData == null) return;
 
       final tempDir = await getTemporaryDirectory();
-      final file = File(
-        '${tempDir.path}/qr_${widget.platform.toLowerCase()}.png',
-      );
+      final file = File('${tempDir.path}/referral_qr.png');
       await file.writeAsBytes(byteData.buffer.asUint8List());
 
       await Share.shareXFiles(
         [XFile(file.path)],
-        text: widget.url,
+        text: widget.referralLink,
         sharePositionOrigin: Rect.zero,
       );
     } catch (e) {
@@ -242,6 +238,37 @@ class _QrTabState extends State<_QrTab> {
 
   @override
   Widget build(BuildContext context) {
+    // Loading state
+    if (widget.loading) {
+      return const Center(child: LoadingScreen(asWidget: true, isOne: true));
+    }
+
+    // Error state
+    if (widget.error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 12,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.grey.shade400),
+            Text(
+              widget.error!,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+            ),
+            ElevatedButton(
+              onPressed: widget.onRetry,
+              child: Text(AppLocalizations.of(context)!.retry),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // No link yet
+    if (widget.referralLink == null) {
+      return const Center(child: LoadingScreen(asWidget: true, isOne: true));
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -263,111 +290,57 @@ class _QrTabState extends State<_QrTab> {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
+                // QR Code
+                RepaintBoundary(
+                  key: _qrKey,
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    color: Colors.white,
+                    child: QrImageView(
+                      data: widget.referralLink!,
+                      version: QrVersions.auto,
+                      size: 220,
+                      backgroundColor: Colors.white,
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: widget.platformColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    spacing: 6,
-                    children: [
-                      Icon(
-                        widget.platform == 'iOS' ? Icons.apple : Icons.android,
-                        size: 16,
-                        color: widget.platformColor,
-                      ),
-                      Text(
-                        widget.platform,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: widget.platformColor,
-                        ),
-                      ),
-                    ],
-                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Hint text
+                Text(
+                  AppLocalizations.of(context)!.scanQrCode,
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                 ),
                 const SizedBox(height: 24),
-                GestureDetector(
-                  onTap: widget.onCopy,
-                  child: RepaintBoundary(
-                    key: _qrKey,
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      color: Colors.white,
-                      child: QrImageView(
-                        data: widget.url,
-                        version: QrVersions.auto,
-                        size: 200,
-                        backgroundColor: Colors.white,
+
+                // Share button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _sharing ? null : _shareQr,
+                    icon: _sharing
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.share_rounded, size: 18),
+                    label: Text(
+                      _sharing ? '...' : AppLocalizations.of(context)!.whatsapp,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF25D366),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: OutlinedButton.icon(
-                          key: ValueKey(widget.copied),
-                          onPressed: widget.onCopy,
-                          icon: Icon(
-                            widget.copied
-                                ? Icons.check_rounded
-                                : Icons.copy_rounded,
-                            size: 16,
-                          ),
-                          label: Text(
-                            widget.copied
-                                ? AppLocalizations.of(context)!.copiedToClipboard
-                                : AppLocalizations.of(context)!.copy,
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.kPrimaryColor,
-                            side: BorderSide(color: AppColors.kPrimaryColor),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _sharing ? null : _shareToWhatsApp,
-                        icon: _sharing
-                            ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                            : const Icon(Icons.share, size: 16),
-                        label: Text(
-                          _sharing ? '...' : AppLocalizations.of(context)!.whatsapp,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF25D366),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -423,12 +396,11 @@ class _StatsTab extends StatelessWidget {
       return const Center(child: LoadingScreen(asWidget: true, isOne: true));
     }
 
-    // ✅ Referrals hero card
     final referralsItem = _StatItem(
       label: AppLocalizations.of(context)!.referrals,
       value: stats!['numberOfReferralsBySeller'] ?? 0,
       icon: Icons.people_alt_rounded,
-      color: AppColors.kSecondaryColor,
+      color: const Color(0xFF007AFF),
     );
 
     final items = [
@@ -474,10 +446,8 @@ class _StatsTab extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 8),
-            // ✅ Referrals at the top
             _HeroStatCard(item: referralsItem),
             const SizedBox(height: 12),
-            // Total orders below
             _HeroStatCard(item: items[0]),
             const SizedBox(height: 16),
             GridView.count(
@@ -487,8 +457,10 @@ class _StatsTab extends StatelessWidget {
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
               childAspectRatio: 1.4,
-              children:
-              items.skip(1).map((item) => _StatCard(item: item)).toList(),
+              children: items
+                  .skip(1)
+                  .map((item) => _StatCard(item: item))
+                  .toList(),
             ),
           ],
         ),
