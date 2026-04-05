@@ -164,12 +164,18 @@ class OrderCubit extends Cubit<OrderState> {
           limit: _historyLimit,
           status: 'CANCELLED',
         );
+        final expiredResponse = await _repository.getOrders(
+          skip: _historySkip,
+          limit: _historyLimit,
+          status: 'EXPIRED',
+        );
         combinedOrders = [
           ...deliveredResponse.orders,
           ...cancelledResponse.orders,
+          ...expiredResponse.orders,
         ];
         _historyTotalCount =
-            deliveredResponse.totalOrders + cancelledResponse.totalOrders;
+            deliveredResponse.totalOrders + cancelledResponse.totalOrders + cancelledResponse.totalOrders;
       }
 
       // Sort by completion date (newest first)

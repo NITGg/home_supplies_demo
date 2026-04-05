@@ -1,9 +1,11 @@
 {
   "@@locale": "ar",
-
+  "copy": "نسخ",
   "next": "التالي",
   "prev": "السابق",
   "done": "تم",
+  "expired": "منتهي الصلاحية",
+  "searchingFailed": "فشل البحث",
   "skip": "تخطي",
   "profile": "الملف الشخصي",
   "menu": "القائمة",
@@ -573,6 +575,8 @@
     "ratingExcellent": "ممتاز",
     "far": "يبعد",
     "referral": "الإحالة",
+    "referrals": "الإحالات",
+    "whatsapp": "واتسآب",
 "nearMe": "بالقرب مني"
 
 

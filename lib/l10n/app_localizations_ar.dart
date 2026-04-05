@@ -1180,6 +1180,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get copiedToClipboard => 'تم النسخ';
 
   @override
+  String get copy => 'نسخ';
+
+  @override
+  String get searchingFailed => 'فشل البحث';
+
+  @override
+  String get expired => 'منتهي الصلاحية';
+
+  @override
   String get success => 'تم بنجاح!';
 
   @override
@@ -1345,6 +1354,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get referral => 'الإحالة';
+
+  @override
+  String get referrals => 'الإحالات';
+
+  @override
+  String get whatsapp => 'واتسآب';
 
   @override
   String get nearMe => 'بالقرب مني';

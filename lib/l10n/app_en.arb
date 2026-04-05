@@ -505,6 +505,9 @@
   "vodafoneCash": "Vodafone Cash",
   "instaPay": "InstaPay",
   "copiedToClipboard": "Copied to clipboard",
+  "copy": "Copy",
+    "searchingFailed": "Searching Failed",
+    "expired": "Expired",
   "success": "Success!",
   "walletToppedUp": "Your wallet has been topped up successfully",
   "amountAdded": "Amount Added",
@@ -572,7 +575,8 @@
 
 "ratingExcellent": "Excellent",
     "referral": "Referral",
-
+    "referrals": "Referrals",
+    "whatsapp": "Whatsapp",
 "nearMe": "Near Me"
 
 

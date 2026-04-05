@@ -75,6 +75,10 @@ class OrderCard extends StatelessWidget {
         return l10n?.delivered ?? 'Delivered';
       case 'CANCELLED':
         return l10n?.cancelled ?? 'Cancelled';
+        case 'EXPIRED':
+        return l10n?.expired ?? 'Expired';
+        case 'SEARCHING_FAILED':
+        return l10n?.searchingFailed ?? 'Searching Failed';
       default:
         return order.status ?? '';
     }

@@ -2399,6 +2399,24 @@ abstract class AppLocalizations {
   /// **'Copied to clipboard'**
   String get copiedToClipboard;
 
+  /// No description provided for @copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copy;
+
+  /// No description provided for @searchingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching Failed'**
+  String get searchingFailed;
+
+  /// No description provided for @expired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get expired;
+
   /// No description provided for @success.
   ///
   /// In en, this message translates to:
@@ -2716,6 +2734,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Referral'**
   String get referral;
+
+  /// No description provided for @referrals.
+  ///
+  /// In en, this message translates to:
+  /// **'Referrals'**
+  String get referrals;
+
+  /// No description provided for @whatsapp.
+  ///
+  /// In en, this message translates to:
+  /// **'Whatsapp'**
+  String get whatsapp;
 
   /// No description provided for @nearMe.
   ///

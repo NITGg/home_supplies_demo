@@ -1180,6 +1180,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copiedToClipboard => 'Copied to clipboard';
 
   @override
+  String get copy => 'Copy';
+
+  @override
+  String get searchingFailed => 'Searching Failed';
+
+  @override
+  String get expired => 'Expired';
+
+  @override
   String get success => 'Success!';
 
   @override
@@ -1345,6 +1354,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get referral => 'Referral';
+
+  @override
+  String get referrals => 'Referrals';
+
+  @override
+  String get whatsapp => 'Whatsapp';
 
   @override
   String get nearMe => 'Near Me';

@@ -52,7 +52,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     notificationDialogTrigger.addListener(_onExternalNotificationTrigger);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-
       // Fetch profile from cubit — single source of truth
       if (mounted) {
         context.read<ProfileCubit>().fetchProfile();
@@ -94,7 +93,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
   void _showPendingNotificationDialog() {
     if (!mounted) return;
-    if (pendingNotificationData == null && !shouldShowNotificationDialog) return;
+    if (pendingNotificationData == null && !shouldShowNotificationDialog)
+      return;
 
     shouldShowNotificationDialog = false;
     pendingNotificationData = null;
@@ -190,13 +190,18 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                         });
 
                         // ✅ Now we have userId — safe to capture referral
-                        ReferralCaptureService.captureOnFirstLaunch(
-                          userId: _userId,
-                        ).then((code) {
-                          if (code != null && mounted) {
-                            showSuccessBanner(context, 'your referral code is: $code');
-                          }
-                        });
+                        if (profileState.profile.referralCode == null) {
+                          ReferralCaptureService.captureOnFirstLaunch(
+                            userId: _userId,
+                          ).then((code) {
+                            if (code != null && mounted) {
+                              showSuccessBanner(
+                                context,
+                                'your referral code is: $code',
+                              );
+                            }
+                          });
+                        }
 
                         if (profileState.profile.phone == null) {
                           _showPhoneNumberBottomSheet(context);
@@ -221,20 +226,20 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                     ),
                   ),
                   floatingActionButtonLocation:
-                  FloatingActionButtonLocation.centerDocked,
+                      FloatingActionButtonLocation.centerDocked,
                   floatingActionButton: FloatingActionButton.large(
                     onPressed: () {
-                      final govState =
-                          context.read<GovernorateCubit>().state;
+                      final govState = context.read<GovernorateCubit>().state;
                       final governorates = govState is GovernoratesLoaded
                           ? govState.response
                           : GovernoratesResponse(
-                        governorates: [],
-                        totalCount: 0,
-                        totalPages: 0,
-                      );
+                              governorates: [],
+                              totalCount: 0,
+                              totalPages: 0,
+                            );
                       final walletCubit = context.read<WalletCubit>();
-                      final balance = walletCubit.cachedWalletData?.wallet.balance ?? 0.0;
+                      final balance =
+                          walletCubit.cachedWalletData?.wallet.balance ?? 0.0;
 
                       showModalBottomSheet(
                         context: context,
@@ -263,8 +268,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                 children: [
                                   BlocBuilder<WalletCubit, WalletState>(
                                     builder: (context, walletState) {
-                                      final walletCubit =
-                                      context.read<WalletCubit>();
+                                      final walletCubit = context
+                                          .read<WalletCubit>();
                                       final badge = walletCubit.currentBadge;
                                       final isArabic =
                                           localizations.localeName == 'ar';
@@ -272,8 +277,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                       final badgeName = badge == null
                                           ? null
                                           : isArabic &&
-                                          (badge.nameAr?.isNotEmpty ??
-                                              false)
+                                                (badge.nameAr?.isNotEmpty ??
+                                                    false)
                                           ? badge.nameAr
                                           : badge.name;
 
@@ -297,20 +302,21 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                             children: [
                                               Padding(
                                                 padding: const EdgeInsets.only(
-                                                    bottom: 10.0),
+                                                  bottom: 10.0,
+                                                ),
                                                 // ✅ Photo now reactive to ProfileCubit
                                                 child: _ProfileAvatar(
                                                   imageUrl:
-                                                  profile?.personalPhoto,
+                                                      profile?.personalPhoto,
                                                   badgeName: badgeName,
                                                 ),
                                               ),
                                               Expanded(
                                                 child: Column(
                                                   mainAxisAlignment:
-                                                  MainAxisAlignment.center,
+                                                      MainAxisAlignment.center,
                                                   crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                                      CrossAxisAlignment.start,
                                                   spacing: 10,
                                                   children: [
                                                     Text(
@@ -318,8 +324,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                       style: AppTextStyles
                                                           .bold16
                                                           .copyWith(
-                                                          color:
-                                                          Colors.white),
+                                                            color: Colors.white,
+                                                          ),
                                                     ),
                                                     Text(
                                                       localizations
@@ -327,11 +333,11 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                       style: AppTextStyles
                                                           .regular14
                                                           .copyWith(
-                                                        fontSize: 12,
-                                                        color: Colors.white,
-                                                      ),
+                                                            fontSize: 12,
+                                                            color: Colors.white,
+                                                          ),
                                                       overflow:
-                                                      TextOverflow.ellipsis,
+                                                          TextOverflow.ellipsis,
                                                       maxLines: 2,
                                                     ),
                                                   ],
@@ -349,56 +355,64 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                     child: Material(
                                       elevation: 4,
                                       color: Colors.white,
-                                      shadowColor:
-                                      Colors.black.withOpacity(0.1),
+                                      shadowColor: Colors.black.withOpacity(
+                                        0.1,
+                                      ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                        BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
                                       clipBehavior: Clip.antiAlias,
                                       child: Column(
                                         children: [
                                           ListTile(
                                             leading: const Icon(
-                                                Icons.language_outlined),
-                                            title: Text(localizations.lang,
-                                                style: AppTextStyles.bold16),
+                                              Icons.language_outlined,
+                                            ),
+                                            title: Text(
+                                              localizations.lang,
+                                              style: AppTextStyles.bold16,
+                                            ),
                                             trailing: SizedBox(
                                               width: 100,
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceBetween,
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
                                                 children: [
-                                                  Text('EN',
-                                                      style: AppTextStyles
-                                                          .regular14),
+                                                  Text(
+                                                    'EN',
+                                                    style:
+                                                        AppTextStyles.regular14,
+                                                  ),
                                                   Switch(
-                                                    value: localizations
-                                                        .localeName ==
+                                                    value:
+                                                        localizations
+                                                            .localeName ==
                                                         'ar',
                                                     onChanged: (value) =>
                                                         context
                                                             .read<LocaleCubit>()
                                                             .toggleLocale(),
                                                     trackOutlineColor:
-                                                    WidgetStateProperty
-                                                        .resolveWith((_) =>
-                                                    AppColors
-                                                        .kPrimaryColor),
-                                                    activeThumbColor: AppColors
-                                                        .kPrimaryColor,
+                                                        WidgetStateProperty.resolveWith(
+                                                          (_) => AppColors
+                                                              .kPrimaryColor,
+                                                        ),
+                                                    activeThumbColor:
+                                                        AppColors.kPrimaryColor,
                                                     activeTrackColor:
-                                                    Colors.white,
+                                                        Colors.white,
                                                     inactiveTrackColor:
-                                                    Colors.white,
-                                                    inactiveThumbColor: AppColors
-                                                        .kPrimaryColor,
+                                                        Colors.white,
+                                                    inactiveThumbColor:
+                                                        AppColors.kPrimaryColor,
                                                   ),
-                                                  Text('AR',
-                                                      style: AppTextStyles
-                                                          .regular14),
+                                                  Text(
+                                                    'AR',
+                                                    style:
+                                                        AppTextStyles.regular14,
+                                                  ),
                                                 ],
                                               ),
                                             ),
@@ -410,99 +424,120 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           // ✅ Referral tile — reactive to ProfileLoaded state
                                           if (profileState is ProfileLoaded &&
                                               profileState.profile.roleId
-                                                  .toString() ==
+                                                      .toString() ==
                                                   '4') ...[
                                             const Divider(),
                                             ListTile(
-                                              onTap: () => context
-                                                  .push('/ReferralQrScreen'),
-                                              leading:
-                                              const Icon(Icons.share),
+                                              onTap: () => context.push(
+                                                '/ReferralQrScreen',
+                                              ),
+                                              leading: const Icon(Icons.share),
                                               title: Text(
-                                                  localizations.referral,
-                                                  style: AppTextStyles.bold16),
+                                                localizations.referral,
+                                                style: AppTextStyles.bold16,
+                                              ),
                                             ),
                                           ],
 
                                           const Divider(),
                                           ListTile(
-                                            onTap: () => context
-                                                .push('/WalletScreen'),
-                                            leading: const Icon(Icons
-                                                .account_balance_wallet_rounded),
-                                            title: Text(localizations.wallet,
-                                                style: AppTextStyles.bold16),
+                                            onTap: () =>
+                                                context.push('/WalletScreen'),
+                                            leading: const Icon(
+                                              Icons
+                                                  .account_balance_wallet_rounded,
+                                            ),
+                                            title: Text(
+                                              localizations.wallet,
+                                              style: AppTextStyles.bold16,
+                                            ),
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () => context
-                                                .push('/addressesManagement'),
+                                            onTap: () => context.push(
+                                              '/addressesManagement',
+                                            ),
                                             leading: const Icon(
-                                                Icons.location_pin),
-                                            title: Text(localizations.address,
-                                                style: AppTextStyles.bold16),
+                                              Icons.location_pin,
+                                            ),
+                                            title: Text(
+                                              localizations.address,
+                                              style: AppTextStyles.bold16,
+                                            ),
                                           ),
                                           const Divider(),
                                           ListTile(
                                             onTap: () =>
                                                 context.push('/ProfileScreen'),
-                                            leading:
-                                            const Icon(Icons.person),
-                                            title: Text(localizations.profile,
-                                                style: AppTextStyles.bold16),
+                                            leading: const Icon(Icons.person),
+                                            title: Text(
+                                              localizations.profile,
+                                              style: AppTextStyles.bold16,
+                                            ),
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () => context
-                                                .push('/ReviewsScreen'),
+                                            onTap: () =>
+                                                context.push('/ReviewsScreen'),
                                             leading: const Icon(
-                                                Icons.star_half),
-                                            title: Text(localizations.reviews,
-                                                style: AppTextStyles.bold16),
+                                              Icons.star_half,
+                                            ),
+                                            title: Text(
+                                              localizations.reviews,
+                                              style: AppTextStyles.bold16,
+                                            ),
                                           ),
                                           const Divider(),
                                           ListTile(
                                             onTap: () =>
                                                 context.push('/FaqPage'),
                                             leading: const Icon(
-                                                Icons.question_mark),
-                                            title: Text(localizations.faq,
-                                                style: AppTextStyles.bold16),
+                                              Icons.question_mark,
+                                            ),
+                                            title: Text(
+                                              localizations.faq,
+                                              style: AppTextStyles.bold16,
+                                            ),
                                           ),
                                           const Divider(),
                                           ListTile(
                                             onTap: () {
                                               launchUrl(
                                                 Uri.parse(
-                                                    "https://wa.me/${AppInfoManager().data!.supportNumber.replaceAll(' ', '')}"),
+                                                  "https://wa.me/${AppInfoManager().data!.supportNumber.replaceAll(' ', '')}",
+                                                ),
                                                 mode: LaunchMode
                                                     .externalApplication,
                                               );
                                             },
                                             leading: const Icon(
-                                                Icons.support_agent_rounded),
-                                            title: Text(localizations.support,
-                                                style: AppTextStyles.bold16),
+                                              Icons.support_agent_rounded,
+                                            ),
+                                            title: Text(
+                                              localizations.support,
+                                              style: AppTextStyles.bold16,
+                                            ),
                                           ),
                                           const Divider(),
                                           ListTile(
                                             onTap: () =>
                                                 context.push('/PrivacyPage'),
                                             leading: const Icon(
-                                                Icons.policy_rounded),
+                                              Icons.policy_rounded,
+                                            ),
                                             title: Text(
-                                                localizations.privecyPolicy,
-                                                style: AppTextStyles.bold16),
+                                              localizations.privecyPolicy,
+                                              style: AppTextStyles.bold16,
+                                            ),
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () =>
-                                                context.push('/Terms'),
+                                            onTap: () => context.push('/Terms'),
                                             leading: const Icon(Icons.lock),
                                             title: Text(
-                                                localizations
-                                                    .termsAndConditions,
-                                                style: AppTextStyles.bold16),
+                                              localizations.termsAndConditions,
+                                              style: AppTextStyles.bold16,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -526,14 +561,14 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                     snapshot.data != null) {
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 17.0),
+                                      horizontal: 17.0,
+                                    ),
                                     child: Material(
                                       elevation: 1,
                                       color: Colors.white,
                                       shadowColor: AppColors.kPrimaryColor,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                        BorderRadius.circular(18),
+                                        borderRadius: BorderRadius.circular(18),
                                       ),
                                       clipBehavior: Clip.antiAlias,
                                       child: InkWell(
@@ -550,7 +585,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           width: double.infinity,
                                           child: Row(
                                             mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                                MainAxisAlignment.center,
                                             spacing: 10,
                                             children: [
                                               SvgPicture.asset(
@@ -560,8 +595,9 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                 localizations.logout,
                                                 style: AppTextStyles.bold16
                                                     .copyWith(
-                                                    color: AppColors
-                                                        .kPrimaryColor),
+                                                      color: AppColors
+                                                          .kPrimaryColor,
+                                                    ),
                                               ),
                                             ],
                                           ),
@@ -622,13 +658,11 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(localizations.enterPhoneNumber,
-                  style: AppTextStyles.bold18),
+              Text(localizations.enterPhoneNumber, style: AppTextStyles.bold18),
               const SizedBox(height: 8),
               Text(
                 localizations.weNeedYourPhoneNumber,
-                style:
-                AppTextStyles.regular14.copyWith(color: Colors.grey),
+                style: AppTextStyles.regular14.copyWith(color: Colors.grey),
               ),
               const SizedBox(height: 20),
               Form(
@@ -819,16 +853,16 @@ class _ProfileAvatar extends StatelessWidget {
             child: ClipOval(
               child: imageUrl != null && imageUrl!.isNotEmpty
                   ? Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    SvgPicture.asset(
+                      imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          SvgPicture.asset(
+                            'assets/images/drawer/profile_placholder.svg',
+                          ),
+                    )
+                  : SvgPicture.asset(
                       'assets/images/drawer/profile_placholder.svg',
                     ),
-              )
-                  : SvgPicture.asset(
-                'assets/images/drawer/profile_placholder.svg',
-              ),
             ),
           ),
         ),
@@ -887,83 +921,109 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
 
     _scaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.3)
-            .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 1.3,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.3, end: 0.9)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(
+          begin: 1.3,
+          end: 0.9,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 30,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.9, end: 1.0)
-            .chain(CurveTween(curve: Curves.elasticOut)),
+        tween: Tween<double>(
+          begin: 0.9,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.elasticOut)),
         weight: 40,
       ),
     ]).animate(_controller);
 
     _rotationAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.0, end: 0.1)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(
+          begin: 0.0,
+          end: 0.1,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 25,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.1, end: -0.1)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(
+          begin: 0.1,
+          end: -0.1,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 25,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: -0.1, end: 0.05)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(
+          begin: -0.1,
+          end: 0.05,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 25,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.05, end: 0.0)
-            .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(
+          begin: 0.05,
+          end: 0.0,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 25,
       ),
     ]).animate(_controller);
 
     _appLogoOpacity = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.0)
-            .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 0.0,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
       TweenSequenceItem(tween: ConstantTween<double>(0.0), weight: 40),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.0, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 30,
       ),
     ]).animate(_controller);
 
     _companyLogoOpacity = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.0, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 30,
       ),
       TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 40),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.0)
-            .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 0.0,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
     ]).animate(_controller);
 
     _companyLogoScale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.5, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(
+          begin: 0.5,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
       TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 40),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.2)
-            .chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 1.2,
+        ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 30,
       ),
     ]).animate(_controller);

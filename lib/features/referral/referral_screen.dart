@@ -1,11 +1,14 @@
-
 import 'dart:developer';
-
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:path_provider/path_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 
@@ -34,7 +37,6 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
   bool _statsLoading = false;
   String? _statsError;
 
-  // ✅ Build URLs dynamically from profile + app settings
   String _buildAndroidUrl(String referralCode) {
     final encoded = Uri.encodeComponent('ref_code=$referralCode');
     return '${AppSettings.android_url}&referrer=$encoded';
@@ -48,7 +50,7 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: 1); // ✅ opens on Android tab
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetchStats());
   }
 
@@ -112,10 +114,9 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
 
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, profileState) {
-        // ✅ Get referral code from profile — show loading if not ready
         if (profileState is! ProfileLoaded) {
           return const Scaffold(
-            body: Center(child: LoadingScreen(asWidget: true,isOne: true,)),
+            body: Center(child: LoadingScreen(asWidget: true, isOne: true)),
           );
         }
 
@@ -145,11 +146,11 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
                 fontSize: 13,
               ),
               tabs: [
-                const Tab(icon: Icon(Icons.android, size: 20), text: 'Android'),
                 Tab(
                   icon: const Icon(Icons.bar_chart_rounded, size: 20),
                   text: localizations.statistics,
                 ),
+                const Tab(icon: Icon(Icons.android, size: 20), text: 'Android'),
                 const Tab(icon: Icon(Icons.apple, size: 20), text: 'iOS'),
               ],
             ),
@@ -157,18 +158,18 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
           body: TabBarView(
             controller: _tabController,
             children: [
+              _StatsTab(
+                stats: _stats,
+                loading: _statsLoading,
+                error: _statsError,
+                onRetry: _fetchStats,
+              ),
               _QrTab(
                 url: androidUrl,
                 copied: _copiedAndroid,
                 platform: 'Android',
                 platformColor: const Color(0xFF3DDC84),
                 onCopy: () => _copyToClipboard(androidUrl, false),
-              ),
-              _StatsTab(
-                stats: _stats,
-                loading: _statsLoading,
-                error: _statsError,
-                onRetry: _fetchStats,
               ),
               _QrTab(
                 url: iosUrl,
@@ -187,7 +188,7 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
 
 // ── QR Tab ────────────────────────────────────────────────────────────────────
 
-class _QrTab extends StatelessWidget {
+class _QrTab extends StatefulWidget {
   final String url;
   final bool copied;
   final String platform;
@@ -203,13 +204,49 @@ class _QrTab extends StatelessWidget {
   });
 
   @override
+  State<_QrTab> createState() => _QrTabState();
+}
+
+class _QrTabState extends State<_QrTab> {
+  final GlobalKey _qrKey = GlobalKey();
+  bool _sharing = false;
+
+  Future<void> _shareToWhatsApp() async {
+    setState(() => _sharing = true);
+    try {
+      final boundary =
+      _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+
+      final tempDir = await getTemporaryDirectory();
+      final file = File(
+        '${tempDir.path}/qr_${widget.platform.toLowerCase()}.png',
+      );
+      await file.writeAsBytes(byteData.buffer.asUint8List());
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: widget.url,
+        sharePositionOrigin: Rect.zero,
+      );
+    } catch (e) {
+      debugPrint('QR share error: $e');
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           const SizedBox(height: 8),
-          // QR Card
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
@@ -226,14 +263,13 @@ class _QrTab extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                // Platform badge
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: platformColor.withOpacity(0.1),
+                    color: widget.platformColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -241,60 +277,97 @@ class _QrTab extends StatelessWidget {
                     spacing: 6,
                     children: [
                       Icon(
-                        platform == 'iOS' ? Icons.apple : Icons.android,
+                        widget.platform == 'iOS' ? Icons.apple : Icons.android,
                         size: 16,
-                        color: platformColor,
+                        color: widget.platformColor,
                       ),
                       Text(
-                        platform,
+                        widget.platform,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: platformColor,
+                          color: widget.platformColor,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // QR Code
                 GestureDetector(
-                  onTap: onCopy,
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
+                  onTap: widget.onCopy,
+                  child: RepaintBoundary(
+                    key: _qrKey,
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: const Color(0xFFE5E5EA),
-                        width: 1.5,
+                      child: QrImageView(
+                        data: widget.url,
+                        version: QrVersions.auto,
+                        size: 200,
+                        backgroundColor: Colors.white,
                       ),
-                    ),
-                    child: QrImageView(
-                      data: url,
-                      version: QrVersions.auto,
-                      size: 200,
-                      backgroundColor: Colors.white,
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Copy button
-                SizedBox(
-                  width: double.infinity,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: IconButton(
-                      key: ValueKey(copied),
-                      onPressed: onCopy,
-                      icon: Icon(
-                        copied ? Icons.check_rounded : Icons.copy_rounded,
-                        size: 18,
+                Row(
+                  children: [
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: OutlinedButton.icon(
+                          key: ValueKey(widget.copied),
+                          onPressed: widget.onCopy,
+                          icon: Icon(
+                            widget.copied
+                                ? Icons.check_rounded
+                                : Icons.copy_rounded,
+                            size: 16,
+                          ),
+                          label: Text(
+                            widget.copied
+                                ? AppLocalizations.of(context)!.copiedToClipboard
+                                : AppLocalizations.of(context)!.copy,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.kPrimaryColor,
+                            side: BorderSide(color: AppColors.kPrimaryColor),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _sharing ? null : _shareToWhatsApp,
+                        icon: _sharing
+                            ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                            : const Icon(Icons.share, size: 16),
+                        label: Text(
+                          _sharing ? '...' : AppLocalizations.of(context)!.whatsapp,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF25D366),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -311,7 +384,7 @@ class _StatsTab extends StatelessWidget {
   final Map<String, dynamic>? stats;
   final bool loading;
   final String? error;
-  final VoidCallback onRetry;
+  final Future<void> Function() onRetry;
 
   const _StatsTab({
     required this.stats,
@@ -323,7 +396,7 @@ class _StatsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Center(child: LoadingScreen(asWidget: true,isOne: true,));
+      return const Center(child: LoadingScreen(asWidget: true, isOne: true));
     }
 
     if (error != null) {
@@ -347,8 +420,16 @@ class _StatsTab extends StatelessWidget {
     }
 
     if (stats == null) {
-      return const Center(child: LoadingScreen(asWidget: true,isOne: true,));
+      return const Center(child: LoadingScreen(asWidget: true, isOne: true));
     }
+
+    // ✅ Referrals hero card
+    final referralsItem = _StatItem(
+      label: AppLocalizations.of(context)!.referrals,
+      value: stats!['numberOfReferralsBySeller'] ?? 0,
+      icon: Icons.people_alt_rounded,
+      color: AppColors.kSecondaryColor,
+    );
 
     final items = [
       _StatItem(
@@ -383,29 +464,34 @@ class _StatsTab extends StatelessWidget {
       ),
     ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 8),
-          // Total orders — big hero card
-          _HeroStatCard(item: items[0]),
-          const SizedBox(height: 16),
-          // 2x2 grid for the rest
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.4,
-            children: items
-                .skip(1)
-                .map((item) => _StatCard(item: item))
-                .toList(),
-          ),
-        ],
+    return RefreshIndicator(
+      onRefresh: onRetry,
+      color: AppColors.kPrimaryColor,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            // ✅ Referrals at the top
+            _HeroStatCard(item: referralsItem),
+            const SizedBox(height: 12),
+            // Total orders below
+            _HeroStatCard(item: items[0]),
+            const SizedBox(height: 16),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.4,
+              children:
+              items.skip(1).map((item) => _StatCard(item: item)).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }
