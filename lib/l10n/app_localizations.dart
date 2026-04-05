@@ -2747,6 +2747,12 @@ abstract class AppLocalizations {
   /// **'Whatsapp'**
   String get whatsapp;
 
+  /// No description provided for @knowUsMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Know Us More'**
+  String get knowUsMore;
+
   /// No description provided for @nearMe.
   ///
   /// In en, this message translates to:

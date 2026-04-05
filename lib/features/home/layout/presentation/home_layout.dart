@@ -501,6 +501,18 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           ),
                                           const Divider(),
                                           ListTile(
+                                            onTap: () =>
+                                                context.push('/KnowUsMoreScreen'),
+                                            leading: const Icon(
+                                              Icons.favorite,
+                                            ),
+                                            title: Text(
+                                              localizations.knowUsMore,
+                                              style: AppTextStyles.bold16,
+                                            ),
+                                          ),
+                                          const Divider(),
+                                          ListTile(
                                             onTap: () {
                                               launchUrl(
                                                 Uri.parse(

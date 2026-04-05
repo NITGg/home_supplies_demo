@@ -1362,5 +1362,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatsapp => 'Whatsapp';
 
   @override
+  String get knowUsMore => 'Know Us More';
+
+  @override
   String get nearMe => 'Near Me';
 }

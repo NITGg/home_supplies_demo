@@ -1362,5 +1362,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get whatsapp => 'واتسآب';
 
   @override
+  String get knowUsMore => 'تعرف علينا أكثر';
+
+  @override
   String get nearMe => 'بالقرب مني';
 }

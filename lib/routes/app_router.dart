@@ -18,6 +18,7 @@ import '../features/home/drawer_pages/privacy_page.dart';
 import '../features/home/drawer_pages/support_page.dart';
 import '../features/home/drawer_pages/terms_page.dart';
 import '../features/home/layout/presentation/home_layout.dart';
+import '../features/know_us_more/know_us_more.dart';
 import '../features/onboarding/onboarding.dart';
 import '../core/utils/secure_storage_service.dart';
 import '../features/referral/referral_screen.dart';
@@ -76,6 +77,11 @@ Future<GoRouter> createAppRouter({
         path: '/ReferralQrScreen',
         name: 'ReferralQrScreen',
         builder: (context, state) => const ReferralQrScreen(),
+      ),
+      GoRoute(
+        path: '/KnowUsMoreScreen',
+        name: 'KnowUsMoreScreen',
+        builder: (context, state) => const KnowUsMoreScreen(),
       ),
       GoRoute(
         path: '/ReviewsScreen',
