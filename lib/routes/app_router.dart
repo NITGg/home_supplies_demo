@@ -20,6 +20,7 @@ import '../features/home/drawer_pages/terms_page.dart';
 import '../features/home/layout/presentation/home_layout.dart';
 import '../features/onboarding/onboarding.dart';
 import '../core/utils/secure_storage_service.dart';
+import '../features/referral/referral_screen.dart';
 import '../features/reviews/data/data_source/reviews_remote_data_source.dart';
 import '../features/reviews/data/repositories/reviews_repo.dart';
 import '../features/reviews/manager/reviews_cubit.dart';
@@ -72,6 +73,11 @@ Future<GoRouter> createAppRouter({
         builder: (context, state) => const ProfileScreen(),
       ),
       GoRoute(
+        path: '/ReferralQrScreen',
+        name: 'ReferralQrScreen',
+        builder: (context, state) => const ReferralQrScreen(),
+      ),
+      GoRoute(
         path: '/ReviewsScreen',
         name: 'ReviewsScreen',
         builder: (context, state) => BlocProvider(
@@ -92,7 +98,7 @@ Future<GoRouter> createAppRouter({
             path: '/auth/loginDeleted',
             name: 'loginDeleted',
             builder: (context, state) =>
-            const LoginScreen(isAccountDeleted: true),
+                const LoginScreen(isAccountDeleted: true),
           ),
           GoRoute(
             path: '/auth/register',

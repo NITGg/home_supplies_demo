@@ -75,6 +75,8 @@ dependencies:
   socket_io_client: ^3.1.4
   flutter_html: ^3.0.0
   floating_draggable_widget: ^2.3.0
+  qr_flutter: ^4.1.0
+  play_install_referrer: ^0.5.0
 
 dev_dependencies:
   flutter_test:

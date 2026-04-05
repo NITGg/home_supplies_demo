@@ -1344,5 +1344,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ratingExcellent => 'ممتاز';
 
   @override
+  String get referral => 'الإحالة';
+
+  @override
   String get nearMe => 'بالقرب مني';
 }

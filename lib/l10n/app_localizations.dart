@@ -2702,7 +2702,7 @@ abstract class AppLocalizations {
   /// No description provided for @far.
   ///
   /// In en, this message translates to:
-  /// **'Far'**
+  /// **'Away'**
   String get far;
 
   /// No description provided for @ratingExcellent.
@@ -2710,6 +2710,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Excellent'**
   String get ratingExcellent;
+
+  /// No description provided for @referral.
+  ///
+  /// In en, this message translates to:
+  /// **'Referral'**
+  String get referral;
 
   /// No description provided for @nearMe.
   ///

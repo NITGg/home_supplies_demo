@@ -9,6 +9,7 @@ class UserProfileModel {
   final String? personalPhoto;
   final String? gender;
   final String? lang;
+  final String? referralCode;
   final bool? isActive;
   final bool? isEmailVerified;
   final bool? isPhoneVerified;
@@ -30,6 +31,7 @@ class UserProfileModel {
     this.extraPhones,
     this.personalPhoto,
     this.gender,
+    this.referralCode,
     this.lang,
     this.isActive,
     this.isEmailVerified,
@@ -51,6 +53,7 @@ class UserProfileModel {
       roleId: user['role_id'] as int?,
       badgeId: user['badge_id'] as int?,
       email: user['email'] as String?,
+      referralCode: user['referral_code'] as String?,
       fullName: user['full_name'] as String,
       phone: user['phone'] as String?,
       extraPhones: user['extra_phones'] as String?,

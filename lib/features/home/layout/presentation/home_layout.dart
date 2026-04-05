@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tawreedat_go/core/widgets/banners.dart';
 import 'package:tawreedat_go/features/coupons/manager/coupons_cubit.dart';
 import 'package:tawreedat_go/features/wallet/manager/wallet_cubit.dart';
 import 'package:tawreedat_go/features/wallet/manager/wallet_state.dart';
@@ -18,7 +19,6 @@ import '../../../../main.dart';
 import '../../../addresses/data/models/governorate_model.dart';
 import '../../../addresses/manager/governorate_cubit.dart';
 import '../../../addresses/manager/governorate_states.dart';
-import '../../../auth/data/models/user_profile_model.dart';
 import '../../../auth/manager/auth_cubit.dart';
 import '../../../../core/utils/secure_storage_service.dart';
 import '../../../../core/style/app_colors.dart';
@@ -26,10 +26,12 @@ import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
 import '../../../auth/manager/profile_cubit.dart';
+import '../../../auth/manager/profile_states.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
 import '../../../notifications/presentation/widgets/notification_dialog.dart';
 import '../../../orders/presentation/orders_list_screen.dart';
 import '../../../orders/presentation/widgets/sheets/create_order_sheet/create_order_sheet.dart';
+import '../../../referral/refferal_service.dart';
 import '../../../static_text/app_dynamic_info.dart';
 import '../manager/home_cubit.dart';
 import 'go_button.dart';
@@ -42,17 +44,22 @@ class HomeLayout extends StatefulWidget {
 }
 
 class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
-  late Future<UserProfileModel?> _userProfileFuture;
   String _userId = '';
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this); // 👈 add observer
-    _userProfileFuture = _loadUserProfile();
+    WidgetsBinding.instance.addObserver(this);
     notificationDialogTrigger.addListener(_onExternalNotificationTrigger);
-
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+
+      // Fetch profile from cubit — single source of truth
+      if (mounted) {
+        context.read<ProfileCubit>().fetchProfile();
+        context.read<WalletCubit>().fetchWalletData();
+      }
+
+      // Connect socket
       final token = await SecureStorageService().getToken();
       if (token != null && token.isNotEmpty) {
         final socketService = SocketService();
@@ -61,24 +68,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
           accessToken: token,
         );
       }
-      if (mounted) {
-        context.read<WalletCubit>().fetchWalletData();
-      }
-
-      // ── Wait for profile to load, then show pending notification ─────────
-      _userProfileFuture.then((_) {
-        if (!mounted) return;
-        // Killed-state: profile just loaded — show dialog now if pending
-        _showPendingNotificationDialog();
-      });
-
-      // ── Background-tap fast path ──────────────────────────────────────────
-      // If profile was already loaded (user was using the app), show immediately
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (!mounted) return;
-      if (_userId.isNotEmpty) {
-        _showPendingNotificationDialog();
-      }
     });
   }
 
@@ -86,8 +75,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     if (!mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      // No flags to check — handleNotificationTap already cleared them.
-      // Just show the dialog directly using this scope's context.
       HomeCubit? homeCubit;
       CouponCubit? couponCubit;
       try {
@@ -105,8 +92,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     });
   }
 
-  /// Shows the notifications dialog if there is a pending notification.
-  /// Safe to call multiple times — clears the flags on first successful call.
   void _showPendingNotificationDialog() {
     if (!mounted) return;
     if (pendingNotificationData == null && !shouldShowNotificationDialog) return;
@@ -130,9 +115,11 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
       couponCubit: couponCubit,
     );
   }
+
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this); // 👈 remove observer
+    WidgetsBinding.instance.removeObserver(this);
+    notificationDialogTrigger.removeListener(_onExternalNotificationTrigger);
     super.dispose();
   }
 
@@ -162,35 +149,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     }
   }
 
-  Future<UserProfileModel?> _loadUserProfile() async {
-    final userProfileJson = await SecureStorageService().getUserProfile();
-    if (userProfileJson != null) {
-      if (userProfileJson['phone'] == null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _showPhoneNumberBottomSheet(context);
-          }
-        });
-      }
-      final profile = UserProfileModel.fromJson(userProfileJson);
-      // ✅ Set userId as soon as profile is available, before build runs
-      if (mounted) {
-        setState(() {
-          _userId = profile.id.toString();
-        });
-      }
-      return profile;
-    }
-    return null;
-  }
-
-  Future<void> _refreshUserProfile() async {
-    final newUserProfile = await _loadUserProfile();
-    setState(() {
-      _userProfileFuture = Future.value(newUserProfile);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final scaffoldKey = GlobalKey<ScaffoldState>();
@@ -209,18 +167,45 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
         builder: (context, state) {
           final cubit = context.read<HomeCubit>();
 
-          return FutureBuilder<UserProfileModel?>(
-            future: _userProfileFuture,
-            builder: (context, snapshot) {
-              final profile = snapshot.data;
-              // ✅ Use _userId from state — already set before first build with data
+          return BlocBuilder<ProfileCubit, ProfileState>(
+            builder: (context, profileState) {
+              final profile = profileState is ProfileLoaded
+                  ? profileState.profile
+                  : null;
 
-              return BlocListener<AuthCubit, AuthState>(
-                listener: (context, state) {
-                  if (state is AuthUpdateSuccess) {
-                    _refreshUserProfile();
-                  }
-                },
+              return MultiBlocListener(
+                listeners: [
+                  BlocListener<AuthCubit, AuthState>(
+                    listener: (context, state) {
+                      if (state is AuthUpdateSuccess) {
+                        context.read<ProfileCubit>().fetchProfile();
+                      }
+                    },
+                  ),
+                  BlocListener<ProfileCubit, ProfileState>(
+                    listener: (context, profileState) {
+                      if (profileState is ProfileLoaded) {
+                        setState(() {
+                          _userId = profileState.profile.id.toString();
+                        });
+
+                        // ✅ Now we have userId — safe to capture referral
+                        ReferralCaptureService.captureOnFirstLaunch(
+                          userId: _userId,
+                        ).then((code) {
+                          if (code != null && mounted) {
+                            showSuccessBanner(context, 'your referral code is: $code');
+                          }
+                        });
+
+                        if (profileState.profile.phone == null) {
+                          _showPhoneNumberBottomSheet(context);
+                        }
+                        _showPendingNotificationDialog();
+                      }
+                    },
+                  ),
+                ],
                 child: Scaffold(
                   key: scaffoldKey,
                   appBar: PreferredSize(
@@ -239,8 +224,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                   FloatingActionButtonLocation.centerDocked,
                   floatingActionButton: FloatingActionButton.large(
                     onPressed: () {
-                      // Read the already-loaded response; fall back to empty if not ready
-                      final govState = context.read<GovernorateCubit>().state;
+                      final govState =
+                          context.read<GovernorateCubit>().state;
                       final governorates = govState is GovernoratesLoaded
                           ? govState.response
                           : GovernoratesResponse(
@@ -248,15 +233,17 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                         totalCount: 0,
                         totalPages: 0,
                       );
-                      final balance = context.read<WalletCubit>().state is WalletLoaded
-                          ? (context.read<WalletCubit>().state as WalletLoaded).walletData.wallet.balance
-                          : 0.0;
+                      final walletCubit = context.read<WalletCubit>();
+                      final balance = walletCubit.cachedWalletData?.wallet.balance ?? 0.0;
 
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
-                        builder: (_) => CreateOrderBottomSheet(governorates: governorates,walletBalance: balance,),
+                        builder: (_) => CreateOrderBottomSheet(
+                          governorates: governorates,
+                          walletBalance: balance,
+                        ),
                       );
                     },
                     backgroundColor: AppColors.kSecondaryColor,
@@ -311,6 +298,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                               Padding(
                                                 padding: const EdgeInsets.only(
                                                     bottom: 10.0),
+                                                // ✅ Photo now reactive to ProfileCubit
                                                 child: _ProfileAvatar(
                                                   imageUrl:
                                                   profile?.personalPhoto,
@@ -418,6 +406,24 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                 .read<LocaleCubit>()
                                                 .toggleLocale(),
                                           ),
+
+                                          // ✅ Referral tile — reactive to ProfileLoaded state
+                                          if (profileState is ProfileLoaded &&
+                                              profileState.profile.roleId
+                                                  .toString() ==
+                                                  '4') ...[
+                                            const Divider(),
+                                            ListTile(
+                                              onTap: () => context
+                                                  .push('/ReferralQrScreen'),
+                                              leading:
+                                              const Icon(Icons.share),
+                                              title: Text(
+                                                  localizations.referral,
+                                                  style: AppTextStyles.bold16),
+                                            ),
+                                          ],
+
                                           const Divider(),
                                           ListTile(
                                             onTap: () => context
@@ -438,8 +444,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () => context
-                                                .push('/ProfileScreen'),
+                                            onTap: () =>
+                                                context.push('/ProfileScreen'),
                                             leading:
                                             const Icon(Icons.person),
                                             title: Text(localizations.profile,
@@ -449,8 +455,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           ListTile(
                                             onTap: () => context
                                                 .push('/ReviewsScreen'),
-                                            leading:
-                                            const Icon(Icons.star_half),
+                                            leading: const Icon(
+                                                Icons.star_half),
                                             title: Text(localizations.reviews,
                                                 style: AppTextStyles.bold16),
                                           ),
@@ -494,7 +500,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                 context.push('/Terms'),
                                             leading: const Icon(Icons.lock),
                                             title: Text(
-                                                localizations.termsAndConditions,
+                                                localizations
+                                                    .termsAndConditions,
                                                 style: AppTextStyles.bold16),
                                           ),
                                         ],
@@ -644,14 +651,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                 },
                 text: localizations.confirm,
               ),
-              // const SizedBox(height: 10),
-              // Center(
-              //   child: TextButton(
-              //     onPressed: () => Navigator.pop(context),
-              //     child: Text(localizations.maybeLater,
-              //         style: AppTextStyles.bold16),
-              //   ),
-              // ),
               const SizedBox(height: 20),
             ],
           ),
@@ -661,7 +660,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   }
 }
 
-// ✅ Extracted bottom nav bar widget — uses NotificationButton for badge support
+// ── _BottomNavBar ─────────────────────────────────────────────────────────────
+
 class _BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final String userId;
@@ -710,12 +710,10 @@ class _BottomNavBar extends StatelessWidget {
           return Stack(
             alignment: Alignment.topCenter,
             children: [
-              // Nav items
               Positioned.fill(
                 top: 8,
                 child: Row(
                   children: [
-                    // Orders tab
                     Expanded(
                       child: InkWell(
                         onTap: onOrdersTap,
@@ -747,15 +745,13 @@ class _BottomNavBar extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    // ✅ Notifications tab — only render NotificationButton once userId is ready
                     Expanded(
                       child: InkWell(
                         onTap: onNotificationsTap,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                              NotificationButton(userId: userId),
+                            NotificationButton(userId: userId),
                             Text(
                               localizations.notifications,
                               style: const TextStyle(
@@ -772,9 +768,6 @@ class _BottomNavBar extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Animated indicator — only shows under orders tab (index 0)
-              // since notifications tab opens a dialog, not a screen
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
