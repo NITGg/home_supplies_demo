@@ -65,17 +65,22 @@ class OrderRemoteDataSource {
     int skip = 0,
     int limit = 20,
     String? status,
+    bool filterByExpiry = true,
   }) async {
-    log('Fetching orders - skip: $skip, limit: $limit, status: $status');
+    log('Fetching orders - skip: $skip, limit: $limit, status: $status, filterByExpiry: $filterByExpiry');
+
+    final queryParams = {
+      'skip': skip,
+      'limit': limit,
+      'lang': LocaleManager.currentLocale,
+      if (status != null) 'status': status,
+      if (filterByExpiry)
+        'expires_at[gte]': DateTime.now().toUtc(),
+    };
 
     final response = await _dio.get(
-      '/orders?includes=courier=user',
-      queryParameters: {
-        'skip': skip,
-        'limit': limit,
-        'lang': LocaleManager.currentLocale,
-        if (status != null) 'status': status,
-      },
+      '/orders',
+      queryParameters: queryParams,
     );
 
     log('Get orders response: ${response.data}');

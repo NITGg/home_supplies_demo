@@ -33,6 +33,7 @@ class Order {
   final DateTime? offerAcceptedAt;
   final DateTime? deliveredAt;
   final DateTime? canceledAt;
+  final DateTime? expiresAt;
   final String? courierName;
   final String? courierPhone;
   final String? courierPhoto; // ← NEW: courier avatar URL
@@ -76,6 +77,7 @@ class Order {
     this.offerAcceptedAt,
     this.deliveredAt,
     this.canceledAt,
+    this.expiresAt,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -127,6 +129,9 @@ class Order {
           : null,
       deliveredAt: json['delivered_at'] != null
           ? DateTime.parse(json['delivered_at'])
+          : null,
+      expiresAt: json['expires_at'] != null
+          ? DateTime.parse(json['expires_at'])
           : null,
       canceledAt: json['canceled_at'] != null
           ? DateTime.parse(json['canceled_at'])

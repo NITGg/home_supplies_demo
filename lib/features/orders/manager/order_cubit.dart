@@ -52,6 +52,7 @@ class OrderCubit extends Cubit<OrderState> {
         skip: _activeSkip,
         limit: _activeLimit,
         status: 'PENDING',
+        filterByExpiry: true,
       );
 
       // Then fetch IN_PROGRESS orders

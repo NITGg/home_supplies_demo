@@ -18,11 +18,13 @@ class OrderRepository {
     int skip = 0,
     int limit = 20,
     String? status,
+    bool filterByExpiry = false,
   }) async {
     return await _remoteDataSource.getOrders(
       skip: skip,
       limit: limit,
       status: status,
+      filterByExpiry: filterByExpiry,
     );
   }
 
