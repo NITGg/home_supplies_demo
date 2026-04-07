@@ -240,8 +240,20 @@ class OrderCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     if (order.budget != '0')
-                      OrderBudgetChip(
-                        budget: order.actualPrice == '0'? order.budget: order.actualPrice,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          OrderBudgetChip(
+                            budget: order.actualPrice == '0'
+                                ? order.budget
+                                : order.actualPrice,
+                          ),
+                          if (order.paymentMethod == 'CASH' ||
+                              order.paymentMethod == 'WALLET') ...[
+                            const SizedBox(width: 8),
+                            _PaymentMethodChip(paymentMethod: order.paymentMethod!),
+                          ],
+                        ],
                       ),
                   ],
                 ),
@@ -706,6 +718,53 @@ class _PriceAdjustmentFooter extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Payment Method Chip
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PaymentMethodChip extends StatelessWidget {
+  final String paymentMethod;
+
+  const _PaymentMethodChip({required this.paymentMethod});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final isCash = paymentMethod == 'CASH';
+    final IconData icon =
+    isCash ? Icons.payments_outlined : Icons.account_balance_wallet_outlined;
+    final String label = isCash
+        ? (l10n.cod)
+        : (l10n.wallet);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.kSecondaryColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.kSecondaryColor.withOpacity(0.25),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: AppColors.kSecondaryColor),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: AppTextStyles.bold14.copyWith(
+              fontSize: 12,
+              color: AppColors.kSecondaryColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // Animated pulsing dot — signals the user that action is required
 // ─────────────────────────────────────────────────────────────────────────────
