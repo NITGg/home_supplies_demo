@@ -954,7 +954,7 @@ class _ProposalCardState extends State<_ProposalCard> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        _distanceLabel(context),
+                        _formatDuration(widget.proposal.timeToPickup, l10n),
                         style: AppTextStyles.bold14.copyWith(
                           fontSize: 12,
                           color: AppColors.kPrimaryColor,
