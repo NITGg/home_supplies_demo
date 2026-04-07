@@ -291,6 +291,7 @@
                     "acceptanceRate": "نسبة القبول",
                     "avgDeliveryTime": "متوسط وقت التوصيل",
                     "min": "دقائق",
+                    "hour": "ساعات",
                     "totalReviews": "مجموع المراجعات",
                     "cancelled": "ملغي",
                     "earn": "اكسب",

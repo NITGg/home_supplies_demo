@@ -289,6 +289,7 @@
                     "acceptanceRate": "Acceptance Rate",
                                         "avgDeliveryTime": "Avg Delivery Time",
                     "min": "min",
+                                        "hour": "hour",
                     "totalReviews": "Total Reviews",
                     "cancelled": "Cancelled",
                     "earn": "Earn",

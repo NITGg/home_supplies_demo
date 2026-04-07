@@ -708,6 +708,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get min => 'min';
 
   @override
+  String get hour => 'hour';
+
+  @override
   String get totalReviews => 'Total Reviews';
 
   @override

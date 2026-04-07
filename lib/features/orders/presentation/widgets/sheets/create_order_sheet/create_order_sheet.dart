@@ -11,7 +11,7 @@ import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/create_
 import 'package:tawreedat_go/l10n/app_localizations.dart';
 
 import '../../../../../../core/utils/area_boundry_validator.dart';
-import '../../../../../../core/utils/calculate_distance.dart';
+import '../../../../../../core/utils/distance_service.dart';
 import '../../../../../../core/widgets/custom_button.dart';
 import '../../../../../../core/widgets/text_form.dart';
 import '../../../../../addresses/data/models/address_model.dart';
@@ -58,7 +58,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   bool _isShopping = true;
   String _paymentMethod = 'CASH';
   bool _pickupNearMe = false;
-  late double distanceInMeters;
+
+  // ── Distance state (replaces the old synchronous calculateDistance call) ──
+  DistanceResult? _distanceResult; // null = not yet fetched / addresses missing
+  bool _fetchingDistance = false;
 
   CouponValid? _appliedCoupon;
   bool _couponValidating = false;
@@ -86,6 +89,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         );
         if (_deliveryAddress == null) {
           setState(() => _deliveryAddress = defaultAddr);
+          _fetchDistanceIfReady(); // try fetching once default is loaded
         }
       }
     });
@@ -106,8 +110,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  Address get _effectivePickup =>
-      _pickupNearMe ? _deliveryAddress! : _pickupAddress!;
+  Address? get _effectivePickup =>
+      _pickupNearMe ? _deliveryAddress : _pickupAddress;
 
   Area? _areaFor(Address address) =>
       widget.governorates.findAreaById(address.areaId);
@@ -122,20 +126,53 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
   }
 
-  // ── Fee calculation ────────────────────────────────────────────────────────
+  // ── Distance fetching ──────────────────────────────────────────────────────
 
-  double? _calculateShippingFee() {
-    log('🚚 [Shipping] Starting fee calculation');
+  /// Calls POST /distances whenever both addresses are available.
+  /// Resets [_distanceResult] and shows a spinner while waiting.
+  Future<void> _fetchDistanceIfReady() async {
+    final pickup = _effectivePickup;
+    final delivery = _deliveryAddress;
 
-    final effectivePickup = _pickupNearMe ? _deliveryAddress : _pickupAddress;
-
-    if (effectivePickup == null || _deliveryAddress == null) {
-      log('❌ [Shipping] Missing addresses -> pickup: $effectivePickup, delivery: $_deliveryAddress');
-      return null;
+    if (pickup == null || delivery == null) {
+      if (mounted) setState(() => _distanceResult = null);
+      return;
     }
 
-    log('📍 [Shipping] Pickup: (${effectivePickup.addressLat}, ${effectivePickup.addressLong})');
-    log('📍 [Shipping] Delivery: (${_deliveryAddress!.addressLat}, ${_deliveryAddress!.addressLong})');
+    if (mounted) {
+      setState(() {
+        _fetchingDistance = true;
+        _distanceResult = null;
+      });
+    }
+
+    try {
+      final result = await DistanceService.instance.fetchDistance(
+        pickupLat: double.parse(pickup.addressLat),
+        pickupLng: double.parse(pickup.addressLong),
+        deliveryLat: double.parse(delivery.addressLat),
+        deliveryLng: double.parse(delivery.addressLong),
+      );
+
+      log('📏 [Distance] ${result.distanceMeters} m  '
+          '⏱ ${result.durationSeconds} s  '
+          '(${result.provider})');
+
+      if (mounted) setState(() => _distanceResult = result);
+    } catch (e) {
+      log('❌ [Distance] fetch failed: $e');
+      if (mounted) setState(() => _distanceResult = null);
+    } finally {
+      if (mounted) setState(() => _fetchingDistance = false);
+    }
+  }
+
+  // ── Fee calculation ────────────────────────────────────────────────────────
+
+  /// Returns the shipping fee in EGP using the already-fetched distance,
+  /// or null when the distance is not yet available.
+  double? _calculateShippingFee() {
+    if (_distanceResult == null) return null;
 
     final rawFeePerKm =
         double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000;
@@ -145,22 +182,12 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final double feePerKm = rawFeePerKm / 100;
     final double minFee = rawMinFee / 100;
 
-    log('💰 [Shipping] feePerKm: $feePerKm, minFee: $minFee');
-
-    distanceInMeters = calculateDistance(
-      double.parse(effectivePickup.addressLat),
-      double.parse(effectivePickup.addressLong),
-      double.parse(_deliveryAddress!.addressLat),
-      double.parse(_deliveryAddress!.addressLong),
-    );
-
-    log('📏 [Shipping] Distance (meters): $distanceInMeters');
-
-    final calculatedFee = distanceInMeters * feePerKm / 1000;
+    final distanceMeters = _distanceResult!.distanceMeters;
+    final calculatedFee = distanceMeters * feePerKm / 1000;
     final fee = calculatedFee < minFee ? minFee : calculatedFee;
     final finalFee = fee.ceilToDouble();
 
-    log('🎯 [Shipping] Final fee (ceil): $finalFee');
+    log('🚚 [Shipping] dist=${distanceMeters}m  fee=$finalFee EGP');
     return finalFee;
   }
 
@@ -213,7 +240,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       title: AppLocalizations.of(context)!.pickupLocation,
       isPickup: true,
     );
-    if (result != null && mounted) setState(() => _pickupAddress = result);
+    if (result != null && mounted) {
+      setState(() => _pickupAddress = result);
+      _fetchDistanceIfReady();
+    }
   }
 
   Future<void> _selectDeliveryAddress() async {
@@ -221,7 +251,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       title: AppLocalizations.of(context)!.deliveryLocation,
       isPickup: false,
     );
-    if (result != null && mounted) setState(() => _deliveryAddress = result);
+    if (result != null && mounted) {
+      setState(() => _deliveryAddress = result);
+      _fetchDistanceIfReady();
+    }
   }
 
   Future<Address?> _openAddressSheet({
@@ -243,18 +276,45 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   Widget _buildRouteSection(AppLocalizations l10n) {
     final fee = _calculateShippingFee();
-    final effectivePickup = _pickupNearMe ? _deliveryAddress : _pickupAddress;
+    final effectivePickup = _effectivePickup;
 
     final pickupOutOfBounds =
         effectivePickup != null && !_isAddressInArea(effectivePickup);
     final deliveryOutOfBounds =
         _deliveryAddress != null && !_isAddressInArea(_deliveryAddress!);
 
-    final distanceLabel = fee != null
-        ? (distanceInMeters >= 1000
-        ? '${(distanceInMeters / 1000).toStringAsFixed(1)} ${l10n.km}'
-        : '${distanceInMeters.toStringAsFixed(0)} ${l10n.m}')
-        : null;
+    // Distance label — show spinner while fetching, value when ready
+    Widget? distanceBadgeChild;
+    if (_fetchingDistance) {
+      distanceBadgeChild = const SizedBox(
+        width: 14,
+        height: 14,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
+      );
+    } else if (_distanceResult != null) {
+      final meters = _distanceResult!.distanceMeters;
+      final label = meters >= 1000
+          ? '${(meters / 1000).toStringAsFixed(1)} ${l10n.km}'
+          : '${meters.toStringAsFixed(0)} ${l10n.m}';
+      distanceBadgeChild = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.route_rounded, size: 12, color: Colors.white),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -376,13 +436,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       ),
                     ),
 
-                  // ── Fee badge divider ──
+                  // ── Distance badge divider ──
                   if (!_pickupNearMe)
                     Stack(
                       alignment: Alignment.center,
                       children: [
                         Divider(height: 1, color: Colors.grey.shade200),
-                        if (distanceLabel != null)
+                        if (distanceBadgeChild != null)
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -392,25 +452,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               color: AppColors.kSecondaryColor,
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.route_rounded,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  distanceLabel,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            child: distanceBadgeChild,
                           ),
                       ],
                     ),
@@ -591,7 +633,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               icon,
               key: ValueKey('$icon-$selected'),
               size: 20,
-              color: selected ? AppColors.kSecondaryColor : Colors.grey.shade400,
+              color:
+              selected ? AppColors.kSecondaryColor : Colors.grey.shade400,
             ),
           ),
           const SizedBox(width: 6),
@@ -709,7 +752,23 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       return;
     }
 
-    final effectivePickup = _effectivePickup;
+    // // Block submission while the distance is still loading
+    // if (_fetchingDistance) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text(l10n.calculatingDistance)),
+    //   );
+    //   return;
+    // }
+
+    // Require a successful distance fetch before submitting
+    if (_distanceResult == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.pleaseSelectLocation)),
+      );
+      return;
+    }
+
+    final effectivePickup = _effectivePickup!;
 
     if (!_isAddressInArea(effectivePickup)) {
       Fluttertoast.showToast(
@@ -733,16 +792,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       return;
     }
 
+    // Use the already-fetched distance for the minimum-distance guard
     if (!_pickupNearMe) {
-      final distance = calculateDistance(
-        double.parse(effectivePickup.addressLat),
-        double.parse(effectivePickup.addressLong),
-        double.parse(_deliveryAddress!.addressLat),
-        double.parse(_deliveryAddress!.addressLong),
-      );
+      final distanceMeters = _distanceResult!.distanceMeters;
+      final minDistance =
+          double.tryParse(AppSettings.min_delivery_distance ?? '0') ?? 0;
 
-      if (distance <
-          (double.tryParse(AppSettings.min_delivery_distance ?? '0') ?? 0)) {
+      if (distanceMeters < minDistance) {
         Fluttertoast.showToast(
           msg: l10n.distanceTooClose,
           toastLength: Toast.LENGTH_SHORT,
@@ -818,10 +874,14 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   Widget _buildNearMeCheckbox(AppLocalizations l10n) {
     return GestureDetector(
-      onTap: () => setState(() {
-        _pickupNearMe = !_pickupNearMe;
-        if (_pickupNearMe) _pickupAddress = null;
-      }),
+      onTap: () {
+        setState(() {
+          _pickupNearMe = !_pickupNearMe;
+          if (_pickupNearMe) _pickupAddress = null;
+        });
+        // Near-Me re-routes pickup through delivery address — re-fetch
+        _fetchDistanceIfReady();
+      },
       child: Row(
         children: [
           SizedBox(
@@ -833,10 +893,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
-              onChanged: (val) => setState(() {
-                _pickupNearMe = val ?? false;
-                if (_pickupNearMe) _pickupAddress = null;
-              }),
+              onChanged: (val) {
+                setState(() {
+                  _pickupNearMe = val ?? false;
+                  if (_pickupNearMe) _pickupAddress = null;
+                });
+                _fetchDistanceIfReady();
+              },
             ),
           ),
           const SizedBox(width: 10),
@@ -924,7 +987,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) {
-          // Compute fee once per build to avoid repeated calls in children
           final shippingFee = _calculateShippingFee();
 
           return Container(
@@ -1279,8 +1341,7 @@ class _BalanceRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade700,
-                fontWeight:
-                highlight ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: highlight ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ),

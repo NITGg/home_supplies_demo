@@ -708,6 +708,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get min => 'دقائق';
 
   @override
+  String get hour => 'ساعات';
+
+  @override
   String get totalReviews => 'مجموع المراجعات';
 
   @override

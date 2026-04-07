@@ -696,6 +696,14 @@ class _ProposalCardState extends State<_ProposalCard> {
     return '${widget.proposal.distanceToPickupM.toStringAsFixed(0)} ${l10n.m}';
   }
 
+  String _formatDuration(int seconds, AppLocalizations l10n) {
+    final mins = (seconds / 60).round();
+    if (mins < 60) return '$mins ${l10n.min}';
+    final h = mins ~/ 60;
+    final m = mins % 60;
+    return m == 0 ? '$h${l10n.hour}' : '$h${l10n.hour} $m${l10n.min}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final statusColor = _getStatusColor();
@@ -813,6 +821,16 @@ class _ProposalCardState extends State<_ProposalCard> {
                       const SizedBox(width: 3),
                       Text(
                         _distanceLabel(context),
+                        style: AppTextStyles.regular14.copyWith(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Icon(Icons.timer, size: 13, color: Colors.grey.shade500),
+                      const SizedBox(width: 3),
+                      Text(
+                        _formatDuration(widget.proposal.timeToPickup, l10n),
                         style: AppTextStyles.regular14.copyWith(
                           fontSize: 12,
                           color: Colors.grey.shade600,

@@ -65,6 +65,7 @@ class Proposal {
   final String totalFee;
   final String status;
   final double distanceToPickupM; // always in meters
+  final int timeToPickup; // always in seconds
   final DateTime createdAt;
   final DateTime? confirmedAt;
   final CourierInfo courier;
@@ -77,6 +78,7 @@ class Proposal {
     required this.totalFee,
     required this.status,
     required this.distanceToPickupM,
+    required this.timeToPickup,
     required this.createdAt,
     this.confirmedAt,
     required this.courier,
@@ -93,6 +95,8 @@ class Proposal {
       status: json['status'] as String,
       distanceToPickupM:
       double.tryParse(json['distance_to_pickup']?.toString() ?? '0') ?? 0,
+      timeToPickup:
+      int.tryParse(json['estimated_arrival_at_pickup']?.toString() ?? '0') ?? 0,
       createdAt: DateTime.parse(json['created_at']),
       confirmedAt: json['confirmed_at'] != null
           ? DateTime.parse(json['confirmed_at'])

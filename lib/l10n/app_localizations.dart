@@ -1493,6 +1493,12 @@ abstract class AppLocalizations {
   /// **'min'**
   String get min;
 
+  /// No description provided for @hour.
+  ///
+  /// In en, this message translates to:
+  /// **'hour'**
+  String get hour;
+
   /// No description provided for @totalReviews.
   ///
   /// In en, this message translates to:
