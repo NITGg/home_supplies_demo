@@ -72,6 +72,7 @@ class OrderRemoteDataSource {
     final queryParams = {
       'skip': skip,
       'limit': limit,
+      'includes': 'courier=user',
       'lang': LocaleManager.currentLocale,
       if (status != null) 'status': status,
       if (filterByExpiry)

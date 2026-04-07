@@ -368,7 +368,7 @@ class OrderCard extends StatelessWidget {
             child: hasPhoto
                 ? null
                 : Text(
-              _initials(order.courierName!),
+              _initials(order.courierName??''),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -382,7 +382,7 @@ class OrderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  order.courierName!,
+                  order.courierName??'',
                   style: AppTextStyles.bold14.copyWith(
                     fontSize: 13,
                     color: Colors.blue.shade900,
