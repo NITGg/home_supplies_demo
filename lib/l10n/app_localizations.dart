@@ -2717,11 +2717,29 @@ abstract class AppLocalizations {
   /// **'Make sure you have enough wallet balance if you want to use it to pay for your order'**
   String get walletBalanceHintShopping;
 
+  /// No description provided for @walletBalanceHintOverBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'If the budget is higher than'**
+  String get walletBalanceHintOverBudget;
+
+  /// No description provided for @walletBalanceHintOverBudget2.
+  ///
+  /// In en, this message translates to:
+  /// **'payment will be made via wallet only'**
+  String get walletBalanceHintOverBudget2;
+
   /// No description provided for @cod.
   ///
   /// In en, this message translates to:
   /// **'COD'**
   String get cod;
+
+  /// No description provided for @codN.
+  ///
+  /// In en, this message translates to:
+  /// **'COD'**
+  String get codN;
 
   /// No description provided for @far.
   ///
@@ -2758,6 +2776,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Know Us More'**
   String get knowUsMore;
+
+  /// No description provided for @preparingOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Your order is being prepared'**
+  String get preparingOrder;
+
+  /// No description provided for @findingCourier.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'re finding you the best courier…'**
+  String get findingCourier;
 
   /// No description provided for @nearMe.
   ///

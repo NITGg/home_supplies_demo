@@ -425,23 +425,9 @@ class _AddressSelectionBottomSheetState
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    AppCustomButton(
-                      onPressed: _selectAndReturn,
-                      text: AppLocalizations.of(context)!.continue_,
-                    ),
-                    Positioned(
-                      left: 0,
-                      top: -25,
-                      child: Lottie.asset(
-                        'assets/animation_json/Location.json',
-                        width: 100,
-                        height: 100,
-                      ),
-                    ),
-                  ],
+                child: AppCustomButton(
+                  onPressed: _selectAndReturn,
+                  text: AppLocalizations.of(context)!.continue_,
                 ),
               ),
             ),

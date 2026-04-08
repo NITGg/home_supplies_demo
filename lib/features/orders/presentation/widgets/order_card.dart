@@ -26,12 +26,15 @@ class OrderCard extends StatelessWidget {
   final Order order;
   final VoidCallback onViewProposals;
   final VoidCallback onCancel;
+  final VoidCallback? onRetrySuccess;
+
 
   const OrderCard({
     super.key,
     required this.order,
     required this.onViewProposals,
     required this.onCancel,
+    this.onRetrySuccess
   });
 
   Color _statusColor() {
@@ -132,6 +135,8 @@ class OrderCard extends StatelessWidget {
             if (order.hasPendingPriceAdjustment)
               _PriceAdjustmentFooter(order: order),
             if (order.isPending) _buildActionButtons(l10n),
+            // inside the Column children list in build():
+            if (order.status == 'EXPIRED') _buildRetryFooter(context,order.id),
           ],
         ),
       ),
@@ -478,6 +483,66 @@ class OrderCard extends StatelessWidget {
       ],
     );
   }
+
+  Widget _buildRetryFooter(BuildContext context, int? orderId) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return BlocConsumer<OrderCubit, OrderState>(
+      listenWhen: (_, current) =>
+      current is OrderRetried || current is OrderRetryError,
+      listener: (context, state) {
+        if (state is OrderRetried) {
+          onRetrySuccess?.call();
+        } else if (state is OrderRetryError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      buildWhen: (_, current) =>
+      current is RetryingOrder ||
+          current is OrderRetried ||
+          current is OrderRetryError ||
+          current is OrdersLoaded,
+      builder: (context, state) {
+        final isLoading = state is RetryingOrder;
+
+        return Column(
+          children: [
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              child: isLoading
+                  ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6),
+                  child: CircularProgressIndicator(
+                    color: AppColors.kSecondaryColor,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              )
+                  : SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () =>
+                      context.read<OrderCubit>().retryOrder(orderId),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: Text(
+                    l10n.retry, // add "retry" key to your ARB files
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -718,6 +783,9 @@ class _PriceAdjustmentFooter extends StatelessWidget {
   }
 }
 
+
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Payment Method Chip
 // ─────────────────────────────────────────────────────────────────────────────
@@ -756,7 +824,7 @@ class _PaymentMethodChip extends StatelessWidget {
           Text(
             label,
             style: AppTextStyles.bold14.copyWith(
-              fontSize: 12,
+              fontSize: 10,
               color: AppColors.kSecondaryColor,
             ),
           ),

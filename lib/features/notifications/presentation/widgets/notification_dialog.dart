@@ -29,6 +29,7 @@ class _NotifType {
   static const couponCreated = 'customer_coupon_created';
   static const couponUpdated = 'customer_coupon_updated';
   static const orderCancelled = 'ORDER_CANCELLED';
+  static const orderExpired = 'ORDER_EXPIRED';
   static const orderDelivered = 'ORDER_DELIVERED';
   static const badgeUpdated = 'BADGE_UPDATED';
 }
@@ -145,13 +146,11 @@ class NotificationsDialog extends StatelessWidget {
     String notificationId,
   ) async {
     context.read<NotificationsCubit>().markAsRead(notificationId);
-    Navigator.of(context).pop();
-    if (!context.mounted) return;
-
     // Payload may be nested under a 'data' key or flat
     final payload = notifData['data'] as Map<String, dynamic>? ?? notifData;
     final type = (payload['type'] as String? ?? '').trim();
-
+    Navigator.of(context).pop();
+    if (!context.mounted) return;
     debugPrint('🔔 Card tapped — type: "$type"  payload: $payload');
 
     switch (type) {
@@ -166,6 +165,7 @@ class NotificationsDialog extends StatelessWidget {
 
       case _NotifType.orderCancelled:
       case _NotifType.orderDelivered:
+      case _NotifType.orderExpired:
         log('ordernoti');
         _requestHistoryTab();
         return;

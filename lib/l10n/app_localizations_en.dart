@@ -1347,7 +1347,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walletBalanceHintShopping => 'Make sure you have enough wallet balance if you want to use it to pay for your order';
 
   @override
+  String get walletBalanceHintOverBudget => 'If the budget is higher than';
+
+  @override
+  String get walletBalanceHintOverBudget2 => 'payment will be made via wallet only';
+
+  @override
   String get cod => 'COD';
+
+  @override
+  String get codN => 'COD';
 
   @override
   String get far => 'Away';
@@ -1366,6 +1375,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowUsMore => 'Know Us More';
+
+  @override
+  String get preparingOrder => 'Your order is being prepared';
+
+  @override
+  String get findingCourier => 'We\'re finding you the best courier…';
 
   @override
   String get nearMe => 'Near Me';

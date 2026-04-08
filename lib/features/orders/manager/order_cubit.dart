@@ -256,6 +256,24 @@ class OrderCubit extends Cubit<OrderState> {
     }
   }
 
+  Future<void> retryOrder(int? orderId) async {
+    emit(const RetryingOrder());
+    try {
+      log('OrderCubit: Retrying order $orderId');
+      if (orderId == null) {
+        throw Exception('Order ID is null');
+      }
+      final response = await _repository.retryOrder(orderId);
+      log('OrderCubit: Order retried — $response');
+      emit(OrderRetried(message: response['message'] ?? 'Order retried successfully'));
+      // New order will appear as PENDING in active orders
+      await loadActiveOrders(loadMore: false);
+    } catch (e) {
+      log('OrderCubit: Error retrying order: $e');
+      emit(OrderRetryError(extractErrorMessage(e)));
+    }
+  }
+
   Future<void> cancelOrderUnavailable({required int orderId}) =>
       cancelOrder(orderId, 'Product unavailable');
 

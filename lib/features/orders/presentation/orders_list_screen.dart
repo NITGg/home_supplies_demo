@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/cancel_order_sheet.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/proposal_sheet.dart';
+import 'package:tawreedat_go/features/orders/presentation/widgets/status_banner.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
 import '../../../core/utils/socket_service.dart';
@@ -58,6 +59,14 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     context.read<OrderCubit>().loadActiveOrders();
     _scrollController.addListener(_onScroll);
     _setupSocketListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final homeCubit = context.read<HomeCubit>();
+      if (homeCubit.pendingHistoryTab) {
+        homeCubit.consumePendingHistoryTab();
+        _onTabChanged(ViewMode.history);
+      }
+    });
   }
 
   @override
@@ -686,11 +695,30 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           child: ListView.builder(
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
+            // +1 for the status banner at index 0 (active mode only),
+            // +1 again when the pagination spinner is visible.
             itemCount: displayOrders.length +
+                (_viewMode == ViewMode.active ? 1 : 0) +
                 (_shouldShowPaginationSpinner(state) ? 1 : 0),
+            padding: EdgeInsets.only(
+              // Give the banner room above the first card.
+              top: _viewMode == ViewMode.active ? 0 : 16,
+              left: 16,
+              right: 16,
+              bottom: 16,
+            ),
             itemBuilder: (context, index) {
-              if (index == displayOrders.length) {
+              // ── [0] Status banner (active tab only) ────────────────────
+              if (_viewMode == ViewMode.active && index == 0) {
+                return OrderStatusBanner(orders: displayOrders);
+              }
+
+              // Adjust index to account for the banner slot.
+              final orderIndex =
+              _viewMode == ViewMode.active ? index - 1 : index;
+
+              // ── Pagination spinner (last item) ─────────────────────────
+              if (orderIndex == displayOrders.length) {
                 return const Padding(
                   padding: EdgeInsets.all(16),
                   child: Center(
@@ -700,12 +728,16 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                 );
               }
 
-              final order = displayOrders[index];
+              // ── Order card ─────────────────────────────────────────────
+              final order = displayOrders[orderIndex];
               return OrderCard(
                 order: order,
                 onViewProposals: () => _showProposals(order),
                 onCancel: () => _showCancelSheet(order),
-                );
+                onRetrySuccess: () {
+                  _onTabChanged(ViewMode.active);
+                },
+              );
             },
           ),
         ),

@@ -85,6 +85,20 @@ class OrderCancelError extends OrderState {
   List<Object?> get props => [message];
 }
 
+class RetryingOrder extends OrderState {
+  const RetryingOrder();
+}
+
+class OrderRetried extends OrderState {
+  final String message;
+  const OrderRetried({required this.message});
+}
+
+class OrderRetryError extends OrderState {
+  final String message;
+  const OrderRetryError(this.message);
+}
+
 // ── Proposals ─────────────────────────────────────────────────────────────────
 
 class ProposalsLoading extends OrderState {

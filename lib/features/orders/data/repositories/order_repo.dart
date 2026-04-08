@@ -79,4 +79,8 @@ class OrderRepository {
   Future<Map<String, dynamic>> redeemCoupon(String code) async {
     return await _remoteDataSource.redeemCoupon(code);
   }
+
+  Future<Map<String, dynamic>> retryOrder(int orderId) async {
+    return await _remoteDataSource.retryOrder(orderId);
+  }
 }

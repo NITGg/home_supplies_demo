@@ -74,6 +74,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   @override
   void initState() {
     super.initState();
+
+    _budgetController.addListener(() {
+      setState(() {});
+    });
+
     _walletBalance = widget.walletBalance ?? 0.0;
     _initCubit = AddressCubit();
     _preloadDefaultDelivery();
@@ -84,7 +89,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (!mounted) return;
       if (state is AddressesLoaded && state.addresses.isNotEmpty) {
         final defaultAddr = state.addresses.firstWhere(
-              (a) => a.isDefault,
+          (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
         if (_deliveryAddress == null) {
@@ -154,9 +159,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         deliveryLng: double.parse(delivery.addressLong),
       );
 
-      log('📏 [Distance] ${result.distanceMeters} m  '
-          '⏱ ${result.durationSeconds} s  '
-          '(${result.provider})');
+      log(
+        '📏 [Distance] ${result.distanceMeters} m  '
+        '⏱ ${result.durationSeconds} s  '
+        '(${result.provider})',
+      );
 
       if (mounted) setState(() => _distanceResult = result);
     } catch (e) {
@@ -561,8 +568,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                 child: AnimatedAlign(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOut,
-                  alignment:
-                  isCash ? Alignment.centerLeft : Alignment.centerRight,
+                  alignment: isCash
+                      ? Alignment.centerLeft
+                      : Alignment.centerRight,
                   child: FractionallySizedBox(
                     widthFactor: 0.5,
                     child: Container(
@@ -592,7 +600,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                         onTap: () => setState(() => _paymentMethod = 'CASH'),
                         child: _buildPaymentOption(
                           icon: Icons.payments_outlined,
-                          label: l10n.cod,
+                          label: _calculateShippingFee() != null
+                              ? l10n.codN
+                              : l10n.cod,
                           selected: isCash,
                         ),
                       ),
@@ -633,17 +643,23 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               icon,
               key: ValueKey('$icon-$selected'),
               size: 20,
-              color:
-              selected ? AppColors.kSecondaryColor : Colors.grey.shade400,
+              color: selected
+                  ? AppColors.kSecondaryColor
+                  : Colors.grey.shade400,
             ),
           ),
           const SizedBox(width: 6),
           Text(
+            textAlign: TextAlign.center,
             label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: selected
                 ? AppTextStyles.bold14.copyWith(fontSize: 10)
-                : AppTextStyles.regular14
-                .copyWith(color: Colors.grey, fontSize: 10),
+                : AppTextStyles.regular14.copyWith(
+                    color: Colors.grey,
+                    fontSize: 10,
+                  ),
           ),
         ],
       ),
@@ -735,36 +751,30 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_isShopping && _productImage == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.tapToSelectImage)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.tapToSelectImage)));
       return;
     }
 
     if (!_pickupNearMe && _pickupAddress == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
     }
 
     if (_deliveryAddress == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
     }
 
-    // // Block submission while the distance is still loading
-    // if (_fetchingDistance) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(content: Text(l10n.calculatingDistance)),
-    //   );
-    //   return;
-    // }
-
-    // Require a successful distance fetch before submitting
     if (_distanceResult == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.pleaseSelectLocation)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
       return;
     }
 
@@ -792,12 +802,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       return;
     }
 
-    // Use the already-fetched distance for the minimum-distance guard
     if (!_pickupNearMe) {
       final distanceMeters = _distanceResult!.distanceMeters;
       final minDistance =
           double.tryParse(AppSettings.min_delivery_distance ?? '0') ?? 0;
-
       if (distanceMeters < minDistance) {
         Fluttertoast.showToast(
           msg: l10n.distanceTooClose,
@@ -808,7 +816,18 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       }
     }
 
-    final bool usesWallet = _paymentMethod == 'WALLET' || !_isShopping;
+    // ── Fix: compute overbudget here instead of referencing build()'s local var ──
+    final budget = double.tryParse(_budgetController.text.trim()) ?? 0;
+    final limit =
+        (double.tryParse(
+              AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
+            ) ??
+            0) /
+        100;
+    final isOverBudget = _isShopping && budget > limit;
+
+    final bool usesWallet =
+        _paymentMethod == 'WALLET' || !_isShopping || isOverBudget;
     if (usesWallet) {
       final required = _requiredWalletAmount();
       if (_walletBalance < required) {
@@ -826,8 +845,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         productImageFile: _productImage,
         budget: _isShopping
             ? (double.parse(_budgetController.text.trim()) * 100)
-            .round()
-            .toString()
+                  .round()
+                  .toString()
             : '1',
         pickupAreaId: effectivePickup.areaId,
         pickupAddressDescription: effectivePickup.detailedAddress,
@@ -976,8 +995,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           );
         } else if (state is OrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
@@ -988,7 +1006,16 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         expand: false,
         builder: (context, scrollController) {
           final shippingFee = _calculateShippingFee();
+          final budget = double.tryParse(_budgetController.text.trim()) ?? 0;
 
+          final limit =
+              (double.tryParse(
+                    AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
+                  ) ??
+                  0) /
+              100;
+
+          final isOverBudget = budget > limit;
           return Container(
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -1032,16 +1059,23 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline_rounded,
-                          size: 14, color: Colors.grey.shade500),
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 14,
+                        color: Colors.grey.shade500,
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           _isShopping
-                              ? l10n.walletBalanceHintShopping
+                              ? (isOverBudget
+                                    ? '${l10n.walletBalanceHintOverBudget} $limit ${l10n.walletBalanceHintOverBudget2}'
+                                    : l10n.walletBalanceHintShopping)
                               : l10n.walletBalanceHintShipping,
                           style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade500),
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
                         ),
                       ),
                     ],
@@ -1070,8 +1104,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           label: _isShopping
                               ? l10n.productDetails
                               : l10n.packageDetails,
-                          validator: (v) =>
-                          (v == null || v.trim().isEmpty)
+                          validator: (v) => (v == null || v.trim().isEmpty)
                               ? l10n.pleaseEnterProductDescription
                               : null,
                         ),
@@ -1110,7 +1143,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                         if (shippingFee != null) ...[
                           _buildFeeAndPaymentRow(l10n, shippingFee),
                           const SizedBox(height: 24),
-                        ] else if (_isShopping) ...[
+                        ] else if (_isShopping && !isOverBudget) ...[
                           _buildPaymentToggle(),
                           const SizedBox(height: 24),
                         ],
@@ -1132,7 +1165,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     padding: const EdgeInsets.all(16),
                     child: BlocBuilder<OrderCubit, OrderState>(
                       buildWhen: (_, s) =>
-                      s is OrderOperationLoading ||
+                          s is OrderOperationLoading ||
                           s is OrdersLoaded ||
                           s is OrderError ||
                           s is OrderSuccess,
@@ -1317,11 +1350,11 @@ class _BalanceRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: highlight
           ? BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(16),
-        ),
-      )
+              color: Colors.red.shade50,
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(16),
+              ),
+            )
           : null,
       child: Row(
         children: [
@@ -1389,7 +1422,11 @@ Widget _buildPinIcon({
               color: Colors.orange.shade700,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.warning_rounded, size: 9, color: Colors.white),
+            child: const Icon(
+              Icons.warning_rounded,
+              size: 9,
+              color: Colors.white,
+            ),
           ),
         ),
     ],

@@ -572,13 +572,19 @@
   "pleaseEnterBudget": "يرجى إدخال الميزانية",
   "walletBalanceHintShipping": "تأكد من أن رصيد محفظتك كافٍ لتغطية رسوم التوصيل",
   "walletBalanceHintShopping": "تأكد من أن رصيد محفظتك كافٍ إذا أردت استخدامه للدفع عن طريقه",
+  "walletBalanceHintOverBudget": "في حال كانت الميزانية أكبر من",
+  "walletBalanceHintOverBudget2": "يتم الدفع عن طريق المحفظة فقط",
     "cod": "الدفع عند الاستلام",
+    "codN": "الدفع\n عند الاستلام",
     "ratingExcellent": "ممتاز",
     "far": "يبعد",
     "referral": "الإحالة",
     "referrals": "الإحالات",
     "whatsapp": "واتسآب",
     "knowUsMore": "تعرف علينا أكثر",
+    "preparingOrder": "جارٍ تحضير طلبك",
+        "findingCourier": "جارٍ العثور على أفضل مندوب لك…",
+
 "nearMe": "بالقرب مني"
 
 

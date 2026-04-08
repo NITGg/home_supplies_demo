@@ -571,7 +571,10 @@
   "pleaseEnterBudget": "Please enter budget",
   "walletBalanceHintShipping": "Make sure you have enough wallet balance to cover the shipping fee",
   "walletBalanceHintShopping": "Make sure you have enough wallet balance if you want to use it to pay for your order",
+    "walletBalanceHintOverBudget": "If the budget is higher than",
+    "walletBalanceHintOverBudget2": "payment will be made via wallet only",
     "cod": "COD",
+    "codN": "COD",
     "far": "Away",
 
 "ratingExcellent": "Excellent",
@@ -579,6 +582,8 @@
     "referrals": "Referrals",
     "whatsapp": "Whatsapp",
         "knowUsMore": "Know Us More",
+    "preparingOrder": "Your order is being prepared",
+    "findingCourier": "We're finding you the best courier…",
 
 "nearMe": "Near Me"
 

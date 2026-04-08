@@ -26,6 +26,7 @@ class AppSettings {
   static String? delivery_price_for_each_1km;
 
   static String? delivery_fee_ratio;
+  static String? customer_budget_cash_on_delivery_limit;
 
   /// Fetch settings from API
   Future<void> load() async {
@@ -38,6 +39,7 @@ class AppSettings {
         final settings = data['settings'];
         android_version = settings['app_android_version'];
         ios_url = settings['app_ios_url'];
+        customer_budget_cash_on_delivery_limit = settings['customer_budget_cash_on_delivery_limit'];
         ios_version = settings['app_ios_version'];
         android_url = settings['app_android_url'];
         min_delivery_distance = settings['min_delivery_distance'];

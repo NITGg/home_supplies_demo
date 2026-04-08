@@ -224,4 +224,17 @@ class OrderRemoteDataSource {
       throw Exception('Failed to redeem coupon');
     }
   }
+
+  Future<Map<String, dynamic>> retryOrder(int orderId) async {
+    log('Retrying order $orderId');
+    final response = await _dio.post(
+      '/orders/$orderId/retry?lang=${LocaleManager.currentLocale}',
+    );
+    log('Retry order response: ${response.data}');
+    if (response.statusCode == 200) {
+      return response.data;
+    } else {
+      throw Exception('Failed to retry order');
+    }
+  }
 }

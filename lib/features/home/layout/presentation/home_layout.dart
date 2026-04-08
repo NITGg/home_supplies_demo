@@ -45,6 +45,8 @@ class HomeLayout extends StatefulWidget {
 
 class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   String _userId = '';
+  late final HomeCubit _homeCubit = HomeCubit();
+  late final CouponCubit _couponCubit = CouponCubit()..loadCoupons();
 
   @override
   void initState() {
@@ -74,19 +76,12 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     if (!mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      HomeCubit? homeCubit;
-      CouponCubit? couponCubit;
-      try {
-        homeCubit = context.read<HomeCubit>();
-        couponCubit = context.read<CouponCubit>();
-      } catch (e) {
-        debugPrint('⚠️ Could not read cubits in HomeLayout: $e');
-      }
+      // 👇 Use fields directly — no context.read needed
       showNotificationsDialog(
         context,
         _userId,
-        homeCubit: homeCubit,
-        couponCubit: couponCubit,
+        homeCubit: _homeCubit,
+        couponCubit: _couponCubit,
       );
     });
   }
@@ -99,25 +94,19 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     shouldShowNotificationDialog = false;
     pendingNotificationData = null;
 
-    HomeCubit? homeCubit;
-    CouponCubit? couponCubit;
-    try {
-      homeCubit = context.read<HomeCubit>();
-      couponCubit = context.read<CouponCubit>();
-    } catch (e) {
-      debugPrint('⚠️ Could not read cubits in HomeLayout: $e');
-    }
-
+    // 👇 Use fields directly — no context.read needed
     showNotificationsDialog(
       context,
       _userId,
-      homeCubit: homeCubit,
-      couponCubit: couponCubit,
+      homeCubit: _homeCubit,
+      couponCubit: _couponCubit,
     );
   }
 
   @override
   void dispose() {
+    _homeCubit.close();
+    _couponCubit.close();
     WidgetsBinding.instance.removeObserver(this);
     notificationDialogTrigger.removeListener(_onExternalNotificationTrigger);
     super.dispose();
@@ -157,8 +146,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider<HomeCubit>(create: (_) => HomeCubit()),
-        BlocProvider<CouponCubit>(create: (_) => CouponCubit()..loadCoupons()),
+        BlocProvider.value(value: _homeCubit),    // 👈 was: create: (_) => HomeCubit()
+        BlocProvider.value(value: _couponCubit),
         BlocProvider<GovernorateCubit>(
           create: (_) => GovernorateCubit()..loadGovernorates(),
         ),
@@ -501,11 +490,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () =>
-                                                context.push('/KnowUsMoreScreen'),
-                                            leading: const Icon(
-                                              Icons.favorite,
+                                            onTap: () => context.push(
+                                              '/KnowUsMoreScreen',
                                             ),
+                                            leading: const Icon(Icons.favorite),
                                             title: Text(
                                               localizations.knowUsMore,
                                               style: AppTextStyles.bold16,
@@ -633,8 +621,12 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                     userId: _userId,
                     localizations: localizations,
                     onOrdersTap: () => cubit.changeTab(0),
-                    onNotificationsTap: () =>
-                        showNotificationsDialog(context, _userId),
+                    onNotificationsTap: () => showNotificationsDialog(
+                      context,
+                      _userId,
+                      homeCubit: _homeCubit,
+                      couponCubit: _couponCubit,
+                    ),
                   ),
                 ),
               );

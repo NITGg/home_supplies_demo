@@ -38,7 +38,7 @@ class OrderBudgetChip extends StatelessWidget {
           Text(
             '${l10n?.budget ?? 'Budget'}: $budget ${l10n?.egp ?? 'EGP'}',
             style: AppTextStyles.bold14.copyWith(
-              fontSize: 12,
+              fontSize: 10,
               color: AppColors.kSecondaryColor,
             ),
           ),

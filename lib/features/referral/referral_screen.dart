@@ -582,7 +582,7 @@ class _StatCard extends StatelessWidget {
               Text(
                 '${item.value}',
                 style: TextStyle(
-                  fontSize: 26,
+                  fontSize: 22,
                   fontWeight: FontWeight.w800,
                   color: item.color,
                   height: 1,
@@ -592,7 +592,7 @@ class _StatCard extends StatelessWidget {
               Text(
                 item.label,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   color: Color(0xFF8E8E93),
                   fontWeight: FontWeight.w500,
                 ),
