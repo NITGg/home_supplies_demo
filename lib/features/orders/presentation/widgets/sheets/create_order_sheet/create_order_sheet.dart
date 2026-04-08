@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 import 'package:tawreedat_go/core/style/text_styles.dart';
 import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
+import 'package:tawreedat_go/core/widgets/banners.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/create_order_sheet/select_address.dart';
 import 'package:tawreedat_go/l10n/app_localizations.dart';
 
@@ -758,24 +759,27 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     }
 
     if (!_pickupNearMe && _pickupAddress == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
-      return;
+      Fluttertoast.showToast(
+        msg: l10n.pleaseSelectLocation,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+      );
     }
 
     if (_deliveryAddress == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
-      return;
+      Fluttertoast.showToast(
+        msg: l10n.pleaseSelectLocation,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+      );return;
     }
 
     if (_distanceResult == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectLocation)));
-      return;
+      Fluttertoast.showToast(
+        msg: l10n.pleaseSelectLocation,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+      );return;
     }
 
     final effectivePickup = _effectivePickup!;
@@ -960,12 +964,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             _couponValidating = false;
             if (state.coupon != null) _appliedCoupon = state.coupon;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.couponRedeemed),
-              backgroundColor: Colors.green.shade700,
-              duration: const Duration(seconds: 3),
-            ),
+          Fluttertoast.showToast(
+            msg: l10n.couponRedeemed,
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.green.shade700,
           );
         } else if (state is CouponInvalid) {
           setState(() => _couponValidating = false);
@@ -987,17 +990,15 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           );
         } else if (state is OrderSuccess) {
           Navigator.pop(context, state.order);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${l10n.created}: ${state.order.orderNumber}'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          showSuccessBanner(context, '${l10n.created}: ${state.order.orderNumber}');
         } else if (state is OrderError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-          );
-        }
+          Fluttertoast.showToast(
+            msg: state.message,
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );        }
       },
       child: DraggableScrollableSheet(
         initialChildSize: 0.75,
@@ -1104,9 +1105,16 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           label: _isShopping
                               ? l10n.productDetails
                               : l10n.packageDetails,
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? l10n.pleaseEnterProductDescription
-                              : null,
+                          validator: (v) {
+                            final text = v?.trim() ?? '';
+                            if (text.isEmpty) {
+                              return l10n.pleaseEnterProductDescription;
+                            }
+                            if (text.length < 10) {
+                              return l10n.tooShort;
+                            }
+                            return null;
+                          },
                         ),
                         if (_isShopping) ...[
                           const SizedBox(height: 16),

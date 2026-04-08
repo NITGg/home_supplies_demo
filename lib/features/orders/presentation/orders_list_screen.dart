@@ -34,6 +34,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   String _currentFilter = 'all';
   bool _isLoadingMore = false;
 
+  final Set<int> _ordersWithNewOffers = {};
+
   // ── expiration reload ──────────────────────────────────────────────────
   //
   // A single Timer that fires at the earliest upcoming expiration among all
@@ -158,6 +160,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       context.read<OrderCubit>().loadActiveOrders(loadMore: false);
     }
   }
+
   // ── socket handlers ──────────────────────────────────────────────────────
 
   void _handleNewPrice(Map<String, dynamic> data) {
@@ -167,6 +170,12 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   }
 
   void _handleNewOffer(Map<String, dynamic> data) {
+    final orderId = data['orderId'] as int?;
+    // ── mark this order as having a new offer ──
+    if (orderId != null) {
+      setState(() => _ordersWithNewOffers.add(orderId));
+    }
+
     final l10n = AppLocalizations.of(context);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -197,7 +206,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           ],
         ),
         backgroundColor: Colors.green,
-        duration: const Duration(seconds: 4),
+        duration: const Duration(seconds: 6),
         action: SnackBarAction(
           label: l10n?.view ?? 'View',
           textColor: Colors.white,
@@ -275,10 +284,12 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       // allow next trigger
       _expirationReloadPending = false;
 
-      if (_viewMode == ViewMode.active &&
-          state.viewMode == OrderViewMode.active) {
-        // ALWAYS reschedule based on fresh data
+      // inside the OrdersLoaded listener block, after _scheduleExpirationReload:
+      if (_viewMode == ViewMode.active && state.viewMode == OrderViewMode.active) {
         _scheduleExpirationReload(state.orders);
+        // remove badges for orders no longer in the list
+        final activeIds = state.orders.map((o) => o.id).toSet();
+        setState(() => _ordersWithNewOffers.removeWhere((id) => !activeIds.contains(id)));
       }
     }
 
@@ -773,7 +784,15 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
               final order = displayOrders[orderIndex];
               return OrderCard(
                 order: order,
-                onViewProposals: () => _showProposals(order),
+                hasNewOffer: _ordersWithNewOffers.contains(order.id),
+                onViewProposals: () {
+                  if (order.id != null) {
+                    setState(
+                      () => _ordersWithNewOffers.remove(order.id),
+                    ); // ← clear badge
+                  }
+                  _showProposals(order);
+                },
                 onCancel: () => _showCancelSheet(order),
                 onRetrySuccess: () {
                   _onTabChanged(ViewMode.active);
