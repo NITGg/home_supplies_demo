@@ -13,6 +13,7 @@ class OrderRemoteDataSource {
   Future<OrderResponse> createOrder(
     Order order,
     String paymentMethod, {
+      required String estimatedDeliveryFee,
     String? couponCode,
   }) async {
     log('Creating order: ${order.toJson()} payment method: $paymentMethod');
@@ -43,6 +44,7 @@ class OrderRemoteDataSource {
         ...order.toJson(),
         'payment_method': paymentMethod,
         if (couponCode != null) 'coupon_code': couponCode,
+        'estimated_delivery_fee': estimatedDeliveryFee,
       });
     }
 

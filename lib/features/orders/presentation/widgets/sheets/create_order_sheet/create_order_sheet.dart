@@ -75,6 +75,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   @override
   void initState() {
     super.initState();
+    context.read<WalletCubit>().fetchWalletData();
 
     _budgetController.addListener(() {
       setState(() {});
@@ -206,18 +207,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       return fee + budget;
     }
     return fee;
-  }
-
-  // ── Wallet balance helpers ─────────────────────────────────────────────────
-
-  void _tryRefreshWalletBalance() {
-    try {
-      final cubit = context.read<WalletCubit>();
-      final s = cubit.state;
-      if (s is WalletLoaded) {
-        setState(() => _walletBalance = s.walletData.wallet.balance);
-      }
-    } catch (_) {}
   }
 
   // ── Coupon ─────────────────────────────────────────────────────────────────
@@ -667,7 +656,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
   }
 
-  Widget _buildFeeAndPaymentRow(AppLocalizations l10n, double fee) {
+  Widget _buildFeeAndPaymentRow(AppLocalizations l10n, double fee,bool isOverBudget) {
     final feeChip = Container(
       height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -709,6 +698,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       children: [
         feeChip,
         const SizedBox(width: 10),
+        if(_isShopping && !isOverBudget)
         Expanded(child: _buildPaymentToggle()),
       ],
     );
@@ -737,7 +727,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           onTopUp: () async {
             Navigator.pop(sheetCtx);
             await context.push('/wallet/topup');
-            if (mounted) _tryRefreshWalletBalance();
           },
         );
       },
@@ -771,7 +760,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         msg: l10n.pleaseSelectLocation,
         toastLength: Toast.LENGTH_LONG,
         gravity: ToastGravity.BOTTOM,
-      );return;
+      );
+      return;
     }
 
     if (_distanceResult == null) {
@@ -779,7 +769,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         msg: l10n.pleaseSelectLocation,
         toastLength: Toast.LENGTH_LONG,
         gravity: ToastGravity.BOTTOM,
-      );return;
+      );
+      return;
     }
 
     final effectivePickup = _effectivePickup!;
@@ -861,6 +852,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         deliveryLat: _deliveryAddress!.addressLat,
         deliveryLong: _deliveryAddress!.addressLong,
       ),
+      estimatedDeliveryFee: (_calculateShippingFee() ?? 0 * 100).toString(),
       _isShopping ? _paymentMethod : 'WALLET',
       couponCode: _appliedCoupon?.code,
     );
@@ -955,7 +947,14 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return BlocListener<OrderCubit, OrderState>(
+    return BlocListener<WalletCubit, WalletState>(
+      listenWhen: (_, current) => current is WalletLoaded,
+      listener: (context, state) {
+        if (state is WalletLoaded) {
+          setState(() => _walletBalance = state.walletData.wallet.balance);
+        }
+      },
+  child: BlocListener<OrderCubit, OrderState>(
       listener: (context, state) {
         if (state is CouponValidating) {
           if (!_couponValidating) setState(() => _couponValidating = true);
@@ -990,7 +989,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           );
         } else if (state is OrderSuccess) {
           Navigator.pop(context, state.order);
-          showSuccessBanner(context, '${l10n.created}: ${state.order.orderNumber}');
+          showSuccessBanner(
+            context,
+            '${l10n.created}: ${state.order.orderNumber}',
+          );
         } else if (state is OrderError) {
           Fluttertoast.showToast(
             msg: state.message,
@@ -998,7 +1000,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             gravity: ToastGravity.BOTTOM,
             backgroundColor: Colors.red,
             textColor: Colors.white,
-          );        }
+          );
+        }
       },
       child: DraggableScrollableSheet(
         initialChildSize: 0.75,
@@ -1149,7 +1152,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                         _buildRouteSection(l10n),
                         const SizedBox(height: 24),
                         if (shippingFee != null) ...[
-                          _buildFeeAndPaymentRow(l10n, shippingFee),
+                          _buildFeeAndPaymentRow(l10n, shippingFee,isOverBudget),
                           const SizedBox(height: 24),
                         ] else if (_isShopping && !isOverBudget) ...[
                           _buildPaymentToggle(),
@@ -1192,7 +1195,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           );
         },
       ),
-    );
+    ),
+);
   }
 }
 
