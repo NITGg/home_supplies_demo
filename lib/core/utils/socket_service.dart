@@ -4,23 +4,37 @@ import 'dart:async';
 
 class SocketService {
   static final SocketService _instance = SocketService._internal();
+
   factory SocketService() => _instance;
+
   SocketService._internal();
 
   IO.Socket? _socket;
 
   // Stream controllers for events
-  final _newOfferController = StreamController<Map<String, dynamic>>.broadcast();
-  final _priceReportController = StreamController<Map<String, dynamic>>.broadcast();
-  final _orderCancelledController = StreamController<Map<String, dynamic>>.broadcast();
+  final _newOfferController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _priceReportController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _orderCancelledController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _orderCollectedController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   // Track which orders we're currently in rooms for
   final Set<int> _activeOrderRooms = {};
 
   // Public streams
   Stream<Map<String, dynamic>> get onNewOffer => _newOfferController.stream;
-  Stream<Map<String, dynamic>> get onPriceReport => _priceReportController.stream;
-  Stream<Map<String, dynamic>> get onOrderCancelled => _orderCancelledController.stream;
+
+  Stream<Map<String, dynamic>> get onPriceReport =>
+      _priceReportController.stream;
+
+  Stream<Map<String, dynamic>> get onOrderCancelled =>
+      _orderCancelledController.stream;
+
+  Stream<Map<String, dynamic>> get onOrderCollected =>
+      _orderCollectedController.stream;
 
   bool get isConnected => _socket?.connected ?? false;
 
@@ -62,6 +76,13 @@ class SocketService {
 
     _socket!.onConnectError((e) {
       log('⚠️ Socket Connection Error: $e');
+    });
+
+    _socket!.on('order:collected', (data) {
+      log('📦 ORDER COLLECTED: $data');
+      if (data is Map<String, dynamic>) {
+        _orderCollectedController.add(data);
+      }
     });
 
     // New offer event
@@ -127,7 +148,9 @@ class SocketService {
 
   // ================= LEAVE ALL INACTIVE ORDERS =================
   void leaveInactiveOrders(List<int> activeOrderIds) {
-    final toRemove = _activeOrderRooms.where((id) => !activeOrderIds.contains(id)).toList();
+    final toRemove = _activeOrderRooms
+        .where((id) => !activeOrderIds.contains(id))
+        .toList();
 
     for (final orderId in toRemove) {
       leaveOrder(orderId);
@@ -149,5 +172,6 @@ class SocketService {
     _newOfferController.close();
     _priceReportController.close();
     _orderCancelledController.close();
+    _orderCollectedController.close();
   }
 }

@@ -33,6 +33,8 @@ class Order {
   final DateTime? offerAcceptedAt;
   final DateTime? deliveredAt;
   final DateTime? canceledAt;
+  final DateTime? collectedAt;
+
   final DateTime? expiresAt;
   final String? courierName;
   final String? courierPhone;
@@ -54,6 +56,7 @@ class Order {
     this.productImageFile,
     required this.budget,
     this.actualPrice,
+    this.collectedAt,
     required this.pickupAreaId,
     required this.pickupAddressDescription,
     required this.pickupLat,
@@ -124,6 +127,9 @@ class Order {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : null,
+      collectedAt: json['order_collected_at'] != null
+          ? DateTime.parse(json['order_collected_at'])
+          : null,
       offerAcceptedAt: json['offer_accepted_at'] != null
           ? DateTime.parse(json['offer_accepted_at'])
           : null,
@@ -158,6 +164,7 @@ class Order {
   bool get isPending => status == 'PENDING';
 
   bool get isAccepted => status == 'ACCEPTED';
+
   bool get isInProgress => status == 'IN_PROGRESS';
 
   bool get isDelivered => status == 'DELIVERED';

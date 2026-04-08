@@ -233,7 +233,7 @@ class OrderCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (order.status == 'IN_PROGRESS')
+                        if (order.status == 'IN_PROGRESS' && order.collectedAt == null)
                           IconButton(
                             onPressed: onCancel,
                             icon: const Icon(

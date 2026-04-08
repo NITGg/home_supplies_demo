@@ -1362,6 +1362,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get far => 'يبعد';
 
   @override
+  String get outForDelivery => 'في الطريق';
+
+  @override
   String get ratingExcellent => 'ممتاز';
 
   @override

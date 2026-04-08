@@ -23,30 +23,30 @@ class _StatusDescriptor {
 const Map<String, ({int priority, _StatusDescriptor descriptor})>
 _kStatusMap = {
   'IN_PROGRESS': (
-    priority: 1,
-    descriptor: _StatusDescriptor(
-      assetPath: 'assets/animation_json/Packaging_in_Progress.json',
-      label: _labelInProgress,
-      accent: Color(0xFF21ABF5),
-    ),
+  priority: 2,                          // ← bumped down; out-for-delivery wins
+  descriptor: _StatusDescriptor(
+    assetPath: 'assets/animation_json/Packaging_in_Progress.json',
+    label: _labelInProgress,
+    accent: Color(0xFF21ABF5),
+  ),
   ),
   'PENDING': (
-    priority: 2,
-    descriptor: _StatusDescriptor(
-      assetPath: 'assets/animation_json/search.json',
-      label: _labelPending,
-      accent: Color(0xFFFF9800),
-    ),
+  priority: 3,
+  descriptor: _StatusDescriptor(
+    assetPath: 'assets/animation_json/search.json',
+    label: _labelPending,
+    accent: Color(0xFFFF9800),
   ),
-  // ── Add more statuses below ──────────────────────────────────────────────
-  // 'OUT_FOR_DELIVERY': (
-  //   priority: 0,
-  //   descriptor: _StatusDescriptor(
-  //     assetPath: 'assets/animation_json/delivery.json',
-  //     label: _labelOutForDelivery,
-  //     accent: Color(0xFF2196F3),
-  //   ),
-  // ),
+  ),
+  // Virtual status — same API value as IN_PROGRESS but collectedAt is set
+  'OUT_FOR_DELIVERY': (
+  priority: 1,
+  descriptor: _StatusDescriptor(
+    assetPath: 'assets/animation_json/courier_on_the_way.json',
+    label: _labelOutForDelivery,
+    accent: Color(0xFF2196F3),
+  ),
+  ),
 };
 
 // Label functions — extracted so they can be const-referenced above.
@@ -55,8 +55,9 @@ String _labelInProgress(BuildContext ctx) =>
 
 String _labelPending(BuildContext ctx) =>
     AppLocalizations.of(ctx)!.findingCourier;
-// String _labelOutForDelivery(BuildContext ctx) => 'Your order is on the way! 🚚';
 
+String _labelOutForDelivery(BuildContext ctx) =>
+    AppLocalizations.of(ctx)!.outForDelivery; // add to .arb files
 // ─────────────────────────────────────────────────────────────────────────────
 // Public widget
 // ─────────────────────────────────────────────────────────────────────────────
@@ -96,8 +97,14 @@ class OrderStatusBanner extends StatelessWidget {
     ({int priority, _StatusDescriptor descriptor})? best;
 
     for (final order in orders) {
-      final key = order.status?.toUpperCase();
+      var key = order.status?.toUpperCase();
       if (key == null) continue;
+
+      // Treat IN_PROGRESS + collectedAt set as a virtual OUT_FOR_DELIVERY status
+      if (key == 'IN_PROGRESS' && order.collectedAt != null) {
+        key = 'OUT_FOR_DELIVERY';
+      }
+
       final entry = _kStatusMap[key];
       if (entry == null) continue;
       if (best == null || entry.priority < best.priority) {

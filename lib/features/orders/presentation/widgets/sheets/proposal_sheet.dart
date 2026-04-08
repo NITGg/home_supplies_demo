@@ -767,125 +767,144 @@ class _ProposalCardState extends State<_ProposalCard> {
               ? const BorderRadius.vertical(top: Radius.circular(16))
               : BorderRadius.circular(16),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Phone tap area
-            GestureDetector(
-              onTap: () => openPhoneApp(widget.proposal.courier.user.phone),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: statusColor.withOpacity(0.3),
-                    width: 1.5,
+            Row(
+              children: [
+                // Phone tap area
+                Padding(
+                  padding: const EdgeInsets.only(top: 15.0),
+                  child: GestureDetector(
+                    onTap: () =>
+                        openPhoneApp(widget.proposal.courier.user.phone),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: statusColor.withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Icon(Icons.phone, color: statusColor, size: 22),
+                    ),
                   ),
                 ),
-                child: Icon(Icons.phone, color: statusColor, size: 22),
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // Name + quick info row
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.proposal.courier.user.fullName,
-                    style: AppTextStyles.bold16.copyWith(fontSize: 15),
+                const SizedBox(width: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child: ImageWithIconFallback(
+                    imageUrl: widget.proposal.courier.user.personalPhoto,
+                    width: 30,
+                    height: 30,
+                    fit: BoxFit.cover,
+                    iconSize: 20,
                   ),
-                  const SizedBox(height: 4),
-                  // Fee + distance inline preview
-                  Row(
+                ),
+                const SizedBox(width: 8),
+
+                // Name + quick info row
+                Expanded(
+                  child: Text(
+                    widget.proposal.courier.user.fullName,
+                    style: AppTextStyles.bold14.copyWith(fontSize: 12),
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                // Status badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: statusColor.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.account_balance_wallet_outlined,
-                        size: 13,
-                        color: Colors.grey.shade500,
-                      ),
+                      Icon(_getStatusIcon(), size: 11, color: Colors.white),
                       const SizedBox(width: 3),
                       Text(
-                        '${widget.proposal.totalFee} ${l10n.egp}',
+                        _getStatusText(context),
                         style: AppTextStyles.bold14.copyWith(
-                          fontSize: 13,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Icon(
-                        Icons.near_me_rounded,
-                        size: 13,
-                        color: Colors.grey.shade500,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        _distanceLabel(context),
-                        style: AppTextStyles.regular14.copyWith(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Icon(Icons.timer, size: 13, color: Colors.grey.shade500),
-                      const SizedBox(width: 3),
-                      Text(
-                        _formatDuration(widget.proposal.timeToPickup, l10n),
-                        style: AppTextStyles.regular14.copyWith(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
+                          fontSize: 10,
+                          color: Colors.white,
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            const SizedBox(width: 8),
+                const SizedBox(width: 6),
 
-            // Status badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              decoration: BoxDecoration(
-                color: statusColor,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: statusColor.withOpacity(0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
+                // Expand chevron
+                AnimatedRotation(
+                  turns: _expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 250),
+                  child: Icon(
+                    Icons.expand_more_rounded,
+                    color: Colors.grey.shade500,
+                    size: 20,
                   ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(_getStatusIcon(), size: 11, color: Colors.white),
-                  const SizedBox(width: 3),
-                  Text(
-                    _getStatusText(context),
-                    style: AppTextStyles.bold14.copyWith(
-                      fontSize: 10,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-
-            const SizedBox(width: 6),
-
-            // Expand chevron
-            AnimatedRotation(
-              turns: _expanded ? 0.5 : 0,
-              duration: const Duration(milliseconds: 250),
-              child: Icon(
-                Icons.expand_more_rounded,
-                color: Colors.grey.shade500,
-                size: 20,
-              ),
+            const SizedBox(height: 4),
+            // Fee + distance inline preview
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.account_balance_wallet_outlined,
+                  size: 13,
+                  color: Colors.grey.shade500,
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  '${widget.proposal.totalFee} ${l10n.egp}',
+                  style: AppTextStyles.bold14.copyWith(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.near_me_rounded,
+                  size: 13,
+                  color: Colors.grey.shade500,
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  _distanceLabel(context),
+                  style: AppTextStyles.regular14.copyWith(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Icon(Icons.timer, size: 13, color: Colors.grey.shade500),
+                const SizedBox(width: 3),
+                Text(
+                  _formatDuration(widget.proposal.timeToPickup, l10n),
+                  style: AppTextStyles.regular14.copyWith(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -912,77 +931,86 @@ class _ProposalCardState extends State<_ProposalCard> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey.shade200),
             ),
-            child: Row(
+            child: Column(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: ImageWithIconFallback(
-                    imageUrl: widget.proposal.vehicle.icon,
-                    height: 32,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                const SizedBox(width: 20),
-
-                Expanded(
-                  child: Text(
-                    vehicleName,
-                    style: AppTextStyles.bold14.copyWith(
-                      color: Colors.grey.shade800,
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: ImageWithIconFallback(
+                        imageUrl: widget.proposal.vehicle.icon,
+                        height: 32,
+                        fit: BoxFit.contain,
+                      ),
                     ),
-                  ),
-                ),
-                if (widget.proposal.courier.courierVehiclePlate != 'N/A')
-                  EgyptianPlate(
-                    plateNumber: widget.proposal.courier.courierVehiclePlate,
-                  ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Text(
-                        widget.proposal.courier.courierRate.toString(),
+                    const SizedBox(width: 20),
+
+                    Expanded(
+                      child: Text(
+                        vehicleName,
                         style: AppTextStyles.bold14.copyWith(
                           color: Colors.grey.shade800,
                         ),
                       ),
-                      Icon(Icons.star_half, color: Colors.yellow),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.kPrimaryColor.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.kPrimaryColor.withOpacity(0.2),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        l10n.far,
-                        style: AppTextStyles.bold14.copyWith(
-                          fontSize: 12,
-                          color: AppColors.kPrimaryColor,
+                    if (widget.proposal.courier.courierVehiclePlate != 'N/A')
+                      EgyptianPlate(
+                        plateNumber:
+                            widget.proposal.courier.courierVehiclePlate,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Text(
+                            widget.proposal.courier.courierRate.toString(),
+                            style: AppTextStyles.bold14.copyWith(
+                              color: Colors.grey.shade800,
+                            ),
+                          ),
+                          Icon(Icons.star_half, color: Colors.yellow),
+                        ],
+                      ),
+                    ),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.kPrimaryColor.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.kPrimaryColor.withOpacity(0.2),
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _formatDuration(widget.proposal.timeToPickup, l10n),
-                        style: AppTextStyles.bold14.copyWith(
-                          fontSize: 12,
-                          color: AppColors.kPrimaryColor,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            l10n.far,
+                            style: AppTextStyles.bold14.copyWith(
+                              fontSize: 12,
+                              color: AppColors.kPrimaryColor,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatDuration(widget.proposal.timeToPickup, l10n),
+                            style: AppTextStyles.bold14.copyWith(
+                              fontSize: 12,
+                              color: AppColors.kPrimaryColor,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),

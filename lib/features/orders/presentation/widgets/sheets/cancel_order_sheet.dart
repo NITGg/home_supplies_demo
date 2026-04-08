@@ -282,7 +282,7 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 16),
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(color: Colors.orange,),
         ),
       );
     }
@@ -383,8 +383,9 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
       onChanged: (_) => setState(() {}),
       validator: (value) {
         if (!_isOtherSelected && _reasonsError == null) return null;
-        if (value == null || value.trim().isEmpty)
+        if (value == null || value.trim().isEmpty) {
           return l10n.pleaseEnterReason;
+        }
         if (value.trim().length < 10) return l10n.tooShort;
         return null;
       },

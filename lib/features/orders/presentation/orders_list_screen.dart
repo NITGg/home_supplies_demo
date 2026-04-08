@@ -52,6 +52,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   StreamSubscription? _newOfferSubscription;
   StreamSubscription? _newPriceSubscription;
   StreamSubscription? _orderCancelledSubscription;
+  StreamSubscription? _orderCollectedSubscription;
 
   @override
   void initState() {
@@ -88,10 +89,12 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     final now = DateTime.now();
 
     final nextExpiry = orders
-        .where((o) =>
-    o.status == 'PENDING' &&
-        o.expiresAt != null &&
-        o.expiresAt!.isAfter(now))
+        .where(
+          (o) =>
+              o.status == 'PENDING' &&
+              o.expiresAt != null &&
+              o.expiresAt!.isAfter(now),
+        )
         .map((o) => o.expiresAt!)
         .minOrNull;
 
@@ -104,9 +107,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
     _expirationTimer = Timer(effectiveDelay, _onExpirationTimerFired);
 
-    debugPrint(
-      '[Orders] Next expiration in ${effectiveDelay.inSeconds}s',
-    );
+    debugPrint('[Orders] Next expiration in ${effectiveDelay.inSeconds}s');
   }
 
   /// Fires when the earliest-expiry timer goes off.
@@ -121,10 +122,15 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     setState(() => _isLoadingMore = false);
     context.read<OrderCubit>().loadActiveOrders(loadMore: false);
   }
+
   // ── socket setup ─────────────────────────────────────────────────────────
 
   void _setupSocketListeners() {
     final socketService = SocketService();
+
+    _orderCollectedSubscription = socketService.onOrderCollected.listen((data) {
+      if (mounted) _handleOrderCollected(data);
+    });
 
     _newOfferSubscription = socketService.onNewOffer.listen((data) {
       if (mounted) _handleNewOffer(data);
@@ -132,21 +138,26 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     _newPriceSubscription = socketService.onPriceReport.listen((data) {
       if (mounted) _handleNewPrice(data);
     });
-    _orderCancelledSubscription =
-        socketService.onOrderCancelled.listen((data) {
-          if (mounted) {
-            final reason = data['reason'] as String? ?? 'other';
-            _handleOrderCancelled(data, reason);
-          }
-        });
+    _orderCancelledSubscription = socketService.onOrderCancelled.listen((data) {
+      if (mounted) {
+        final reason = data['reason'] as String? ?? 'other';
+        _handleOrderCancelled(data, reason);
+      }
+    });
   }
 
   void _cleanupSocketListeners() {
     _newOfferSubscription?.cancel();
     _newPriceSubscription?.cancel();
     _orderCancelledSubscription?.cancel();
+    _orderCollectedSubscription?.cancel();
   }
 
+  void _handleOrderCollected(Map<String, dynamic> data) {
+    if (_viewMode == ViewMode.active) {
+      context.read<OrderCubit>().loadActiveOrders(loadMore: false);
+    }
+  }
   // ── socket handlers ──────────────────────────────────────────────────────
 
   void _handleNewPrice(Map<String, dynamic> data) {
@@ -172,7 +183,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                   Text(
                     l10n?.newProposalReceived ?? 'New Proposal Received!',
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
                   Text(
                     l10n?.tapToView ?? 'Tap to view details',
@@ -213,7 +226,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                     ? l10n!.orderCancelledUnavailable
                     : l10n!.orderCancelled,
                 style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 15),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
               ),
             ),
           ],
@@ -271,8 +286,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       if (!mounted) return;
       final freshState = cubit.state;
       if (freshState is OrdersLoaded) {
-        final order =
-        freshState.orders.firstWhereOrNull((o) => o.id == orderId);
+        final order = freshState.orders.firstWhereOrNull(
+          (o) => o.id == orderId,
+        );
         if (order != null) _showProposals(order);
       }
     });
@@ -350,8 +366,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider.value(
         value: context.read<OrderCubit>(),
-        child: OrderCancelBottomSheet(
-            isUnavailable: false, orderId: order.id!),
+        child: OrderCancelBottomSheet(isUnavailable: false, orderId: order.id!),
       ),
     );
   }
@@ -383,8 +398,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             children: [
               OrderToggleButton(
                 active: _viewMode == ViewMode.active,
-                onToggle: (isActive) =>
-                    _onTabChanged(isActive ? ViewMode.active : ViewMode.history),
+                onToggle: (isActive) => _onTabChanged(
+                  isActive ? ViewMode.active : ViewMode.history,
+                ),
               ),
               const Spacer(),
             ],
@@ -392,9 +408,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           actions: [
             BlocBuilder<OrderCubit, OrderState>(
               buildWhen: (_, current) =>
-              current is OrdersLoaded || current is OrderLoading,
+                  current is OrdersLoaded || current is OrderLoading,
               builder: (context, state) {
-                final hasActiveOrders = state is OrdersLoaded &&
+                final hasActiveOrders =
+                    state is OrdersLoaded &&
                     state.viewMode == OrderViewMode.active &&
                     state.orders.any((o) => o.isInProgress);
 
@@ -423,12 +440,14 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             return _viewMode == ViewMode.active
                 ? cubit.loadActiveOrders(loadMore: false)
                 : cubit.loadHistoryOrders(
-                loadMore: false, filter: _currentFilter);
+                    loadMore: false,
+                    filter: _currentFilter,
+                  );
           },
           color: AppColors.kPrimaryColor,
           child: BlocConsumer<OrderCubit, OrderState>(
             listenWhen: (_, current) =>
-            current is OrdersLoaded ||
+                current is OrdersLoaded ||
                 current is OrderCancelled ||
                 current is OrderCancelError ||
                 current is DeliveryConfirmed ||
@@ -453,25 +472,30 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
               }
 
               if (state is OrderCancelled) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content:
-                  Text(AppLocalizations.of(context)!.orderCancelled),
-                  backgroundColor: Colors.green,
-                ));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.orderCancelled),
+                    backgroundColor: Colors.green,
+                  ),
+                );
               } else if (state is DeliveryConfirmed) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(AppLocalizations.of(context)!.delivered),
-                  backgroundColor: Colors.green,
-                ));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.delivered),
+                    backgroundColor: Colors.green,
+                  ),
+                );
               } else if (state is OrderError) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: Colors.red,
-                ));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             },
             buildWhen: (_, current) =>
-            current is OrderLoading ||
+                current is OrderLoading ||
                 current is OrdersLoaded ||
                 current is OrderError,
             builder: (context, state) {
@@ -528,9 +552,11 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                     color: AppColors.kSecondaryLightColor.withOpacity(0.3),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.error_outline,
-                      size: 80,
-                      color: AppColors.kPrimaryColor.withOpacity(0.6)),
+                  child: Icon(
+                    Icons.error_outline,
+                    size: 80,
+                    color: AppColors.kPrimaryColor.withOpacity(0.6),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(state.message),
@@ -547,7 +573,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.kPrimaryColor,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
                 ),
               ],
@@ -570,35 +598,43 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2))
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            Text(l10n.filterBy,
-                style: AppTextStyles.medium18
-                    .copyWith(color: Colors.grey.shade700, fontSize: 14)),
+            Text(
+              l10n.filterBy,
+              style: AppTextStyles.medium18.copyWith(
+                color: Colors.grey.shade700,
+                fontSize: 14,
+              ),
+            ),
             const SizedBox(width: 12),
             _buildFilterChip(
-                label: l10n.all,
-                value: 'all',
-                icon: Icons.all_inclusive),
+              label: l10n.all,
+              value: 'all',
+              icon: Icons.all_inclusive,
+            ),
             const SizedBox(width: 8),
             _buildFilterChip(
-                label: l10n.delivered,
-                value: 'DELIVERED',
-                icon: Icons.check_circle_outline,
-                color: Colors.green),
+              label: l10n.delivered,
+              value: 'DELIVERED',
+              icon: Icons.check_circle_outline,
+              color: Colors.green,
+            ),
             const SizedBox(width: 8),
             _buildFilterChip(
-                label: l10n.cancelled,
-                value: 'CANCELLED',
-                icon: Icons.cancel_outlined,
-                color: Colors.red),
+              label: l10n.cancelled,
+              value: 'CANCELLED',
+              icon: Icons.cancel_outlined,
+              color: Colors.red,
+            ),
           ],
         ),
       ),
@@ -618,8 +654,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon,
-              size: 10, color: isSelected ? Colors.white : chipColor),
+          Icon(icon, size: 10, color: isSelected ? Colors.white : chipColor),
           const SizedBox(width: 4),
           Text(label),
         ],
@@ -638,13 +673,16 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       selectedColor: chipColor,
       backgroundColor: chipColor.withOpacity(0.1),
       labelStyle: AppTextStyles.bold14.copyWith(
-          fontSize: 10, color: isSelected ? Colors.white : chipColor),
+        fontSize: 10,
+        color: isSelected ? Colors.white : chipColor,
+      ),
       checkmarkColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-            color: isSelected ? chipColor : chipColor.withOpacity(0.3),
-            width: 1.5),
+          color: isSelected ? chipColor : chipColor.withOpacity(0.3),
+          width: 1.5,
+        ),
       ),
     );
   }
@@ -662,8 +700,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     final isCorrectMode =
         (_viewMode == ViewMode.active &&
             state.viewMode == OrderViewMode.active) ||
-            (_viewMode == ViewMode.history &&
-                state.viewMode == OrderViewMode.history);
+        (_viewMode == ViewMode.history &&
+            state.viewMode == OrderViewMode.history);
 
     if (!isCorrectMode) return _buildShimmerView();
 
@@ -697,7 +735,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             // +1 for the status banner at index 0 (active mode only),
             // +1 again when the pagination spinner is visible.
-            itemCount: displayOrders.length +
+            itemCount:
+                displayOrders.length +
                 (_viewMode == ViewMode.active ? 1 : 0) +
                 (_shouldShowPaginationSpinner(state) ? 1 : 0),
             padding: EdgeInsets.only(
@@ -714,8 +753,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
               }
 
               // Adjust index to account for the banner slot.
-              final orderIndex =
-              _viewMode == ViewMode.active ? index - 1 : index;
+              final orderIndex = _viewMode == ViewMode.active
+                  ? index - 1
+                  : index;
 
               // ── Pagination spinner (last item) ─────────────────────────
               if (orderIndex == displayOrders.length) {
@@ -723,7 +763,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                   padding: EdgeInsets.all(16),
                   child: Center(
                     child: CircularProgressIndicator(
-                        color: AppColors.kPrimaryColor),
+                      color: AppColors.kPrimaryColor,
+                    ),
                   ),
                 );
               }
@@ -770,15 +811,17 @@ class _OrderCardSkeleton extends StatelessWidget {
                   width: 100,
                   height: 16,
                   decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(4)),
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
                 Container(
                   width: 72,
                   height: 24,
                   decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(20)),
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
               ],
             ),
@@ -787,16 +830,18 @@ class _OrderCardSkeleton extends StatelessWidget {
               width: double.infinity,
               height: 14,
               decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(4)),
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
             const SizedBox(height: 8),
             Container(
               width: MediaQuery.of(context).size.width * 0.55,
               height: 14,
               decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(4)),
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
             const SizedBox(height: 16),
             Row(
@@ -805,16 +850,18 @@ class _OrderCardSkeleton extends StatelessWidget {
                   width: 90,
                   height: 12,
                   decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(4)),
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
                 const Spacer(),
                 Container(
                   width: 60,
                   height: 16,
                   decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(4)),
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
               ],
             ),
@@ -825,8 +872,9 @@ class _OrderCardSkeleton extends StatelessWidget {
                   child: Container(
                     height: 38,
                     decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(8)),
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -834,8 +882,9 @@ class _OrderCardSkeleton extends StatelessWidget {
                   child: Container(
                     height: 38,
                     decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(8)),
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ],

@@ -1362,6 +1362,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get far => 'Away';
 
   @override
+  String get outForDelivery => 'Out For Delivery';
+
+  @override
   String get ratingExcellent => 'Excellent';
 
   @override

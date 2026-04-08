@@ -2747,6 +2747,12 @@ abstract class AppLocalizations {
   /// **'Away'**
   String get far;
 
+  /// No description provided for @outForDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Out For Delivery'**
+  String get outForDelivery;
+
   /// No description provided for @ratingExcellent.
   ///
   /// In en, this message translates to:

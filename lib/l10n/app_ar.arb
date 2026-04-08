@@ -463,6 +463,8 @@
             "alignQrCode": "قم بمحاذاة رمز Qr ضمن الإطار",
             "processing":"جارٍ المعالجة...",
         "cancelOrderWarning": "هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها",
+            "outForDelivery": "في الطريق",
+
 "acceptProposalConfirmation": "هل أنت متأكد من قبول هذا العرض؟",
 "acceptProposal": "قبول العرض",
 "rejectProposalConfirmation": "هل أنت متأكد من رفض هذا العرض؟",

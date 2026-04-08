@@ -2,11 +2,13 @@ class DeliveryQRCode {
   final int orderId;
   final int courierId;
   final String action;
+  final int actualPrice;
   final DateTime timestamp;
 
   DeliveryQRCode({
     required this.orderId,
     required this.courierId,
+    required this.actualPrice,
     required this.action,
     required this.timestamp,
   });
@@ -14,6 +16,7 @@ class DeliveryQRCode {
   factory DeliveryQRCode.fromJson(Map<String, dynamic> json) {
     return DeliveryQRCode(
       orderId: json['orderId'] as int,
+      actualPrice: json['actual_price'] as int,
       courierId: json['courierId'] as int,
       action: json['action'] as String,
       timestamp: DateTime.parse(json['timestamp']),
@@ -24,6 +27,7 @@ class DeliveryQRCode {
     return {
       'orderId': orderId,
       'courierId': courierId,
+      'actualPrice': actualPrice,
       'action': action,
       'timestamp': timestamp.toIso8601String(),
     };

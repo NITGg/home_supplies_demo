@@ -2,11 +2,13 @@ class CourierUser {
   final int id;
   final String fullName;
   final String phone;
+  final String personalPhoto;
 
   CourierUser({
     required this.id,
     required this.fullName,
     required this.phone,
+    this.personalPhoto = '',
   });
 
   factory CourierUser.fromJson(Map<String, dynamic> json) {
@@ -14,6 +16,7 @@ class CourierUser {
       id: json['id'] as int,
       fullName: json['full_name'] as String,
       phone: json['phone'] as String,
+      personalPhoto: (json['personal_photo'] ?? '') as String,
     );
   }
 }
@@ -96,13 +99,17 @@ class Proposal {
       id: json['id'] as int,
       orderId: json['order_id'] as int,
       courierId: json['courier_id'] as int,
-      totalFee: ((num.tryParse(json['total_fee']?.toString() ?? '0') ?? 0) / 100)
-          .toStringAsFixed(0),
+      totalFee:
+          ((num.tryParse(json['total_fee']?.toString() ?? '0') ?? 0) / 100)
+              .toStringAsFixed(0),
       status: json['status'] as String,
       distanceToPickupM:
-      double.tryParse(json['distance_to_pickup']?.toString() ?? '0') ?? 0,
+          double.tryParse(json['distance_to_pickup']?.toString() ?? '0') ?? 0,
       timeToPickup:
-      int.tryParse(json['estimated_arrival_at_pickup']?.toString() ?? '0') ?? 0,
+          int.tryParse(
+            json['estimated_arrival_at_pickup']?.toString() ?? '0',
+          ) ??
+          0,
       createdAt: DateTime.parse(json['created_at']),
       confirmedAt: json['confirmed_at'] != null
           ? DateTime.parse(json['confirmed_at'])
@@ -113,7 +120,9 @@ class Proposal {
   }
 
   bool get isPending => status == 'PENDING';
+
   bool get isAccepted => status == 'ACCEPTED';
+
   bool get isRejected => status == 'REJECTED';
 }
 

@@ -39,7 +39,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // Parse QR code data
       final qrData = jsonDecode(code);
       final deliveryQR = DeliveryQRCode.fromJson(qrData);
 
@@ -49,15 +48,40 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         return;
       }
 
-      // Confirm delivery
-      if (mounted) {
-        await context.read<OrderCubit>().confirmDelivery(
-          orderId: deliveryQR.orderId,
-          courierId: deliveryQR.courierId,
-        );
-      }
+      // Convert cents → full currency unit
+      final double price = (deliveryQR.actualPrice) / 100;
+
+      if (!mounted) return;
+
+      // Pause scanner while sheet is open
+      cameraController.stop();
+
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        isDismissible: false,       // force an explicit choice
+        enableDrag: false,
+        builder: (_) => PriceConfirmationSheet(
+          actualPrice: price,
+          onConfirm: () async {
+            Navigator.pop(context); // close sheet
+            if (mounted) {
+              await context.read<OrderCubit>().confirmDelivery(
+                orderId: deliveryQR.orderId,
+                courierId: deliveryQR.courierId,
+              );
+            }
+          },
+          onCancel: () {
+            Navigator.pop(context); // close sheet
+            cameraController.start();              // resume scanning
+            setState(() => _isProcessing = false); // allow re-scan
+          },
+        ),
+      );
     } catch (e) {
-      _showError(AppLocalizations.of(context)!.invalidQrCodeFormat);
+      _showError(e.toString());
       setState(() => _isProcessing = false);
     }
   }
@@ -235,4 +259,102 @@ class ScannerOverlayPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+// price_confirmation_sheet.dart
+
+class PriceConfirmationSheet extends StatelessWidget {
+  final double actualPrice; // already divided by 100
+  final VoidCallback onConfirm;
+  final VoidCallback onCancel;
+
+  const PriceConfirmationSheet({
+    super.key,
+    required this.actualPrice,
+    required this.onConfirm,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Icon(Icons.attach_money, size: 48, color: AppColors.kPrimaryColor),
+          const SizedBox(height: 12),
+          Text(
+            AppLocalizations.of(context)!.budget,
+            style: AppTextStyles.bold18,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '\$${actualPrice.toStringAsFixed(2)}',
+            style: AppTextStyles.bold18.copyWith(
+              fontSize: 32,
+              color: AppColors.kPrimaryColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            AppLocalizations.of(context)!.confirm,
+            style: AppTextStyles.regular14.copyWith(color: Colors.grey[600]),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 28),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onCancel,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(color: Colors.grey[400]!),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)!.cancel,
+                    style: AppTextStyles.bold16.copyWith(color: Colors.grey[700]),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: onConfirm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.kPrimaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)!.confirm,
+                    style: AppTextStyles.bold16.copyWith(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
