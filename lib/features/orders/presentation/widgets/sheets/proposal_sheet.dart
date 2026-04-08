@@ -8,6 +8,7 @@ import '../../../../../core/style/app_colors.dart';
 import '../../../../../core/style/text_styles.dart';
 import '../../../../../core/utils/phone_dialer.dart';
 import '../../../../../core/utils/socket_service.dart';
+import '../../../../../core/widgets/egy_plate.dart';
 import '../../../../../core/widgets/loading_screen.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../data/models/order_model.dart';
@@ -921,7 +922,8 @@ class _ProposalCardState extends State<_ProposalCard> {
                     fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 20),
+
                 Expanded(
                   child: Text(
                     vehicleName,
@@ -930,6 +932,25 @@ class _ProposalCardState extends State<_ProposalCard> {
                     ),
                   ),
                 ),
+                if (widget.proposal.courier.courierVehiclePlate != 'N/A')
+                  EgyptianPlate(
+                    plateNumber: widget.proposal.courier.courierVehiclePlate,
+                  ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        widget.proposal.courier.courierRate.toString(),
+                        style: AppTextStyles.bold14.copyWith(
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                      Icon(Icons.star_half, color: Colors.yellow),
+                    ],
+                  ),
+                ),
+
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,

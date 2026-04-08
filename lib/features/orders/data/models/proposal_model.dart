@@ -20,16 +20,22 @@ class CourierUser {
 
 class CourierInfo {
   final int id;
+  final num courierRate;
+  final String courierVehiclePlate;
   final CourierUser user;
 
   CourierInfo({
     required this.id,
     required this.user,
+    required this.courierRate,
+    required this.courierVehiclePlate,
   });
 
   factory CourierInfo.fromJson(Map<String, dynamic> json) {
     return CourierInfo(
       id: json['id'] as int,
+      courierRate: num.tryParse(json['avg_rating']?.toString() ?? '0') ?? 0,
+      courierVehiclePlate: json['vehicle_plate'] as String,
       user: CourierUser.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
