@@ -666,14 +666,42 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
   }
 
-  Widget _buildFeeAndPaymentRow(AppLocalizations l10n, double fee,bool isOverBudget) {
+  Widget _buildFeeAndPaymentRow(
+    AppLocalizations l10n,
+    double fee,
+    bool isOverBudget,
+  ) {
+    // ── Compute discounted fee if a delivery-fee coupon is applied ────────────
+    double? discountedFee;
+    if (_appliedCoupon != null && _appliedCoupon!.isDeliveryFeeDiscount) {
+      if (_appliedCoupon!.isPercentDiscount &&
+          _appliedCoupon!.discountValue != null) {
+        discountedFee = (fee - (fee * _appliedCoupon!.discountValue! / 100))
+            .clamp(0, double.infinity);
+      } else if (_appliedCoupon!.isFixedDiscount &&
+          _appliedCoupon!.discountValue != null) {
+        discountedFee = (fee - _appliedCoupon!.discountValue!).clamp(
+          0,
+          double.infinity,
+        );
+      }
+    }
+
+    final bool hasFeeDiscount = discountedFee != null;
+
     final feeChip = Container(
       height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.kSecondaryColor.withOpacity(0.08),
+        color: hasFeeDiscount
+            ? Colors.green.shade50
+            : AppColors.kSecondaryColor.withOpacity(0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.kSecondaryColor.withOpacity(0.25)),
+        border: Border.all(
+          color: hasFeeDiscount
+              ? Colors.green.shade300
+              : AppColors.kSecondaryColor.withOpacity(0.25),
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -683,20 +711,52 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             l10n.estimatedShippingFee,
             style: TextStyle(
               fontSize: 10,
-              color: AppColors.kSecondaryColor.withOpacity(0.8),
+              color: hasFeeDiscount
+                  ? Colors.green.shade700
+                  : AppColors.kSecondaryColor.withOpacity(0.8),
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 3),
-          Text(
-            textAlign: TextAlign.center,
-            '${fee.toInt()} ${l10n.egp}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: AppColors.kSecondaryColor,
+          if (hasFeeDiscount)
+            // ── Show original crossed out + new fee ──────────────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Original fee — struck through
+                Text(
+                  '${fee.toInt()} ${l10n.egp}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.red.shade400,
+                    decoration: TextDecoration.lineThrough,
+                    decorationColor: Colors.red.shade400,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                // Discounted fee
+                Text(
+                  '${discountedFee!.toInt()} ${l10n.egp}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade700,
+                  ),
+                ),
+              ],
+            )
+          else
+            Text(
+              textAlign: TextAlign.center,
+              '${fee.toInt()} ${l10n.egp}',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppColors.kSecondaryColor,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -963,249 +1023,255 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           setState(() => _walletBalance = state.walletData.wallet.balance);
         }
       },
-  child: BlocListener<OrderCubit, OrderState>(
-      listener: (context, state) {
-        if (state is CouponValidating) {
-          if (!_couponValidating) setState(() => _couponValidating = true);
-        } else if (state is CouponRedeemed) {
-          setState(() {
-            _couponValidating = false;
-            if (state.coupon != null) _appliedCoupon = state.coupon;
-          });
-          Fluttertoast.showToast(
-            msg: l10n.couponRedeemed,
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.green.shade700,
-          );
-        } else if (state is CouponInvalid) {
-          setState(() => _couponValidating = false);
-          Fluttertoast.showToast(
-            msg: state.message,
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
-        } else if (state is CouponRedeemError) {
-          setState(() => _couponValidating = false);
-          Fluttertoast.showToast(
-            msg: state.message,
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.orange,
-            textColor: Colors.white,
-          );
-        } else if (state is OrderSuccess) {
-          Navigator.pop(context, state.order);
-          showSuccessBanner(
-            context,
-            '${l10n.created}: ${state.order.orderNumber}',
-          );
-        } else if (state is OrderError) {
-          Fluttertoast.showToast(
-            msg: state.message,
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
-        }
-      },
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.75,
-        minChildSize: 0.6,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) {
-          final shippingFee = _calculateShippingFee();
-          final budget = double.tryParse(_budgetController.text.trim()) ?? 0;
+      child: BlocListener<OrderCubit, OrderState>(
+        listener: (context, state) {
+          if (state is CouponValidating) {
+            if (!_couponValidating) setState(() => _couponValidating = true);
+          } else if (state is CouponRedeemed) {
+            setState(() {
+              _couponValidating = false;
+              if (state.coupon != null) _appliedCoupon = state.coupon;
+            });
+            Fluttertoast.showToast(
+              msg: l10n.couponRedeemed,
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.green.shade700,
+            );
+          } else if (state is CouponInvalid) {
+            setState(() => _couponValidating = false);
+            Fluttertoast.showToast(
+              msg: state.message,
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+            );
+          } else if (state is CouponRedeemError) {
+            setState(() => _couponValidating = false);
+            Fluttertoast.showToast(
+              msg: state.message,
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.orange,
+              textColor: Colors.white,
+            );
+          } else if (state is OrderSuccess) {
+            Navigator.pop(context, state.order);
+            showSuccessBanner(
+              context,
+              '${l10n.created}: ${state.order.orderNumber}',
+            );
+          } else if (state is OrderError) {
+            Fluttertoast.showToast(
+              msg: state.message,
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+            );
+          }
+        },
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.75,
+          minChildSize: 0.6,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            final shippingFee = _calculateShippingFee();
+            final budget = double.tryParse(_budgetController.text.trim()) ?? 0;
 
-          final limit =
-              (double.tryParse(
-                    AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
-                  ) ??
-                  0) /
-              100;
+            final limit =
+                (double.tryParse(
+                      AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
+                    ) ??
+                    0) /
+                100;
 
-          final isOverBudget = budget > limit;
-          return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
+            final isOverBudget = budget > limit;
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          l10n.newOrder,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      _buildToggle(),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline_rounded,
-                        size: 14,
-                        color: Colors.grey.shade500,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          _isShopping
-                              ? (isOverBudget
-                                    ? '${l10n.walletBalanceHintOverBudget} $limit ${l10n.walletBalanceHintOverBudget2}'
-                                    : l10n.walletBalanceHintShopping)
-                              : l10n.walletBalanceHintShipping,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Form(
-                    key: _formKey,
-                    child: ListView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.all(16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
                       children: [
-                        AppTextFormField(
-                          focusNode: _productDescriptionFocus,
-                          textInputAction: _isShopping
-                              ? TextInputAction.next
-                              : TextInputAction.done,
-                          onFieldSubmitted: (_) {
-                            if (_isShopping) {
-                              FocusScope.of(context).requestFocus(_budgetFocus);
-                            } else {
-                              FocusScope.of(context).unfocus();
-                            }
-                          },
-                          controller: _productDescriptionController,
-                          label: _isShopping
-                              ? l10n.productDetails
-                              : l10n.packageDetails,
-                          validator: (v) {
-                            final text = v?.trim() ?? '';
-                            if (text.isEmpty) {
-                              return l10n.pleaseEnterProductDescription;
-                            }
-                            if (text.length < 10) {
-                              return l10n.tooShort;
-                            }
-                            return null;
-                          },
+                        Expanded(
+                          child: Text(
+                            l10n.newOrder,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                        if (_isShopping) ...[
-                          const SizedBox(height: 16),
+                        _buildToggle(),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 14,
+                          color: Colors.grey.shade500,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            _isShopping
+                                ? (isOverBudget
+                                      ? '${l10n.walletBalanceHintOverBudget} $limit ${l10n.walletBalanceHintOverBudget2}'
+                                      : l10n.walletBalanceHintShopping)
+                                : l10n.walletBalanceHintShipping,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Form(
+                      key: _formKey,
+                      child: ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(16),
+                        children: [
                           AppTextFormField(
-                            focusNode: _budgetFocus,
-                            textInputAction: TextInputAction.done,
-                            controller: _budgetController,
-                            label: l10n.budget,
-                            keyboardType: TextInputType.number,
-                            validator: (v) {
-                              if (!_isShopping) return null;
-                              if (v == null || v.trim().isEmpty || v == '0') {
-                                return l10n.pleaseEnterBudget;
+                            focusNode: _productDescriptionFocus,
+                            textInputAction: _isShopping
+                                ? TextInputAction.next
+                                : TextInputAction.done,
+                            onFieldSubmitted: (_) {
+                              if (_isShopping) {
+                                FocusScope.of(
+                                  context,
+                                ).requestFocus(_budgetFocus);
+                              } else {
+                                FocusScope.of(context).unfocus();
                               }
-                              if (double.tryParse(v) == null) {
-                                return l10n.pleaseEnterValidNumber;
+                            },
+                            controller: _productDescriptionController,
+                            label: _isShopping
+                                ? l10n.productDetails
+                                : l10n.packageDetails,
+                            validator: (v) {
+                              final text = v?.trim() ?? '';
+                              if (text.isEmpty) {
+                                return l10n.pleaseEnterProductDescription;
+                              }
+                              if (text.length < 10) {
+                                return l10n.tooShort;
                               }
                               return null;
                             },
                           ),
-                        ],
-                        const SizedBox(height: 16),
-                        ProductImagePicker(
-                          isRequired: !_isShopping,
-                          productImage: _productImage,
-                          onImagePicked: (file) =>
-                              setState(() => _productImage = file),
-                        ),
-                        const SizedBox(height: 24),
-                        _buildNearMeCheckbox(l10n),
-                        const SizedBox(height: 16),
-                        _buildRouteSection(l10n),
-                        const SizedBox(height: 24),
-                        if (shippingFee != null) ...[
-                          _buildFeeAndPaymentRow(l10n, shippingFee,isOverBudget),
+                          if (_isShopping) ...[
+                            const SizedBox(height: 16),
+                            AppTextFormField(
+                              focusNode: _budgetFocus,
+                              textInputAction: TextInputAction.done,
+                              controller: _budgetController,
+                              label: l10n.budget,
+                              keyboardType: TextInputType.number,
+                              validator: (v) {
+                                if (!_isShopping) return null;
+                                if (v == null || v.trim().isEmpty || v == '0') {
+                                  return l10n.pleaseEnterBudget;
+                                }
+                                if (double.tryParse(v) == null) {
+                                  return l10n.pleaseEnterValidNumber;
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                          const SizedBox(height: 16),
+                          ProductImagePicker(
+                            isRequired: !_isShopping,
+                            productImage: _productImage,
+                            onImagePicked: (file) =>
+                                setState(() => _productImage = file),
+                          ),
                           const SizedBox(height: 24),
-                        ] else if (_isShopping && !isOverBudget) ...[
-                          _buildPaymentToggle(),
+                          _buildNearMeCheckbox(l10n),
+                          const SizedBox(height: 16),
+                          _buildRouteSection(l10n),
                           const SizedBox(height: 24),
+                          if (shippingFee != null) ...[
+                            _buildFeeAndPaymentRow(
+                              l10n,
+                              shippingFee,
+                              isOverBudget,
+                            ),
+                            const SizedBox(height: 24),
+                          ] else if (_isShopping && !isOverBudget) ...[
+                            _buildPaymentToggle(),
+                            const SizedBox(height: 24),
+                          ],
+                          CouponSection(
+                            couponController: _couponController,
+                            couponFocus: _couponFocus,
+                            appliedCoupon: _appliedCoupon,
+                            couponValidating: _couponValidating,
+                            onValidate: _validateCoupon,
+                            onRemove: _removeCoupon,
+                          ),
+                          const SizedBox(height: 16),
                         ],
-                        CouponSection(
-                          couponController: _couponController,
-                          couponFocus: _couponFocus,
-                          appliedCoupon: _appliedCoupon,
-                          couponValidating: _couponValidating,
-                          onValidate: _validateCoupon,
-                          onRemove: _removeCoupon,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: BlocBuilder<OrderCubit, OrderState>(
-                      buildWhen: (_, s) =>
-                          s is OrderOperationLoading ||
-                          s is OrdersLoaded ||
-                          s is OrderError ||
-                          s is OrderSuccess,
-                      builder: (context, state) {
-                        return AppCustomButton(
-                          onPressed: _submit,
-                          text: l10n.confirm,
-                          isLoading: state is OrderOperationLoading,
-                        );
-                      },
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: BlocBuilder<OrderCubit, OrderState>(
+                        buildWhen: (_, s) =>
+                            s is OrderOperationLoading ||
+                            s is OrdersLoaded ||
+                            s is OrderError ||
+                            s is OrderSuccess,
+                        builder: (context, state) {
+                          return AppCustomButton(
+                            onPressed: _submit,
+                            text: l10n.confirm,
+                            isLoading: state is OrderOperationLoading,
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
-    ),
-);
+    );
   }
 }
 
