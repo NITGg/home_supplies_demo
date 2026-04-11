@@ -194,7 +194,7 @@ class OrderCard extends StatelessWidget {
                 Icon(_statusIcon(), size: 12, color: Colors.white),
                 const SizedBox(width: 4),
                 Text(
-                  order.collectedAt != null
+                  (order.collectedAt != null&& order.status == 'IN_PROGRESS')
                       ? AppLocalizations.of(context)!.outForDelivery
                       : _statusLabel(context),
                   style: AppTextStyles.bold14.copyWith(
