@@ -75,7 +75,7 @@ class PenaltyCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   textDirection: ui.TextDirection.ltr,
-                  DateFormat('dd MMM yyyy').format(penalty.createdAt),
+                  DateFormat('dd MMM yyyy, hh:mm a').format(penalty.createdAt),
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey.shade600,

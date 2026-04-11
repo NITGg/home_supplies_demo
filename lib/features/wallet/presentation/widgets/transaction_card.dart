@@ -138,7 +138,7 @@ class TransactionCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   textDirection: ui.TextDirection.ltr,
-                  DateFormat('dd MMM yyyy').format(transaction.createdAt),
+                  DateFormat('dd MMM yyyy, hh:mm a').format(transaction.createdAt),
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
