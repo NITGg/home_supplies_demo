@@ -242,6 +242,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                               coupon: coupon,
                               governorates: governorates,
                               walletBalance: balance,
+                              couponCubit: _couponCubit, // ← ADD
                             ),
                           );
                         }
@@ -283,9 +284,14 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
-                        builder: (_) => CreateOrderBottomSheet(
-                          governorates: governorates,
-                          walletBalance: balance,
+                        builder: (_) => BlocProvider.value(
+                          value: _couponCubit,
+                          // ← re-provide the same instance into the new route
+                          child: CreateOrderBottomSheet(
+                            governorates: governorates,
+                            walletBalance: balance,
+                            // no initialCouponCode — sheet reads from cubit itself now
+                          ),
                         ),
                       );
                     },

@@ -19,6 +19,7 @@ import '../../../../../addresses/data/models/address_model.dart';
 import '../../../../../addresses/data/models/governorate_model.dart';
 import '../../../../../addresses/manager/address_cubit.dart';
 import '../../../../../addresses/manager/address_states.dart';
+import '../../../../../coupons/manager/coupons_cubit.dart';
 import '../../../../../wallet/manager/wallet_cubit.dart';
 import '../../../../../wallet/manager/wallet_state.dart';
 import '../../../../data/models/order_model.dart';
@@ -78,22 +79,25 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   void initState() {
     super.initState();
     context.read<WalletCubit>().fetchWalletData();
-
-    _budgetController.addListener(() {
-      setState(() {});
-    });
-
+    _budgetController.addListener(() => setState(() {}));
     _walletBalance = widget.walletBalance ?? 0.0;
     _initCubit = AddressCubit();
     _preloadDefaultDelivery();
-    // ── Auto-apply first-order coupon if provided ──────────────────────────
-    if (widget.initialCouponCode != null &&
-        widget.initialCouponCode!.isNotEmpty) {
-      _couponController.text = widget.initialCouponCode!;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _validateCoupon();
-      });
-    }
+
+    // Always resolve through the cubit — handles both dialog and direct-open flows.
+    // If the dialog already checked, the result is cached (no extra API call).
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final code = widget.initialCouponCode?.isNotEmpty == true
+          ? widget.initialCouponCode          // explicit override (e.g. deep link)
+          : await context                     // cubit handles caching + eligibility
+          .read<CouponCubit>()
+          .getOrFetchFirstOrderCoupon();
+
+      if (!mounted || code == null || code.isEmpty) return;
+      _couponController.text = code;
+      _validateCoupon();
+    });
   }
 
   Future<void> _preloadDefaultDelivery() async {
@@ -211,7 +215,18 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 
   double _requiredWalletAmount() {
-    final fee = _calculateShippingFee() ?? 0.0;
+    final rawFee = _calculateShippingFee() ?? 0.0;
+
+    // Apply coupon discount to the fee if applicable
+    double fee = rawFee;
+    if (_appliedCoupon != null && _appliedCoupon!.isDeliveryFeeDiscount) {
+      if (_appliedCoupon!.isPercentDiscount && _appliedCoupon!.discountValue != null) {
+        fee = (rawFee - (rawFee * _appliedCoupon!.discountValue! / 100)).clamp(0, double.infinity);
+      } else if (_appliedCoupon!.isFixedDiscount && _appliedCoupon!.discountValue != null) {
+        fee = (rawFee - _appliedCoupon!.discountValue!).clamp(0, double.infinity);
+      }
+    }
+
     if (_isShopping) {
       final budget = double.tryParse(_budgetController.text.trim()) ?? 0.0;
       return fee + budget;

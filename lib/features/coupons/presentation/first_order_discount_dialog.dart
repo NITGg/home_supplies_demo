@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../addresses/data/models/governorate_model.dart';
 import '../../orders/presentation/widgets/sheets/create_order_sheet/create_order_sheet.dart';
 import '../data/models/coupons_model.dart';
+import '../manager/coupons_cubit.dart';
 
 class FirstOrderDiscountDialog extends StatelessWidget {
   final Coupon coupon;
   final GovernoratesResponse governorates; // ← NEW
+  final CouponCubit couponCubit;
+
   final double walletBalance;
 
   const FirstOrderDiscountDialog({super.key, required this.coupon,required this.governorates,
-    required this.walletBalance,});
+    required this.walletBalance, required this.couponCubit});
 
   @override
   Widget build(BuildContext context) {
@@ -122,11 +126,12 @@ class FirstOrderDiscountDialog extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => CreateOrderBottomSheet(
-        governorates: governorates,    // ← from field, not context.read
-        walletBalance: walletBalance,  // ← from field, not context.read
-        initialCouponCode: coupon.code,
+      builder: (_) => BlocProvider.value(
+        value: couponCubit,
+        child: CreateOrderBottomSheet(
+          governorates: governorates,
+          walletBalance: walletBalance,
+        ),
       ),
     );
-  }
-}
+  }}

@@ -208,16 +208,48 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                         color: Colors.green,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        '${proposal.totalFee} ${l10n.egp}',
-                        style: AppTextStyles.bold16.copyWith(
-                          color: Colors.green,
-                          fontSize: 17,
-                        ),
-                      ),
+                      // ── Discount-aware fee display ──────────────────────────────
+                      Builder(builder: (_) {
+                        final total = double.tryParse(proposal.totalFee) ?? 0;
+                        final discount = proposal.discountFee;
+                        final hasDiscount = discount > 0;
+                        final finalFee = (total - discount).clamp(0, double.infinity);
+
+                        if (!hasDiscount) {
+                          return Text(
+                            '${proposal.totalFee} ${l10n.egp}',
+                            style: AppTextStyles.bold16.copyWith(
+                              color: Colors.green,
+                              fontSize: 17,
+                            ),
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Text(
+                              '${total.toInt()} ${l10n.egp}',
+                              style: AppTextStyles.bold14.copyWith(
+                                fontSize: 13,
+                                color: Colors.red.shade300,
+                                decoration: TextDecoration.lineThrough,
+                                decorationColor: Colors.red.shade300,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${finalFee.toInt()} ${l10n.egp}',
+                              style: AppTextStyles.bold16.copyWith(
+                                color: Colors.green,
+                                fontSize: 17,
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                      // ───────────────────────────────────────────────────────────
                     ],
-                  ),
-                ],
+                  ),                ],
               ),
             ),
           ],
