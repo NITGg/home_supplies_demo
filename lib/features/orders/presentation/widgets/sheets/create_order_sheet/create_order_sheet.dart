@@ -655,10 +655,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: selected
-                ? AppTextStyles.bold14.copyWith(fontSize: 10)
+                ? AppTextStyles.bold14.copyWith(fontSize: 9)
                 : AppTextStyles.regular14.copyWith(
                     color: Colors.grey,
-                    fontSize: 10,
+                    fontSize: 9,
                   ),
           ),
         ],
