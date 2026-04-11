@@ -2540,13 +2540,19 @@ abstract class AppLocalizations {
   /// No description provided for @couponRedeemed.
   ///
   /// In en, this message translates to:
-  /// **'Coupon redeemed — wallet credited!'**
+  /// **'Coupon Applied!'**
   String get couponRedeemed;
+
+  /// No description provided for @offYourOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'off your order'**
+  String get offYourOrder;
 
   /// No description provided for @couponRedeemFailed.
   ///
   /// In en, this message translates to:
-  /// **'Coupon redeem failed: {message}'**
+  /// **'Coupon Apply failed: {message}'**
   String couponRedeemFailed(String message);
 
   /// No description provided for @removeCoupon.
@@ -2794,6 +2800,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We\'re finding you the best courier…'**
   String get findingCourier;
+
+  /// No description provided for @offDeliveryFee.
+  ///
+  /// In en, this message translates to:
+  /// **'off delivery fee'**
+  String get offDeliveryFee;
 
   /// No description provided for @nearMe.
   ///

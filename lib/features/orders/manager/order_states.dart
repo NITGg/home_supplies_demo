@@ -75,7 +75,6 @@ class PriceAdjustmentResponded extends OrderState {
   const PriceAdjustmentResponded(this.status);
 }
 
-
 class OrderCancelError extends OrderState {
   final String message;
 
@@ -91,11 +90,13 @@ class RetryingOrder extends OrderState {
 
 class OrderRetried extends OrderState {
   final String message;
+
   const OrderRetried({required this.message});
 }
 
 class OrderRetryError extends OrderState {
   final String message;
+
   const OrderRetryError(this.message);
 }
 
@@ -186,28 +187,52 @@ class CouponValidating extends OrderState {}
 class CouponValid extends OrderState {
   final String code;
   final String title;
-  final int? walletAmountCents; // e.g. 2000 = 20.00 EGP
+  final int? walletAmountCents;
   final int? walletPoints;
+  final String? scope;
+  final String? discountType; // 'PERCENT' or 'FIXED'
+  final double? discountValue;
 
   const CouponValid({
     required this.code,
     required this.title,
     this.walletAmountCents,
     this.walletPoints,
+    this.discountType,
+    this.discountValue,
+    this.scope,
   });
 
+  bool get isWalletCredit =>
+      (walletAmountCents != null && walletAmountCents! > 0) ||
+      (walletPoints != null && walletPoints! > 0);
+
+  bool get isPercentDiscount => discountType == 'PERCENT';
+
+  bool get isFixedDiscount => discountType == 'FIXED';
+
+  bool get isDeliveryFeeDiscount => scope == 'DELIVERY_FEE';
+
   @override
-  List<Object?> get props => [code, title, walletAmountCents, walletPoints];
+  List<Object?> get props => [
+    code,
+    title,
+    walletAmountCents,
+    walletPoints,
+    discountType,
+    discountValue,
+    scope,
+  ];
 }
 
 class CouponInvalid extends OrderState {
   final String message;
+
   const CouponInvalid(this.message);
 
   @override
   List<Object?> get props => [message];
 }
-
 
 class CouponRedeemed extends OrderState {
   final String message;
@@ -221,6 +246,7 @@ class CouponRedeemed extends OrderState {
 
 class CouponRedeemError extends OrderState {
   final String message;
+
   const CouponRedeemError(this.message);
 
   @override

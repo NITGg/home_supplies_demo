@@ -11,7 +11,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../main.dart';
 
 import '../../../coupons/manager/coupons_cubit.dart';
-import '../../../coupons/manager/ocupons_states.dart';
+import '../../../coupons/manager/coupons_states.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
 import '../../../home/layout/manager/home_cubit.dart';
 import '../../manager/notification_cubit.dart';
@@ -134,7 +134,7 @@ class NotificationsDialog extends StatelessWidget {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     showDialog(
       context: context,
-      builder: (_) => CouponsDialog(coupons: state.activeCoupons, isAr: isAr),
+      builder: (_) => CouponsDialog(isAr: isAr),
     );
   }
 

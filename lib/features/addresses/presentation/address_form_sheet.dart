@@ -129,21 +129,24 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (_selectedAreaId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.pleaseSelectArea),
-          ),
+        Fluttertoast.showToast(
+          msg: AppLocalizations.of(context)!.pleaseSelectArea,
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
         );
         return;
       }
 
       if (_latController.text.trim().isEmpty ||
           _longController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.pleaseSelectLocation),
-            backgroundColor: Colors.orange,
-          ),
+        Fluttertoast.showToast(
+          msg: AppLocalizations.of(context)!.pleaseSelectLocation,
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
         );
         return;
       }
@@ -422,6 +425,12 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                             controller: _nameController,
                             label: l10n.addressNameOptional,
                             hintText: l10n.addressNameHint,
+                            validator: (value) {
+                              if (value != null && value.trim().isEmpty) {
+                                return l10n.required;
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -535,17 +544,20 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                         const SizedBox(height: 16),
 
                         // ── Detailed Address ───────────────────────────────
-                        AppTextFormField(
-                          enabled: false,
-                          controller: _detailedAddressController,
-                          label: l10n.detailedAddress,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return l10n.required;
-                            }
-                            return null;
-                          },
-                        ),
+                        if (_detailedAddressController.text.isNotEmpty) ...[
+                          AppTextFormField(
+                            enabled: false,
+                            controller: _detailedAddressController,
+                            label: l10n.detailedAddress,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return l10n.required;
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         const SizedBox(height: 16),
 
                         // ── Set as Default (only when saving) ──────────────

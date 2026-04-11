@@ -1251,11 +1251,14 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get couponRedeemed => 'تم استرداد الكوبون — تم إضافة الرصيد!';
+  String get couponRedeemed => 'تم تطبيق الكوبون!';
+
+  @override
+  String get offYourOrder => 'على طلبك';
 
   @override
   String couponRedeemFailed(String message) {
-    return 'فشل استرداد الكوبون: $message';
+    return 'فشل تطبيق الكوبون: $message';
   }
 
   @override
@@ -1384,6 +1387,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get findingCourier => 'جارٍ العثور على أفضل مندوب لك…';
+
+  @override
+  String get offDeliveryFee => 'على رسوم التوصيل';
 
   @override
   String get nearMe => 'بالقرب مني';

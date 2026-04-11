@@ -176,7 +176,9 @@ class OrderCubit extends Cubit<OrderState> {
           ...expiredResponse.orders,
         ];
         _historyTotalCount =
-            deliveredResponse.totalOrders + cancelledResponse.totalOrders + cancelledResponse.totalOrders;
+            deliveredResponse.totalOrders +
+            cancelledResponse.totalOrders +
+            cancelledResponse.totalOrders;
       }
 
       // Sort by completion date (newest first)
@@ -221,11 +223,21 @@ class OrderCubit extends Cubit<OrderState> {
 
   // ── Create Order ───────────────────────────────────────────────────────────
 
-  Future<void> createOrder(Order order, String paymentMethod, {String? couponCode,required String estimatedDeliveryFee}) async {
+  Future<void> createOrder(
+    Order order,
+    String paymentMethod, {
+    String? couponCode,
+    required String estimatedDeliveryFee,
+  }) async {
     emit(OrderOperationLoading());
     try {
       log('OrderCubit: Creating order');
-      final response = await _repository.createOrder(order, paymentMethod, couponCode: couponCode, estimatedDeliveryFee: estimatedDeliveryFee);
+      final response = await _repository.createOrder(
+        order,
+        paymentMethod,
+        couponCode: couponCode,
+        estimatedDeliveryFee: estimatedDeliveryFee,
+      );
       log('OrderCubit: Order created — ${response.order.orderNumber}');
 
       emit(OrderSuccess(message: response.message, order: response.order));
@@ -265,7 +277,11 @@ class OrderCubit extends Cubit<OrderState> {
       }
       final response = await _repository.retryOrder(orderId);
       log('OrderCubit: Order retried — $response');
-      emit(OrderRetried(message: response['message'] ?? 'Order retried successfully'));
+      emit(
+        OrderRetried(
+          message: response['message'] ?? 'Order retried successfully',
+        ),
+      );
       // New order will appear as PENDING in active orders
       await loadActiveOrders(loadMore: false);
     } catch (e) {
@@ -347,7 +363,6 @@ class OrderCubit extends Cubit<OrderState> {
     }
   }
 
-
   // ── Coupon ─────────────────────────────────────────────────────────────────────
 
   Future<void> validateCoupon(String code) async {
@@ -370,9 +385,17 @@ class OrderCubit extends Cubit<OrderState> {
         title: (coupon['title'] ?? 'Coupon') as String,
         walletAmountCents: coupon['wallet_amount_cents'] as int?,
         walletPoints: coupon['wallet_points'] as int?,
+        discountType: coupon['discount_type'] as String?,
+        discountValue: (coupon['discount_value'] as num?)?.toDouble(),
+        scope: coupon['scope'] as String?,
       );
 
-      emit(CouponRedeemed(message: 'Coupon redeemed successfully!', coupon: validState));
+      emit(
+        CouponRedeemed(
+          message: 'Coupon redeemed successfully!',
+          coupon: validState,
+        ),
+      );
     } catch (e) {
       // This handles 4xx/5xx from validate endpoint (e.g. errors.not_found)
       log('OrderCubit: Coupon validation error: $e');
@@ -400,8 +423,6 @@ class OrderCubit extends Cubit<OrderState> {
       log('OrderCubit: Error confirming delivery: $e');
       emit(OrderError(extractErrorMessage(e)));
     }
-
-
   }
 
   Future<void> respondToPriceAdjustment({

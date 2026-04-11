@@ -27,7 +27,9 @@ import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
 import '../../../auth/manager/profile_cubit.dart';
 import '../../../auth/manager/profile_states.dart';
+import '../../../coupons/manager/coupons_states.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
+import '../../../coupons/presentation/first_order_discount_dialog.dart';
 import '../../../notifications/presentation/widgets/notification_dialog.dart';
 import '../../../orders/presentation/orders_list_screen.dart';
 import '../../../orders/presentation/widgets/sheets/create_order_sheet/create_order_sheet.dart';
@@ -47,6 +49,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   String _userId = '';
   late final HomeCubit _homeCubit = HomeCubit();
   late final CouponCubit _couponCubit = CouponCubit()..loadCoupons();
+  bool _firstOrderChecked = false;
+
 
   @override
   void initState() {
@@ -164,6 +168,30 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
               return MultiBlocListener(
                 listeners: [
+                  BlocListener<CouponCubit, CouponState>(
+                    bloc: _couponCubit,
+                    listener: (context, state) {
+                      if (state is FirstOrderCouponAvailable) {
+                        // Read everything we need HERE, while context still has the providers
+                        final govState = context.read<GovernorateCubit>().state;
+                        final governorates = govState is GovernoratesLoaded
+                            ? govState.response
+                            : GovernoratesResponse(governorates: [], totalCount: 0, totalPages: 0);
+                        final balance =
+                            context.read<WalletCubit>().cachedWalletData?.wallet.balance ?? 0.0;
+
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) => FirstOrderDiscountDialog(
+                            coupon: state.coupon,
+                            governorates: governorates, // ← passed directly
+                            walletBalance: balance,     // ← passed directly
+                          ),
+                        );
+                      }
+                    },
+                  ),
                   BlocListener<AuthCubit, AuthState>(
                     listener: (context, state) {
                       if (state is AuthUpdateSuccess) {
@@ -196,6 +224,12 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                           _showPhoneNumberBottomSheet(context);
                         }
                         _showPendingNotificationDialog();
+
+                        // ── NEW: check first-order discount once per session ──
+                        if (!_firstOrderChecked) {
+                          _firstOrderChecked = true;
+                          _couponCubit.checkFirstOrderDiscount();
+                        }
                       }
                     },
                   ),

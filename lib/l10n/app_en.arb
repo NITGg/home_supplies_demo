@@ -531,8 +531,10 @@
   "@couponApplied": {
     "placeholders": { "title": { "type": "String" } }
   },
-  "couponRedeemed": "Coupon redeemed — wallet credited!",
-  "couponRedeemFailed": "Coupon redeem failed: {message}",
+  "couponRedeemed": "Coupon Applied!",
+                "offYourOrder": "off your order",
+
+  "couponRedeemFailed": "Coupon Apply failed: {message}",
   "@couponRedeemFailed": {
     "placeholders": { "message": { "type": "String" } }
   },
@@ -585,7 +587,7 @@
         "knowUsMore": "Know Us More",
     "preparingOrder": "Your order is being prepared",
     "findingCourier": "We're finding you the best courier…",
-
+"offDeliveryFee": "off delivery fee",
 "nearMe": "Near Me"
 
 

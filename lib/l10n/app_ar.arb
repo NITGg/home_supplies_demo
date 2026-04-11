@@ -530,12 +530,14 @@
               "paymentFailed": "فشل الدفع",
               "couponCode": "كود الكوبون",
               "applyCoupon": "تطبيق",
+              "offDeliveryFee": "على رسوم التوصيل",
               "couponApplied": "تم تطبيق الكوبون \"{title}\"!",
               "@couponApplied": {
                 "placeholders": { "title": { "type": "String" } }
               },
-              "couponRedeemed": "تم استرداد الكوبون — تم إضافة الرصيد!",
-              "couponRedeemFailed": "فشل استرداد الكوبون: {message}",
+              "couponRedeemed": "تم تطبيق الكوبون!",
+              "offYourOrder": "على طلبك",
+              "couponRedeemFailed": "فشل تطبيق الكوبون: {message}",
               "@couponRedeemFailed": {
                 "placeholders": { "message": { "type": "String" } }
               },

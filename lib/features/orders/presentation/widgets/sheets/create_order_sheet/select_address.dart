@@ -122,7 +122,7 @@ class _AddressSelectionSheetState extends State<AddressSelectionSheet> {
                 }
                 if (state is AddressesLoaded) {
                   if (state.addresses.isEmpty) {
-                    return const Center(child: Text('No saved addresses'));
+                    return const Center(child: Text(''));
                   }
 
                   final defaultId = !widget.isPickup

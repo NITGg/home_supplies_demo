@@ -31,11 +31,13 @@ import 'toggle_tab.dart';
 class CreateOrderBottomSheet extends StatefulWidget {
   final GovernoratesResponse governorates;
   final double? walletBalance;
+  final String? initialCouponCode; // ← NEW
 
   const CreateOrderBottomSheet({
     super.key,
     required this.governorates,
     this.walletBalance,
+    this.initialCouponCode,
   });
 
   @override
@@ -84,6 +86,14 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     _walletBalance = widget.walletBalance ?? 0.0;
     _initCubit = AddressCubit();
     _preloadDefaultDelivery();
+    // ── Auto-apply first-order coupon if provided ──────────────────────────
+    if (widget.initialCouponCode != null &&
+        widget.initialCouponCode!.isNotEmpty) {
+      _couponController.text = widget.initialCouponCode!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _validateCoupon();
+      });
+    }
   }
 
   Future<void> _preloadDefaultDelivery() async {
@@ -691,14 +701,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       ),
     );
 
-    if (!_isShopping) return feeChip;
+    if (!_isShopping || isOverBudget) return feeChip;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         feeChip,
         const SizedBox(width: 10),
-        if(_isShopping && !isOverBudget)
         Expanded(child: _buildPaymentToggle()),
       ],
     );

@@ -1251,11 +1251,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get couponRedeemed => 'Coupon redeemed — wallet credited!';
+  String get couponRedeemed => 'Coupon Applied!';
+
+  @override
+  String get offYourOrder => 'off your order';
 
   @override
   String couponRedeemFailed(String message) {
-    return 'Coupon redeem failed: $message';
+    return 'Coupon Apply failed: $message';
   }
 
   @override
@@ -1384,6 +1387,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get findingCourier => 'We\'re finding you the best courier…';
+
+  @override
+  String get offDeliveryFee => 'off delivery fee';
 
   @override
   String get nearMe => 'Near Me';

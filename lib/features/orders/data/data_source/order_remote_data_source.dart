@@ -16,7 +16,7 @@ class OrderRemoteDataSource {
       required String estimatedDeliveryFee,
     String? couponCode,
   }) async {
-    log('Creating order: ${order.toJson()} payment method: $paymentMethod');
+    log('Creating order: ${order.toJson()} payment method: $paymentMethod coupon code: $couponCode');
 
     FormData formData;
 
@@ -33,6 +33,8 @@ class OrderRemoteDataSource {
         'delivery_lat': order.deliveryLat,
         'delivery_long': order.deliveryLong,
         'payment_method': paymentMethod,
+        'estemated_delivery_fee': estimatedDeliveryFee,
+
         if (couponCode != null) 'coupon_code': couponCode,
         'product_image': await MultipartFile.fromFile(
           order.productImageFile!.path,
@@ -44,9 +46,10 @@ class OrderRemoteDataSource {
         ...order.toJson(),
         'payment_method': paymentMethod,
         if (couponCode != null) 'coupon_code': couponCode,
-        'estimated_delivery_fee': estimatedDeliveryFee,
+        'estemated_delivery_fee': estimatedDeliveryFee,
       });
     }
+    log('Form data: ${formData.fields}');
 
     final response = await _dio.post(
       '/orders?lang=${LocaleManager.currentLocale}',

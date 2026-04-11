@@ -80,19 +80,39 @@ class AppliedCouponBadge extends StatelessWidget {
     required this.onRemove,
   });
 
+  String _buildRewardText(AppLocalizations l10n) {
+    if (coupon.isWalletCredit) {
+      final parts = <String>[];
+      if (coupon.walletAmountCents != null && coupon.walletAmountCents! > 0) {
+        final egp = (coupon.walletAmountCents! / 100).toStringAsFixed(2);
+        parts.add(l10n.walletCredit(egp));
+      }
+      if (coupon.walletPoints != null && coupon.walletPoints! > 0) {
+        parts.add(l10n.walletPoints(coupon.walletPoints!));
+      }
+      return parts.join(' & ');
+    }
+
+    if (coupon.discountValue != null) {
+      // ── Determine what the discount applies to ──────────────────────────
+      final target = coupon.isDeliveryFeeDiscount
+          ? l10n.offDeliveryFee   // ← new string
+          : l10n.offYourOrder;
+
+      if (coupon.isPercentDiscount) {
+        return '${coupon.discountValue!.toStringAsFixed(0)}% $target';
+      }
+      if (coupon.isFixedDiscount) {
+        return '${coupon.discountValue!.toStringAsFixed(0)} ${l10n.egp} $target';
+      }
+    }
+
+    return '';
+  }
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-
-    final parts = <String>[];
-    if (coupon.walletAmountCents != null) {
-      final egp = (coupon.walletAmountCents! / 100).toStringAsFixed(2);
-      parts.add(l10n.walletCredit(egp));
-    }
-    if (coupon.walletPoints != null) {
-      parts.add(l10n.walletPoints(coupon.walletPoints!));
-    }
-    final reward = parts.join(' & ');
+    final reward = _buildRewardText(l10n);
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -116,7 +136,8 @@ class AppliedCouponBadge extends StatelessWidget {
                     color: Colors.green.shade800,
                   ),
                 ),
-                if (reward.isNotEmpty)
+                if (reward.isNotEmpty) ...[
+                  const SizedBox(height: 2),
                   Text(
                     reward,
                     style: TextStyle(
@@ -124,12 +145,15 @@ class AppliedCouponBadge extends StatelessWidget {
                       color: Colors.green.shade700,
                     ),
                   ),
+                ],
+                const SizedBox(height: 2),
                 Text(
                   coupon.code,
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.green.shade600,
                     fontFamily: 'monospace',
+                    letterSpacing: 1.2,
                   ),
                 ),
               ],

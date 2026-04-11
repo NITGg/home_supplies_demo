@@ -4,15 +4,16 @@ class Coupon {
   final String title;
   final String? titleAr;
   final String? description;
+  final String? scope;
   final String? descriptionAr;
-  final String type; // 'WALLET_CREDIT' or 'ORDER_DISCOUNT'
+  final String type;
   final DateTime? startAt;
   final DateTime? endAt;
   final bool isActive;
   final int? maxTotalUses;
   final int? maxUserUses;
   final int minOrdersCount;
-  final String? discountType; // 'PERCENT' or 'FIXED'
+  final String? discountType;
   final double? discountValue;
   final int? maxDiscountCents;
   final int? minOrderTotalCents;
@@ -20,6 +21,12 @@ class Coupon {
   final int walletPoints;
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  // ── NEW ──────────────────────────────────────────────
+  final String? image;
+  final String? buttonText;
+  final String? buttonTextAr;
+  // ─────────────────────────────────────────────────────
 
   const Coupon({
     required this.id,
@@ -31,6 +38,7 @@ class Coupon {
     required this.type,
     this.startAt,
     this.endAt,
+    this.scope,
     required this.isActive,
     this.maxTotalUses,
     this.maxUserUses,
@@ -43,16 +51,17 @@ class Coupon {
     required this.walletPoints,
     required this.createdAt,
     required this.updatedAt,
+    this.image,
+    this.buttonText,
+    this.buttonTextAr,
   });
 
   bool get isWalletCredit => type == 'WALLET_CREDIT';
   bool get isOrderDiscount => type == 'ORDER_DISCOUNT';
+  bool get isDeliveryFeeDiscount => scope == 'DELIVERY_FEE';
+
   bool get isPercentDiscount => discountType == 'PERCENT';
-
-  /// Wallet credit amount in major currency unit
   double get walletAmount => walletAmountCents / 100;
-
-  /// Max discount amount in major currency unit
   double? get maxDiscount =>
       maxDiscountCents != null ? maxDiscountCents! / 100 : null;
 
@@ -65,6 +74,7 @@ class Coupon {
       description: json['description'] as String?,
       descriptionAr: json['description_ar'] as String?,
       type: json['type'] as String,
+      scope: json['scope'] as String?,
       startAt: json['start_at'] != null
           ? DateTime.tryParse(json['start_at'] as String)
           : null,
@@ -83,6 +93,10 @@ class Coupon {
       walletPoints: (json['wallet_points'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      // ── NEW ──
+      image: json['image'] as String?,
+      buttonText: json['button_text'] as String?,
+      buttonTextAr: json['button_text_ar'] as String?,
     );
   }
 }
