@@ -676,10 +676,12 @@ class _ProposalCardState extends State<_ProposalCard> {
   }
 
   String _getStatusText(BuildContext context) {
-    if (widget.proposal.isAccepted)
+    if (widget.proposal.isAccepted) {
       return AppLocalizations.of(context)!.accepted;
-    if (widget.proposal.isRejected)
+    }
+    if (widget.proposal.isRejected) {
       return AppLocalizations.of(context)!.rejected;
+    }
     return AppLocalizations.of(context)!.pending;
   }
 
@@ -874,10 +876,17 @@ class _ProposalCardState extends State<_ProposalCard> {
                 ),
                 const SizedBox(width: 3),
                 Text(
-                  '${widget.proposal.totalFee} ${l10n.egp}',
+                      () {
+                    final total = double.tryParse(widget.proposal.totalFee) ?? 0;
+                    final discount = widget.proposal.discountFee ?? 0;
+                    final finalFee = (total - discount).clamp(0, double.infinity);
+                    return '${finalFee.toInt()} ${l10n.egp}';
+                  }(),
                   style: AppTextStyles.bold14.copyWith(
                     fontSize: 13,
-                    color: Colors.grey.shade600,
+                    color: (widget.proposal.discountFee ?? 0) > 0
+                        ? Colors.green.shade700
+                        : Colors.grey.shade600,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1038,13 +1047,49 @@ class _ProposalCardState extends State<_ProposalCard> {
                     color: Colors.grey.shade700,
                   ),
                 ),
-                Text(
-                  '${widget.proposal.totalFee} ${l10n.egp}',
-                  style: AppTextStyles.bold18.copyWith(
-                    color: AppColors.kPrimaryColor,
-                    fontSize: 20,
-                  ),
-                ),
+                // ── Fee display ──────────────────────────────────────────────
+                Builder(builder: (_) {
+                  final total = double.tryParse(widget.proposal.totalFee) ?? 0;
+                  final discount = widget.proposal.discountFee ?? 0;
+                  final hasDiscount = discount > 0;
+                  final finalFee = (total - discount).clamp(0, double.infinity);
+
+                  if (!hasDiscount) {
+                    return Text(
+                      '${widget.proposal.totalFee} ${l10n.egp}',
+                      style: AppTextStyles.bold18.copyWith(
+                        color: AppColors.kPrimaryColor,
+                        fontSize: 20,
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // Original — struck through in red
+                      Text(
+                        '${total.toInt()} ${l10n.egp}',
+                        style: AppTextStyles.bold14.copyWith(
+                          fontSize: 13,
+                          color: Colors.red.shade400,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: Colors.red.shade400,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      // Discounted — green
+                      Text(
+                        '${finalFee.toInt()} ${l10n.egp}',
+                        style: AppTextStyles.bold18.copyWith(
+                          color: Colors.green.shade700,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+                // ────────────────────────────────────────────────────────────
               ],
             ),
           ),
