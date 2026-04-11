@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../data/models/coupons_model.dart';
 import '../data/repositories/coupons_repo.dart';
 import 'coupons_states.dart';
+
 class CouponCubit extends Cubit<CouponState> {
   final CouponRepository _repository;
 
@@ -9,8 +11,8 @@ class CouponCubit extends Cubit<CouponState> {
   CouponsLoaded? _lastLoadedState;
 
   CouponCubit({CouponRepository? repository})
-      : _repository = repository ?? CouponRepositoryImpl(),
-        super(CouponInitial());
+    : _repository = repository ?? CouponRepositoryImpl(),
+      super(CouponInitial());
 
   Future<void> loadCoupons() async {
     emit(CouponLoading());
@@ -28,27 +30,13 @@ class CouponCubit extends Cubit<CouponState> {
     }
   }
 
-  Future<void> checkFirstOrderDiscount() async {
+  Future<Coupon?> checkFirstOrderDiscount() async {
     try {
       final count = await _repository.getCompletedOrdersCount();
-      if (count != 0) {
-        _restoreLoadedState();
-        return;
-      }
-      final coupon = await _repository.getFirstOrderCoupon();
-      if (coupon != null) {
-        emit(FirstOrderCouponAvailable(coupon));
-      }
-      // Restore the ticker state regardless
-      _restoreLoadedState();
+      if (count != 0) return null;
+      return await _repository.getFirstOrderCoupon();
     } catch (_) {
-      _restoreLoadedState();
-    }
-  }
-
-  void _restoreLoadedState() {
-    if (_lastLoadedState != null) {
-      emit(_lastLoadedState!);
+      return null;
     }
   }
 }

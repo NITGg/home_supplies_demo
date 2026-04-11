@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../addresses/data/models/governorate_model.dart';
-import '../../addresses/manager/governorate_cubit.dart';
-import '../../addresses/manager/governorate_states.dart';
 import '../../orders/presentation/widgets/sheets/create_order_sheet/create_order_sheet.dart';
-import '../../wallet/manager/wallet_cubit.dart';
 import '../data/models/coupons_model.dart';
 
 class FirstOrderDiscountDialog extends StatelessWidget {

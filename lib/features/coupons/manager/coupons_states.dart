@@ -25,11 +25,11 @@ class CouponError extends CouponState {
   CouponError(this.message);
 }
 
-// ── NEW: emitted when the user qualifies for a first-order discount ──────────
-class FirstOrderCouponAvailable extends CouponState {
-  final Coupon coupon;
-  FirstOrderCouponAvailable(this.coupon);
-}
-
-class FirstOrderCouponChecked extends CouponState {} // no coupon / already ordered
-// ────────────────────────────────────────────────────────────────────────────
+// // ── NEW: emitted when the user qualifies for a first-order discount ──────────
+// class FirstOrderCouponAvailable extends CouponState {
+//   final Coupon coupon;
+//   FirstOrderCouponAvailable(this.coupon);
+// }
+//
+// class FirstOrderCouponChecked extends CouponState {} // no coupon / already ordered
+// // ────────────────────────────────────────────────────────────────────────────

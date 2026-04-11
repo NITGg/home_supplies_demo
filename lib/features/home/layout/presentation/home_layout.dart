@@ -27,7 +27,6 @@ import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
 import '../../../auth/manager/profile_cubit.dart';
 import '../../../auth/manager/profile_states.dart';
-import '../../../coupons/manager/coupons_states.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
 import '../../../coupons/presentation/first_order_discount_dialog.dart';
 import '../../../notifications/presentation/widgets/notification_dialog.dart';
@@ -50,7 +49,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   late final HomeCubit _homeCubit = HomeCubit();
   late final CouponCubit _couponCubit = CouponCubit()..loadCoupons();
   bool _firstOrderChecked = false;
-
+  bool _phoneSheetShown = false;
 
   @override
   void initState() {
@@ -150,7 +149,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider.value(value: _homeCubit),    // 👈 was: create: (_) => HomeCubit()
+        BlocProvider.value(value: _homeCubit),
+        // 👈 was: create: (_) => HomeCubit()
         BlocProvider.value(value: _couponCubit),
         BlocProvider<GovernorateCubit>(
           create: (_) => GovernorateCubit()..loadGovernorates(),
@@ -168,30 +168,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
               return MultiBlocListener(
                 listeners: [
-                  BlocListener<CouponCubit, CouponState>(
-                    bloc: _couponCubit,
-                    listener: (context, state) {
-                      if (state is FirstOrderCouponAvailable) {
-                        // Read everything we need HERE, while context still has the providers
-                        final govState = context.read<GovernorateCubit>().state;
-                        final governorates = govState is GovernoratesLoaded
-                            ? govState.response
-                            : GovernoratesResponse(governorates: [], totalCount: 0, totalPages: 0);
-                        final balance =
-                            context.read<WalletCubit>().cachedWalletData?.wallet.balance ?? 0.0;
-
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (_) => FirstOrderDiscountDialog(
-                            coupon: state.coupon,
-                            governorates: governorates, // ← passed directly
-                            walletBalance: balance,     // ← passed directly
-                          ),
-                        );
-                      }
-                    },
-                  ),
                   BlocListener<AuthCubit, AuthState>(
                     listener: (context, state) {
                       if (state is AuthUpdateSuccess) {
@@ -200,18 +176,17 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                     },
                   ),
                   BlocListener<ProfileCubit, ProfileState>(
-                    listener: (context, profileState) {
+                    listener: (context, profileState) async {
                       if (profileState is ProfileLoaded) {
-                        setState(() {
-                          _userId = profileState.profile.id.toString();
-                        });
+                        setState(
+                          () => _userId = profileState.profile.id.toString(),
+                        );
 
-                        // ✅ Now we have userId — safe to capture referral
                         if (profileState.profile.referralCode == null) {
                           ReferralCaptureService.captureOnFirstLaunch(
                             userId: _userId,
                           ).then((code) {
-                            if (code != null && mounted) {
+                            if (code != null && context.mounted) {
                               showSuccessBanner(
                                 context,
                                 'your referral code is: $code',
@@ -220,15 +195,55 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                           });
                         }
 
-                        if (profileState.profile.phone == null) {
-                          _showPhoneNumberBottomSheet(context);
+                        // ── Guard the entire flow so it only runs once ──────────────────
+                        if (_firstOrderChecked) {
+                          return; // ← second ProfileLoaded hits this and exits
                         }
+                        _firstOrderChecked = true; // ← set BEFORE any await
+
+                        // 1️⃣ Phone sheet
+                        if (profileState.profile.phone == null &&
+                            !_phoneSheetShown) {
+                          _phoneSheetShown = true;
+                          await _showPhoneNumberBottomSheet(context);
+                        }
+
+                        if (!mounted) return;
+
+                        // 2️⃣ Pending notification
                         _showPendingNotificationDialog();
 
-                        // ── NEW: check first-order discount once per session ──
-                        if (!_firstOrderChecked) {
-                          _firstOrderChecked = true;
-                          _couponCubit.checkFirstOrderDiscount();
+                        // 3️⃣ First order dialog
+                        final coupon = await _couponCubit
+                            .checkFirstOrderDiscount();
+                        if (coupon != null && context.mounted) {
+                          final govState = context
+                              .read<GovernorateCubit>()
+                              .state;
+                          final governorates = govState is GovernoratesLoaded
+                              ? govState.response
+                              : GovernoratesResponse(
+                                  governorates: [],
+                                  totalCount: 0,
+                                  totalPages: 0,
+                                );
+                          final balance =
+                              context
+                                  .read<WalletCubit>()
+                                  .cachedWalletData
+                                  ?.wallet
+                                  .balance ??
+                              0.0;
+
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => FirstOrderDiscountDialog(
+                              coupon: coupon,
+                              governorates: governorates,
+                              walletBalance: balance,
+                            ),
+                          );
                         }
                       }
                     },
@@ -671,11 +686,9 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     );
   }
 
-  void _showPhoneNumberBottomSheet(BuildContext context) {
-    final TextEditingController phoneController = TextEditingController();
-    final localizations = AppLocalizations.of(context)!;
-    final formKey = GlobalKey<FormState>();
-    showModalBottomSheet(
+  Future<void> _showPhoneNumberBottomSheet(BuildContext context) async {
+    final parentContext = context; // holds ProfileCubit
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       isDismissible: false,
@@ -684,50 +697,126 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 20,
-            right: 20,
-            top: 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(localizations.enterPhoneNumber, style: AppTextStyles.bold18),
-              const SizedBox(height: 8),
-              Text(
-                localizations.weNeedYourPhoneNumber,
-                style: AppTextStyles.regular14.copyWith(color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-              Form(
-                key: formKey,
-                child: AppTextFormField(
-                  label: AppLocalizations.of(context)!.phone,
-                  controller: phoneController,
-                  isPhone: true,
-                ),
-              ),
-              const SizedBox(height: 20),
-              AppCustomButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    Navigator.pop(context);
-                    context.read<ProfileCubit>().changePhone(
-                      phone: phoneController.text,
-                    );
-                  }
-                },
-                text: localizations.confirm,
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
+      builder: (_) => _PhoneNumberSheet(parentContext: parentContext),
+    );
+  }
+}
+
+class _PhoneNumberSheet extends StatefulWidget {
+  final BuildContext parentContext;
+
+  const _PhoneNumberSheet({required this.parentContext});
+
+  @override
+  State<_PhoneNumberSheet> createState() => _PhoneNumberSheetState();
+}
+
+class _PhoneNumberSheetState extends State<_PhoneNumberSheet> {
+  final _phoneController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _loading = false;
+  String? _errorMessage;
+  bool _submitted = false; // ← NEW guard
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+      _submitted = true; // ← mark that user initiated a request
+    });
+    widget.parentContext.read<ProfileCubit>().changePhone(
+      phone: _phoneController.text.trim(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
+    return BlocListener<ProfileCubit, ProfileState>(
+      bloc: widget.parentContext.read<ProfileCubit>(),
+      listener: (_, state) {
+        // ── Only react to states triggered by our own submit ──
+        if (!_submitted) return;
+
+        if (state is ProfileLoaded) {
+          if (mounted) Navigator.pop(context);
+        } else if (state is ProfileFailure) {
+          if (mounted) {
+            setState(() {
+              _loading = false;
+              _errorMessage = state.message;
+            });
+          }
+        } else if (state is ProfileLoading) {
+          if (mounted) setState(() => _loading = true);
+        }
       },
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(localizations.enterPhoneNumber, style: AppTextStyles.bold18),
+            const SizedBox(height: 8),
+            Text(
+              localizations.weNeedYourPhoneNumber,
+              style: AppTextStyles.regular14.copyWith(color: Colors.grey),
+            ),
+            const SizedBox(height: 20),
+            Form(
+              key: _formKey,
+              child: AppTextFormField(
+                label: localizations.phone,
+                controller: _phoneController,
+                isPhone: true,
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 14,
+                    color: Colors.red.shade700,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 20),
+            AppCustomButton(
+              onPressed: _loading ? () {} : _submit,
+              text: localizations.confirm,
+              isLoading: _loading,
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
     );
   }
 }

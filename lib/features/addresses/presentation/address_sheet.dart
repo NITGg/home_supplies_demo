@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/loading_screen.dart';
