@@ -28,6 +28,7 @@ class OrderCard extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback? onRetrySuccess;
   final bool hasNewOffer;
+  final int? roleId;
 
   const OrderCard({
     super.key,
@@ -36,6 +37,7 @@ class OrderCard extends StatelessWidget {
     required this.onCancel,
     this.onRetrySuccess,
     this.hasNewOffer = false,
+    this.roleId,
   });
 
   Color _statusColor() {
@@ -138,6 +140,8 @@ class OrderCard extends StatelessWidget {
             if (order.isPending) _buildActionButtons(l10n),
             // inside the Column children list in build():
             if (order.status == 'EXPIRED') _buildRetryFooter(context, order.id),
+            if (order.status == "IN_PROGRESS" && roleId == 4) // ← ADD
+              _buildConfirmDeliveryFooter(context),
           ],
         ),
       ),
@@ -194,7 +198,7 @@ class OrderCard extends StatelessWidget {
                 Icon(_statusIcon(), size: 12, color: Colors.white),
                 const SizedBox(width: 4),
                 Text(
-                  (order.collectedAt != null&& order.status == 'IN_PROGRESS')
+                  (order.collectedAt != null && order.status == 'IN_PROGRESS')
                       ? AppLocalizations.of(context)!.outForDelivery
                       : _statusLabel(context),
                   style: AppTextStyles.bold14.copyWith(
@@ -274,8 +278,8 @@ class OrderCard extends StatelessWidget {
               ),
             ],
           ),
-            const SizedBox(height: 14),
-            OrderRouteSection(order: order),
+          const SizedBox(height: 14),
+          OrderRouteSection(order: order),
         ],
       ),
     );
@@ -435,6 +439,110 @@ class OrderCard extends StatelessWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConfirmDeliveryFooter(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return BlocConsumer<OrderCubit, OrderState>(
+      listenWhen: (_, current) =>
+          current is DeliveryConfirmed || current is OrderError,
+      listener: (context, state) {
+        if (state is DeliveryConfirmed) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.deliveryConfirmed),
+              backgroundColor: Colors.green.shade700,
+            ),
+          );
+        } else if (state is OrderError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+      },
+      buildWhen: (_, current) =>
+          current is DeliveryConfirming ||
+          current is DeliveryConfirmed ||
+          current is OrderError ||
+          current is OrdersLoaded,
+      builder: (context, state) {
+        final isLoading = state is DeliveryConfirming;
+
+        return Column(
+          children: [
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              child: isLoading
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 6),
+                        child: CircularProgressIndicator(
+                          color: AppColors.kSecondaryColor,
+                          strokeWidth: 2.5,
+                        ),
+                      ),
+                    )
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showConfirmDialog(context, l10n),
+                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        label: Text(
+                          l10n.confirmDelivery,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.shade600,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showConfirmDialog(BuildContext context, AppLocalizations l10n) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(l10n.confirmDelivery),
+        content: Text('${l10n.confirmDeliveryMessage} \n ${order.orderNumber}'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green.shade600,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              context.read<OrderCubit>().confirmDelivery(
+                orderId: order.id!,
+                courierId: order.courierId!, // already on the order model
+              );
+            },
+            child: Text(l10n.confirm),
+          ),
         ],
       ),
     );

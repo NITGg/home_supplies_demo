@@ -234,17 +234,22 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                   ?.wallet
                                   .balance ??
                               0.0;
-
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (_) => FirstOrderDiscountDialog(
-                              coupon: coupon,
-                              governorates: governorates,
-                              walletBalance: balance,
-                              couponCubit: _couponCubit, // ← ADD
-                            ),
-                          );
+                          if (context
+                                  .read<ProfileCubit>()
+                                  .currentProfile
+                                  ?.roleId !=
+                              4) {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) => FirstOrderDiscountDialog(
+                                coupon: coupon,
+                                governorates: governorates,
+                                walletBalance: balance,
+                                couponCubit: _couponCubit, // ← ADD
+                              ),
+                            );
+                          }
                         }
                       }
                     },

@@ -579,7 +579,8 @@
     "codN": "COD",
     "far": "Away",
     "outForDelivery": "Out For Delivery",
-
+    "confirmDelivery": "Confirm Delivery",
+    "confirmDeliveryMessage": "Are you sure the order has been delivered to the customer?",
 "ratingExcellent": "Excellent",
     "referral": "Referral",
     "referrals": "Referrals",

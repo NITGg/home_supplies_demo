@@ -1368,6 +1368,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get outForDelivery => 'Out For Delivery';
 
   @override
+  String get confirmDelivery => 'Confirm Delivery';
+
+  @override
+  String get confirmDeliveryMessage => 'Are you sure the order has been delivered to the customer?';
+
+  @override
   String get ratingExcellent => 'Excellent';
 
   @override

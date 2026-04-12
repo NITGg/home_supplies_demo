@@ -2759,6 +2759,18 @@ abstract class AppLocalizations {
   /// **'Out For Delivery'**
   String get outForDelivery;
 
+  /// No description provided for @confirmDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Delivery'**
+  String get confirmDelivery;
+
+  /// No description provided for @confirmDeliveryMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure the order has been delivered to the customer?'**
+  String get confirmDeliveryMessage;
+
   /// No description provided for @ratingExcellent.
   ///
   /// In en, this message translates to:

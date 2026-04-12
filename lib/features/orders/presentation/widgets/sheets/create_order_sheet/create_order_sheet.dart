@@ -19,6 +19,7 @@ import '../../../../../addresses/data/models/address_model.dart';
 import '../../../../../addresses/data/models/governorate_model.dart';
 import '../../../../../addresses/manager/address_cubit.dart';
 import '../../../../../addresses/manager/address_states.dart';
+import '../../../../../auth/manager/profile_cubit.dart';
 import '../../../../../coupons/manager/coupons_cubit.dart';
 import '../../../../../wallet/manager/wallet_cubit.dart';
 import '../../../../../wallet/manager/wallet_state.dart';
@@ -88,6 +89,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     // If the dialog already checked, the result is cached (no extra API call).
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+      if (context.read<ProfileCubit>().currentProfile?.roleId == 4) return;
       final code = widget.initialCouponCode?.isNotEmpty == true
           ? widget.initialCouponCode          // explicit override (e.g. deep link)
           : await context                     // cubit handles caching + eligibility

@@ -10,6 +10,7 @@ import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
 import '../../../core/utils/socket_service.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/manager/profile_cubit.dart';
 import '../../home/layout/manager/home_cubit.dart';
 import '../data/models/order_model.dart';
 import '../manager/order_cubit.dart';
@@ -783,6 +784,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
               // ── Order card ─────────────────────────────────────────────
               final order = displayOrders[orderIndex];
               return OrderCard(
+                roleId: context.read<ProfileCubit>().currentProfile?.roleId,
                 order: order,
                 hasNewOffer: _ordersWithNewOffers.contains(order.id),
                 onViewProposals: () {

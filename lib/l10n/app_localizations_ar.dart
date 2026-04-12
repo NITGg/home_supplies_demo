@@ -1368,6 +1368,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get outForDelivery => 'في الطريق';
 
   @override
+  String get confirmDelivery => 'تأكيد التوصيل';
+
+  @override
+  String get confirmDeliveryMessage => 'هل أنت متاكد من وصول الطلب للعميل؟';
+
+  @override
   String get ratingExcellent => 'ممتاز';
 
   @override
