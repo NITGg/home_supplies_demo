@@ -134,7 +134,10 @@ class NotificationsDialog extends StatelessWidget {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     showDialog(
       context: context,
-      builder: (_) => CouponsDialog(isAr: isAr),
+      builder: (_) => BlocProvider.value(
+        value: couponCubit!, // ← inject the already-loaded cubit
+        child: CouponsDialog(isAr: isAr),
+      ),
     );
   }
 
