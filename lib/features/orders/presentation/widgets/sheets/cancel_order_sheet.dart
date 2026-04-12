@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/features/auth/manager/profile_cubit.dart';
 
 import '../../../../../core/style/text_styles.dart';
 import '../../../../../core/utils/api_client.dart';
@@ -63,7 +64,7 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
     try {
       final response = await ApiClient.instance.dio.get(
         '/admin/cancellation-reason/all-reasons',
-        queryParameters: {'role_id': 3, 'limit': 50},
+        queryParameters: {'role_id': context.read<ProfileCubit>().currentProfile?.roleId ?? 3, 'page': 1, 'limit': 50},
       );
 
       final data = response.data['data'] as Map<String, dynamic>;
