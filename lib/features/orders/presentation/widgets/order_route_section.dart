@@ -3,7 +3,7 @@ import '../../../../core/style/text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/order_model.dart';
 
-class OrderRouteSection extends StatelessWidget {
+class OrderRouteSection extends StatefulWidget {
   final Order order;
 
   const OrderRouteSection({
@@ -12,10 +12,46 @@ class OrderRouteSection extends StatelessWidget {
   });
 
   @override
+  State<OrderRouteSection> createState() => _OrderRouteSectionState();
+}
+
+class _OrderRouteSectionState extends State<OrderRouteSection>
+    with SingleTickerProviderStateMixin {
+  bool _isExpanded = false;
+  late AnimationController _controller;
+  late Animation<double> _expandAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 250),
+      vsync: this,
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      _isExpanded ? _controller.forward() : _controller.reverse();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+
     return Container(
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
@@ -23,30 +59,85 @@ class OrderRouteSection extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _LocationRow(
-            icon: Icons.store_outlined,
-            label: l10n?.pickup ?? 'Pickup',
-            address: order.pickupAddressDescription,
-            color: Colors.green,
+          // ── Header / toggle row ──
+          InkWell(
+            onTap: _toggle,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  const Icon(Icons.route_outlined, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  // Delivery address preview while collapsed
+                  if (!_isExpanded)
+                    Flexible(
+                      child: Text(
+                        widget.order.deliveryAddressDescription,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.regular14.copyWith(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 4),
+                  AnimatedRotation(
+                    turns: _isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 18,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-            child: Row(
+
+          // ── Collapsible body ──
+          SizeTransition(
+            sizeFactor: _expandAnimation,
+            child: Column(
               children: [
-                Container(
-                  width: 1.5,
-                  height: 16,
-                  color: Colors.grey.shade300,
-                  margin: const EdgeInsets.only(left: 11),
+                Divider(height: 1, color: Colors.grey.shade200),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      _LocationRow(
+                        icon: Icons.store_outlined,
+                        label: l10n?.pickup ?? 'Pickup',
+                        address: widget.order.pickupAddressDescription,
+                        color: Colors.green,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 6, horizontal: 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 1.5,
+                              height: 16,
+                              color: Colors.grey.shade300,
+                              margin: const EdgeInsets.only(left: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _LocationRow(
+                        icon: Icons.location_on,
+                        label: l10n?.delivery ?? 'Delivery',
+                        address: widget.order.deliveryAddressDescription,
+                        color: Colors.blue,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-          _LocationRow(
-            icon: Icons.location_on,
-            label: l10n?.delivery ?? 'Delivery',
-            address: order.deliveryAddressDescription,
-            color: Colors.blue,
           ),
         ],
       ),
