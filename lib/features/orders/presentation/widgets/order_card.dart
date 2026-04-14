@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
+import '../../../../core/utils/formatDate.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/order_model.dart';
 import '../../manager/order_cubit.dart';
@@ -89,25 +90,6 @@ class OrderCard extends StatelessWidget {
         return order.status ?? '';
     }
   }
-
-  String _formatDate(BuildContext context, DateTime date) {
-    final l10n = AppLocalizations.of(context)!;
-    final now = DateTime.now();
-    final diff = now.difference(date);
-
-    if (diff.inMinutes < 1) {
-      return l10n.justNow;
-    } else if (diff.inMinutes < 60) {
-      return l10n.minutesAgo(diff.inMinutes);
-    } else if (diff.inHours < 24) {
-      return l10n.hoursAgo(diff.inHours);
-    } else if (diff.inDays < 7) {
-      return l10n.daysAgo(diff.inDays);
-    } else {
-      return DateFormat('MMM dd').format(date);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -177,7 +159,7 @@ class OrderCard extends StatelessWidget {
                   style: AppTextStyles.bold14.copyWith(fontSize: 12),
                 ),
                 Text(
-                  _formatDate(context, order.createdAt ?? DateTime.now()),
+                  formatDate(context, order.createdAt ?? DateTime.now()),
                   style: AppTextStyles.regular14.copyWith(
                     fontSize: 12,
                     color: Colors.grey.shade500,
@@ -353,7 +335,7 @@ class OrderCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${AppLocalizations.of(context)!.delivered}: ${_formatDate(context, order.deliveredAt!)}',
+                    '${AppLocalizations.of(context)!.delivered}: ${formatDate(context, order.deliveredAt!)}',
                     style: AppTextStyles.medium18.copyWith(
                       fontSize: 13,
                       color: Colors.green.shade900,

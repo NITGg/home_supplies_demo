@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:timeago/timeago.dart' as timeago;
-
 import '../../../../core/style/app_colors.dart';
+import '../../../../core/utils/formatDate.dart';
 import '../../manager/notification_cubit.dart';
+
 
 class NotificationCard extends StatelessWidget {
   final String notificationId;
@@ -143,7 +143,7 @@ class NotificationCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             timestamp != null
-                                ? timeago.format(timestamp!.toDate())
+                                ? formatDate(context,timestamp!.toDate())
                                 : 'Unknown time',
                             style: TextStyle(color: Colors.grey[500], fontSize: 12),
                           ),
