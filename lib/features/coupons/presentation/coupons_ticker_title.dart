@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +12,7 @@ import '../manager/coupons_cubit.dart';
 import '../manager/coupons_states.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Entry point — same as before, just swaps the ticker for the card pill
+// Entry point
 // ─────────────────────────────────────────────────────────────────────────────
 
 class CouponTickerTitle extends StatefulWidget {
@@ -53,7 +55,7 @@ class _CouponTickerTitleState extends State<CouponTickerTitle>
           if (!_hasAnimated) {
             _hasAnimated = true;
             WidgetsBinding.instance.addPostFrameCallback(
-              (_) => _fadeController.forward(),
+                  (_) => _fadeController.forward(),
             );
           }
           return FadeTransition(
@@ -86,7 +88,7 @@ class _CouponTickerTitleState extends State<CouponTickerTitle>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Compact pill — shows first coupon, tap to copy, then "view more" fades in
+// Compact pill
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CouponPill extends StatefulWidget {
@@ -105,28 +107,76 @@ class _CouponPill extends StatefulWidget {
 }
 
 class _CouponPillState extends State<_CouponPill>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   // 'idle' → 'copied' → 'viewMore' → 'idle'
   _PillPhase _phase = _PillPhase.idle;
-  late final AnimationController _controller;
-  late final Animation<double> _scaleAnim;
+  bool _showHint = false;
+
+  // Tap-press controller (shrink on tap)
+  late final AnimationController _tapController;
+  late final Animation<double> _tapScale;
+
+  // Hint nudge controller (gentle bounce + brief hint label)
+  late final AnimationController _hintController;
+  late final Animation<double> _hintScale;
+
+  Timer? _hintTimer;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+
+    _tapController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 180),
     );
-    _scaleAnim = Tween<double>(
+    _tapScale = Tween<double>(
       begin: 1.0,
       end: 0.93,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    ).animate(CurvedAnimation(parent: _tapController, curve: Curves.easeInOut));
+
+    _hintController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    // Bouncy scale: grows slightly then snaps back with elasticity
+    _hintScale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 1.06)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 35,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.06, end: 0.97)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 0.97, end: 1.0)
+            .chain(CurveTween(curve: Curves.elasticOut)),
+        weight: 40,
+      ),
+    ]).animate(_hintController);
+
+    // Show hint every 4 s, only when pill is idle
+    _hintTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
+      if (!mounted || _phase != _PillPhase.idle) return;
+
+      setState(() => _showHint = true);
+      _hintController.forward(from: 0);
+
+      await Future.delayed(const Duration(milliseconds: 1800));
+      if (mounted && _phase == _PillPhase.idle) {
+        setState(() => _showHint = false);
+      }
+    });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _hintTimer?.cancel();
+    _tapController.dispose();
+    _hintController.dispose();
     super.dispose();
   }
 
@@ -139,26 +189,42 @@ class _CouponPillState extends State<_CouponPill>
 
     if (_phase != _PillPhase.idle) return;
 
+    // Cancel any active hint so it doesn't overlap
+    _hintTimer?.cancel();
+    setState(() => _showHint = false);
+
     // Press animation
-    await _controller.forward();
-    await _controller.reverse();
+    await _tapController.forward();
+    await _tapController.reverse();
 
     await Clipboard.setData(ClipboardData(text: widget.coupon.code));
 
     setState(() => _phase = _PillPhase.copied);
 
-    // After 1.4 s show "view more" (only if there are more coupons)
     await Future.delayed(const Duration(milliseconds: 1400));
     if (!mounted) return;
 
     if (widget.allCoupons.length > 1) {
       setState(() => _phase = _PillPhase.viewMore);
-      // Auto-reset after 2.5 s
       await Future.delayed(const Duration(milliseconds: 2500));
       if (mounted) setState(() => _phase = _PillPhase.idle);
     } else {
       setState(() => _phase = _PillPhase.idle);
     }
+
+    // Re-arm the hint timer after the tap flow finishes
+    _hintTimer?.cancel();
+    _hintTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
+      if (!mounted || _phase != _PillPhase.idle) return;
+
+      setState(() => _showHint = true);
+      _hintController.forward(from: 0);
+
+      await Future.delayed(const Duration(milliseconds: 1800));
+      if (mounted && _phase == _PillPhase.idle) {
+        setState(() => _showHint = false);
+      }
+    });
   }
 
   @override
@@ -166,43 +232,47 @@ class _CouponPillState extends State<_CouponPill>
     final isAr = AppLocalizations.of(context)?.localeName == 'ar';
     final label = _labelFor(widget.coupon, isAr ?? false);
 
+    // Combine tap-press scale and hint-bounce scale
     return GestureDetector(
       onTap: _onTap,
       child: ScaleTransition(
-        scale: _scaleAnim,
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 280),
-          height: 38,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.kPrimaryColor.withOpacity(0.15),
-                Colors.orange.shade50,
-              ],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.kPrimaryColor.withOpacity(0.4),
-              width: 1.2,
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 280),
-              transitionBuilder: (child, anim) => FadeTransition(
-                opacity: anim,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, 0.3),
-                    end: Offset.zero,
-                  ).animate(anim),
-                  child: child,
-                ),
+        scale: _tapScale,
+        child: ScaleTransition(
+          scale: _hintScale,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 280),
+            height: 38,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.kPrimaryColor.withOpacity(0.15),
+                  Colors.orange.shade50,
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
               ),
-              child: _pillContent(label, isAr ?? false),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.kPrimaryColor.withOpacity(0.4),
+                width: 1.2,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 280),
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.3),
+                      end: Offset.zero,
+                    ).animate(anim),
+                    child: child,
+                  ),
+                ),
+                child: _pillContent(label, isAr ?? false),
+              ),
             ),
           ),
         ),
@@ -212,8 +282,17 @@ class _CouponPillState extends State<_CouponPill>
 
   Widget _pillContent(String label, bool isAr) {
     switch (_phase) {
-      // ── Idle: scrolling label + code badge ──
       case _PillPhase.idle:
+      // When hint is active, swap the label to a "tap to copy" nudge
+        if (_showHint) {
+          return _StatusPillContent(
+            key: const ValueKey('hint'),
+            icon: Icons.touch_app_rounded,
+            iconColor: AppColors.kPrimaryColor,
+            text: isAr ? 'اضغط لنسخ الكود' : 'Tap to copy',
+            textColor: Colors.orange.shade800,
+          );
+        }
         return _IdlePillContent(
           key: const ValueKey('idle'),
           coupon: widget.coupon,
@@ -221,7 +300,6 @@ class _CouponPillState extends State<_CouponPill>
           isAr: isAr,
         );
 
-      // ── Copied: green check ──
       case _PillPhase.copied:
         return _StatusPillContent(
           key: const ValueKey('copied'),
@@ -231,7 +309,6 @@ class _CouponPillState extends State<_CouponPill>
           textColor: Colors.green.shade700,
         );
 
-      // ── View more ──
       case _PillPhase.viewMore:
         return _StatusPillContent(
           key: const ValueKey('viewMore'),
@@ -248,18 +325,9 @@ class _CouponPillState extends State<_CouponPill>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Idle content: static label + code chip
-//
-// TO RESTORE THE MARQUEE:
-//   1. Change `_IdlePillContent` back to a StatefulWidget with
-//      SingleTickerProviderStateMixin, add a `Ticker _ticker` and
-//      `Duration _elapsed`, start the ticker in initState.
-//   2. Replace the `Text` widget in the Expanded with a `ClipRect > SizedBox.expand
-//      > CustomPaint` using `_SingleLabelTickerPainter`.
-//   3. Uncomment the `_SingleLabelTickerPainter` class at the bottom of this file.
-//   4. Remove the `import 'package:flutter/scheduler.dart'` suppression warning
-//      (the import is already present at the top).
+// Idle content
 // ─────────────────────────────────────────────────────────────────────────────
+
 class _IdlePillContent extends StatelessWidget {
   final Coupon coupon;
   final String label;
@@ -277,7 +345,6 @@ class _IdlePillContent extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Discount value — bold and prominent
         Expanded(
           child: Text(
             textAlign: TextAlign.center,
@@ -299,7 +366,7 @@ class _IdlePillContent extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Status content (copied / view more)
+// Status content (copied / view more / hint)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _StatusPillContent extends StatelessWidget {
@@ -356,61 +423,7 @@ class _StatusPillContent extends StatelessWidget {
 enum _PillPhase { idle, copied, viewMore }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Painter — single label, looping
-// ─────────────────────────────────────────────────────────────────────────────
-
-// class _SingleLabelTickerPainter extends CustomPainter {
-//   final String label;
-//   final bool isRtl;
-//   final double speed;
-//   final Duration elapsed;
-//
-//   _SingleLabelTickerPainter({
-//     required this.label,
-//     required this.isRtl,
-//     required this.speed,
-//     required this.elapsed,
-//   });
-//
-//   static const TextStyle _style = TextStyle(
-//     fontSize: 11,
-//     fontWeight: FontWeight.w500,
-//     color: Colors.black87,
-//   );
-//
-//   @override
-//   void paint(Canvas canvas, Size size) {
-//     final tp = TextPainter(
-//       text: TextSpan(text: label, style: _style),
-//       textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
-//       maxLines: 1,
-//     )..layout();
-//
-//     final stripWidth = tp.width + 40.0; // gap between loops
-//     final seconds = elapsed.inMicroseconds / 1e6;
-//     final offset = (seconds * speed) % stripWidth;
-//
-//     canvas.save();
-//     canvas.clipRect(Offset.zero & size);
-//
-//     final centerY = size.height / 2 - tp.height / 2;
-//     final x1 = isRtl ? offset : -offset;
-//     tp.paint(canvas, Offset(x1, centerY));
-//     tp.paint(
-//       canvas,
-//       Offset(isRtl ? x1 - stripWidth : x1 + stripWidth, centerY),
-//     );
-//
-//     canvas.restore();
-//   }
-//
-//   @override
-//   bool shouldRepaint(covariant _SingleLabelTickerPainter old) =>
-//       old.elapsed != elapsed || old.label != label;
-// }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Label builder (unchanged from original)
+// Label builder
 // ─────────────────────────────────────────────────────────────────────────────
 
 String _labelFor(Coupon coupon, bool isAr) {
@@ -454,8 +467,9 @@ String _labelFor(Coupon coupon, bool isAr) {
     return '';
   }
 }
+
 // ─────────────────────────────────────────────────────────────────────────────
-// CouponsDialog (unchanged from original)
+// CouponsDialog
 // ─────────────────────────────────────────────────────────────────────────────
 
 class CouponsDialog extends StatelessWidget {
@@ -632,68 +646,68 @@ class _CouponCardState extends State<_CouponCard> {
                 duration: const Duration(milliseconds: 300),
                 child: _copied
                     ? Container(
-                        key: const ValueKey('copied'),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 9,
-                          horizontal: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              widget.isAr ? 'تم النسخ' : 'Copied!',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : GestureDetector(
-                        key: const ValueKey('copy'),
-                        onTap: _copyCode,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 9,
-                            horizontal: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.kPrimaryColor,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.copy,
-                                color: Colors.black,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                widget.isAr ? 'نسخ' : 'Copy',
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
+                  key: const ValueKey('copied'),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 9,
+                    horizontal: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.isAr ? 'تم النسخ' : 'Copied!',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
                         ),
                       ),
+                    ],
+                  ),
+                )
+                    : GestureDetector(
+                  key: const ValueKey('copy'),
+                  onTap: _copyCode,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 9,
+                      horizontal: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.kPrimaryColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.copy,
+                          color: Colors.black,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.isAr ? 'نسخ' : 'Copy',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
