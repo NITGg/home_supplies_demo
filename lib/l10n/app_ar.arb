@@ -449,7 +449,7 @@
           "setAsDefault": "تعيين كافتراضي",
           "pleaseSelectArea": "يرجى اختيار المنطقة",
           "noAreasAvailable": "لا توجد مناطق متاحة",
-          "addressNameHint": "اسم العنوان",
+          "addressNameHint": "امنح عنوانك اسمًا (مثل المنزل أو العمل)",
           "addressNameOptional": "اسم العنوان",
           "pleaseSelectLocation": "يرجى اختيار الموقع",
           "oneTimeAddress": "إدخال عنوان (لا تحفظ)",

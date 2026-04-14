@@ -99,12 +99,12 @@ class _AddressSelectionSheetState extends State<AddressSelectionSheet> {
                   text: l10n.addAddress,
                   isSecondary: true,
                 ),
-                const SizedBox(height: 8),
-                AppCustomButton(
-                  onPressed: () => _showAddressForm(saveAddress: false),
-                  text: l10n.oneTimeAddress,
-                  isSecondary: true,
-                ),
+                // const SizedBox(height: 8),
+                // AppCustomButton(
+                //   onPressed: () => _showAddressForm(saveAddress: false),
+                //   text: l10n.oneTimeAddress,
+                //   isSecondary: true,
+                // ),
               ],
             ),
           ),

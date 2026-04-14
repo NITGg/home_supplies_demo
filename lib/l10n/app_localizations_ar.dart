@@ -1025,7 +1025,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noAreasAvailable => 'لا توجد مناطق متاحة';
 
   @override
-  String get addressNameHint => 'اسم العنوان';
+  String get addressNameHint => 'امنح عنوانك اسمًا (مثل المنزل أو العمل)';
 
   @override
   String get addressNameOptional => 'اسم العنوان';

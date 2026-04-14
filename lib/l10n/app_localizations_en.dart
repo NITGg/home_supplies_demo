@@ -1025,7 +1025,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noAreasAvailable => 'No areas available';
 
   @override
-  String get addressNameHint => 'Address name';
+  String get addressNameHint => 'Give your address a label (e.g Home or Work)';
 
   @override
   String get addressNameOptional => 'Address name';

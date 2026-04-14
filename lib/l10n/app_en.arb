@@ -450,7 +450,7 @@
           "setAsDefault": "Set as default",
           "pleaseSelectArea": "Please select an area",
           "noAreasAvailable": "No areas available",
-          "addressNameHint": "Address name",
+          "addressNameHint": "Give your address a label (e.g Home or Work)",
           "addressNameOptional": "Address name",
           "distanceTooClose": "Pickup and delivery locations are too close. Please choose different locations",
           "pleaseSelectLocation": "Please select a location",

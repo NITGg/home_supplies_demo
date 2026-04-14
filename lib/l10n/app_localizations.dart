@@ -2096,7 +2096,7 @@ abstract class AppLocalizations {
   /// No description provided for @addressNameHint.
   ///
   /// In en, this message translates to:
-  /// **'Address name'**
+  /// **'Give your address a label (e.g Home or Work)'**
   String get addressNameHint;
 
   /// No description provided for @addressNameOptional.
