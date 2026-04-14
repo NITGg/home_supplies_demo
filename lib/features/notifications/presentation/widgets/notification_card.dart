@@ -24,50 +24,64 @@ class NotificationCard extends StatelessWidget {
     required this.onTap,
   });
 
+  Widget _markReadBackground() => Container(
+    alignment: Alignment.centerLeft,
+    padding: const EdgeInsets.only(left: 20),
+    decoration: BoxDecoration(
+      color: AppColors.kPrimaryColor,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: const Icon(Icons.done, color: Colors.white, size: 28),
+  );
+
+  Widget _deleteBackground() => Container(
+    alignment: Alignment.centerRight,
+    padding: const EdgeInsets.only(right: 20),
+    decoration: BoxDecoration(
+      color: Colors.red,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: const Icon(Icons.clear_all_rounded, color: Colors.white, size: 28),
+  );
+
   @override
   Widget build(BuildContext context) {
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+
+    // In RTL Flutter mirrors swipe directions, so we flip intent accordingly:
+    // LTR: startToEnd = mark read, endToStart = delete
+    // RTL: startToEnd = delete,    endToStart = mark read
+    final markReadDirection =
+    isRtl ? DismissDirection.endToStart : DismissDirection.startToEnd;
+    final deleteDirection =
+    isRtl ? DismissDirection.startToEnd : DismissDirection.endToStart;
+
     return Dismissible(
       key: Key(notificationId),
       confirmDismiss: (direction) async {
-        if (direction == DismissDirection.endToStart) {
-          // Swipe left: Delete
-          await context.read<NotificationsCubit>().deleteNotification(
-            notificationId,
-          );
+        if (direction == deleteDirection) {
+          await context
+              .read<NotificationsCubit>()
+              .deleteNotification(notificationId);
           return true;
-        } else if (direction == DismissDirection.startToEnd) {
-          // Swipe right: Mark as read
+        } else if (direction == markReadDirection) {
           if (!isRead) {
-            await context.read<NotificationsCubit>().markAsRead(notificationId);
+            await context
+                .read<NotificationsCubit>()
+                .markAsRead(notificationId);
           }
           return false;
         }
         return false;
       },
-      background: Container(
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: 20),
-        decoration: BoxDecoration(
-          color: AppColors.kPrimaryColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Icon(Icons.done, color: Colors.white, size: 28),
-        ),
-      ),
-      secondaryBackground: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Icon(Icons.clear_all_rounded, color: Colors.white, size: 28),
-        ),
-      ),
+      // background  = behind startToEnd swipe
+      // in RTL startToEnd is delete, in LTR it is mark-read
+      background:
+      isRtl ? _deleteBackground() : _markReadBackground(),
+      // secondaryBackground = behind endToStart swipe
+      // in RTL endToStart is mark-read, in LTR it is delete
+      secondaryBackground:
+      isRtl ? _markReadBackground() : _deleteBackground(),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -76,7 +90,9 @@ class NotificationCard extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isRead ? Colors.grey[200]! : Colors.orange.withOpacity(0.3),
+              color: isRead
+                  ? Colors.grey[200]!
+                  : Colors.orange.withOpacity(0.3),
               width: isRead ? 1 : 2,
             ),
             boxShadow: [
@@ -139,13 +155,20 @@ class NotificationCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.access_time, size: 14, color: Colors.grey[400]),
+                          Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: Colors.grey[400],
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             timestamp != null
-                                ? formatDate(context,timestamp!.toDate())
+                                ? formatDate(context, timestamp!.toDate())
                                 : 'Unknown time',
-                            style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
