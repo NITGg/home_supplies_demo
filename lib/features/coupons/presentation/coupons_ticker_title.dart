@@ -433,47 +433,52 @@ enum _PillPhase { idle, copied, viewMore }
 // ─────────────────────────────────────────────────────────────────────────────
 
 String _labelFor(Coupon coupon, bool isAr) {
+  String base = '';
+
   if (isAr) {
     if (coupon.isWalletCredit) {
       final parts = <String>[];
       if (coupon.walletAmountCents > 0)
         parts.add('${coupon.walletAmount.toStringAsFixed(0)} جنيه');
       if (coupon.walletPoints > 0) parts.add('${coupon.walletPoints} نقطة');
-      return parts.join(' + ');
+      base = parts.join(' + ');
     } else if (coupon.discountValue != null) {
       if (coupon.isPercentDiscount) {
-        return coupon.isDeliveryFeeDiscount
+        base = coupon.isDeliveryFeeDiscount
             ? 'خصم ${coupon.discountValue!.toStringAsFixed(0)}٪ على التوصيل'
             : 'خصم ${coupon.discountValue!.toStringAsFixed(0)}٪ على طلبك';
       } else {
-        return coupon.isDeliveryFeeDiscount
+        base = coupon.isDeliveryFeeDiscount
             ? 'خصم ${coupon.discountValue!.toStringAsFixed(0)} جنيه على التوصيل'
             : 'خصم ${coupon.discountValue!.toStringAsFixed(0)} جنيه على طلبك';
       }
     }
-    return '';
+    if (base.isNotEmpty && coupon.minOrdersCount > 0)
+      base += ' · ${coupon.minOrdersCount}+ طلب';
   } else {
     if (coupon.isWalletCredit) {
       final parts = <String>[];
       if (coupon.walletAmountCents > 0)
         parts.add('${coupon.walletAmount.toStringAsFixed(0)} EGP credit');
       if (coupon.walletPoints > 0) parts.add('${coupon.walletPoints} pts');
-      return parts.join(' + ');
+      base = parts.join(' + ');
     } else if (coupon.discountValue != null) {
       if (coupon.isPercentDiscount) {
-        return coupon.isDeliveryFeeDiscount
+        base = coupon.isDeliveryFeeDiscount
             ? '${coupon.discountValue!.toStringAsFixed(0)}% off delivery'
             : '${coupon.discountValue!.toStringAsFixed(0)}% off your order';
       } else {
-        return coupon.isDeliveryFeeDiscount
+        base = coupon.isDeliveryFeeDiscount
             ? '${coupon.discountValue!.toStringAsFixed(0)} EGP off delivery'
             : '${coupon.discountValue!.toStringAsFixed(0)} EGP off your order';
       }
     }
-    return '';
+    if (base.isNotEmpty && coupon.minOrdersCount > 0)
+      base += ' · ${coupon.minOrdersCount}+ orders';
   }
-}
 
+  return base;
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // CouponsDialog
 // ─────────────────────────────────────────────────────────────────────────────
@@ -624,6 +629,30 @@ class _CouponCardState extends State<_CouponCard> {
             ),
           ),
           const SizedBox(height: 10),
+          // After the discount description Text widget:
+          if (widget.coupon.minOrdersCount > 0) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(
+                  Icons.receipt_long_outlined,
+                  size: 13,
+                  color: Colors.orange.shade700,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  widget.isAr
+                      ? 'يتطلب ${widget.coupon.minOrdersCount} طلب${widget.coupon.minOrdersCount > 1 ? 'ات' : ''} مكتمل${widget.coupon.minOrdersCount > 1 ? 'ة' : ''}'
+                      : 'Requires ${widget.coupon.minOrdersCount} completed order${widget.coupon.minOrdersCount > 1 ? 's' : ''}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.orange.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ],
           Row(
             children: [
               Expanded(

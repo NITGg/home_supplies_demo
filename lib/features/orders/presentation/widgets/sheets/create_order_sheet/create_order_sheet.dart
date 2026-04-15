@@ -23,13 +23,16 @@ import '../../../../../auth/manager/profile_cubit.dart';
 import '../../../../../coupons/manager/coupons_cubit.dart';
 import '../../../../../wallet/manager/wallet_cubit.dart';
 import '../../../../../wallet/manager/wallet_state.dart';
-import '../../../../data/models/draft_modle.dart';
+import '../../../../data/models/draft_model.dart';
 import '../../../../data/models/order_model.dart';
 import '../../../../manager/order_cubit.dart';
 import '../../../../manager/order_states.dart';
 import 'coupon_section.dart';
+import 'insufficient_balance_sheet.dart';
+import 'pin_icon.dart';
 import 'product_image_picker.dart';
 import 'toggle_tab.dart';
+import 'vertical_dashed_line_painter.dart';
 
 class CreateOrderBottomSheet extends StatefulWidget {
   final GovernoratesResponse governorates;
@@ -153,7 +156,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (!mounted) return;
       if (state is AddressesLoaded && state.addresses.isNotEmpty) {
         final defaultAddr = state.addresses.firstWhere(
-          (a) => a.isDefault,
+              (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
         // Only use the preloaded default when the draft has no delivery address. // ← DRAFT
@@ -226,8 +229,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
       log(
         '📏 [Distance] ${result.distanceMeters} m  '
-        '⏱ ${result.durationSeconds} s  '
-        '(${result.provider})',
+            '⏱ ${result.durationSeconds} s  '
+            '(${result.provider})',
       );
 
       if (mounted) setState(() => _distanceResult = result);
@@ -412,7 +415,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     if (!_pickupNearMe)
-                      _buildPinIcon(
+                      buildPinIcon(
                         icon: Icons.store_outlined,
                         color: const Color(0xFF0F6E56),
                         bgColor: const Color(0xFFE1F5EE),
@@ -423,14 +426,14 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                         child: SizedBox(
                           width: 2,
                           child: CustomPaint(
-                            painter: _VerticalDashedLinePainter(
+                            painter: VerticalDashedLinePainter(
                               color: Colors.grey.shade300,
                             ),
                           ),
                         ),
                       ),
                     ),
-                    _buildPinIcon(
+                    buildPinIcon(
                       icon: Icons.location_on,
                       color: const Color(0xFF185FA5),
                       bgColor: const Color(0xFFE6F1FB),
@@ -724,9 +727,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             style: selected
                 ? AppTextStyles.bold14.copyWith(fontSize: 9)
                 : AppTextStyles.regular14.copyWith(
-                    color: Colors.grey,
-                    fontSize: 9,
-                  ),
+              color: Colors.grey,
+              fontSize: 9,
+            ),
           ),
         ],
       ),
@@ -734,10 +737,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 
   Widget _buildFeeAndPaymentRow(
-    AppLocalizations l10n,
-    double fee,
-    bool isOverBudget,
-  ) {
+      AppLocalizations l10n,
+      double fee,
+      bool isOverBudget,
+      ) {
     double? discountedFee;
     if (_appliedCoupon != null && _appliedCoupon!.isDeliveryFeeDiscount) {
       if (_appliedCoupon!.isPercentDiscount &&
@@ -850,7 +853,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (sheetCtx) {
-        return _InsufficientBalanceSheet(
+        return InsufficientBalanceSheet(
           currentBalance: balance,
           requiredAmount: required,
           shortfall: shortfall,
@@ -946,10 +949,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final budget = double.tryParse(_budgetController.text.trim()) ?? 0;
     final limit =
         (double.tryParse(
-              AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
-            ) ??
+          AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
+        ) ??
             0) /
-        100;
+            100;
     final isOverBudget = _isShopping && budget > limit;
 
     final bool usesWallet =
@@ -971,8 +974,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         productImageFile: _productImage,
         budget: _isShopping
             ? (double.parse(_budgetController.text.trim()) * 100)
-                  .round()
-                  .toString()
+            .round()
+            .toString()
             : '1',
         pickupAreaId: effectivePickup.areaId,
         pickupAddressDescription: effectivePickup.detailedAddress,
@@ -1154,10 +1157,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
             final limit =
                 (double.tryParse(
-                      AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
-                    ) ??
+                  AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
+                ) ??
                     0) /
-                100;
+                    100;
 
             final isOverBudget = budget > limit;
             return Container(
@@ -1213,8 +1216,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           child: Text(
                             _isShopping
                                 ? (isOverBudget
-                                      ? '${l10n.walletBalanceHintOverBudget} $limit ${l10n.walletBalanceHintOverBudget2}'
-                                      : l10n.walletBalanceHintShopping)
+                                ? '${l10n.walletBalanceHintOverBudget} $limit ${l10n.walletBalanceHintOverBudget2}'
+                                : l10n.walletBalanceHintShopping)
                                 : l10n.walletBalanceHintShipping,
                             style: TextStyle(
                               fontSize: 12,
@@ -1271,7 +1274,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               keyboardType: TextInputType.number,
                               validator: (v) {
                                 if (!_isShopping) return null;
-                                if (v == null || v.trim().isEmpty || v == '0') {
+                                if (v == null ||
+                                    v.trim().isEmpty ||
+                                    v == '0') {
                                   return l10n.pleaseEnterBudget;
                                 }
                                 if (double.tryParse(v) == null) {
@@ -1322,7 +1327,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       padding: const EdgeInsets.all(16),
                       child: BlocBuilder<OrderCubit, OrderState>(
                         buildWhen: (_, s) =>
-                            s is OrderOperationLoading ||
+                        s is OrderOperationLoading ||
                             s is OrdersLoaded ||
                             s is OrderError ||
                             s is OrderSuccess,
@@ -1344,280 +1349,4 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       ),
     );
   }
-}
-
-// ── Insufficient Balance Bottom Sheet ─────────────────────────────────────────
-
-class _InsufficientBalanceSheet extends StatelessWidget {
-  final double currentBalance;
-  final double requiredAmount;
-  final double shortfall;
-  final bool isShopping;
-  final AppLocalizations l10n;
-  final VoidCallback onTopUp;
-
-  const _InsufficientBalanceSheet({
-    required this.currentBalance,
-    required this.requiredAmount,
-    required this.shortfall,
-    required this.isShopping,
-    required this.l10n,
-    required this.onTopUp,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: Colors.orange.shade50,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.account_balance_wallet_outlined,
-              size: 32,
-              color: Colors.orange.shade700,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            l10n.insufficientBalance,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            isShopping
-                ? l10n.insufficientBalanceShoppingDesc
-                : l10n.insufficientBalanceShippingDesc,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              children: [
-                _BalanceRow(
-                  label: l10n.currentBalance,
-                  amount: currentBalance,
-                  egpLabel: l10n.egp,
-                  color: Colors.green.shade700,
-                  icon: Icons.account_balance_wallet,
-                ),
-                Divider(height: 1, color: Colors.grey.shade200),
-                _BalanceRow(
-                  label: l10n.requiredAmount,
-                  amount: requiredAmount,
-                  egpLabel: l10n.egp,
-                  color: Colors.blue.shade700,
-                  icon: Icons.receipt_long_outlined,
-                ),
-                Divider(height: 1, color: Colors.grey.shade200),
-                _BalanceRow(
-                  label: l10n.shortfall,
-                  amount: shortfall,
-                  egpLabel: l10n.egp,
-                  color: Colors.red.shade700,
-                  icon: Icons.arrow_downward_rounded,
-                  highlight: true,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onTopUp,
-              icon: const Icon(Icons.add_card_rounded),
-              label: Text(
-                l10n.topUpNow,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.kPrimaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              l10n.notNow,
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BalanceRow extends StatelessWidget {
-  final String label;
-  final double amount;
-  final String egpLabel;
-  final Color color;
-  final IconData icon;
-  final bool highlight;
-
-  const _BalanceRow({
-    required this.label,
-    required this.amount,
-    required this.egpLabel,
-    required this.color,
-    required this.icon,
-    this.highlight = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: highlight
-          ? BoxDecoration(
-              color: Colors.red.shade50,
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(16),
-              ),
-            )
-          : null,
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 16, color: color),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
-                fontWeight: highlight ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ),
-          Text(
-            '${amount.toStringAsFixed(2)} $egpLabel',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-Widget _buildPinIcon({
-  required IconData icon,
-  required Color color,
-  required Color bgColor,
-  bool warning = false,
-}) {
-  return Stack(
-    clipBehavior: Clip.none,
-    children: [
-      Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: bgColor,
-          shape: BoxShape.circle,
-          border: Border.all(color: color.withOpacity(0.4)),
-        ),
-        child: Icon(icon, color: color, size: 18),
-      ),
-      if (warning)
-        Positioned(
-          right: -3,
-          top: -3,
-          child: Container(
-            width: 14,
-            height: 14,
-            decoration: BoxDecoration(
-              color: Colors.orange.shade700,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.warning_rounded,
-              size: 9,
-              color: Colors.white,
-            ),
-          ),
-        ),
-    ],
-  );
-}
-
-class _VerticalDashedLinePainter extends CustomPainter {
-  final Color color;
-
-  const _VerticalDashedLinePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-
-    const dashH = 4.0;
-    const gap = 4.0;
-    double y = 0;
-    final x = size.width / 2;
-
-    while (y < size.height) {
-      canvas.drawLine(
-        Offset(x, y),
-        Offset(x, (y + dashH).clamp(0, size.height)),
-        paint,
-      );
-      y += dashH + gap;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_VerticalDashedLinePainter old) => old.color != color;
 }
