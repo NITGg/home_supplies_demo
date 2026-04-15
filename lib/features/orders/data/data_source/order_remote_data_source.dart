@@ -16,7 +16,7 @@ class OrderRemoteDataSource {
       required String estimatedDeliveryFee,
     String? couponCode,
   }) async {
-    log('Creating order: ${order.toJson()} payment method: $paymentMethod coupon code: $couponCode');
+    log('Creating order: ${order.toJson()} payment method: $paymentMethod coupon code: $couponCode, estimated delivery fee: $estimatedDeliveryFee');
 
     FormData formData;
 

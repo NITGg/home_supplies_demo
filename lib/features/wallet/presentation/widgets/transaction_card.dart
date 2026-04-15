@@ -29,8 +29,8 @@ class TransactionCard extends StatelessWidget {
       case 'MANUAL_DECREASE':
         return const Color(0xFFFF6B6B);
       case 'COUPON_PURCHASE':
-        return const Color(0xFFFF6B6B);
-        case 'PLATFORM_COD_COMMISSION':
+        return Colors.green.shade600;
+      case 'PLATFORM_COD_COMMISSION':
         return const Color(0xFFFF6B6B);
       default:
         return Colors.grey;
@@ -41,15 +41,15 @@ class TransactionCard extends StatelessWidget {
     switch (transaction.type) {
       case 'TOPUP' || 'MANUAL_INCREASE':
         return Icons.add_circle_outline;
-      case 'WITHDRAWAL' || 'MANUAL_DECREASE' || 'COUPON_PURCHASE':
+      case 'WITHDRAWAL' || 'MANUAL_DECREASE':
         return Icons.remove_circle_outline;
-      case 'ESCROW_RELEASE':
+      case 'ESCROW_RELEASE' || 'COUPON_PURCHASE':
         return Icons.payments_outlined;
       case 'PENALTY':
         return Icons.warning_amber_outlined;
       case 'COMMISSION_DEDUCTION':
         return Icons.percent;
-        case 'PLATFORM_COD_COMMISSION':
+      case 'PLATFORM_COD_COMMISSION':
         return Icons.percent;
       default:
         return Icons.receipt_long;
@@ -76,15 +76,18 @@ class TransactionCard extends StatelessWidget {
       case 'WITHDRAWAL':
         return l10n.withdrawal;
       case 'ESCROW_RELEASE':
-        return l10n.escrowRelease;case 'ESCROW_REMOVE':
         return l10n.escrowRelease;
-        case 'ESCROW_HOLD':
+      case 'ESCROW_REMOVE':
+        return l10n.escrowRelease;
+      case 'COUPON_PURCHASE':
+        return l10n.couponRedeemed;
+      case 'ESCROW_HOLD':
         return l10n.escrowHold;
       case 'PENALTY':
         return l10n.penalty;
-        case 'MANUAL_INCREASE':
+      case 'MANUAL_INCREASE':
         return l10n.topup;
-        case 'MANUAL_DECREASE':
+      case 'MANUAL_DECREASE':
         return l10n.withdrawal;
       default:
         return transaction.type;
@@ -138,7 +141,9 @@ class TransactionCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   textDirection: ui.TextDirection.ltr,
-                  DateFormat('dd MMM yyyy, hh:mm a').format(transaction.createdAt),
+                  DateFormat(
+                    'dd MMM yyyy, hh:mm a',
+                  ).format(transaction.createdAt),
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
@@ -159,6 +164,7 @@ class TransactionCard extends StatelessWidget {
     );
   }
 }
+
 Widget buildTransactionSkeleton() {
   return Skeletonizer(
     enabled: true,

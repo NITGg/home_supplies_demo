@@ -986,7 +986,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         deliveryLat: _deliveryAddress!.addressLat,
         deliveryLong: _deliveryAddress!.addressLong,
       ),
-      estimatedDeliveryFee: (_calculateShippingFee() ?? 0 * 100).toString(),
+      estimatedDeliveryFee: ((_calculateShippingFee() ?? 0 )* 100).toString(),
       _isShopping ? _paymentMethod : 'WALLET',
       couponCode: _appliedCoupon?.code,
     );

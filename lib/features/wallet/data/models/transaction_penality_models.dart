@@ -54,12 +54,11 @@ class WalletTransactionModel {
   }
 
   bool get isPositive =>
-      type == 'TOPUP' || type == 'MANUAL_INCREASE' || type == 'ESCROW_RELEASE';
+      type == 'TOPUP' || type == 'MANUAL_INCREASE' || type == 'ESCROW_RELEASE'  || type == 'COUPON_PURCHASE';
 
   bool get isNegative =>
       type == 'WITHDRAWAL' ||
           type == 'PENALTY' ||
-          type == 'COUPON_PURCHASE' ||
           type == 'MANUAL_DECREASE' ||
           type == 'ESCROW_HOLD' ||
           type == 'COMMISSION_DEDUCTION';
