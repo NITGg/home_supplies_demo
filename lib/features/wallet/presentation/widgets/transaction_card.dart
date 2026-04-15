@@ -20,7 +20,7 @@ class TransactionCard extends StatelessWidget {
         return Colors.green.shade600;
       case 'WITHDRAWAL':
         return const Color(0xFF6C5CE7);
-      case 'ESCROW_RELEASE':
+      case 'ESCROW_RELEASE' || 'ESCROW_REMOVE':
         return Colors.green.shade600;
       case 'PENALTY':
         return const Color(0xFFE17055);

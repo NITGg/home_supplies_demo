@@ -1,4 +1,3 @@
-
 // lib/features/wallet/data/models/wallet_transaction_model.dart
 
 class WalletTransactionModel {
@@ -54,17 +53,23 @@ class WalletTransactionModel {
   }
 
   bool get isPositive =>
-      type == 'TOPUP' || type == 'MANUAL_INCREASE' || type == 'ESCROW_RELEASE'  || type == 'COUPON_PURCHASE';
+      type == 'TOPUP' ||
+      type == 'MANUAL_INCREASE' ||
+      type == 'ESCROW_RELEASE' ||
+      type == 'ESCROW_REMOVE' ||
+      type == 'COUPON_PURCHASE';
 
   bool get isNegative =>
       type == 'WITHDRAWAL' ||
-          type == 'PENALTY' ||
-          type == 'MANUAL_DECREASE' ||
-          type == 'ESCROW_HOLD' ||
-          type == 'COMMISSION_DEDUCTION';
+      type == 'PENALTY' ||
+      type == 'MANUAL_DECREASE' ||
+      type == 'ESCROW_HOLD' ||
+      type == 'COMMISSION_DEDUCTION';
 
   bool get isCompleted => status == 'COMPLETED';
+
   bool get isFailed => status == 'FAILED';
+
   bool get isPending => status == 'PENDING';
 }
 
