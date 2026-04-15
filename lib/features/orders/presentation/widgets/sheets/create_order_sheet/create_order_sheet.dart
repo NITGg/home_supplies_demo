@@ -23,6 +23,7 @@ import '../../../../../auth/manager/profile_cubit.dart';
 import '../../../../../coupons/manager/coupons_cubit.dart';
 import '../../../../../wallet/manager/wallet_cubit.dart';
 import '../../../../../wallet/manager/wallet_state.dart';
+import '../../../../data/models/draft_modle.dart';
 import '../../../../data/models/order_model.dart';
 import '../../../../manager/order_cubit.dart';
 import '../../../../manager/order_states.dart';
@@ -33,7 +34,7 @@ import 'toggle_tab.dart';
 class CreateOrderBottomSheet extends StatefulWidget {
   final GovernoratesResponse governorates;
   final double? walletBalance;
-  final String? initialCouponCode; // ← NEW
+  final String? initialCouponCode;
 
   const CreateOrderBottomSheet({
     super.key,
@@ -64,8 +65,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   String _paymentMethod = 'CASH';
   bool _pickupNearMe = false;
 
-  // ── Distance state (replaces the old synchronous calculateDistance call) ──
-  DistanceResult? _distanceResult; // null = not yet fetched / addresses missing
+  DistanceResult? _distanceResult;
   bool _fetchingDistance = false;
 
   CouponValid? _appliedCoupon;
@@ -80,26 +80,72 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   void initState() {
     super.initState();
     context.read<WalletCubit>().fetchWalletData();
-    _budgetController.addListener(() => setState(() {}));
     _walletBalance = widget.walletBalance ?? 0.0;
     _initCubit = AddressCubit();
+
+    // ── Restore draft ──────────────────────────────────────────────────────── // ← DRAFT
+    _productDescriptionController.text =
+        CreateOrderDraft.productDescription; // ← DRAFT
+    _budgetController.text = CreateOrderDraft.budget; // ← DRAFT
+    _couponController.text = CreateOrderDraft.couponCode; // ← DRAFT
+    _pickupAddress = CreateOrderDraft.pickupAddress; // ← DRAFT
+    _deliveryAddress = CreateOrderDraft.deliveryAddress; // ← DRAFT
+    _isShopping = CreateOrderDraft.isShopping; // ← DRAFT
+    _paymentMethod = CreateOrderDraft.paymentMethod; // ← DRAFT
+    _pickupNearMe = CreateOrderDraft.pickupNearMe; // ← DRAFT
+    _appliedCoupon = CreateOrderDraft.appliedCoupon; // ← DRAFT
+
+    // ── Wire up listeners to keep draft in sync ────────────────────────────── // ← DRAFT
+    _productDescriptionController.addListener(_syncDraft); // ← DRAFT
+    _budgetController.addListener(() {
+      // ← DRAFT
+      setState(() {}); // (already existed for rebuild)
+      _syncDraft(); // ← DRAFT
+    });
+    _couponController.addListener(_syncDraft); // ← DRAFT
+
     _preloadDefaultDelivery();
 
-    // Always resolve through the cubit — handles both dialog and direct-open flows.
-    // If the dialog already checked, the result is cached (no extra API call).
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Re-fetch distance if we restored both addresses from the draft.        // ← DRAFT
+      if (_effectivePickup != null && _deliveryAddress != null) {
+        // ← DRAFT
+        _fetchDistanceIfReady(); // ← DRAFT
+      } // ← DRAFT
+
       if (!mounted) return;
       if (context.read<ProfileCubit>().currentProfile?.roleId == 4) return;
-      final code = widget.initialCouponCode?.isNotEmpty == true
-          ? widget.initialCouponCode          // explicit override (e.g. deep link)
-          : await context                     // cubit handles caching + eligibility
-          .read<CouponCubit>()
-          .getOrFetchFirstOrderCoupon();
 
-      if (!mounted || code == null || code.isEmpty) return;
-      _couponController.text = code;
-      _validateCoupon();
+      // Only auto-fill coupon when the draft doesn't already have one.         // ← DRAFT
+      if (_couponController.text.isEmpty) {
+        // ← DRAFT
+        final code = widget.initialCouponCode?.isNotEmpty == true
+            ? widget.initialCouponCode
+            : await context.read<CouponCubit>().getOrFetchFirstOrderCoupon();
+
+        if (!mounted || code == null || code.isEmpty) return;
+        _couponController.text = code;
+        _validateCoupon();
+      } else if (_appliedCoupon == null && _couponController.text.isNotEmpty) {
+        // ← DRAFT
+        // Coupon text was restored but validation state was lost — re-validate. // ← DRAFT
+        _validateCoupon(); // ← DRAFT
+      } // ← DRAFT
     });
+  }
+
+  // ── Sync all current state into the draft ─────────────────────────────────
+  void _syncDraft() {
+    // ← DRAFT
+    CreateOrderDraft.productDescription = _productDescriptionController.text;
+    CreateOrderDraft.budget = _budgetController.text;
+    CreateOrderDraft.couponCode = _couponController.text;
+    CreateOrderDraft.pickupAddress = _pickupAddress;
+    CreateOrderDraft.deliveryAddress = _deliveryAddress;
+    CreateOrderDraft.isShopping = _isShopping;
+    CreateOrderDraft.paymentMethod = _paymentMethod;
+    CreateOrderDraft.pickupNearMe = _pickupNearMe;
+    CreateOrderDraft.appliedCoupon = _appliedCoupon;
   }
 
   Future<void> _preloadDefaultDelivery() async {
@@ -110,9 +156,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
+        // Only use the preloaded default when the draft has no delivery address. // ← DRAFT
         if (_deliveryAddress == null) {
+          // ← DRAFT (unchanged logic, but now respects restored draft)
           setState(() => _deliveryAddress = defaultAddr);
-          _fetchDistanceIfReady(); // try fetching once default is loaded
+          _fetchDistanceIfReady();
         }
       }
     });
@@ -121,6 +169,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   @override
   void dispose() {
+    _syncDraft(); // ← DRAFT — persist latest state before widget tree tears down
     _initCubit.close();
     _productDescriptionController.dispose();
     _budgetController.dispose();
@@ -151,8 +200,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   // ── Distance fetching ──────────────────────────────────────────────────────
 
-  /// Calls POST /distances whenever both addresses are available.
-  /// Resets [_distanceResult] and shows a spinner while waiting.
   Future<void> _fetchDistanceIfReady() async {
     final pickup = _effectivePickup;
     final delivery = _deliveryAddress;
@@ -194,8 +241,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   // ── Fee calculation ────────────────────────────────────────────────────────
 
-  /// Returns the shipping fee in EGP using the already-fetched distance,
-  /// or null when the distance is not yet available.
   double? _calculateShippingFee() {
     if (_distanceResult == null) return null;
 
@@ -219,13 +264,20 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   double _requiredWalletAmount() {
     final rawFee = _calculateShippingFee() ?? 0.0;
 
-    // Apply coupon discount to the fee if applicable
     double fee = rawFee;
     if (_appliedCoupon != null && _appliedCoupon!.isDeliveryFeeDiscount) {
-      if (_appliedCoupon!.isPercentDiscount && _appliedCoupon!.discountValue != null) {
-        fee = (rawFee - (rawFee * _appliedCoupon!.discountValue! / 100)).clamp(0, double.infinity);
-      } else if (_appliedCoupon!.isFixedDiscount && _appliedCoupon!.discountValue != null) {
-        fee = (rawFee - _appliedCoupon!.discountValue!).clamp(0, double.infinity);
+      if (_appliedCoupon!.isPercentDiscount &&
+          _appliedCoupon!.discountValue != null) {
+        fee = (rawFee - (rawFee * _appliedCoupon!.discountValue! / 100)).clamp(
+          0,
+          double.infinity,
+        );
+      } else if (_appliedCoupon!.isFixedDiscount &&
+          _appliedCoupon!.discountValue != null) {
+        fee = (rawFee - _appliedCoupon!.discountValue!).clamp(
+          0,
+          double.infinity,
+        );
       }
     }
 
@@ -255,6 +307,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       _appliedCoupon = null;
       _couponController.clear();
     });
+    _syncDraft(); // ← DRAFT
   }
 
   // ── Address sheet ──────────────────────────────────────────────────────────
@@ -266,6 +319,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
     if (result != null && mounted) {
       setState(() => _pickupAddress = result);
+      _syncDraft(); // ← DRAFT
       _fetchDistanceIfReady();
     }
   }
@@ -277,6 +331,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
     if (result != null && mounted) {
       setState(() => _deliveryAddress = result);
+      _syncDraft(); // ← DRAFT
       _fetchDistanceIfReady();
     }
   }
@@ -307,7 +362,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final deliveryOutOfBounds =
         _deliveryAddress != null && !_isAddressInArea(_deliveryAddress!);
 
-    // Distance label — show spinner while fetching, value when ready
     Widget? distanceBadgeChild;
     if (_fetchingDistance) {
       distanceBadgeChild = const SizedBox(
@@ -350,7 +404,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Left: icon column with vertical dashed connector ──
             SizedBox(
               width: 64,
               child: Padding(
@@ -387,16 +440,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                 ),
               ),
             ),
-
-            // ── Vertical divider ──
             VerticalDivider(width: 1, color: Colors.grey.shade200),
-
-            // ── Right: address rows ──
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Pickup row — hidden when Near Me is active
                   if (!_pickupNearMe)
                     Material(
                       color: Colors.transparent,
@@ -459,8 +507,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                         ),
                       ),
                     ),
-
-                  // ── Distance badge divider ──
                   if (!_pickupNearMe)
                     Stack(
                       alignment: Alignment.center,
@@ -480,8 +526,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           ),
                       ],
                     ),
-
-                  // Delivery row
                   Material(
                     color: Colors.transparent,
                     child: InkWell(
@@ -614,7 +658,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     Expanded(
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
-                        onTap: () => setState(() => _paymentMethod = 'CASH'),
+                        onTap: () {
+                          setState(() => _paymentMethod = 'CASH');
+                          _syncDraft(); // ← DRAFT
+                        },
                         child: _buildPaymentOption(
                           icon: Icons.payments_outlined,
                           label: _calculateShippingFee() != null
@@ -627,7 +674,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                     Expanded(
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
-                        onTap: () => setState(() => _paymentMethod = 'WALLET'),
+                        onTap: () {
+                          setState(() => _paymentMethod = 'WALLET');
+                          _syncDraft(); // ← DRAFT
+                        },
                         child: _buildPaymentOption(
                           icon: Icons.account_balance_wallet_outlined,
                           label: l10n.wallet,
@@ -688,7 +738,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     double fee,
     bool isOverBudget,
   ) {
-    // ── Compute discounted fee if a delivery-fee coupon is applied ────────────
     double? discountedFee;
     if (_appliedCoupon != null && _appliedCoupon!.isDeliveryFeeDiscount) {
       if (_appliedCoupon!.isPercentDiscount &&
@@ -736,12 +785,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           ),
           const SizedBox(height: 3),
           if (hasFeeDiscount)
-            // ── Show original crossed out + new fee ──────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Original fee — struck through
                 Text(
                   '${fee.toInt()} ${l10n.egp}',
                   style: TextStyle(
@@ -753,7 +800,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                // Discounted fee
                 Text(
                   '${discountedFee!.toInt()} ${l10n.egp}',
                   style: TextStyle(
@@ -897,7 +943,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       }
     }
 
-    // ── Fix: compute overbudget here instead of referencing build()'s local var ──
     final budget = double.tryParse(_budgetController.text.trim()) ?? 0;
     final limit =
         (double.tryParse(
@@ -961,12 +1006,18 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           ToggleTab(
             label: l10n.shopping,
             selected: _isShopping,
-            onTap: () => setState(() => _isShopping = true),
+            onTap: () {
+              setState(() => _isShopping = true);
+              _syncDraft(); // ← DRAFT
+            },
           ),
           ToggleTab(
             label: l10n.shipping,
             selected: !_isShopping,
-            onTap: () => setState(() => _isShopping = false),
+            onTap: () {
+              setState(() => _isShopping = false);
+              _syncDraft(); // ← DRAFT
+            },
           ),
         ],
       ),
@@ -980,7 +1031,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           _pickupNearMe = !_pickupNearMe;
           if (_pickupNearMe) _pickupAddress = null;
         });
-        // Near-Me re-routes pickup through delivery address — re-fetch
+        _syncDraft(); // ← DRAFT
         _fetchDistanceIfReady();
       },
       child: Row(
@@ -999,6 +1050,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   _pickupNearMe = val ?? false;
                   if (_pickupNearMe) _pickupAddress = null;
                 });
+                _syncDraft(); // ← DRAFT
                 _fetchDistanceIfReady();
               },
             ),
@@ -1049,6 +1101,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               _couponValidating = false;
               if (state.coupon != null) _appliedCoupon = state.coupon;
             });
+            _syncDraft(); // ← DRAFT
             Fluttertoast.showToast(
               msg: l10n.couponRedeemed,
               toastLength: Toast.LENGTH_SHORT,
@@ -1074,6 +1127,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               textColor: Colors.white,
             );
           } else if (state is OrderSuccess) {
+            CreateOrderDraft.clear(); // ← DRAFT — wipe draft after a successful order
             Navigator.pop(context, state.order);
             showSuccessBanner(
               context,

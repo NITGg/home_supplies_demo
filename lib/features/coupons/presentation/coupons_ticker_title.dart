@@ -55,7 +55,7 @@ class _CouponTickerTitleState extends State<CouponTickerTitle>
           if (!_hasAnimated) {
             _hasAnimated = true;
             WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => _fadeController.forward(),
+              (_) => _fadeController.forward(),
             );
           }
           return FadeTransition(
@@ -142,18 +142,24 @@ class _CouponPillState extends State<_CouponPill>
     // Bouncy scale: grows slightly then snaps back with elasticity
     _hintScale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 1.06)
-            .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween(
+          begin: 1.0,
+          end: 1.06,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 35,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.06, end: 0.97)
-            .chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween(
+          begin: 1.06,
+          end: 0.97,
+        ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 25,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 0.97, end: 1.0)
-            .chain(CurveTween(curve: Curves.elasticOut)),
+        tween: Tween(
+          begin: 0.97,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.elasticOut)),
         weight: 40,
       ),
     ]).animate(_hintController);
@@ -283,7 +289,7 @@ class _CouponPillState extends State<_CouponPill>
   Widget _pillContent(String label, bool isAr) {
     switch (_phase) {
       case _PillPhase.idle:
-      // When hint is active, swap the label to a "tap to copy" nudge
+        // When hint is active, swap the label to a "tap to copy" nudge
         if (_showHint) {
           return _StatusPillContent(
             key: const ValueKey('hint'),
@@ -646,68 +652,68 @@ class _CouponCardState extends State<_CouponCard> {
                 duration: const Duration(milliseconds: 300),
                 child: _copied
                     ? Container(
-                  key: const ValueKey('copied'),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 9,
-                    horizontal: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        widget.isAr ? 'تم النسخ' : 'Copied!',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                        key: const ValueKey('copied'),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 9,
+                          horizontal: 14,
                         ),
-                      ),
-                    ],
-                  ),
-                )
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.isAr ? 'تم النسخ' : 'Copied!',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
                     : GestureDetector(
-                  key: const ValueKey('copy'),
-                  onTap: _copyCode,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 9,
-                      horizontal: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.kPrimaryColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.copy,
-                          color: Colors.black,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          widget.isAr ? 'نسخ' : 'Copy',
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                        key: const ValueKey('copy'),
+                        onTap: _copyCode,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 9,
+                            horizontal: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.kPrimaryColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.copy,
+                                color: Colors.black,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.isAr ? 'نسخ' : 'Copy',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
+                      ),
               ),
             ],
           ),
