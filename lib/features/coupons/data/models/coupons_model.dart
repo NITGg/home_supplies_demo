@@ -26,6 +26,7 @@ class Coupon {
   final String? image;
   final String? buttonText;
   final String? buttonTextAr;
+
   // ─────────────────────────────────────────────────────
 
   const Coupon({
@@ -57,11 +58,15 @@ class Coupon {
   });
 
   bool get isWalletCredit => type == 'WALLET_CREDIT';
+
   bool get isOrderDiscount => type == 'ORDER_DISCOUNT';
+
   bool get isDeliveryFeeDiscount => scope == 'DELIVERY_FEE';
 
   bool get isPercentDiscount => discountType == 'PERCENT';
+
   double get walletAmount => walletAmountCents / 100;
+
   double? get maxDiscount =>
       maxDiscountCents != null ? maxDiscountCents! / 100 : null;
 
@@ -88,9 +93,10 @@ class Coupon {
       discountType: json['discount_type'] as String?,
       discountValue: (json['discount_value'] as num?) != null
           ? (json['discount_type'] == 'PERCENT'
-          ? (json['discount_value'] as num).toDouble()
-          : (json['discount_value'] as num).toDouble() / 100)
-          : null,      maxDiscountCents: json['max_discount_cents'] as int?,
+                ? (json['discount_value'] as num).toDouble()
+                : (json['discount_value'] as num).toDouble() / 100)
+          : null,
+      maxDiscountCents: json['max_discount_cents'] as int?,
       minOrderTotalCents: json['min_order_total_cents'] as int?,
       walletAmountCents: (json['wallet_amount_cents'] as num?)?.toInt() ?? 0,
       walletPoints: (json['wallet_points'] as num?)?.toInt() ?? 0,
