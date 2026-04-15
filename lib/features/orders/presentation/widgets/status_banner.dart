@@ -33,7 +33,7 @@ _kStatusMap = {
   'PENDING': (
   priority: 3,
   descriptor: _StatusDescriptor(
-    assetPath: 'assets/animation_json/search.json',
+    assetPath: 'assets/animation_json/Searching.json',
     label: _labelPending,
     accent: Color(0xFFFF9800),
   ),
