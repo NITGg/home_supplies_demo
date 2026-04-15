@@ -86,8 +86,11 @@ class Coupon {
       maxUserUses: json['max_user_uses'] as int?,
       minOrdersCount: (json['min_orders_count'] as num?)?.toInt() ?? 0,
       discountType: json['discount_type'] as String?,
-      discountValue: (json['discount_value'] as num?)?.toDouble(),
-      maxDiscountCents: json['max_discount_cents'] as int?,
+      discountValue: (json['discount_value'] as num?) != null
+          ? (json['discount_type'] == 'PERCENT'
+          ? (json['discount_value'] as num).toDouble()
+          : (json['discount_value'] as num).toDouble() / 100)
+          : null,      maxDiscountCents: json['max_discount_cents'] as int?,
       minOrderTotalCents: json['min_order_total_cents'] as int?,
       walletAmountCents: (json['wallet_amount_cents'] as num?)?.toInt() ?? 0,
       walletPoints: (json['wallet_points'] as num?)?.toInt() ?? 0,
