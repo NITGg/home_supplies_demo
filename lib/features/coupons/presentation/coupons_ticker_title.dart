@@ -289,21 +289,14 @@ class _CouponPillState extends State<_CouponPill>
   Widget _pillContent(String label, bool isAr) {
     switch (_phase) {
       case _PillPhase.idle:
-        // When hint is active, swap the label to a "tap to copy" nudge
-        if (_showHint) {
-          return _StatusPillContent(
-            key: const ValueKey('hint'),
-            icon: Icons.touch_app_rounded,
-            iconColor: AppColors.kPrimaryColor,
-            text: isAr ? 'اضغط لنسخ الكود' : 'Tap to copy',
-            textColor: Colors.orange.shade800,
-          );
-        }
         return _IdlePillContent(
           key: const ValueKey('idle'),
           coupon: widget.coupon,
           label: label,
           isAr: isAr,
+          onViewAll: widget.onViewAll,
+          // ← pass it down
+          showHint: _showHint, // ← pass hint flag down
         );
 
       case _PillPhase.copied:
@@ -334,44 +327,128 @@ class _CouponPillState extends State<_CouponPill>
 // Idle content
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Idle content  (updated)
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _IdlePillContent extends StatelessWidget {
   final Coupon coupon;
   final String label;
   final bool isAr;
+  final VoidCallback onViewAll;
+  final bool showHint; // ← new
 
   const _IdlePillContent({
     super.key,
     required this.coupon,
     required this.label,
     required this.isAr,
+    required this.onViewAll,
+    this.showHint = false, // ← new
   });
 
   @override
   Widget build(BuildContext context) {
+    final hintText = isAr ? 'اضغط لنسخ الكود' : 'Tap to copy';
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // ── Label / hint (swaps in place) ─────────────────────────────────
         Expanded(
-          child: Text(
-            textAlign: TextAlign.center,
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Colors.orange.shade900,
-              letterSpacing: 0.1,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              transitionBuilder: (child, anim) =>
+                  FadeTransition(opacity: anim, child: child),
+              child: showHint
+                  ? Row(
+                      key: const ValueKey('hint'),
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.touch_app_rounded,
+                          size: 13,
+                          color: AppColors.kPrimaryColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            hintText,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.orange.shade800,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textDirection: isAr
+                                ? TextDirection.rtl
+                                : TextDirection.ltr,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      key: const ValueKey('label'),
+                      label,
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.orange.shade900,
+                        letterSpacing: 0.1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textDirection: isAr
+                          ? TextDirection.rtl
+                          : TextDirection.ltr,
+                    ),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+          ),
+        ),
+
+        // ── Divider ───────────────────────────────────────────────────────
+        Container(
+          width: 1,
+          height: 22,
+          color: AppColors.kPrimaryColor.withOpacity(0.3),
+          margin: const EdgeInsets.symmetric(horizontal: 6),
+        ),
+
+        // ── "All" button — always visible ─────────────────────────────────
+        GestureDetector(
+          onTap: onViewAll,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.local_offer_outlined,
+                  size: 13,
+                  color: AppColors.kPrimaryColor,
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  isAr ? 'الكل' : 'All',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.kPrimaryColor,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
+} // ─────────────────────────────────────────────────────────────────────────────
 // Status content (copied / view more / hint)
 // ─────────────────────────────────────────────────────────────────────────────
 

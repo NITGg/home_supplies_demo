@@ -24,7 +24,7 @@ class CouponRemoteDataSourceImpl implements CouponRemoteDataSource {
       queryParameters: {
         'page': page,
         'limit': limit,
-        'sort': 'id',
+        'sort': '-discount_value',
         'OR[0][AND][0][start_at][lte]': now,
         'OR[0][AND][1][end_at][gte]': now,
         'OR[1][start_at]': null,
