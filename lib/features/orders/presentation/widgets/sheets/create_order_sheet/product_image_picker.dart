@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -80,6 +81,16 @@ class ProductImagePicker extends StatelessWidget {
       imageQuality: 85,
     );
     if (pickedFile != null) {
+      final bytes = await pickedFile.length();
+      log('Image size: $bytes bytes');
+      if (bytes > 10 * 1024 * 1024) {
+           if (context.mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               SnackBar(content: Text(AppLocalizations.of(context)!.imageTooLarge)),
+             );
+          }
+           return;
+         }
       onImagePicked(File(pickedFile.path));
     }
   }
@@ -180,7 +191,7 @@ class ProductImagePicker extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'JPG or PNG (max 1MB)',
+                        'JPG or PNG (max 10MB)',
                         style: AppTextStyles.regular14.copyWith(
                           color: Colors.grey.shade500,
                           fontSize: 10,

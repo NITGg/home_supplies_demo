@@ -2135,6 +2135,12 @@ abstract class AppLocalizations {
   /// **'New Order'**
   String get newOrder;
 
+  /// No description provided for @imageTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Too Large'**
+  String get imageTooLarge;
+
   /// No description provided for @acceptProposalConfirmation.
   ///
   /// In en, this message translates to:

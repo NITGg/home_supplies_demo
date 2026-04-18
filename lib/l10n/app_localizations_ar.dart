@@ -1046,6 +1046,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get newOrder => 'طلب جديد';
 
   @override
+  String get imageTooLarge => 'حجم الصورة كبير';
+
+  @override
   String get acceptProposalConfirmation => 'هل أنت متأكد من قبول هذا العرض؟';
 
   @override

@@ -1046,6 +1046,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newOrder => 'New Order';
 
   @override
+  String get imageTooLarge => 'Image Too Large';
+
+  @override
   String get acceptProposalConfirmation => 'Are you sure you want to accept this proposal?';
 
   @override

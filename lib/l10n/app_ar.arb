@@ -86,6 +86,7 @@
   "notifications": "الإشعارات",
   "markAllAsRead": "تحديد الكل كمقروءة",
   "clearAll": "حذف الكل",
+          "imageTooLarge": "حجم الصورة كبير",
 
   "deleteAccount": "حذف الحساب",
   "all": "الجميع",

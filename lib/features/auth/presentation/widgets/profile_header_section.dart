@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -43,16 +44,16 @@ class ProfileHeaderSection extends StatelessWidget {
                     child: ClipOval(
                       child: profile.personalPhoto != null
                           ? Image.network(
-                        profile.personalPhoto ?? '',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            SvgPicture.asset(
+                              profile.personalPhoto ?? '',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  SvgPicture.asset(
+                                    'assets/images/drawer/profile_placholder.svg',
+                                  ),
+                            )
+                          : SvgPicture.asset(
                               'assets/images/drawer/profile_placholder.svg',
                             ),
-                      )
-                          : SvgPicture.asset(
-                        'assets/images/drawer/profile_placholder.svg',
-                      ),
                     ),
                   ),
                 ),
@@ -157,9 +158,24 @@ class ProfileHeaderSection extends StatelessWidget {
   }
 
   Future<void> _pickAndCropImage(
-      BuildContext context, ImageSource source) async {
-    final pickedFile = await ImagePicker().pickImage(source: source);
+    BuildContext context,
+    ImageSource source,
+  ) async {
+    final pickedFile = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 85,
+    );
     if (pickedFile == null) return;
+    final bytes = await pickedFile.length();
+    log('Image size: $bytes bytes');
+    if (bytes > 10 * 1024 * 1024) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.imageTooLarge)),
+        );
+      }
+      return;
+    }
 
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: pickedFile.path,
@@ -168,7 +184,7 @@ class ProfileHeaderSection extends StatelessWidget {
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle:
-          AppLocalizations.of(context)?.updateProfile ?? 'Crop Photo',
+              AppLocalizations.of(context)?.updateProfile ?? 'Crop Photo',
           toolbarColor: Colors.orange,
           toolbarWidgetColor: Colors.white,
           lockAspectRatio: true,

@@ -457,6 +457,8 @@
                     "oneTimeAddress": "Enter Adress (Don't Save)",
           "productImageOptional": "Product Image (Optional)",
           "newOrder": "New Order",
+          "imageTooLarge": "Image Too Large",
+
 "acceptProposalConfirmation": "Are you sure you want to accept this proposal?",
 "acceptProposal": "Accept Proposal",
 "rejectProposalConfirmation": "Are you sure you want to reject this proposal?",
