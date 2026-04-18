@@ -13,6 +13,8 @@ import '../features/auth/presentation/pages/login_screen.dart';
 import '../features/auth/presentation/pages/new_password_screen.dart';
 import '../features/auth/presentation/pages/profile_screen.dart';
 import '../features/auth/presentation/pages/register_screen.dart';
+import '../features/categories/data/models/category_models.dart';
+import '../features/categories/presentation/category_details_screen.dart';
 import '../features/home/drawer_pages/faq_page.dart';
 import '../features/home/drawer_pages/privacy_page.dart';
 import '../features/home/drawer_pages/support_page.dart';
@@ -21,6 +23,8 @@ import '../features/home/layout/presentation/home_layout.dart';
 import '../features/know_us_more/know_us_more.dart';
 import '../features/onboarding/onboarding.dart';
 import '../core/utils/secure_storage_service.dart';
+import '../features/products/data/models/product_model.dart';
+import '../features/products/presentation/product_details_screen.dart';
 import '../features/referral/referral_screen.dart';
 import '../features/reviews/data/data_source/reviews_remote_data_source.dart';
 import '../features/reviews/data/repositories/reviews_repo.dart';
@@ -211,6 +215,21 @@ Future<GoRouter> createAppRouter({
         path: '/mainHome',
         name: 'mainHome',
         builder: (context, state) => const HomeLayout(),
+      ),
+
+      GoRoute(
+        path: '/categories/:id',
+        builder: (context, state) => CategoryDetailScreen(
+          categoryId: int.parse(state.pathParameters['id']!),
+          category: state.extra as CategoryModel?,
+        ),
+      ),
+      GoRoute(
+        path: '/products/:id',
+        builder: (context, state) => ProductDetailScreen(
+          productId: int.parse(state.pathParameters['id']!),
+          product: state.extra as ProductModel?,
+        ),
       ),
     ],
     errorBuilder: (context, state) {

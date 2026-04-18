@@ -10,9 +10,11 @@ class ApiClient {
   static final ApiClient instance = ApiClient._();
 
   late final Dio dio;
+  late final Dio dioDEV;
 
   static const String baseUrl =
-      'https://tawreedat.nitg-eg.com/admin_apis/api/v1';
+      'https://tawreedat.nitg-eg.com/admin_apis/api/v1'; static const String baseUrlDev =
+      'https://adminapis-dev.nitg-eg.com/api/v1';
 
   void init() {
     dio = Dio(
@@ -24,6 +26,39 @@ class ApiClient {
     );
 
     dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await SecureStorageService().getToken();
+          // log('Token: $token');
+          if (token != null && token.isNotEmpty) {
+            // Add the authorization token to the headers
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+        onError: (e, handler) async {
+          final friendlyError = _toFriendlyError(e);
+          handler.next(friendlyError);
+          if (e.response?.statusCode == 401) {
+            await SecureStorageService().clearAll();
+            if (rootNavigatorKey.currentContext != null) {
+              rootNavigatorKey.currentContext?.go('/auth/login');
+            }
+          }
+        },
+      ),
+    );
+
+
+    dioDEV = Dio(
+      BaseOptions(
+        baseUrl: baseUrlDev,
+        connectTimeout: const Duration(seconds: 25),
+        receiveTimeout: const Duration(seconds: 30),
+      ),
+    );
+
+    dioDEV.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final token = await SecureStorageService().getToken();
