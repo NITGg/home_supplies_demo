@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/widgets/image_with_fallback.dart';
 
 import '../../../../../core/style/app_colors.dart';
@@ -15,6 +16,7 @@ import '../../../data/models/order_model.dart';
 import '../../../data/models/proposal_model.dart';
 import '../../../manager/order_cubit.dart';
 import '../../../manager/order_states.dart';
+import 'create_order_sheet/insufficient_balance_sheet.dart';
 
 enum _SortOption { none, feeAsc, feeDesc, distanceAsc, distanceDesc }
 
@@ -209,47 +211,53 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                       ),
                       const SizedBox(width: 8),
                       // ── Discount-aware fee display ──────────────────────────────
-                      Builder(builder: (_) {
-                        final total = double.tryParse(proposal.totalFee) ?? 0;
-                        final discount = proposal.discountFee;
-                        final hasDiscount = discount > 0;
-                        final finalFee = (total - discount).clamp(0, double.infinity);
-
-                        if (!hasDiscount) {
-                          return Text(
-                            '${proposal.totalFee} ${l10n.egp}',
-                            style: AppTextStyles.bold16.copyWith(
-                              color: Colors.green,
-                              fontSize: 17,
-                            ),
+                      Builder(
+                        builder: (_) {
+                          final total = double.tryParse(proposal.totalFee) ?? 0;
+                          final discount = proposal.discountFee;
+                          final hasDiscount = discount > 0;
+                          final finalFee = (total - discount).clamp(
+                            0,
+                            double.infinity,
                           );
-                        }
 
-                        return Row(
-                          children: [
-                            Text(
-                              '${total.toInt()} ${l10n.egp}',
-                              style: AppTextStyles.bold14.copyWith(
-                                fontSize: 13,
-                                color: Colors.red.shade300,
-                                decoration: TextDecoration.lineThrough,
-                                decorationColor: Colors.red.shade300,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${finalFee.toInt()} ${l10n.egp}',
+                          if (!hasDiscount) {
+                            return Text(
+                              '${proposal.totalFee} ${l10n.egp}',
                               style: AppTextStyles.bold16.copyWith(
                                 color: Colors.green,
                                 fontSize: 17,
                               ),
-                            ),
-                          ],
-                        );
-                      }),
+                            );
+                          }
+
+                          return Row(
+                            children: [
+                              Text(
+                                '${total.toInt()} ${l10n.egp}',
+                                style: AppTextStyles.bold14.copyWith(
+                                  fontSize: 13,
+                                  color: Colors.red.shade300,
+                                  decoration: TextDecoration.lineThrough,
+                                  decorationColor: Colors.red.shade300,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${finalFee.toInt()} ${l10n.egp}',
+                                style: AppTextStyles.bold16.copyWith(
+                                  color: Colors.green,
+                                  fontSize: 17,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                       // ───────────────────────────────────────────────────────────
                     ],
-                  ),                ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -279,7 +287,6 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                 orderId: widget.order.id!,
                 proposalId: proposal.id,
               );
-              Navigator.pop(context);
             },
             icon: const Icon(Icons.check, size: 18),
             label: Text(
@@ -507,6 +514,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
           // Proposals list
           Expanded(
             child: BlocConsumer<OrderCubit, OrderState>(
+              // In the BlocConsumer listener inside the Expanded proposals list:
               listener: (context, state) {
                 if (state is ProposalsLoaded) {
                   setState(() {
@@ -514,6 +522,33 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                     _isInitialLoad = false;
                     _isRefreshing = false;
                   });
+                }
+                if (state is ProposalAccepted) {
+                  Navigator.pop(context);
+                }
+
+                // ── NEW: insufficient balance after accepting ──────────────────
+                if (state is ProposalAcceptInsufficientBalance) {
+                  final l10n = AppLocalizations.of(context)!;
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => InsufficientBalanceSheet(
+                      currentBalance: state.current,
+                      requiredAmount: state.required,
+                      shortfall: (state.required - state.current).clamp(
+                        0,
+                        double.infinity,
+                      ),
+                      isShopping: false,
+                      l10n: l10n,
+                      onTopUp: () async {
+                        Navigator.pop(context); // close sheet
+                        await context.push('/wallet/topup');
+                      },
+                    ),
+                  );
                 }
               },
               buildWhen: (previous, current) {
@@ -908,10 +943,14 @@ class _ProposalCardState extends State<_ProposalCard> {
                 ),
                 const SizedBox(width: 3),
                 Text(
-                      () {
-                    final total = double.tryParse(widget.proposal.totalFee) ?? 0;
+                  () {
+                    final total =
+                        double.tryParse(widget.proposal.totalFee) ?? 0;
                     final discount = widget.proposal.discountFee ?? 0;
-                    final finalFee = (total - discount).clamp(0, double.infinity);
+                    final finalFee = (total - discount).clamp(
+                      0,
+                      double.infinity,
+                    );
                     return '$finalFee ${l10n.egp}';
                   }(),
                   style: AppTextStyles.bold14.copyWith(
@@ -1080,47 +1119,53 @@ class _ProposalCardState extends State<_ProposalCard> {
                   ),
                 ),
                 // ── Fee display ──────────────────────────────────────────────
-                Builder(builder: (_) {
-                  final total = double.tryParse(widget.proposal.totalFee) ?? 0;
-                  final discount = widget.proposal.discountFee ?? 0;
-                  final hasDiscount = discount > 0;
-                  final finalFee = (total - discount).clamp(0, double.infinity);
-
-                  if (!hasDiscount) {
-                    return Text(
-                      '${widget.proposal.totalFee} ${l10n.egp}',
-                      style: AppTextStyles.bold18.copyWith(
-                        color: AppColors.kPrimaryColor,
-                        fontSize: 20,
-                      ),
+                Builder(
+                  builder: (_) {
+                    final total =
+                        double.tryParse(widget.proposal.totalFee) ?? 0;
+                    final discount = widget.proposal.discountFee ?? 0;
+                    final hasDiscount = discount > 0;
+                    final finalFee = (total - discount).clamp(
+                      0,
+                      double.infinity,
                     );
-                  }
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // Original — struck through in red
-                      Text(
-                        '${total.toInt()} ${l10n.egp}',
-                        style: AppTextStyles.bold14.copyWith(
-                          fontSize: 13,
-                          color: Colors.red.shade400,
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor: Colors.red.shade400,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      // Discounted — green
-                      Text(
-                        '${finalFee.toInt()} ${l10n.egp}',
+                    if (!hasDiscount) {
+                      return Text(
+                        '${widget.proposal.totalFee} ${l10n.egp}',
                         style: AppTextStyles.bold18.copyWith(
-                          color: Colors.green.shade700,
+                          color: AppColors.kPrimaryColor,
                           fontSize: 20,
                         ),
-                      ),
-                    ],
-                  );
-                }),
+                      );
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Original — struck through in red
+                        Text(
+                          '${total.toInt()} ${l10n.egp}',
+                          style: AppTextStyles.bold14.copyWith(
+                            fontSize: 13,
+                            color: Colors.red.shade400,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: Colors.red.shade400,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        // Discounted — green
+                        Text(
+                          '${finalFee.toInt()} ${l10n.egp}',
+                          style: AppTextStyles.bold18.copyWith(
+                            color: Colors.green.shade700,
+                            fontSize: 20,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
                 // ────────────────────────────────────────────────────────────
               ],
             ),

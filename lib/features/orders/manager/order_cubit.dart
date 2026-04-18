@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
 import '../data/models/order_model.dart';
@@ -327,12 +328,34 @@ class OrderCubit extends Cubit<OrderState> {
         status: 'ACCEPTED',
       );
       log('OrderCubit: Proposal accepted');
-
       emit(ProposalAccepted(orderId: orderId, proposalId: proposalId));
-
-      // Reload active orders and proposals
       await loadActiveOrders(loadMore: false);
       await loadProposals(orderId);
+    } on DioException catch (e) {
+      final body = e.response?.data as Map<String, dynamic>?;
+      final inner =
+          body?['data'] as Map<String, dynamic>?; // ← was body?['meta']
+
+      if (e.response?.statusCode == 400 &&
+          inner != null &&
+          inner.containsKey('required') &&
+          inner.containsKey('current')) {
+        final required = ((inner['required'] as num?) ?? 0) / 100.0;
+        final current = ((inner['current'] as num?) ?? 0) / 100.0;
+        log(
+          'OrderCubit: Insufficient balance — required: $required, current: $current',
+        );
+        emit(
+          ProposalAcceptInsufficientBalance(
+            required: required,
+            current: current,
+          ),
+        );
+        return;
+      }
+
+      log('OrderCubit: Error accepting proposal: $e');
+      emit(OrderError(extractErrorMessage(e)));
     } catch (e) {
       log('OrderCubit: Error accepting proposal: $e');
       emit(OrderError(extractErrorMessage(e)));
