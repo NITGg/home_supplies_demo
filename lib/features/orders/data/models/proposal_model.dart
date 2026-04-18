@@ -103,7 +103,7 @@ class Proposal {
       courierId: json['courier_id'] as int,
       totalFee:
           ((num.tryParse(json['total_fee']?.toString() ?? '0') ?? 0) / 100)
-              .toStringAsFixed(0),
+              .toStringAsFixed(2),
       discountFee:
           (num.tryParse(json['discount_amount']?.toString() ?? '0') ?? 0) / 100,
 

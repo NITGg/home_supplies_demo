@@ -912,7 +912,7 @@ class _ProposalCardState extends State<_ProposalCard> {
                     final total = double.tryParse(widget.proposal.totalFee) ?? 0;
                     final discount = widget.proposal.discountFee ?? 0;
                     final finalFee = (total - discount).clamp(0, double.infinity);
-                    return '${finalFee.toInt()} ${l10n.egp}';
+                    return '$finalFee ${l10n.egp}';
                   }(),
                   style: AppTextStyles.bold14.copyWith(
                     fontSize: 13,
