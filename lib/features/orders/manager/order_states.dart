@@ -252,3 +252,13 @@ class CouponRedeemError extends OrderState {
   @override
   List<Object?> get props => [message];
 }
+
+class ProposalAcceptInsufficientBalance extends OrderState {
+  final double required;
+  final double current;
+
+  const ProposalAcceptInsufficientBalance({
+    required this.required,
+    required this.current,
+  });
+}
