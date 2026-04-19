@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/cancel_order_sheet.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/proposal_sheet.dart';
@@ -362,11 +363,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   }
 
   void _navigateToCategory(CategoryModel category) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => CategoryDetailScreen(category: category),
-      ),
-    );
+    context.push('/categories/${category.id}', extra: category);
   }
 
   // ── build ────────────────────────────────────────────────────────────────

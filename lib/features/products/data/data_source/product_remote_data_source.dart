@@ -41,6 +41,8 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       queryParameters: queryParams,
     );
 
+    log(response.statusCode.toString());
+
     return ProductsResponseModel.fromJson(
       response.data as Map<String, dynamic>,
     );

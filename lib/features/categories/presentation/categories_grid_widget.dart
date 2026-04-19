@@ -76,7 +76,7 @@ class _CategoriesSection extends StatelessWidget {
   final VoidCallback onLoadMore;
 
   /// Threshold: above this count the compact (circle chip) style is used.
-  static const int _compactThreshold = 8;
+  static const int _compactThreshold = 2;
 
   const _CategoriesSection({
     required this.state,

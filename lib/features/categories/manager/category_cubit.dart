@@ -19,11 +19,11 @@ class CategoriesCubit extends Cubit<CategoriesState> {
   Future<void> loadCategories({bool refresh = false}) async {
     if (refresh) {
       _currentSkip = 0;
-      emit(const CategoriesLoading());
+      if (!isClosed) emit(const CategoriesLoading());
     } else if (state is CategoriesLoading) {
       return;
     } else {
-      emit(const CategoriesLoading());
+      if (!isClosed) emit(const CategoriesLoading());
     }
 
     try {
@@ -34,14 +34,16 @@ class CategoriesCubit extends Cubit<CategoriesState> {
 
       _currentSkip = response.categories.length;
 
-      emit(CategoriesLoaded(
-        categories: response.categories,
-        totalCount: response.totalCount,
-        hasMore: _currentSkip < response.totalCount,
-      ));
+      if (!isClosed) {
+        emit(CategoriesLoaded(
+          categories: response.categories,
+          totalCount: response.totalCount,
+          hasMore: _currentSkip < response.totalCount,
+        ));
+      }
     } catch (e) {
       log('CategoriesCubit: Error loading categories: $e');
-        emit(CategoriesError(extractErrorMessage(e)));
+      if (!isClosed) emit(CategoriesError(extractErrorMessage(e)));
     }
   }
 
@@ -50,7 +52,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
     if (current is! CategoriesLoaded || !current.hasMore ||
         current.isLoadingMore) return;
 
-    emit(current.copyWith(isLoadingMore: true));
+    if (!isClosed) emit(current.copyWith(isLoadingMore: true));
 
     try {
       final response = await _repository.getCategories(
@@ -60,14 +62,16 @@ class CategoriesCubit extends Cubit<CategoriesState> {
 
       _currentSkip += response.categories.length;
 
-      emit(current.copyWith(
-        categories: [...current.categories, ...response.categories],
-        hasMore: _currentSkip < response.totalCount,
-        isLoadingMore: false,
-      ));
+      if (!isClosed) {
+        emit(current.copyWith(
+          categories: [...current.categories, ...response.categories],
+          hasMore: _currentSkip < response.totalCount,
+          isLoadingMore: false,
+        ));
+      }
     } catch (e) {
-      // Revert loading state on error, keep existing data
-      emit(current.copyWith(isLoadingMore: false));
+      log('CategoriesCubit: Error loading more categories: $e');
+      if (!isClosed) emit(current.copyWith(isLoadingMore: false));
     }
   }
 }
