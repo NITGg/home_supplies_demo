@@ -158,20 +158,36 @@ class ProfileHeaderSection extends StatelessWidget {
   }
 
   Future<void> _pickAndCropImage(
-    BuildContext context,
-    ImageSource source,
-  ) async {
+      BuildContext context,
+      ImageSource source,
+      ) async {
     final pickedFile = await ImagePicker().pickImage(
       source: source,
       imageQuality: 85,
     );
+
     if (pickedFile == null) return;
+
     final bytes = await pickedFile.length();
-    log('Image size: $bytes bytes');
-    if (bytes > 10 * 1024 * 1024) {
+
+    final sizeInMB = bytes / (1024 * 1024);
+    const limitInMB = 5;
+
+    log(
+      'Image size: ${sizeInMB.toStringAsFixed(2)} MB (Limit: $limitInMB MB)',
+    );
+
+    if (bytes > limitInMB * 1024 * 1024) {
       if (context.mounted) {
+        final loc = AppLocalizations.of(context)!;
+
+        final message = loc.imageTooLargeDetailed(
+          sizeInMB.toStringAsFixed(2),
+          limitInMB.toString(),
+        );
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.imageTooLarge)),
+          SnackBar(content: Text(message)),
         );
       }
       return;

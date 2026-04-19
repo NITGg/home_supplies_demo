@@ -2141,6 +2141,18 @@ abstract class AppLocalizations {
   /// **'Image Too Large'**
   String get imageTooLarge;
 
+  /// No description provided for @categories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categories;
+
+  /// No description provided for @imageTooLargeDetailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Image is {size} MB. Max allowed is {limit} MB'**
+  String imageTooLargeDetailed(Object size, Object limit);
+
   /// No description provided for @acceptProposalConfirmation.
   ///
   /// In en, this message translates to:

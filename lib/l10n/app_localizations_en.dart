@@ -1049,6 +1049,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imageTooLarge => 'Image Too Large';
 
   @override
+  String get categories => 'Categories';
+
+  @override
+  String imageTooLargeDetailed(Object size, Object limit) {
+    return 'Image is $size MB. Max allowed is $limit MB';
+  }
+
+  @override
   String get acceptProposalConfirmation => 'Are you sure you want to accept this proposal?';
 
   @override

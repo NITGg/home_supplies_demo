@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tawreedat_go/l10n/app_localizations.dart';
 
@@ -80,17 +81,36 @@ class ProductImagePicker extends StatelessWidget {
       maxHeight: 1024,
       imageQuality: 85,
     );
+
     if (pickedFile != null) {
       final bytes = await pickedFile.length();
-      log('Image size: $bytes bytes');
-      if (bytes > 10 * 1024 * 1024) {
-           if (context.mounted) {
-             ScaffoldMessenger.of(context).showSnackBar(
-               SnackBar(content: Text(AppLocalizations.of(context)!.imageTooLarge)),
-             );
-          }
-           return;
-         }
+
+      final sizeInMB = bytes / (1024 * 1024);
+      const limitInMB = 5;
+
+      log(
+        'Image size: ${sizeInMB.toStringAsFixed(2)} MB (Limit: $limitInMB MB)',
+      );
+
+      if (bytes > limitInMB * 1024 * 1024) {
+        if (context.mounted) {
+          final loc = AppLocalizations.of(context)!;
+          final message = loc.imageTooLargeDetailed(
+            sizeInMB.toStringAsFixed(2),
+            limitInMB.toString(),
+          );
+
+          Fluttertoast.showToast(
+            msg: message,
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+        }
+        return;
+      }
+
       onImagePicked(File(pickedFile.path));
     }
   }

@@ -5,10 +5,21 @@
   "prev": "السابق",
   "done": "تم",
   "expired": "منتهي الصلاحية",
+  "categories": "التصنيفات",
   "searchingFailed": "فشل البحث",
   "skip": "تخطي",
   "profile": "الملف الشخصي",
   "menu": "القائمة",
+
+
+  "imageTooLargeDetailed": "حجم الصورة {size} ميجابايت. الحد الأقصى المسموح {limit} ميجابايت",
+  "@imageTooLargeDetailed": {
+    "placeholders": {
+      "size": {},
+      "limit": {}
+    }
+  },
+
   "welcome": "مرحباً بك",
   "tawreedatIsYourBestChoice": "توريدات اختيارك الأمثل",
   "lang": "اللغة",

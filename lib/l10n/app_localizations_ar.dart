@@ -1049,6 +1049,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get imageTooLarge => 'حجم الصورة كبير';
 
   @override
+  String get categories => 'التصنيفات';
+
+  @override
+  String imageTooLargeDetailed(Object size, Object limit) {
+    return 'حجم الصورة $size ميجابايت. الحد الأقصى المسموح $limit ميجابايت';
+  }
+
+  @override
   String get acceptProposalConfirmation => 'هل أنت متأكد من قبول هذا العرض؟';
 
   @override

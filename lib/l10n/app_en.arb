@@ -458,6 +458,16 @@
           "productImageOptional": "Product Image (Optional)",
           "newOrder": "New Order",
           "imageTooLarge": "Image Too Large",
+  "categories": "Categories",
+
+
+  "imageTooLargeDetailed": "Image is {size} MB. Max allowed is {limit} MB",
+  "@imageTooLargeDetailed": {
+    "placeholders": {
+      "size": {},
+      "limit": {}
+    }
+  },
 
 "acceptProposalConfirmation": "Are you sure you want to accept this proposal?",
 "acceptProposal": "Accept Proposal",
