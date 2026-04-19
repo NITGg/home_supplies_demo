@@ -88,7 +88,7 @@ class _CategoriesLoadedView extends StatelessWidget {
   final void Function(CategoryModel) onCategoryTap;
 
   // Threshold: more than this count → compact style
-  static const int _compactThreshold = 8;
+  static const int _compactThreshold = 2;
 
   const _CategoriesLoadedView({
     required this.state,

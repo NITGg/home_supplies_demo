@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/core/style/app_colors.dart';
 
 import '../data/models/category_models.dart';
 import '../manager/category_cubit.dart';
@@ -25,11 +26,13 @@ class CategoriesGridWidget extends StatefulWidget {
   });
 
   @override
-  State<CategoriesGridWidget> createState() => _CategoriesGridWidgetState();
+  State<CategoriesGridWidget> createState() => CategoriesGridWidgetState();
 }
 
-class _CategoriesGridWidgetState extends State<CategoriesGridWidget> {
+class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
   late final CategoriesCubit _cubit;
+
+  Future<void> refresh() => _cubit.loadCategories(refresh: true);
 
   @override
   void initState() {
@@ -75,16 +78,22 @@ class _CategoriesSection extends StatelessWidget {
   final void Function(CategoryModel) onCategoryTap;
   final VoidCallback onLoadMore;
 
-  /// Threshold: above this count the compact (circle chip) style is used.
-  static const int _compactThreshold = 2;
-
   const _CategoriesSection({
     required this.state,
     required this.onCategoryTap,
     required this.onLoadMore,
   });
 
-  bool get _useCompact => state.totalCount > _compactThreshold;
+  // ≤6 → 3 columns regular, >6 → 4-5 columns compact
+  bool get _useCompact => state.totalCount > 6;
+
+  int get _crossAxisCount {
+    if (!_useCompact) return 3;
+    if (state.totalCount > 12) return 5;
+    return 4;
+  }
+
+  double get _childAspectRatio => _useCompact ? 0.95 : 0.82;
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +112,7 @@ class _CategoriesSection extends StatelessWidget {
                 width: 4,
                 height: 18,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
+                  color: AppColors.kPrimaryColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -127,114 +136,40 @@ class _CategoriesSection extends StatelessWidget {
           ),
         ),
 
-        // ── Grid ───────────────────────────────────────────────────────────
-        if (_useCompact)
-          _CompactScrollRow(
-            categories: state.categories,
-            onTap: onCategoryTap,
-            hasMore: state.hasMore,
-            onLoadMore: onLoadMore,
-          )
-        else
-          _RegularWrappedGrid(
-            categories: state.categories,
-            onTap: onCategoryTap,
+        // ── Always a grid, compact style when many ──────────────────────
+        NotificationListener<ScrollNotification>(
+          onNotification: (n) {
+            if (n is ScrollEndNotification &&
+                n.metrics.pixels >= n.metrics.maxScrollExtent - 40 &&
+                state.hasMore) {
+              onLoadMore();
+            }
+            return false;
+          },
+          child: GridView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: _crossAxisCount,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: _childAspectRatio,
+            ),
+            itemCount: state.categories.length,
+            itemBuilder: (_, i) => CategoryCard(
+              category: state.categories[i],
+              onTap: () => onCategoryTap(state.categories[i]),
+              style: _useCompact
+                  ? CategoryCardStyle.compact
+                  : CategoryCardStyle.regular,
+            ),
           ),
+        ),
 
         const SizedBox(height: 4),
         Divider(color: Colors.grey.shade200, height: 1),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Compact: horizontal scrollable row of circle chips
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _CompactScrollRow extends StatelessWidget {
-  final List<CategoryModel> categories;
-  final void Function(CategoryModel) onTap;
-  final bool hasMore;
-  final VoidCallback onLoadMore;
-
-  const _CompactScrollRow({
-    required this.categories,
-    required this.onTap,
-    required this.hasMore,
-    required this.onLoadMore,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: (n) {
-        if (n is ScrollEndNotification &&
-            n.metrics.pixels >= n.metrics.maxScrollExtent - 40 &&
-            hasMore) {
-          onLoadMore();
-        }
-        return false;
-      },
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: categories
-              .map(
-                (cat) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: CategoryCard(
-                category: cat,
-                onTap: () => onTap(cat),
-                style: CategoryCardStyle.compact,
-              ),
-            ),
-          )
-              .toList(),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Regular: wrapped grid (shrinkWrap — no independent scroll)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _RegularWrappedGrid extends StatelessWidget {
-  final List<CategoryModel> categories;
-  final void Function(CategoryModel) onTap;
-
-  const _RegularWrappedGrid({
-    required this.categories,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth >= 700 ? 4 : 3;
-        return GridView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 0.82,
-          ),
-          itemCount: categories.length,
-          itemBuilder: (_, i) => CategoryCard(
-            category: categories[i],
-            onTap: () => onTap(categories[i]),
-            style: CategoryCardStyle.regular,
-          ),
-        );
-      },
     );
   }
 }
@@ -279,7 +214,7 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Skeleton title bar
+        // ── Skeleton header ───────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: AnimatedBuilder(
@@ -297,47 +232,37 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
             ),
           ),
         ),
-        // Skeleton circle row
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const NeverScrollableScrollPhysics(),
+
+        // ── Skeleton grid (4 columns compact — matches most common layout) ─
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: List.generate(
-              6,
-                  (i) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: AnimatedBuilder(
-                  animation: _anim,
-                  builder: (_, __) => Opacity(
-                    opacity: _anim.value,
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.grey.shade300,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: 50,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ],
-                    ),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 0.95,
+            ),
+            itemCount: 8,
+            itemBuilder: (_, __) => AnimatedBuilder(
+              animation: _anim,
+              builder: (_, __) => Opacity(
+                opacity: _anim.value,
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey.shade300,
                   ),
                 ),
               ),
             ),
           ),
         ),
+
         const SizedBox(height: 12),
         Divider(color: Colors.grey.shade200, height: 1),
       ],

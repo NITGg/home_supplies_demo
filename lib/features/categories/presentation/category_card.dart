@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-
 import '../data/models/category_models.dart';
-
 
 enum CategoryCardStyle { compact, regular }
 
@@ -20,19 +18,13 @@ class CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (style) {
-      CategoryCardStyle.compact => _CompactCard(
-        category: category,
-        onTap: onTap,
-      ),
-      CategoryCardStyle.regular => _RegularCard(
-        category: category,
-        onTap: onTap,
-      ),
+      CategoryCardStyle.compact => _CompactCard(category: category, onTap: onTap),
+      CategoryCardStyle.regular => _RegularCard(category: category, onTap: onTap),
     };
   }
 }
 
-// ── Regular card (few categories) ────────────────────────────────────────────
+// ── Regular card: full image cover + small name at top center ─────────────────
 
 class _RegularCard extends StatelessWidget {
   final CategoryModel category;
@@ -42,50 +34,40 @@ class _RegularCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: theme.colorScheme.outlineVariant, width: 0.8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Expanded(
-              flex: 3,
-              child: _CategoryImage(
-                imageUrl: category.imageUrl ?? category.iconUrl,
-                label: category.displayName,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
+            // ── Full cover image ──────────────────────────────────────────
+            _buildImage(category.imageUrl ?? category.iconUrl),
+
+            // ── Top center name label ─────────────────────────────────────
+            Positioned(
+              top: 8,
+              left: 8,
+              right: 8,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.45),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
                     category.displayName,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                    maxLines: 1,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (category.displayDescription.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      category.displayDescription,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: Colors.grey.shade600),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ],
@@ -93,9 +75,38 @@ class _RegularCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildImage(String? url) {
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _placeholder(),
+      );
+    }
+    return _placeholder();
+  }
+
+  Widget _placeholder() {
+    return Container(
+      color: Colors.grey.shade200,
+      child: Center(
+        child: Text(
+          category.displayName.isNotEmpty
+              ? category.displayName[0].toUpperCase()
+              : '?',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade500,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-// ── Compact card (many categories) ───────────────────────────────────────────
+// ── Compact card: circle cover with iconUrl + floating name at top ─────────────
 
 class _CompactCard extends StatelessWidget {
   final CategoryModel category;
@@ -105,83 +116,81 @@ class _CompactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final iconUrl = category.iconUrl ?? category.imageUrl;
 
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: theme.colorScheme.primaryContainer,
-              border: Border.all(
-                color: theme.colorScheme.primary.withOpacity(0.2),
-                width: 1.5,
+      child: SizedBox(
+        width: 88,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
+          children: [
+            // ── Circle with cover image ───────────────────────────────────
+            Container(
+              width: 80,
+              height: 80,
+              decoration: const BoxDecoration(shape: BoxShape.circle),
+              clipBehavior: Clip.antiAlias,
+              child: _buildIcon(iconUrl),
+            ),
+
+            // ── Floating name label at top center ─────────────────────────
+            Positioned(
+              top: 6,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.45),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    category.displayName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
             ),
-            clipBehavior: Clip.antiAlias,
-            child: _CategoryImage(
-              imageUrl: category.imageUrl ?? category.iconUrl,
-              label: category.displayName,
-              iconSize: 28,
-            ),
-          ),
-          const SizedBox(height: 6),
-          SizedBox(
-            width: 72,
-            child: Text(
-              category.displayName,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-}
 
-// ── Shared image widget ───────────────────────────────────────────────────────
-
-class _CategoryImage extends StatelessWidget {
-  final String? imageUrl;
-  final String label;
-  final double iconSize;
-
-  const _CategoryImage({
-    this.imageUrl,
-    required this.label,
-    this.iconSize = 40,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (imageUrl != null && imageUrl!.isNotEmpty) {
+  Widget _buildIcon(String? url) {
+    if (url != null && url.isNotEmpty) {
       return Image.network(
-        imageUrl!,
+        url,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholder(context),
+        errorBuilder: (_, __, ___) => _placeholder(),
       );
     }
-    return _placeholder(context);
+    return _placeholder();
   }
 
-  Widget _placeholder(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
-    return Center(
-      child: Text(
-        label.isNotEmpty ? label[0].toUpperCase() : '?',
-        style: TextStyle(
-          fontSize: iconSize * 0.8,
-          fontWeight: FontWeight.bold,
-          color: color,
+  Widget _placeholder() {
+    return Container(
+      color: Colors.grey.shade200,
+      child: Center(
+        child: Text(
+          category.displayName.isNotEmpty
+              ? category.displayName[0].toUpperCase()
+              : '?',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade500,
+          ),
         ),
       ),
     );

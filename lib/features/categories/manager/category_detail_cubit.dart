@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/core/utils/extract_error_message.dart';
 
 import '../../products/data/repo/product_repo.dart';
 import '../data/repo/category_repo.dart';
@@ -69,7 +70,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
     } catch (e) {
       log('CategoryDetailCubit: ❌ Failed at step "$step" for category $categoryId');
       log('CategoryDetailCubit: Error → $e');
-      if (!isClosed) emit(CategoryDetailError(_parseError(e)));
+      if (!isClosed) emit(CategoryDetailError(extractErrorMessage(e)));
     }
   }
   // ── Load products for all sub-category sections ───────────────────────────
@@ -205,7 +206,4 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
   // ── Refresh ────────────────────────────────────────────────────────────────
 
   Future<void> refresh(int categoryId) => load(categoryId);
-
-  String _parseError(Object e) =>
-      e.toString().replaceFirst('Exception: ', '');
 }
