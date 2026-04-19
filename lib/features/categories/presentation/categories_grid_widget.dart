@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_cubit.dart';
 import '../manager/category_states.dart';
@@ -85,7 +86,7 @@ class _CategoriesSection extends StatelessWidget {
   });
 
   // ≤6 → 3 columns regular, >6 → 4-5 columns compact
-  bool get _useCompact => state.totalCount > 6;
+  bool get _useCompact => state.totalCount > 0;
 
   int get _crossAxisCount {
     if (!_useCompact) return 3;
@@ -118,7 +119,7 @@ class _CategoriesSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'التصنيفات',
+                AppLocalizations.of(context)!.categories,
                 style: theme.textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
