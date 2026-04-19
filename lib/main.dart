@@ -253,11 +253,9 @@ void handleNotificationTap(Map<String, dynamic> data) {
     return;
   }
 
-  final currentUri = GoRouter.of(context)
-      .routerDelegate
-      .currentConfiguration
-      .uri
-      .toString();
+  final currentUri = GoRouter.of(
+    context,
+  ).routerDelegate.currentConfiguration.uri.toString();
   log('🧭 Current route: $currentUri');
 
   if (currentUri == '/mainHome') {
@@ -267,7 +265,7 @@ void handleNotificationTap(Map<String, dynamic> data) {
     // using its own scoped context where everything is available.
     shouldShowNotificationDialog = false;
     pendingNotificationData = null;
-    notificationDialogTrigger.value++;          // ← triggers HomeLayout
+    notificationDialogTrigger.value++; // ← triggers HomeLayout
   } else if (currentUri == '/splash' || currentUri == '/') {
     log('⏳ App initialising — dialog will show after HomeLayout mounts');
   } else {
@@ -390,7 +388,7 @@ class _MyAppState extends State<MyApp> {
             child: ValueListenableBuilder<bool>(
               valueListenable: showFloatingButton,
               builder: (context, show, child) {
-                final mainScreenWidget= NetworkAwareWidget(
+                final mainScreenWidget = NetworkAwareWidget(
                   offlineWidget: OfflineScreen(),
                   child: MaterialApp.router(
                     routerConfig: widget.router,
@@ -404,7 +402,8 @@ class _MyAppState extends State<MyApp> {
                             maxScaleFactor: 1.1,
                           ),
                         ),
-                        child: child ?? const SizedBox(),                      );
+                        child: child ?? const SizedBox(),
+                      );
                     },
                     localizationsDelegates: const [
                       AppLocalizations.delegate,
@@ -416,12 +415,26 @@ class _MyAppState extends State<MyApp> {
                     locale: state.locale,
                     title: 'Tawreedat',
                     theme: ThemeData(
+                      colorScheme: ColorScheme(
+                        brightness: Brightness.light,
+
+                        primary: AppColors.kPrimaryColor,
+                        onPrimary: Colors.black,
+
+                        secondary: AppColors.kSecondaryColor,
+                        onSecondary: Colors.white,
+
+                        error: Colors.red,
+                        onError: Colors.white,
+
+                        surface: Colors.white,
+                        onSurface: Colors.black,
+                      ),
                       pageTransitionsTheme: PageTransitionsTheme(
                         builders: {
                           TargetPlatform.android:
-                          CupertinoPageTransitionsBuilder(),
-                          TargetPlatform.iOS:
-                          CupertinoPageTransitionsBuilder(),
+                              CupertinoPageTransitionsBuilder(),
+                          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
                         },
                       ),
                       cupertinoOverrideTheme: const CupertinoThemeData(

@@ -52,7 +52,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   Future<ProductModel> getProductById(int id) async {
     final response = await _dio.get(
       '/products/$id',
-      queryParameters: {'includes': 'attributes,units'},
+      // queryParameters: {'includes': 'attributes,units'},
     );
 
     final data = response.data as Map<String, dynamic>;

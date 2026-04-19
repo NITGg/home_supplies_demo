@@ -86,7 +86,7 @@ class _CategoriesSection extends StatelessWidget {
   });
 
   // ≤6 → 3 columns regular, >6 → 4-5 columns compact
-  bool get _useCompact => state.totalCount > 0;
+  bool get _useCompact => state.totalCount > 2;
 
   int get _crossAxisCount {
     if (!_useCompact) return 3;

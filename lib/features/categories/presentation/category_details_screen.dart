@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/features/categories/presentation/sub_cat_section.dart';
 
 import '../../products/data/models/product_model.dart';
@@ -71,12 +72,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   }
 
   void _navigateToProduct(ProductModel product) {
-    Navigator.of(context).pushNamed(
-      '/products/detail',
-      arguments: product,
-    );
-    // Or with GoRouter:
-    // context.push('/products/${product.id}', extra: product);
+    context.push('/products/${product.id}', extra: product);
   }
 }
 
