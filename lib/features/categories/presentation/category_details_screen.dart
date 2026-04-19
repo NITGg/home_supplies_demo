@@ -9,7 +9,6 @@ import '../manager/category_detail_cubit.dart';
 import '../manager/category_detail_states.dart';
 
 class CategoryDetailScreen extends StatefulWidget {
-  /// Pass either [category] (from list navigation) or [categoryId] (deep link).
   final CategoryModel? category;
   final int? categoryId;
 
@@ -99,16 +98,7 @@ class _LoadedView extends StatelessWidget {
       onRefresh: onRefresh,
       child: CustomScrollView(
         slivers: [
-          // ── Collapsible app bar with category image ──────────────────────
           _CategorySliverAppBar(category: state.category),
-
-          // ── Category description card ────────────────────────────────────
-          if (state.category.displayDescription.isNotEmpty)
-            SliverToBoxAdapter(
-              child: _CategoryInfoCard(category: state.category),
-            ),
-
-          // ── Products: grouped by sub-category OR flat list ───────────────
           if (state.hasSections)
             SliverList.separated(
               itemCount: state.sections.length,
@@ -163,91 +153,291 @@ class _CategorySliverAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasImage =
+        category.imageUrl != null && category.imageUrl!.isNotEmpty;
 
     return SliverAppBar(
-      expandedHeight: 200,
+      expandedHeight: 280,
       pinned: true,
       stretch: true,
-      flexibleSpace: FlexibleSpaceBar(
-        title: Text(
-          category.displayName,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            shadows: [Shadow(blurRadius: 4, color: Colors.black45)],
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: Padding(
+        padding: const EdgeInsets.all(8),
+        child: _GlassPill(
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                size: 16, color: Colors.white),
+            onPressed: () => Navigator.of(context).maybePop(),
+            padding: EdgeInsets.zero,
           ),
         ),
-        background: category.imageUrl != null
-            ? Image.network(
-          category.imageUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
-              _headerPlaceholder(theme, category),
-        )
-            : _headerPlaceholder(theme, category),
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: EdgeInsets.zero,
         stretchModes: const [
           StretchMode.zoomBackground,
           StretchMode.blurBackground,
         ],
-      ),
-    );
-  }
-
-  Widget _headerPlaceholder(ThemeData theme, CategoryModel cat) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primaryContainer,
-            theme.colorScheme.primary,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Center(
-        child: Text(
-          cat.displayName.isNotEmpty ? cat.displayName[0].toUpperCase() : '?',
-          style: TextStyle(
-            fontSize: 80,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onPrimary.withOpacity(0.4),
-          ),
+        background: _HeaderBackground(
+          category: category,
+          hasImage: hasImage,
+          theme: theme,
         ),
       ),
     );
   }
 }
 
-// ── Category info card ────────────────────────────────────────────────────────
+// ── Header background ─────────────────────────────────────────────────────────
 
-class _CategoryInfoCard extends StatelessWidget {
+class _HeaderBackground extends StatelessWidget {
   final CategoryModel category;
+  final bool hasImage;
+  final ThemeData theme;
 
-  const _CategoryInfoCard({required this.category});
+  const _HeaderBackground({
+    required this.category,
+    required this.hasImage,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // ── Layer 1: image or gradient mesh ──────────────────────────────────
+        if (hasImage)
+          Image.network(
+            category.imageUrl!,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) =>
+                _GradientMesh(theme: theme, category: category),
+          )
+        else
+          _GradientMesh(theme: theme, category: category),
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant, width: 0.8),
-      ),
-      child: Text(
-        category.displayDescription,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          height: 1.6,
+        // ── Layer 2: cinematic bottom-heavy scrim ─────────────────────────────
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.35, 0.70, 1.0],
+                colors: [
+                  Colors.black.withOpacity(0.12),
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.50),
+                  Colors.black.withOpacity(0.80),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
+
+        // ── Layer 3: title block ───────────────────────────────────────────────
+        Positioned(
+          left: 20,
+          right: 20,
+          bottom: 22,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Sub-category breadcrumb badge
+              if (category.parentId != null) ...[
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: Colors.white.withOpacity(0.28), width: 0.8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.subdirectory_arrow_right_rounded,
+                          size: 11,
+                          color: Colors.white.withOpacity(0.82)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'تصنيف فرعي',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.82),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+
+              // ── Display title ──────────────────────────────────────────────
+              Text(
+                category.displayName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1,
+                  letterSpacing: -0.8,
+                  shadows: [
+                    Shadow(
+                        blurRadius: 16,
+                        color: Colors.black54,
+                        offset: Offset(0, 3)),
+                  ],
+                ),
+              ),
+
+              // ── One-line description preview ───────────────────────────────
+              if (category.displayDescription.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  category.displayDescription,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.68),
+                    fontSize: 13,
+                    height: 1.4,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
 
+// ── Gradient mesh (no-image fallback) ────────────────────────────────────────
+
+class _GradientMesh extends StatelessWidget {
+  final ThemeData theme;
+  final CategoryModel category;
+
+  const _GradientMesh({required this.theme, required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = theme.colorScheme.primary;
+    final secondary = theme.colorScheme.secondary;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Diagonal base gradient
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                HSLColor.fromColor(primary)
+                    .withLightness(
+                    (HSLColor.fromColor(primary).lightness - 0.12)
+                        .clamp(0.0, 1.0))
+                    .toColor(),
+                primary,
+                HSLColor.fromColor(secondary)
+                    .withSaturation(0.9)
+                    .toColor(),
+              ],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              stops: const [0.0, 0.45, 1.0],
+            ),
+          ),
+        ),
+
+        // Radial accent spot (top-right)
+        Positioned(
+          top: -60,
+          right: -40,
+          child: Container(
+            width: 220,
+            height: 220,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  Colors.white.withOpacity(0.12),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Huge decorative initial
+        Positioned(
+          right: -8,
+          bottom: -24,
+          child: Text(
+            category.displayName.isNotEmpty
+                ? category.displayName[0].toUpperCase()
+                : '?',
+            style: TextStyle(
+              fontSize: 210,
+              fontWeight: FontWeight.w900,
+              color: Colors.white.withOpacity(0.07),
+              height: 1,
+            ),
+          ),
+        ),
+
+        // Icon watermark if available
+        if (category.iconUrl != null && category.iconUrl!.isNotEmpty)
+          Center(
+            child: Opacity(
+              opacity: 0.12,
+              child: Image.network(
+                category.iconUrl!,
+                width: 130,
+                height: 130,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ── Frosted-glass pill back button ────────────────────────────────────────────
+
+class _GlassPill extends StatelessWidget {
+  final Widget child;
+
+  const _GlassPill({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.26),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.18),
+            width: 0.8,
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 class _EmptyProducts extends StatelessWidget {
@@ -290,21 +480,60 @@ class _LoadingView extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       slivers: [
         SliverAppBar(
-          expandedHeight: 200,
+          expandedHeight: 280,
           pinned: true,
+          backgroundColor: Colors.transparent,
           flexibleSpace: FlexibleSpaceBar(
-            title: category != null ? Text(category!.displayName) : null,
-            background: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.primaryContainer,
-                    theme.colorScheme.primary,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            titlePadding: EdgeInsets.zero,
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary.withOpacity(0.9),
+                        theme.colorScheme.secondary.withOpacity(0.8),
+                      ],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                    ),
+                  ),
                 ),
-              ),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: const [0.0, 0.35, 0.70, 1.0],
+                        colors: [
+                          Colors.black.withOpacity(0.12),
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.50),
+                          Colors.black.withOpacity(0.80),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (category != null)
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    bottom: 22,
+                    child: Text(
+                      category!.displayName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        height: 1.1,
+                        letterSpacing: -0.8,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

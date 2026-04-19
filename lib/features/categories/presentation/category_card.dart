@@ -106,7 +106,7 @@ class _RegularCard extends StatelessWidget {
   }
 }
 
-// ── Compact card: circle cover with iconUrl + floating name at top ─────────────
+// ── Compact card: circle cover with iconUrl + name below ──────────────────────
 
 class _CompactCard extends StatelessWidget {
   final CategoryModel category;
@@ -120,49 +120,33 @@ class _CompactCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: SizedBox(
-        width: 88,
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.topCenter,
-          children: [
-            // ── Circle with cover image ───────────────────────────────────
-            Container(
-              width: 80,
-              height: 80,
-              decoration: const BoxDecoration(shape: BoxShape.circle),
-              clipBehavior: Clip.antiAlias,
-              child: _buildIcon(iconUrl),
-            ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Circle image ─────────────────────────────────────────────────
+          Container(
+            width: 64,
+            height: 64,
+            decoration: const BoxDecoration(shape: BoxShape.circle),
+            clipBehavior: Clip.antiAlias,
+            child: _buildIcon(iconUrl),
+          ),
 
-            // ── Floating name label at top center ─────────────────────────
-            Positioned(
-              top: 6,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.45),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    category.displayName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
+          const SizedBox(height: 6),
+
+          // ── Name below ───────────────────────────────────────────────────
+          Text(
+            category.displayName,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              height: 1.3,
             ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

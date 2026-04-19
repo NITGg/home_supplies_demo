@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/features/products/presentation/quantity_selector.dart';
 
 
+import '../../cart/manager/cart_cubit.dart';
 import '../data/models/product_model.dart';
 import '../manager/product_detail_cubit.dart';
 import '../manager/product_details_states.dart';
@@ -147,15 +148,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         onDecrement: () {
           if (_quantity > 0) setState(() => _quantity--);
         },
-        onAddToCart: () {
-          // TODO: dispatch to CartCubit
+        onAddToCart: () async {
+          final qty = _quantity == 0 ? 1 : _quantity;
           if (_quantity == 0) setState(() => _quantity = 1);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('تمت إضافة ${product.displayName} إلى السلة'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+
+          try {
+            await context.read<CartCubit>().addItem(
+              spId: product.spId??product.id,
+              quantity: qty,
+            );
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('تمت إضافة ${product.displayName} إلى السلة'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          } catch (_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('تعذّرت الإضافة إلى السلة'),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+              );
+            }
+          }
         },
       ),
     );
@@ -345,7 +365,7 @@ class _PriceSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '${product.offer} ج.م',
+            '${product.offer!.toStringAsFixed(0)} ج.م',
             style: theme.textTheme.headlineMedium?.copyWith(
               color: theme.colorScheme.error,
               fontWeight: FontWeight.bold,
@@ -353,7 +373,7 @@ class _PriceSection extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Text(
-            '${product.price} ج.م',
+            '${product.price.toStringAsFixed(0)} ج.م',
             style: theme.textTheme.titleMedium?.copyWith(
               color: Colors.grey,
               decoration: TextDecoration.lineThrough,
@@ -364,7 +384,7 @@ class _PriceSection extends StatelessWidget {
     }
 
     return Text(
-      '${product.price} ج.م',
+      '${product.effectivePrice.toStringAsFixed(0)} ج.م',
       style: theme.textTheme.headlineMedium?.copyWith(
         color: theme.colorScheme.primary,
         fontWeight: FontWeight.bold,

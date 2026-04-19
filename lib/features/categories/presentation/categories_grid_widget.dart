@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../cart/manager/cart_cubit.dart';
+import '../../cart/manager/cart_state.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_cubit.dart';
 import '../manager/category_states.dart';
@@ -55,8 +58,8 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
       child: BlocBuilder<CategoriesCubit, CategoriesState>(
         builder: (context, state) {
           return switch (state) {
-            CategoriesInitial() || CategoriesLoading() =>
-            const _CategoriesSkeletonRow(),
+            CategoriesInitial() ||
+            CategoriesLoading() => const _CategoriesSkeletonRow(),
             CategoriesError() => const SizedBox.shrink(),
             CategoriesLoaded() => _CategoriesSection(
               state: state,
@@ -85,12 +88,14 @@ class _CategoriesSection extends StatelessWidget {
     required this.onLoadMore,
   });
 
-  // ≤6 → 3 columns regular, >6 → 4-5 columns compact
-  bool get _useCompact => state.totalCount > 2;
+  List<CategoryModel> get _parents =>
+      state.categories.where((c) => c.parentId == null).toList();
+
+  bool get _useCompact => _parents.length > 6;
 
   int get _crossAxisCount {
     if (!_useCompact) return 3;
-    if (state.totalCount > 12) return 5;
+    if (_parents.length > 12) return 5;
     return 4;
   }
 
@@ -100,78 +105,118 @@ class _CategoriesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // ── Header ─────────────────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-          child: Row(
+    void navigateToCart() {
+      context.push('/cart');
+    }
+
+    return state.totalCount == 0
+        ? SizedBox.shrink()
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 4,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: AppColors.kPrimaryColor,
-                  borderRadius: BorderRadius.circular(2),
+              // ── Header ─────────────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: AppColors.kPrimaryColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      AppLocalizations.of(context)!.categories,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (state.isLoadingMore)
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    BlocSelector<CartCubit, CartState, int>(
+                      selector: (state) {
+                        if (state is CartLoaded) {
+                          final total = state.data.summary.totalItems;
+                          return total < 0 ? 0 : total;
+                        }
+                        return 0;
+                      },
+                      builder: (context, count) {
+                        return InkWell(
+                          onTap: () => navigateToCart(),
+                          customBorder: const CircleBorder(),
+                          child: CircleAvatar(
+                            radius: 20,
+                            backgroundColor: Colors.grey.shade200,
+                            child:Badge.count(
+                              backgroundColor: AppColors.kSecondaryColor,
+                              textColor: AppColors.kPrimaryColor,
+                              isLabelVisible: count > 0,
+                              count: count,
+                              largeSize: 10,
+                              alignment: Alignment.topRight,
+                              child: Icon(
+                                count > 0
+                                    ? Icons.shopping_cart_rounded
+                                    : Icons.shopping_cart_outlined,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context)!.categories,
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const Spacer(),
-              if (state.isLoadingMore)
-                SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: theme.colorScheme.primary,
+
+              // ── Always a grid, compact style when many ──────────────────────
+              NotificationListener<ScrollNotification>(
+                onNotification: (n) {
+                  if (n is ScrollEndNotification &&
+                      n.metrics.pixels >= n.metrics.maxScrollExtent - 40 &&
+                      state.hasMore) {
+                    onLoadMore();
+                  }
+                  return false;
+                },
+                child: GridView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: _crossAxisCount,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                    childAspectRatio: _childAspectRatio,
+                  ),
+                  itemCount: _parents.length,
+                  itemBuilder: (_, i) => CategoryCard(
+                    category: _parents[i],
+                    onTap: () => onCategoryTap(_parents[i]),
+                    style: _useCompact
+                        ? CategoryCardStyle.compact
+                        : CategoryCardStyle.regular,
                   ),
                 ),
+              ),
+
+              const SizedBox(height: 4),
+              Divider(color: Colors.grey.shade200, height: 1),
             ],
-          ),
-        ),
-
-        // ── Always a grid, compact style when many ──────────────────────
-        NotificationListener<ScrollNotification>(
-          onNotification: (n) {
-            if (n is ScrollEndNotification &&
-                n.metrics.pixels >= n.metrics.maxScrollExtent - 40 &&
-                state.hasMore) {
-              onLoadMore();
-            }
-            return false;
-          },
-          child: GridView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: _crossAxisCount,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: _childAspectRatio,
-            ),
-            itemCount: state.categories.length,
-            itemBuilder: (_, i) => CategoryCard(
-              category: state.categories[i],
-              onTap: () => onCategoryTap(state.categories[i]),
-              style: _useCompact
-                  ? CategoryCardStyle.compact
-                  : CategoryCardStyle.regular,
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 4),
-        Divider(color: Colors.grey.shade200, height: 1),
-      ],
-    );
+          );
   }
 }
 
@@ -198,9 +243,10 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.3, end: 0.85).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: 0.3,
+      end: 0.85,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override

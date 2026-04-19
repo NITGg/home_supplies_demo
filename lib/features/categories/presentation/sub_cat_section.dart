@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-
+import '../../cart/manager/cart_cubit.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/presentation/product_card.dart';
 import '../manager/category_detail_states.dart';
@@ -61,8 +62,9 @@ class SubCategorySectionWidget extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
               'لا توجد منتجات في هذه الفئة',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: Colors.grey.shade500),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.grey.shade500,
+              ),
             ),
           )
         else
@@ -81,15 +83,15 @@ class SubCategorySectionWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: section.isLoading
                   ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : TextButton.icon(
-                onPressed: onLoadMore,
-                icon: const Icon(Icons.expand_more, size: 18),
-                label: const Text('عرض المزيد'),
-              ),
+                      onPressed: onLoadMore,
+                      icon: const Icon(Icons.expand_more, size: 18),
+                      label: const Text('عرض المزيد'),
+                    ),
             ),
           ),
       ],
@@ -120,10 +122,23 @@ class _ProductGrid extends StatelessWidget {
             childAspectRatio: 0.72,
           ),
           itemCount: products.length,
-          itemBuilder: (_, i) => ProductCard(
-            product: products[i],
-            onTap: () => onProductTap(products[i]),
-          ),
+          itemBuilder: (_, i) {
+            final product = products[i];
+            return ProductCard(
+              product: product,
+              onTap: () => onProductTap(product),
+              onQuantityChanged: (qty) {
+                if (qty == 1) {
+                  // first add only
+                  context.read<CartCubit>().addItem(
+                    spId: product.spId ?? product.id,
+                    quantity: 1,
+                  );
+                }
+                // subsequent taps are local UI only until user goes to cart
+              },
+            );
+          },
         );
       },
     );
@@ -239,10 +254,10 @@ class DirectProductsGrid extends StatelessWidget {
             child: isLoadingMore
                 ? const CircularProgressIndicator()
                 : ElevatedButton.icon(
-              onPressed: onLoadMore,
-              icon: const Icon(Icons.expand_more),
-              label: const Text('تحميل المزيد'),
-            ),
+                    onPressed: onLoadMore,
+                    icon: const Icon(Icons.expand_more),
+                    label: const Text('تحميل المزيد'),
+                  ),
           ),
       ],
     );

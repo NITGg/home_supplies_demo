@@ -311,7 +311,7 @@ class _CouponPillState extends State<_CouponPill>
       case _PillPhase.viewMore:
         return _StatusPillContent(
           key: const ValueKey('viewMore'),
-          icon: Icons.local_offer_outlined,
+          icon: Icons.card_giftcard,
           iconColor: Colors.orange.shade700,
           text: isAr
               ? 'عرض كل الكوبونات (${widget.allCoupons.length})'
@@ -428,7 +428,7 @@ class _IdlePillContent extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.local_offer_outlined,
+                  Icons.card_giftcard,
                   size: 13,
                   color: AppColors.kPrimaryColor,
                 ),

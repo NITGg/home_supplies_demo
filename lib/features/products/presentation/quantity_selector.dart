@@ -65,7 +65,7 @@ class QuantitySelector extends StatelessWidget {
             icon: Icons.remove,
             onTap: quantity > minQuantity ? onDecrement : null,
             size: size,
-            color: colorScheme.primary,
+            color: colorScheme.onPrimary,
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -84,7 +84,7 @@ class QuantitySelector extends StatelessWidget {
                 ? onIncrement
                 : null,
             size: size,
-            color: colorScheme.primary,
+            color: colorScheme.onPrimary,
           ),
         ],
       ),

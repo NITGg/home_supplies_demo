@@ -11,7 +11,6 @@ abstract class ProductRemoteDataSource {
     int skip = 0,
     int limit = 20,
     int? categoryId,
-    String includes = 'attributes,units',
   });
 
   Future<ProductModel> getProductById(int id);
@@ -27,7 +26,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     int skip = 0,
     int limit = 20,
     int? categoryId,
-    String includes = 'attributes,units',
+    String includes = 'attributes,suppliers',
   }) async {
     final queryParams = <String, dynamic>{
       'skip': skip,
@@ -52,7 +51,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   Future<ProductModel> getProductById(int id) async {
     final response = await _dio.get(
       '/products/$id',
-      // queryParameters: {'includes': 'attributes,units'},
+      queryParameters: {'includes': 'attributes,suppliers'},
     );
 
     final data = response.data as Map<String, dynamic>;

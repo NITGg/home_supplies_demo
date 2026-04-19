@@ -89,11 +89,11 @@ class AuthCubit extends Cubit<AuthState> {
       );
 
       final userRole = result.user.role ?? '';
-      if (userRole == 'Courier' || userRole == 'Admin') {
-        emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
-        SecureStorageService().deleteToken();
-        return;
-      }
+      // if (userRole == 'Courier' || userRole == 'Admin') {
+      //   emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
+      //   SecureStorageService().deleteToken();
+      //   return;
+      // }
 
       await _initializeUserSession();
       emit(AuthSuccess(shortAuthResponse: result));

@@ -41,7 +41,6 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
         categoryId: categoryId,
         skip: 0,
         limit: _pageSize,
-        includes: '',
       );
 
       if (isClosed) return;
@@ -108,7 +107,6 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
         categoryId: subCategoryId,
         skip: skip,
         limit: _pageSize,
-        includes: '',
       );
 
       if (isClosed) return;
@@ -173,7 +171,6 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
         categoryId: current.category.id,
         skip: current.directProductsSkip,
         limit: _pageSize,
-        includes: '',
       );
 
       if (isClosed) return;
