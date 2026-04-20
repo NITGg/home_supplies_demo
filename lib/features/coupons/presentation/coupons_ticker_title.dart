@@ -423,7 +423,7 @@ class _IdlePillContent extends StatelessWidget {
           onTap: onViewAll,
           behavior: HitTestBehavior.opaque,
           child: Padding(
-            padding: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsetsGeometry.directional(end: 20),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -470,31 +470,28 @@ class _StatusPillContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 15, color: iconColor),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 15, color: iconColor),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: textColor,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          if (trailingIcon != null) ...[
-            const SizedBox(width: 2),
-            Icon(trailingIcon, size: 15, color: iconColor),
-          ],
+        ),
+        if (trailingIcon != null) ...[
+          const SizedBox(width: 2),
+          Icon(trailingIcon, size: 15, color: iconColor),
         ],
-      ),
+      ],
     );
   }
 }

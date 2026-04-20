@@ -1248,7 +1248,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
                                 scale: _companyLogoScale.value,
                                 child: SvgPicture.asset(
                                   'assets/images/appbar/company_logo.svg',
-                                  height: 30,
+                                  height: 20,
                                 ),
                               ),
                             ),
@@ -1259,7 +1259,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
                 },
                 child: SvgPicture.asset(
                   'assets/images/appbar/logo.svg',
-                  height: 30,
+                  height: 20,
                 ),
               ),
             ),
