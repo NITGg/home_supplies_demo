@@ -375,8 +375,9 @@ class _CategorySliverAppBar extends StatelessWidget {
       expandedHeight: 280,
       pinned: true,
       stretch: true,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+      backgroundColor: theme.colorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 2,              elevation: 0,
       leading: CircleBackButton(),
       actions: [
         AnimatedCartIcon(onTap: () => context.push('/cart')),
