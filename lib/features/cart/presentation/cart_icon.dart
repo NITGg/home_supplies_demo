@@ -56,7 +56,7 @@ class _AnimatedCartIconState extends State<AnimatedCartIcon>
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(5.0),
       child: BlocConsumer<CartCubit, CartState>(
         // Only re-listen / rebuild when the total item count changes.
         listenWhen: (prev, curr) {

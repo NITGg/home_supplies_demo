@@ -6,6 +6,7 @@ import 'package:tawreedat_go/core/style/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
+import '../../cart/presentation/cart_icon.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_cubit.dart';
 import '../manager/category_states.dart';
@@ -118,7 +119,7 @@ class _CategoriesSection extends StatelessWidget {
             children: [
               // ── Header ─────────────────────────────────────────────────────────
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
                 child: Row(
                   children: [
                     Container(
@@ -137,6 +138,18 @@ class _CategoriesSection extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey.shade200,
+                      child: IconButton(
+                        icon: Icon(
+                          Icons.search_rounded,
+                          color: Colors.grey.shade700,
+                        ),
+                        onPressed: () {},
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
                     if (state.isLoadingMore)
                       SizedBox(
                         width: 14,
@@ -155,27 +168,8 @@ class _CategoriesSection extends StatelessWidget {
                         return 0;
                       },
                       builder: (context, count) {
-                        return InkWell(
-                          onTap: () => navigateToCart(),
-                          customBorder: const CircleBorder(),
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Colors.grey.shade200,
-                            child:Badge.count(
-                              backgroundColor: AppColors.kSecondaryColor,
-                              textColor: AppColors.kPrimaryColor,
-                              isLabelVisible: count > 0,
-                              count: count,
-                              largeSize: 10,
-                              alignment: Alignment.topRight,
-                              child: Icon(
-                                count > 0
-                                    ? Icons.shopping_cart_rounded
-                                    : Icons.shopping_cart_outlined,
-                                color: Colors.grey.shade700,
-                              ),
-                            ),
-                          ),
+                        return AnimatedCartIcon(
+                          onTap: () => context.push('/cart'),
                         );
                       },
                     ),

@@ -907,14 +907,14 @@ class _BottomNavBar extends StatelessWidget {
                           children: [
                             Icon(
                               currentIndex == 0
-                                  ? Icons.grid_view_rounded
+                                  ? Icons.shopping_bag
                                   : Icons.grid_view_outlined,
                               color: currentIndex == 0
                                   ? AppColors.kPrimaryColor
                                   : Colors.grey,
                             ),
                             Text(
-                              localizations.categories,
+                              localizations.shopping,
                               style: TextStyle(
                                 height: 2,
                                 fontSize: 10,
