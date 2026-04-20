@@ -1,4 +1,5 @@
 import 'dart:developer';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
@@ -13,42 +14,74 @@ class CartCubit extends Cubit<CartState> {
   final CartRepository _repository;
 
   CartCubit({CartRepository? repository})
-    : _repository = repository ?? CartRepositoryImpl(),
-      super(const CartInitial());
+      : _repository = repository ?? CartRepositoryImpl(),
+        super(const CartInitial());
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  /// Emits safely, skipping if the cubit has already been closed.
+  void _safeEmit(CartState state) {
+    if (isClosed) return;
+    emit(state);
+  }
+
+  CartLoaded? get _loaded => state is CartLoaded ? state as CartLoaded : null;
 
   // ── Fetch ────────────────────────────────────────────────────────────────
 
   Future<void> fetchCart() async {
-    emit(const CartLoading());
+    _safeEmit(const CartLoading());
     try {
       final data = await _repository.getCart();
-      emit(CartLoaded(data));
+      _safeEmit(CartLoaded(data));
     } catch (e) {
-      emit(CartError(extractErrorMessage(e)));
+      _safeEmit(CartError(extractErrorMessage(e)));
+    }
+  }
+
+  /// Refreshes cart data in the background without emitting [CartLoading],
+  /// preserving the current visible state during network round-trips.
+  Future<void> _silentRefresh() async {
+    try {
+      final data = await _repository.getCart();
+      _safeEmit(CartLoaded(data));
+    } catch (e) {
+      log('[CartCubit] silentRefresh error: $e');
+      // Silent failure – the optimistic state remains until user manually refreshes.
     }
   }
 
   // ── Add item ─────────────────────────────────────────────────────────────
 
+  /// Adds an item and optimistically updates the UI so there is no full-page
+  /// loading flash. Falls back to [fetchCart] if the state is not yet loaded.
   Future<void> addItem({required int spId, required int quantity}) async {
     try {
-      await _repository.addItem(spId: spId, quantity: quantity);
-      await fetchCart(); // refresh to get updated totals
+      final item = await _repository.addItem(spId: spId, quantity: quantity);
+
+      if (_loaded != null) {
+        // Optimistic: merge the returned item into the current cart snapshot.
+        _applyItemAdd(item);
+        // Background reconcile – server is the source of truth for totals.
+        unawaited(_silentRefresh());
+      } else {
+        // Cart was never loaded – bootstrap from server.
+        await fetchCart();
+      }
     } catch (e) {
       log('[CartCubit] addItem error: $e');
-      if (state is CartLoaded) {
-        // preserve loaded state but surface error via snackbar upstream
-        rethrow;
+      if (_loaded != null) {
+        rethrow; // Caller will surface a SnackBar; keep loaded state intact.
       }
-      emit(CartError(extractErrorMessage(e)));
+      _safeEmit(CartError(extractErrorMessage(e)));
     }
   }
 
   // ── Increment ────────────────────────────────────────────────────────────
 
-  Future<void> incrementItem(int cartItemId) async {
+  Future<void> incrementItem(int spId) async {
     await _updateItem(
-      cartItemId: cartItemId,
+      cartItemId: spId,
       action: CartUpdateAction.increment,
       quantity: 1,
     );
@@ -56,30 +89,32 @@ class CartCubit extends Cubit<CartState> {
 
   // ── Decrement / remove ───────────────────────────────────────────────────
 
-  Future<void> decrementItem(int cartItemId) async {
-    final loaded = state as CartLoaded?;
+  Future<void> decrementItem(int spId) async {
+    final loaded = _loaded;
     if (loaded == null) return;
 
-    final item = loaded.data.cartItems.firstWhere((i) => i.spId == cartItemId);
+    final CartItemModel? item =
+        loaded.data.cartItems.where((i) => i.spId == spId).firstOrNull;
+    if (item == null) return;
 
     if (item.quantity <= 1) {
-      // Removing last unit → optimistically remove item from list
-      _applyOptimisticRemove(cartItemId);
+      // Last unit – remove immediately in the UI, then reconcile with server.
+      _applyOptimisticRemove(spId);
       try {
         await _repository.updateItem(
-          cartItemId: cartItemId,
+          cartItemId: spId,
           action: CartUpdateAction.decrement,
           quantity: 1,
         );
-        await fetchCart(); // reconcile
+        await _silentRefresh();
       } catch (e) {
-        log('[CartCubit] decrementItem error: $e');
-        await fetchCart(); // rollback via refresh
+        log('[CartCubit] decrementItem(remove) error: $e');
+        await fetchCart(); // rollback via full refresh
         rethrow;
       }
     } else {
       await _updateItem(
-        cartItemId: cartItemId,
+        cartItemId: spId,
         action: CartUpdateAction.decrement,
         quantity: 1,
       );
@@ -88,39 +123,75 @@ class CartCubit extends Cubit<CartState> {
 
   // ── Set quantity ─────────────────────────────────────────────────────────
 
-  Future<void> setItemQuantity(int cartItemId, int quantity) async {
+  Future<void> setItemQuantity(int spId, int quantity) async {
     await _updateItem(
-      cartItemId: cartItemId,
+      cartItemId: spId,
       action: CartUpdateAction.set,
       quantity: quantity,
     );
   }
 
-  // ── Clear cart ───────────────────────────────────────────────────────────
+  // ── Remove item ──────────────────────────────────────────────────────────
 
-  Future<void> clearCart() async {
-    if (state is! CartLoaded) return;
-    emit(const CartLoading());
+  Future<void> removeItem(int spId) async {
+    _applyOptimisticRemove(spId);
     try {
-      await _repository.clearCart();
-      await fetchCart();
+      await _repository.updateItem(
+        cartItemId: spId,
+        action: CartUpdateAction.set,
+        quantity: 0,
+      );
+      await _silentRefresh();
     } catch (e) {
-      emit(CartError(extractErrorMessage(e)));
+      log('[CartCubit] removeItem error: $e');
+      await fetchCart(); // rollback
+      rethrow;
     }
   }
 
-  // ── Private helpers ───────────────────────────────────────────────────────
+  // ── Clear cart ───────────────────────────────────────────────────────────
+
+  Future<void> clearCart() async {
+    final loaded = _loaded;
+    if (loaded == null) return;
+
+    // Optimistic: show empty cart immediately.
+    final emptyResponse = CartResponseModel(
+      cart: loaded.data.cart,
+      cartItems: const [],
+      summary: const CartSummaryModel(
+        itemCount: 0,
+        totalItems: 0,
+        totalPrice: 0,
+      ),
+    );
+    _safeEmit(CartLoaded(emptyResponse));
+
+    try {
+      await _repository.clearCart();
+      // Confirm with server to keep IDs / totals accurate.
+      await _silentRefresh();
+    } catch (e) {
+      log('[CartCubit] clearCart error: $e');
+      await fetchCart(); // rollback to real state
+      _safeEmit(CartError(extractErrorMessage(e)));
+    }
+  }
+
+  // ── Private: generic update ───────────────────────────────────────────────
 
   Future<void> _updateItem({
     required int cartItemId,
     required CartUpdateAction action,
     required int quantity,
   }) async {
-    final loaded = state as CartLoaded?;
+    final loaded = _loaded;
     if (loaded == null) return;
 
-    // Mark item as busy
-    emit(loaded.copyWith(busyItemIds: {...loaded.busyItemIds, cartItemId}));
+    // Mark item as busy so its tile shows a spinner.
+    _safeEmit(
+      loaded.copyWith(busyItemIds: {...loaded.busyItemIds, cartItemId}),
+    );
 
     try {
       final updated = await _repository.updateItem(
@@ -130,81 +201,91 @@ class CartCubit extends Cubit<CartState> {
       );
 
       if (updated == null) {
-        // Item was removed from backend
         _applyOptimisticRemove(cartItemId);
       } else {
         _applyItemUpdate(updated);
       }
     } catch (e) {
-      log('[CartCubit] updateItem error: $e');
-      // Unmark busy, preserve state
-      final current = state as CartLoaded?;
+      log('[CartCubit] _updateItem error: $e');
+      // Unmark busy, keep rest of state intact.
+      final current = _loaded;
       if (current != null) {
         final busy = Set<int>.from(current.busyItemIds)..remove(cartItemId);
-        emit(current.copyWith(busyItemIds: busy));
+        _safeEmit(current.copyWith(busyItemIds: busy));
       }
       rethrow;
     }
   }
 
-  Future<void> removeItem(int cartItemId) async {
-    _applyOptimisticRemove(cartItemId);
-    try {
-      await _repository.updateItem(
-        cartItemId: cartItemId,
-        action: CartUpdateAction.set,
-        quantity: 0,
-      );
-      await fetchCart();
-    } catch (e) {
-      await fetchCart();
-      rethrow;
-    }
+  // ── Private: state mutations ──────────────────────────────────────────────
+
+  /// Merges [newItem] into the cart – updates if already present, appends otherwise.
+  void _applyItemAdd(CartItemModel newItem) {
+    final loaded = _loaded;
+    if (loaded == null) return;
+
+    final exists = loaded.data.cartItems.any((i) => i.spId == newItem.spId);
+    final items = exists
+        ? loaded.data.cartItems
+        .map((i) => i.spId == newItem.spId ? newItem : i)
+        .toList()
+        : [...loaded.data.cartItems, newItem];
+
+    _safeEmit(
+      loaded.copyWith(
+        data: loaded.data.copyWith(
+          cartItems: items,
+          summary: _computeSummary(items),
+        ),
+      ),
+    );
   }
 
   void _applyItemUpdate(CartItemModel updated) {
-    final loaded = state as CartLoaded?;
+    final loaded = _loaded;
     if (loaded == null) return;
 
-    final items = loaded.data.cartItems.map((item) {
-      return item.spId == updated.spId ? updated : item;
-    }).toList();
-
-    final newTotal = items.fold<double>(0, (sum, i) => sum + i.lineTotal);
-    final newSummary = CartSummaryModel(
-      itemCount: items.length,
-      totalItems: items.fold(0, (sum, i) => sum + i.quantity),
-      totalPrice: newTotal,
-    );
+    final items = loaded.data.cartItems
+        .map((i) => i.spId == updated.spId ? updated : i)
+        .toList();
 
     final busy = Set<int>.from(loaded.busyItemIds)..remove(updated.spId);
-    emit(
+    _safeEmit(
       loaded.copyWith(
-        data: loaded.data.copyWith(cartItems: items, summary: newSummary),
+        data: loaded.data.copyWith(
+          cartItems: items,
+          summary: _computeSummary(items),
+        ),
         busyItemIds: busy,
       ),
     );
   }
 
-  void _applyOptimisticRemove(int cartItemId) {
-    final loaded = state as CartLoaded?;
+  void _applyOptimisticRemove(int spId) {
+    final loaded = _loaded;
     if (loaded == null) return;
 
-    final items = loaded.data.cartItems
-        .where((i) => i.spId != cartItemId)
-        .toList();
-    final newTotal = items.fold<double>(0, (sum, i) => sum + i.lineTotal);
-    final newSummary = CartSummaryModel(
-      itemCount: items.length,
-      totalItems: items.fold(0, (sum, i) => sum + i.quantity),
-      totalPrice: newTotal,
-    );
+    final items =
+    loaded.data.cartItems.where((i) => i.spId != spId).toList();
 
-    emit(
+    _safeEmit(
       loaded.copyWith(
-        data: loaded.data.copyWith(cartItems: items, summary: newSummary),
+        data: loaded.data.copyWith(
+          cartItems: items,
+          summary: _computeSummary(items),
+        ),
       ),
     );
   }
 
+  CartSummaryModel _computeSummary(List<CartItemModel> items) {
+    return CartSummaryModel(
+      itemCount: items.length,
+      totalItems: items.fold(0, (sum, i) => sum + i.quantity),
+      totalPrice: items.fold(0.0, (sum, i) => sum + i.lineTotal),
+    );
+  }
 }
+
+/// Discards the Future from [_silentRefresh] without lint warnings.
+void unawaited(Future<void> future) {}

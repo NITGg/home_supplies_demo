@@ -442,7 +442,7 @@ class NotificationButton extends StatelessWidget {
               unreadCount > 0
                   ? Icons.notifications
                   : Icons.notifications_none,
-              color: Colors.grey,
+              color: Colors.grey.shade700,
             ),
           ),
         );

@@ -12,9 +12,6 @@ import '../../../core/style/text_styles.dart';
 import '../../../core/utils/socket_service.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/manager/profile_cubit.dart';
-import '../../categories/data/models/category_models.dart';
-import '../../categories/presentation/categories_grid_widget.dart';
-import '../../categories/presentation/category_details_screen.dart';
 import '../../home/layout/manager/home_cubit.dart';
 import '../data/models/order_model.dart';
 import '../manager/order_cubit.dart';
@@ -23,6 +20,8 @@ import 'qr_scanner_screen.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/order_card.dart';
 import 'widgets/order_toggle_button.dart';
+
+// Categories-related imports removed — the grid now lives in CategoriesScreen.
 
 enum ViewMode { active, history }
 
@@ -35,7 +34,9 @@ class OrdersListScreen extends StatefulWidget {
 
 class _OrdersListScreenState extends State<OrdersListScreen> {
   final ScrollController _scrollController = ScrollController();
-  final GlobalKey<CategoriesGridWidgetState> _categoriesKey = GlobalKey();
+
+  // _categoriesKey removed — CategoriesGridWidget moved to CategoriesScreen.
+
   ViewMode _viewMode = ViewMode.active;
   String _currentFilter = 'all';
   bool _isLoadingMore = false;
@@ -74,7 +75,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     super.dispose();
   }
 
-  // ── expiration timer management ─────────────────────────────────────────
+  // ── expiration timer management ──────────────────────────────────────────
 
   void _scheduleExpirationReload(List<Order> orders) {
     _expirationTimer?.cancel();
@@ -85,10 +86,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     final nextExpiry = orders
         .where(
           (o) =>
-              o.status == 'PENDING' &&
-              o.expiresAt != null &&
-              o.expiresAt!.isAfter(now),
-        )
+      o.status == 'PENDING' &&
+          o.expiresAt != null &&
+          o.expiresAt!.isAfter(now),
+    )
         .map((o) => o.expiresAt!)
         .minOrNull;
 
@@ -262,7 +263,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         _scheduleExpirationReload(state.orders);
         final activeIds = state.orders.map((o) => o.id).toSet();
         setState(
-          () =>
+              () =>
               _ordersWithNewOffers.removeWhere((id) => !activeIds.contains(id)),
         );
       }
@@ -273,7 +274,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       final freshState = cubit.state;
       if (freshState is OrdersLoaded) {
         final order = freshState.orders.firstWhereOrNull(
-          (o) => o.id == orderId,
+              (o) => o.id == orderId,
         );
         if (order != null) _showProposals(order);
       }
@@ -368,10 +369,6 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     );
   }
 
-  void _navigateToCategory(CategoryModel category) {
-    context.push('/categories/${category.id}', extra: category);
-  }
-
   // ── build ────────────────────────────────────────────────────────────────
 
   @override
@@ -385,21 +382,19 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             onRefresh: () async {
               setState(() => _isLoadingMore = false);
               final cubit = context.read<OrderCubit>();
-              await Future.wait([
-                _categoriesKey.currentState?.refresh() ?? Future.value(),
-                _viewMode == ViewMode.active
-                    ? cubit.loadActiveOrders(loadMore: false)
-                    : cubit.loadHistoryOrders(
-                        loadMore: false,
-                        filter: _currentFilter,
-                      ),
-              ]);
+              // Only refreshes orders — categories refresh is handled by
+              // CategoriesScreen's own RefreshIndicator.
+              await (_viewMode == ViewMode.active
+                  ? cubit.loadActiveOrders(loadMore: false)
+                  : cubit.loadHistoryOrders(
+                loadMore: false,
+                filter: _currentFilter,
+              ));
             },
             color: AppColors.kPrimaryColor,
-            // ✅ BlocConsumer wraps CustomScrollView so slivers react to state
             child: BlocConsumer<OrderCubit, OrderState>(
               listenWhen: (_, current) =>
-                  current is OrdersLoaded ||
+              current is OrdersLoaded ||
                   current is OrderCancelled ||
                   current is OrderCancelError ||
                   current is DeliveryConfirmed ||
@@ -443,23 +438,14 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                 }
               },
               buildWhen: (_, current) =>
-                  current is OrderLoading ||
+              current is OrderLoading ||
                   current is OrdersLoaded ||
                   current is OrderError,
               builder: (context, orderState) {
                 return CustomScrollView(
-                  // ✅ Single scroll controller for the whole screen
                   controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
-                    // ── Categories grid ─────────────────────────────────
-                    SliverToBoxAdapter(
-                      child: CategoriesGridWidget(
-                        key: _categoriesKey,
-                        onCategoryTap: _navigateToCategory,
-                      ),
-                    ),
-
                     // ── Toggle + QR row ─────────────────────────────────
                     SliverToBoxAdapter(
                       child: Padding(
@@ -478,13 +464,13 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                             const Spacer(),
                             BlocBuilder<OrderCubit, OrderState>(
                               buildWhen: (_, current) =>
-                                  current is OrdersLoaded ||
+                              current is OrdersLoaded ||
                                   current is OrderLoading,
                               builder: (context, state) {
                                 final hasActiveOrders =
                                     state is OrdersLoaded &&
-                                    state.viewMode == OrderViewMode.active &&
-                                    state.orders.any((o) => o.isInProgress);
+                                        state.viewMode == OrderViewMode.active &&
+                                        state.orders.any((o) => o.isInProgress);
                                 if (!hasActiveOrders)
                                   return const SizedBox.shrink();
                                 return CircleAvatar(
@@ -515,7 +501,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     );
   }
 
-  // ── Sliver builders ───────────────────────────────────────────────────────────
+  // ── Sliver builders ───────────────────────────────────────────────────────
 
   List<Widget> _buildOrderSlivers(OrderState state) {
     if (state is OrderLoading) {
@@ -530,8 +516,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       final isCorrectMode =
           (_viewMode == ViewMode.active &&
               state.viewMode == OrderViewMode.active) ||
-          (_viewMode == ViewMode.history &&
-              state.viewMode == OrderViewMode.history);
+              (_viewMode == ViewMode.history &&
+                  state.viewMode == OrderViewMode.history);
 
       if (!isCorrectMode) {
         return [SliverFillRemaining(child: _buildShimmerView())];
@@ -570,8 +556,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             bottom: 16,
           ),
           sliver: SliverList.builder(
-            itemCount:
-                orders.length + (_shouldShowPaginationSpinner(state) ? 1 : 0),
+            itemCount: orders.length +
+                (_shouldShowPaginationSpinner(state) ? 1 : 0),
             itemBuilder: (context, index) {
               // Pagination spinner
               if (index == orders.length) {
@@ -587,12 +573,14 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
               final order = orders[index];
               return OrderCard(
-                roleId: context.read<ProfileCubit>().currentProfile?.roleId,
+                roleId:
+                context.read<ProfileCubit>().currentProfile?.roleId,
                 order: order,
                 hasNewOffer: _ordersWithNewOffers.contains(order.id),
                 onViewProposals: () {
                   if (order.id != null) {
-                    setState(() => _ordersWithNewOffers.remove(order.id));
+                    setState(
+                            () => _ordersWithNewOffers.remove(order.id));
                   }
                   _showProposals(order);
                 },
@@ -780,104 +768,13 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     );
   }
 
-  // ── orders list ──────────────────────────────────────────────────────────
+  // ── helpers ──────────────────────────────────────────────────────────────
 
   bool _shouldShowPaginationSpinner(OrdersLoaded state) {
     if (_viewMode != ViewMode.history) return false;
     if (!_isLoadingMore) return false;
     if (!state.hasMore) return false;
     return true;
-  }
-
-  Widget _buildOrdersList(OrdersLoaded state) {
-    final isCorrectMode =
-        (_viewMode == ViewMode.active &&
-            state.viewMode == OrderViewMode.active) ||
-        (_viewMode == ViewMode.history &&
-            state.viewMode == OrderViewMode.history);
-
-    if (!isCorrectMode) return _buildShimmerView();
-
-    final displayOrders = state.orders;
-
-    if (displayOrders.isEmpty) {
-      return Column(
-        children: [
-          if (_viewMode == ViewMode.history) _buildFilterChips(context),
-          Expanded(
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.45,
-                  child: OrderEmptyState(viewMode: _viewMode),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    return Column(
-      children: [
-        if (_viewMode == ViewMode.history) _buildFilterChips(context),
-        Expanded(
-          child: ListView.builder(
-            controller: _scrollController,
-            physics: const AlwaysScrollableScrollPhysics(),
-            itemCount:
-                displayOrders.length +
-                (_viewMode == ViewMode.active ? 1 : 0) +
-                (_shouldShowPaginationSpinner(state) ? 1 : 0),
-            padding: EdgeInsets.only(
-              top: _viewMode == ViewMode.active ? 0 : 16,
-              left: 16,
-              right: 16,
-              bottom: 16,
-            ),
-            itemBuilder: (context, index) {
-              // ── [0] Status banner (active tab only) ──────────────────
-              if (_viewMode == ViewMode.active && index == 0) {
-                return OrderStatusBanner(orders: displayOrders);
-              }
-
-              final orderIndex = _viewMode == ViewMode.active
-                  ? index - 1
-                  : index;
-
-              // ── Pagination spinner (last item) ──────────────────────
-              if (orderIndex == displayOrders.length) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.kPrimaryColor,
-                    ),
-                  ),
-                );
-              }
-
-              // ── Order card ──────────────────────────────────────────
-              final order = displayOrders[orderIndex];
-              return OrderCard(
-                roleId: context.read<ProfileCubit>().currentProfile?.roleId,
-                order: order,
-                hasNewOffer: _ordersWithNewOffers.contains(order.id),
-                onViewProposals: () {
-                  if (order.id != null) {
-                    setState(() => _ordersWithNewOffers.remove(order.id));
-                  }
-                  _showProposals(order);
-                },
-                onCancel: () => _showCancelSheet(order),
-                onRetrySuccess: () => _onTabChanged(ViewMode.active),
-              );
-            },
-          ),
-        ),
-      ],
-    );
   }
 }
 

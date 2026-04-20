@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tawreedat_go/core/widgets/image_with_fallback.dart';
 import '../data/models/category_models.dart';
 
 enum CategoryCardStyle { compact, regular }
@@ -153,11 +154,7 @@ class _CompactCard extends StatelessWidget {
 
   Widget _buildIcon(String? url) {
     if (url != null && url.isNotEmpty) {
-      return Image.network(
-        url,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholder(),
-      );
+      return ImageWithIconFallback(imageUrl: url,fit: BoxFit.cover,);
     }
     return _placeholder();
   }

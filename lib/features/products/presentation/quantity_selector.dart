@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
-class QuantitySelector extends StatelessWidget {
+/// A compact increment / decrement selector.
+///
+/// When [quantity] is 0 it renders a simple "أضف" pill.
+/// Once [quantity] > 0 it switches to a full +/− control with an animated
+/// counter that slides upward on increment and downward on decrement.
+class QuantitySelector extends StatefulWidget {
   final int quantity;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
@@ -21,70 +26,109 @@ class QuantitySelector extends StatelessWidget {
   });
 
   @override
+  State<QuantitySelector> createState() => _QuantitySelectorState();
+}
+
+class _QuantitySelectorState extends State<QuantitySelector> {
+  int _prevQuantity = 0;
+
+  @override
+  void didUpdateWidget(QuantitySelector old) {
+    super.didUpdateWidget(old);
+    _prevQuantity = old.quantity;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final cs = theme.colorScheme;
 
-    if (quantity == 0) {
-      // Show simple add button when nothing in cart
+    // ── Zero state: simple add pill ──────────────────────────────────────────
+    if (widget.quantity == 0) {
       return SizedBox(
-        height: size,
+        height: widget.size,
         child: ElevatedButton.icon(
-          onPressed: onIncrement,
-          icon: Icon(Icons.add, size: compact ? 14 : 16),
-          label: compact
+          onPressed: widget.onIncrement,
+          icon: Icon(Icons.add, size: widget.compact ? 14 : 16),
+          label: widget.compact
               ? const SizedBox.shrink()
               : const Text('أضف', style: TextStyle(fontSize: 12)),
           style: ElevatedButton.styleFrom(
             padding: EdgeInsets.symmetric(
-              horizontal: compact ? 8 : 12,
+              horizontal: widget.compact ? 8 : 12,
               vertical: 0,
             ),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            backgroundColor: colorScheme.primary,
-            foregroundColor: colorScheme.onPrimary,
+            backgroundColor: cs.primary,
+            foregroundColor: cs.onPrimary,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(size / 2),
+              borderRadius: BorderRadius.circular(widget.size / 2),
             ),
           ),
         ),
       );
     }
 
-    return Container(
-      height: size,
+    // ── Non-zero state: +/− pill ─────────────────────────────────────────────
+    final canDecrement = widget.quantity > widget.minQuantity;
+    final canIncrement =
+        widget.maxQuantity == null || widget.quantity < widget.maxQuantity!;
+
+    // Slide direction: up when incrementing, down when decrementing.
+    final slideUp = widget.quantity > _prevQuantity;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: widget.size,
       decoration: BoxDecoration(
-        color: colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(size / 2),
+        color: cs.primaryContainer,
+        borderRadius: BorderRadius.circular(widget.size / 2),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           _CircleButton(
             icon: Icons.remove,
-            onTap: quantity > minQuantity ? onDecrement : null,
-            size: size,
-            color: colorScheme.onPrimary,
+            onTap: canDecrement ? widget.onDecrement : null,
+            size: widget.size,
+            color: cs.onPrimary,
           ),
+
+          // Animated counter
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Text(
-              '$quantity',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: compact ? 12 : 14,
-                color: colorScheme.onPrimaryContainer,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, animation) {
+                final slide = Tween<Offset>(
+                  begin: Offset(0, slideUp ? 0.6 : -0.6),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                );
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(position: slide, child: child),
+                );
+              },
+              child: Text(
+                '${widget.quantity}',
+                key: ValueKey(widget.quantity),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: widget.compact ? 12 : 14,
+                  color: cs.onPrimaryContainer,
+                ),
               ),
             ),
           ),
+
           _CircleButton(
             icon: Icons.add,
-            onTap: (maxQuantity == null || quantity < maxQuantity!)
-                ? onIncrement
-                : null,
-            size: size,
-            color: colorScheme.onPrimary,
+            onTap: canIncrement ? widget.onIncrement : null,
+            size: widget.size,
+            color: cs.onPrimary,
           ),
         ],
       ),
@@ -115,7 +159,7 @@ class _CircleButton extends StatelessWidget {
         child: Icon(
           icon,
           size: size * 0.5,
-          color: onTap != null ? color : color.withOpacity(0.4),
+          color: onTap != null ? color : color.withOpacity(0.35),
         ),
       ),
     );

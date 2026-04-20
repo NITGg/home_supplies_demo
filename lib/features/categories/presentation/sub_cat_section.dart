@@ -83,15 +83,15 @@ class SubCategorySectionWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: section.isLoading
                   ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
                   : TextButton.icon(
-                      onPressed: onLoadMore,
-                      icon: const Icon(Icons.expand_more, size: 18),
-                      label: const Text('عرض المزيد'),
-                    ),
+                onPressed: onLoadMore,
+                icon: const Icon(Icons.expand_more, size: 18),
+                label: const Text('عرض المزيد'),
+              ),
             ),
           ),
       ],
@@ -127,16 +127,9 @@ class _ProductGrid extends StatelessWidget {
             return ProductCard(
               product: product,
               onTap: () => onProductTap(product),
-              onQuantityChanged: (qty) {
-                if (qty == 1) {
-                  // first add only
-                  context.read<CartCubit>().addItem(
-                    spId: product.spId ?? product.id,
-                    quantity: 1,
-                  );
-                }
-                // subsequent taps are local UI only until user goes to cart
-              },
+              // ProductCard calls CartCubit directly for every cart operation.
+              // Do NOT call addItem here — that would fire a second addItem
+              // on the first tap and double the quantity.
             );
           },
         );
@@ -254,10 +247,10 @@ class DirectProductsGrid extends StatelessWidget {
             child: isLoadingMore
                 ? const CircularProgressIndicator()
                 : ElevatedButton.icon(
-                    onPressed: onLoadMore,
-                    icon: const Icon(Icons.expand_more),
-                    label: const Text('تحميل المزيد'),
-                  ),
+              onPressed: onLoadMore,
+              icon: const Icon(Icons.expand_more),
+              label: const Text('تحميل المزيد'),
+            ),
           ),
       ],
     );

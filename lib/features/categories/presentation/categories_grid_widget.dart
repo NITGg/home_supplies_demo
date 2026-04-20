@@ -91,7 +91,8 @@ class _CategoriesSection extends StatelessWidget {
   List<CategoryModel> get _parents =>
       state.categories.where((c) => c.parentId == null).toList();
 
-  bool get _useCompact => _parents.length > 6;
+  // bool get _useCompact => _parents.length > 6;
+  bool get _useCompact => false;
 
   int get _crossAxisCount {
     if (!_useCompact) return 3;

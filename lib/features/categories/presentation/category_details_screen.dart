@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/features/categories/presentation/sub_cat_section.dart';
 
+import '../../../core/widgets/image_with_fallback.dart';
+import '../../cart/presentation/cart_icon.dart';
 import '../../products/data/models/product_model.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_detail_cubit.dart';
@@ -12,11 +14,8 @@ class CategoryDetailScreen extends StatefulWidget {
   final CategoryModel? category;
   final int? categoryId;
 
-  const CategoryDetailScreen({
-    super.key,
-    this.category,
-    this.categoryId,
-  }) : assert(category != null || categoryId != null);
+  const CategoryDetailScreen({super.key, this.category, this.categoryId})
+    : assert(category != null || categoryId != null);
 
   @override
   State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
@@ -49,7 +48,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           builder: (context, state) {
             return switch (state) {
               CategoryDetailInitial() || CategoryDetailLoading() =>
-                  _LoadingView(category: widget.category),
+                _LoadingView(category: widget.category),
               CategoryDetailError(:final message) => _ErrorView(
                 message: message,
                 category: widget.category,
@@ -58,8 +57,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               CategoryDetailLoaded() => _LoadedView(
                 state: state,
                 onProductTap: _navigateToProduct,
-                onLoadMoreSection: (subCatId) =>
-                    _cubit.loadMoreSectionProducts(subCatId),
+                onLoadMoreSection: _cubit.loadMoreSectionProducts,
                 onLoadMoreDirect: _cubit.loadMoreDirectProducts,
                 onRefresh: () => _cubit.refresh(_id),
               ),
@@ -102,11 +100,8 @@ class _LoadedView extends StatelessWidget {
           if (state.hasSections)
             SliverList.separated(
               itemCount: state.sections.length,
-              separatorBuilder: (_, __) => const Divider(
-                height: 1,
-                indent: 16,
-                endIndent: 16,
-              ),
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, indent: 16, endIndent: 16),
               itemBuilder: (_, i) {
                 final section = state.sections[i];
                 return SubCategorySectionWidget(
@@ -122,20 +117,19 @@ class _LoadedView extends StatelessWidget {
             SliverToBoxAdapter(
               child: state.directProductsLoading && state.directProducts.isEmpty
                   ? const Padding(
-                padding: EdgeInsets.all(48),
-                child: Center(child: CircularProgressIndicator()),
-              )
+                      padding: EdgeInsets.all(48),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
                   : state.directProducts.isEmpty
                   ? const _EmptyProducts()
                   : DirectProductsGrid(
-                products: state.directProducts,
-                isLoadingMore: state.directProductsLoading,
-                hasMore: state.directProductsHasMore,
-                onProductTap: onProductTap,
-                onLoadMore: onLoadMoreDirect,
-              ),
+                      products: state.directProducts,
+                      isLoadingMore: state.directProductsLoading,
+                      hasMore: state.directProductsHasMore,
+                      onProductTap: onProductTap,
+                      onLoadMore: onLoadMoreDirect,
+                    ),
             ),
-
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
       ),
@@ -153,8 +147,7 @@ class _CategorySliverAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasImage =
-        category.imageUrl != null && category.imageUrl!.isNotEmpty;
+    final hasImage = category.imageUrl != null && category.imageUrl!.isNotEmpty;
 
     return SliverAppBar(
       expandedHeight: 280,
@@ -164,15 +157,24 @@ class _CategorySliverAppBar extends StatelessWidget {
       elevation: 0,
       leading: Padding(
         padding: const EdgeInsets.all(8),
-        child: _GlassPill(
+        child: CircleAvatar(
+          radius: 20,
+          backgroundColor: Colors.grey.shade200,
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 16, color: Colors.white),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 16,
+              color: Colors.grey.shade700,
+            ),
             onPressed: () => Navigator.of(context).maybePop(),
             padding: EdgeInsets.zero,
           ),
         ),
       ),
+      actions: [
+        // Animated cart icon with bounce-on-add animation.
+        AnimatedCartIcon(onTap: () => context.push('/cart')),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: EdgeInsets.zero,
         stretchModes: const [
@@ -207,18 +209,12 @@ class _HeaderBackground extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // ── Layer 1: image or gradient mesh ──────────────────────────────────
         if (hasImage)
-          Image.network(
-            category.imageUrl!,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) =>
-                _GradientMesh(theme: theme, category: category),
-          )
+          ImageWithIconFallback(imageUrl: category.imageUrl!,fit: BoxFit.cover)
         else
           _GradientMesh(theme: theme, category: category),
 
-        // ── Layer 2: cinematic bottom-heavy scrim ─────────────────────────────
+        // Cinematic bottom-heavy scrim
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -237,7 +233,7 @@ class _HeaderBackground extends StatelessWidget {
           ),
         ),
 
-        // ── Layer 3: title block ───────────────────────────────────────────────
+        // Title block
         Positioned(
           left: 20,
           right: 20,
@@ -246,23 +242,28 @@ class _HeaderBackground extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Sub-category breadcrumb badge
               if (category.parentId != null) ...[
                 Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                        color: Colors.white.withOpacity(0.28), width: 0.8),
+                      color: Colors.white.withOpacity(0.28),
+                      width: 0.8,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.subdirectory_arrow_right_rounded,
-                          size: 11,
-                          color: Colors.white.withOpacity(0.82)),
+                      Icon(
+                        Icons.subdirectory_arrow_right_rounded,
+                        size: 11,
+                        color: Colors.white.withOpacity(0.82),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'تصنيف فرعي',
@@ -278,8 +279,6 @@ class _HeaderBackground extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
               ],
-
-              // ── Display title ──────────────────────────────────────────────
               Text(
                 category.displayName,
                 style: const TextStyle(
@@ -290,14 +289,13 @@ class _HeaderBackground extends StatelessWidget {
                   letterSpacing: -0.8,
                   shadows: [
                     Shadow(
-                        blurRadius: 16,
-                        color: Colors.black54,
-                        offset: Offset(0, 3)),
+                      blurRadius: 16,
+                      color: Colors.black54,
+                      offset: Offset(0, 3),
+                    ),
                   ],
                 ),
               ),
-
-              // ── One-line description preview ───────────────────────────────
               if (category.displayDescription.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 Text(
@@ -336,20 +334,20 @@ class _GradientMesh extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Diagonal base gradient
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
                 HSLColor.fromColor(primary)
                     .withLightness(
-                    (HSLColor.fromColor(primary).lightness - 0.12)
-                        .clamp(0.0, 1.0))
+                      (HSLColor.fromColor(primary).lightness - 0.12).clamp(
+                        0.0,
+                        1.0,
+                      ),
+                    )
                     .toColor(),
                 primary,
-                HSLColor.fromColor(secondary)
-                    .withSaturation(0.9)
-                    .toColor(),
+                HSLColor.fromColor(secondary).withSaturation(0.9).toColor(),
               ],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
@@ -357,8 +355,6 @@ class _GradientMesh extends StatelessWidget {
             ),
           ),
         ),
-
-        // Radial accent spot (top-right)
         Positioned(
           top: -60,
           right: -40,
@@ -368,16 +364,11 @@ class _GradientMesh extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [
-                  Colors.white.withOpacity(0.12),
-                  Colors.transparent,
-                ],
+                colors: [Colors.white.withOpacity(0.12), Colors.transparent],
               ),
             ),
           ),
         ),
-
-        // Huge decorative initial
         Positioned(
           right: -8,
           bottom: -24,
@@ -393,8 +384,6 @@ class _GradientMesh extends StatelessWidget {
             ),
           ),
         ),
-
-        // Icon watermark if available
         if (category.iconUrl != null && category.iconUrl!.isNotEmpty)
           Center(
             child: Opacity(
@@ -413,31 +402,6 @@ class _GradientMesh extends StatelessWidget {
   }
 }
 
-// ── Frosted-glass pill back button ────────────────────────────────────────────
-
-class _GlassPill extends StatelessWidget {
-  final Widget child;
-
-  const _GlassPill({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.26),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.18),
-            width: 0.8,
-          ),
-        ),
-        child: child,
-      ),
-    );
-  }
-}
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 class _EmptyProducts extends StatelessWidget {
@@ -449,15 +413,17 @@ class _EmptyProducts extends StatelessWidget {
       padding: const EdgeInsets.all(48),
       child: Column(
         children: [
-          Icon(Icons.inventory_2_outlined,
-              size: 64, color: Colors.grey.shade400),
+          Icon(
+            Icons.inventory_2_outlined,
+            size: 64,
+            color: Colors.grey.shade400,
+          ),
           const SizedBox(height: 16),
           Text(
             'لا توجد منتجات في هذا التصنيف',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: Colors.grey.shade600),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -573,8 +539,11 @@ class _ErrorView extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.error_outline,
-                      size: 64, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
                   Text(message, textAlign: TextAlign.center),
                   const SizedBox(height: 24),
