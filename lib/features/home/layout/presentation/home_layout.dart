@@ -908,7 +908,7 @@ class _BottomNavBar extends StatelessWidget {
                             Icon(
                               currentIndex == 0
                                   ? Icons.shopping_bag
-                                  : Icons.grid_view_outlined,
+                                  : Icons.shopping_bag_outlined,
                               color: currentIndex == 0
                                   ? AppColors.kPrimaryColor
                                   : Colors.grey,
