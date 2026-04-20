@@ -949,7 +949,7 @@ class _MetaInfo extends StatelessWidget {
         runSpacing: 4,
         children: [
           Text('SKU: ${product.sku}'),
-          if (product.barcode != null) Text('${product.barcode}'),
+          if (product.barcode != null) Text('Barcode: ${product.barcode}'),
           if (product.weight != null)
             Text('${product.weight} ${AppLocalizations.of(context)!.weight}'),
         ],

@@ -240,7 +240,6 @@ class _LineTotalBlock extends StatelessWidget {
             child: Text(
               '${l10n.save} ${item.lineSaving.toStringAsFixed(0)} ${l10n.egp}',
               style: TextStyle(
-                color: Colors.green.shade700,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.1,

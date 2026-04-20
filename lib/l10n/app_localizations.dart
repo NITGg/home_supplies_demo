@@ -2843,6 +2843,12 @@ abstract class AppLocalizations {
   /// **'Near Me'**
   String get nearMe;
 
+  /// No description provided for @cartTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Cart Total'**
+  String get cartTotal;
+
   /// No description provided for @offer.
   ///
   /// In en, this message translates to:

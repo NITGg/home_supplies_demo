@@ -1412,6 +1412,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nearMe => 'Near Me';
 
   @override
+  String get cartTotal => 'Cart Total';
+
+  @override
   String get offer => 'Offer';
 
   @override

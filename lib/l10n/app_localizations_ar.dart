@@ -1412,6 +1412,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nearMe => 'بالقرب مني';
 
   @override
+  String get cartTotal => 'مجموع السلة';
+
+  @override
   String get offer => 'عرض';
 
   @override

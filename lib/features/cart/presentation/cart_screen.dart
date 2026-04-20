@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/widgets/circel_back_cutton.dart';
+import '../../../core/widgets/highlighter_widget.dart';
 import '../../../l10n/app_localizations.dart';
 import '../manager/cart_cubit.dart';
 import '../manager/cart_state.dart';
@@ -15,10 +16,6 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  // ── BUG FIX: Do NOT create a private CartCubit here. ─────────────────────
-  // CartScreen must read the global CartCubit that is provided by an ancestor
-  // BlocProvider so all widgets share the exact same state stream.
-
   @override
   void initState() {
     super.initState();
@@ -92,7 +89,8 @@ class _CartScreenState extends State<CartScreen> {
               radius: 20,
               backgroundColor: Colors.grey.shade200,
               child: IconButton(
-                icon: Icon(Icons.delete_sweep_outlined , color: Colors.grey.shade700,),
+                icon: Icon(Icons.delete_sweep_outlined,
+                    color: Colors.grey.shade700),
                 tooltip: l10n.clearCart,
                 onPressed: () => _confirmClear(context),
               ),
@@ -135,59 +133,20 @@ class _CartScreenState extends State<CartScreen> {
         ),
 
         // ── Summary bar ───────────────────────────────────────────────────
-        Container(
-          padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 16 + bottomPadding),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 16,
-                offset: const Offset(0, -4),
+        _CartSummaryBar(
+          summary: summary,
+          hPad: hPad,
+          bottomPadding: bottomPadding,
+          theme: theme,
+          l10n: l10n,
+          onCheckout: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n.navigatingToCheckout),
+                behavior: SnackBarBehavior.floating,
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _SummaryRow(
-                label: l10n.numberOfItems,
-                value: '${summary.itemCount}',
-              ),
-              const SizedBox(height: 4),
-              _SummaryRow(
-                label: l10n.totalQuantity,
-                value: '${summary.totalItems}',
-              ),
-              const Divider(height: 20),
-              _SummaryRow(
-                label: l10n.sum,
-                value: '${summary.totalPrice.toStringAsFixed(0)} ${l10n.egp}',
-                isTotal: true,
-              ),
-              const SizedBox(height: 16),
-
-              FilledButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.navigatingToCheckout),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.check_circle_outline_rounded),
-                label: Text(
-                  l10n.proceedToCheckout,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15),
-                ),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(50),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ],
     );
@@ -242,6 +201,191 @@ class _CartScreenState extends State<CartScreen> {
     );
 
     if (confirmed == true) await _cubit.clearCart();
+  }
+}
+
+// ── Advanced summary bar ──────────────────────────────────────────────────────
+
+class _CartSummaryBar extends StatelessWidget {
+  final dynamic summary; // CartSummaryModel
+  final double hPad;
+  final double bottomPadding;
+  final ThemeData theme;
+  final AppLocalizations l10n;
+  final VoidCallback onCheckout;
+
+  const _CartSummaryBar({
+    required this.summary,
+    required this.hPad,
+    required this.bottomPadding,
+    required this.theme,
+    required this.l10n,
+    required this.onCheckout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasDiscount = summary.hasDiscount as bool;
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 16 + bottomPadding),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Item counts ─────────────────────────────────────────────────
+          _SummaryRow(
+            label: l10n.numberOfItems,
+            value: '${summary.itemCount}',
+          ),
+          const SizedBox(height: 4),
+          _SummaryRow(
+            label: l10n.totalQuantity,
+            value: '${summary.totalItems}',
+          ),
+
+          const Divider(height: 20),
+
+          // ── Pricing breakdown ──────────────────────────────────────────
+          // Cart total (original price before any discounts)
+          _SummaryRow(
+            label: l10n.cartTotal,
+            value:
+            '${(summary.originalTotal as double).toStringAsFixed(0)} ${l10n.egp}',
+          ),
+
+          // Discount row — only visible when there is an actual saving
+          if (hasDiscount) ...[
+            const SizedBox(height: 6),
+            _DiscountRow(
+              discount: summary.totalDiscount as double,
+              egp: l10n.egp,
+              theme: theme,
+            ),
+          ],
+
+          // Subtle divider before the final total
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: DashedDivider(color: theme.dividerColor),
+          ),
+
+          // Subtotal (what the customer actually pays)
+          _SummaryRow(
+            label: l10n.subtotal,
+            value:
+            '${(summary.subtotal as double).toStringAsFixed(0)} ${l10n.egp}',
+            isTotal: true,
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Checkout button ─────────────────────────────────────────────
+          FilledButton.icon(
+            onPressed: onCheckout,
+            icon: const Icon(Icons.check_circle_outline_rounded),
+            label: Text(
+              l10n.proceedToCheckout,
+              style:
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(50),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Discount row ──────────────────────────────────────────────────────────────
+// Shown only when hasDiscount is true. Uses a green pill badge to make the
+// saving feel rewarding rather than just a line item.
+
+class _DiscountRow extends StatelessWidget {
+  final double discount;
+  final String egp;
+  final ThemeData theme;
+
+  const _DiscountRow({
+    required this.discount,
+    required this.egp,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.percent_rounded,
+                size: 14,),
+            const SizedBox(width: 4),
+            Text(
+              AppLocalizations.of(context)!.discount,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, anim) =>
+              FadeTransition(opacity: anim, child: child),
+          child: HighlighterWidget(
+            child: Text(
+              '$discount ${AppLocalizations.of(context)!.egp}',
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+// ── Dashed divider ────────────────────────────────────────────────────────────
+
+class DashedDivider extends StatelessWidget {
+  final Color color;
+  const DashedDivider({super.key, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        const dashWidth = 6.0;
+        const gapWidth = 4.0;
+        final count = (constraints.maxWidth / (dashWidth + gapWidth)).floor();
+        return Row(
+          children: List.generate(
+            count,
+                (_) => Container(
+              width: dashWidth,
+              height: 1,
+              margin: const EdgeInsets.only(right: gapWidth),
+              color: color,
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -349,11 +493,8 @@ class _EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.shopping_cart_outlined,
-              size: 80,
-              color: Colors.grey.shade300,
-            ),
+            Icon(Icons.shopping_cart_outlined,
+                size: 80, color: Colors.grey.shade300),
             const SizedBox(height: 16),
             Text(
               l10n.cartIsEmpty,
@@ -376,8 +517,7 @@ class _EmptyView extends StatelessWidget {
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-  const _ErrorView(
-      {super.key, required this.message, required this.onRetry});
+  const _ErrorView({super.key, required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
