@@ -1410,4 +1410,97 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get nearMe => 'بالقرب مني';
+
+  @override
+  String get offer => 'عرض';
+
+  @override
+  String get bestSeller => 'الأكثر مبيعاً';
+
+  @override
+  String get featured => 'مميز';
+
+  @override
+  String get outOfStock => 'نفد المخزون';
+
+  @override
+  String get add => 'أضف';
+
+  @override
+  String get addToCart => 'أضف إلى السلة';
+
+  @override
+  String get cartUpdateFailed => 'تعذّر تحديث السلة';
+
+  @override
+  String get description => 'الوصف';
+
+  @override
+  String get specifications => 'المواصفات';
+
+  @override
+  String get purchaseUnits => 'وحدات الشراء';
+
+  @override
+  String lowStockRemaining(int count) {
+    return 'متبقي $count فقط';
+  }
+
+  @override
+  String inStockCount(int count) {
+    return 'متوفر ($count)';
+  }
+
+  @override
+  String percentOff(int percent) {
+    return '$percent% خصم';
+  }
+
+  @override
+  String get save => 'وفّر';
+
+  @override
+  String get perUnit => '/ وحدة';
+
+  @override
+  String get cart => 'السلة';
+
+  @override
+  String get clearCart => 'تفريغ السلة';
+
+  @override
+  String get clearCartConfirmation => 'هل أنت متأكد من حذف جميع المنتجات من السلة؟';
+
+  @override
+  String get emptyCart => 'تفريغ';
+
+  @override
+  String get proceedToCheckout => 'إتمام الطلب';
+
+  @override
+  String get navigatingToCheckout => 'الانتقال إلى إتمام الطلب...';
+
+  @override
+  String get cartIsEmpty => 'السلة فارغة';
+
+  @override
+  String get startAddingProducts => 'أضف بعض المنتجات للبدء';
+
+  @override
+  String get numberOfItems => 'عدد الأصناف';
+
+  @override
+  String get totalQuantity => 'إجمالي الكميات';
+
+  @override
+  String get updateQuantityFailed => 'تعذّر تحديث الكمية';
+
+  @override
+  String get noProductsInSection => 'لا توجد منتجات في هذه الفئة';
+
+  @override
+  String get showMore => 'عرض المزيد';
+
+  @override
+  String get loadMore => 'تحميل المزيد';
 }

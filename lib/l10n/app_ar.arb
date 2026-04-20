@@ -603,7 +603,56 @@
     "confirmDelivery": "تأكيد التوصيل",
     "confirmDeliveryMessage": "هل أنت متاكد من وصول الطلب للعميل؟",
 
-"nearMe": "بالقرب مني"
+"nearMe": "بالقرب مني",
 
+"offer": "عرض",
+"bestSeller": "الأكثر مبيعاً",
+"featured": "مميز",
+"outOfStock": "نفد المخزون",
+"add": "أضف",
+"addToCart": "أضف إلى السلة",
+"cartUpdateFailed": "تعذّر تحديث السلة",
+"description": "الوصف",
+"specifications": "المواصفات",
+"purchaseUnits": "وحدات الشراء",
 
+"lowStockRemaining": "متبقي {count} فقط",
+"@lowStockRemaining": {
+  "placeholders": {
+    "count": { "type": "int" }
+  }
+},
+
+"inStockCount": "متوفر ({count})",
+"@inStockCount": {
+  "placeholders": {
+    "count": { "type": "int" }
+  }
+},
+
+"percentOff": "{percent}% خصم",
+"@percentOff": {
+  "placeholders": {
+    "percent": { "type": "int" }
+  }
+},
+
+"save": "وفّر",
+"perUnit": "/ وحدة",
+
+"cart": "السلة",
+"clearCart": "تفريغ السلة",
+"clearCartConfirmation": "هل أنت متأكد من حذف جميع المنتجات من السلة؟",
+"emptyCart": "تفريغ",
+"proceedToCheckout": "إتمام الطلب",
+"navigatingToCheckout": "الانتقال إلى إتمام الطلب...",
+"cartIsEmpty": "السلة فارغة",
+"startAddingProducts": "أضف بعض المنتجات للبدء",
+"numberOfItems": "عدد الأصناف",
+"totalQuantity": "إجمالي الكميات",
+"updateQuantityFailed": "تعذّر تحديث الكمية",
+
+"noProductsInSection": "لا توجد منتجات في هذه الفئة",
+"showMore": "عرض المزيد",
+"loadMore": "تحميل المزيد"
 }

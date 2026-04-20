@@ -4,6 +4,7 @@ import '../../../../../core/widgets/custom_button.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
+import '../../../core/widgets/circel_back_cutton.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../static_text/faq_manager.dart';
 
@@ -43,9 +44,7 @@ class _FaqPageState extends State<FaqPage> {
           centerTitle: true,
           automaticallyImplyLeading: false,
           backgroundColor: AppColors.kPrimaryColor,
-          leading: BackButton(color:
-            Colors.black,
-          ),
+          leading: CircleBackButton(),
         ),
         body: Column(
           children: [

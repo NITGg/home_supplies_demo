@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/widgets/circel_back_cutton.dart';
 import '../../l10n/app_localizations.dart';
 import '../static_text/app_dynamic_info.dart';
 
@@ -9,7 +10,9 @@ class KnowUsMoreScreen extends StatelessWidget {
 
   /// Returns true only when [raw] is a non-empty, well-formed http/https URL.
   bool _isValidUrl(String raw) {
-    if (raw.trim().isEmpty) return false;
+    if (raw
+        .trim()
+        .isEmpty) return false;
     final uri = Uri.tryParse(raw.trim());
     return uri != null &&
         (uri.scheme == 'http' || uri.scheme == 'https') &&
@@ -35,60 +38,62 @@ class KnowUsMoreScreen extends StatelessWidget {
     final List<_SocialEntry> allEntries = info == null
         ? []
         : [
-            _SocialEntry(
-              label: 'Facebook',
-              assetPath: 'assets/social_logos/facebook.svg',
-              url: info.facebook,
-            ),
-            _SocialEntry(
-              label: 'Instagram',
-              assetPath: 'assets/social_logos/instagram.svg',
-              url: info.instagram,
-            ),
-            _SocialEntry(
-              label: 'LinkedIn',
-              assetPath: 'assets/social_logos/linkedin.svg',
-              url: info.linkedin,
-            ),
+      _SocialEntry(
+        label: 'Facebook',
+        assetPath: 'assets/social_logos/facebook.svg',
+        url: info.facebook,
+      ),
+      _SocialEntry(
+        label: 'Instagram',
+        assetPath: 'assets/social_logos/instagram.svg',
+        url: info.instagram,
+      ),
+      _SocialEntry(
+        label: 'LinkedIn',
+        assetPath: 'assets/social_logos/linkedin.svg',
+        url: info.linkedin,
+      ),
 
-            _SocialEntry(
-              label: 'Twitter / X',
-              assetPath: 'assets/social_logos/twitter.svg',
-              url: info.twitter,
-            ),
-            _SocialEntry(
-              label: 'YouTube',
-              assetPath: 'assets/social_logos/youtube.svg',
-              url: info.youtube,
-            ),
-            _SocialEntry(
-              label: 'TikTok',
-              assetPath: 'assets/social_logos/tiktok.svg',
-              url: info.tiktok,
-            ),
-          ];
+      _SocialEntry(
+        label: 'Twitter / X',
+        assetPath: 'assets/social_logos/twitter.svg',
+        url: info.twitter,
+      ),
+      _SocialEntry(
+        label: 'YouTube',
+        assetPath: 'assets/social_logos/youtube.svg',
+        url: info.youtube,
+      ),
+      _SocialEntry(
+        label: 'TikTok',
+        assetPath: 'assets/social_logos/tiktok.svg',
+        url: info.tiktok,
+      ),
+    ];
 
     // Filter out entries whose URL is not a valid, parsable http/https link.
     final validEntries = allEntries.where((e) => _isValidUrl(e.url)).toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.knowUsMore)),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.knowUsMore),
+          leading: CircleBackButton(),
+          ),
       body: info == null
           ? const Center(child: Text('No information available.'))
           : validEntries.isEmpty
           ? const Center(child: Text('No social links available.'))
           : ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-              itemCount: validEntries.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final entry = validEntries[index];
-                return _SocialButton(
-                  entry: entry,
-                  onTap: () => _launch(context, entry.url),
-                );
-              },
-            ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        itemCount: validEntries.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final entry = validEntries[index];
+          return _SocialButton(
+            entry: entry,
+            onTap: () => _launch(context, entry.url),
+          );
+        },
+      ),
     );
   }
 }
@@ -121,8 +126,12 @@ class _SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
+    final textTheme = Theme
+        .of(context)
+        .textTheme;
 
     return Material(
       color: colorScheme.surfaceContainerHighest,

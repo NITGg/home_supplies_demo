@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/highlighter_widget.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../products/presentation/quantity_selector.dart';
 import '../data/models/cart_item_model.dart';
 
@@ -23,6 +25,7 @@ class CartItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final product = item.product;
+    final l10n = AppLocalizations.of(context)!;
 
     // Responsive horizontal margin – tighter on narrow screens.
     final hMargin = MediaQuery.of(context).size.width < 360 ? 10.0 : 16.0;
@@ -53,40 +56,33 @@ class CartItemTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Product image ────────────────────────────────────────────
+              // ── Product image ──────────────────────────────────────────────
               _ProductThumb(imageUrl: product.primaryImage),
               const SizedBox(width: 12),
 
-              // ── Info ──────────────────────────────────────────────────────
+              // ── Info column ────────────────────────────────────────────────
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name
-                    Text(
-                      product.displayName,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Unit price
-                    Text(
-                      '${item.unitPrice.toStringAsFixed(0)} ج.م / وحدة',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // ── Bottom row: qty selector + line total ──────────────
+                    // ── ROW 1: Product name  +  quantity selector (top-end) ──
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Quantity selector – replaced by spinner while busy.
+                        Expanded(
+                          child: Text(
+                            product.displayName,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        // Quantity selector pinned to top-end; spinner while busy.
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 250),
                           child: isBusy
@@ -99,43 +95,24 @@ class CartItemTile extends StatelessWidget {
                             quantity: item.quantity,
                             onIncrement: onIncrement,
                             onDecrement: onDecrement,
-                            minQuantity: 0, // 0 lets the cubit's decrementItem fire at qty=1 and remove the item
+                            // 0 lets decrementItem fire at qty=1 and remove the item
+                            minQuantity: 0,
                             maxQuantity: product.maxAmountForOneOrder,
                             size: 32,
                             compact: true,
                           ),
                         ),
-
-                        const Spacer(),
-
-                        // Line total with animated number
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          transitionBuilder: (child, animation) =>
-                              FadeTransition(
-                                opacity: animation,
-                                child: SlideTransition(
-                                  position: Tween<Offset>(
-                                    begin: const Offset(0, 0.3),
-                                    end: Offset.zero,
-                                  ).animate(CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOut,
-                                  )),
-                                  child: child,
-                                ),
-                              ),
-                          child: Text(
-                            '${item.lineTotal.toStringAsFixed(0)} ج.م',
-                            key: ValueKey(item.lineTotal),
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
+                    const SizedBox(height: 7),
+
+                    // ── ROW 2: Unit price (underline-highlighted when discounted)
+                    _PriceBlock(item: item, l10n: l10n, theme: theme),
+
+                    const SizedBox(height: 9),
+
+                    // ── ROW 3: Line total + save — occupies where qty was ────
+                    _LineTotalBlock(item: item, theme: theme, l10n: l10n),
                   ],
                 ),
               ),
@@ -143,6 +120,135 @@ class CartItemTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Price block ───────────────────────────────────────────────────────────────
+// Unit price per item. Uses the thin underline highlighter on the discounted
+// price so it stands out without dominating the card.
+
+class _PriceBlock extends StatelessWidget {
+  final CartItemModel item;
+  final AppLocalizations l10n;
+  final ThemeData theme;
+
+  const _PriceBlock({
+    required this.item,
+    required this.l10n,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (item.hasDiscount) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // ── Underline-highlighted discounted unit price ───────────────────
+          HighlighterWidget(
+            style: HighlighterStyle.underline,
+            child: Text(
+              '${item.unitPrice.toStringAsFixed(0)} ${l10n.egp}',
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          // ── Original price struck through ─────────────────────────────────
+          Text(
+            '${item.originalPrice.toStringAsFixed(0)} ${l10n.egp}',
+            style: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: 11,
+              decoration: TextDecoration.lineThrough,
+              decorationColor: Colors.grey.shade400,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            l10n.perUnit,
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: Colors.grey.shade500),
+          ),
+        ],
+      );
+    }
+
+    // No discount — simple muted unit price label.
+    return Text(
+      '${item.unitPrice.toStringAsFixed(0)} ${l10n.egp} ${l10n.perUnit}',
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: Colors.grey.shade500,
+      ),
+    );
+  }
+}
+
+// ── Line total block ──────────────────────────────────────────────────────────
+// Shows the line total and, when a discount applies, a full-block highlighted
+// saving label — moved to the bottom-start where the quantity selector used to
+// live, giving it more visual breathing room.
+
+class _LineTotalBlock extends StatelessWidget {
+  final CartItemModel item;
+  final ThemeData theme;
+  final AppLocalizations l10n;
+
+  const _LineTotalBlock({
+    required this.item,
+    required this.theme,
+    required this.l10n,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.3),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOut),
+              ),
+              child: child,
+            ),
+          ),
+          child: Text(
+            '${item.lineTotal.toStringAsFixed(0)} ${l10n.egp}',
+            key: ValueKey(item.lineTotal),
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+
+        // ── Saving label — full-block highlighted in green ───────────────────
+        if (item.hasDiscount && item.lineSaving > 0) ...[
+          const SizedBox(height: 4),
+          HighlighterWidget(
+            child: Text(
+              '${l10n.save} ${item.lineSaving.toStringAsFixed(0)} ${l10n.egp}',
+              style: TextStyle(
+                color: Colors.green.shade700,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.1,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

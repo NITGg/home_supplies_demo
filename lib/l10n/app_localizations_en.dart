@@ -1410,4 +1410,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nearMe => 'Near Me';
+
+  @override
+  String get offer => 'Offer';
+
+  @override
+  String get bestSeller => 'Best Seller';
+
+  @override
+  String get featured => 'Featured';
+
+  @override
+  String get outOfStock => 'Out of Stock';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get addToCart => 'Add to Cart';
+
+  @override
+  String get cartUpdateFailed => 'Failed to update cart';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get specifications => 'Specifications';
+
+  @override
+  String get purchaseUnits => 'Purchase Units';
+
+  @override
+  String lowStockRemaining(int count) {
+    return 'Only $count left';
+  }
+
+  @override
+  String inStockCount(int count) {
+    return 'In stock ($count)';
+  }
+
+  @override
+  String percentOff(int percent) {
+    return '$percent% off';
+  }
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get perUnit => '/ unit';
+
+  @override
+  String get cart => 'Cart';
+
+  @override
+  String get clearCart => 'Clear Cart';
+
+  @override
+  String get clearCartConfirmation => 'Are you sure you want to remove all items from the cart?';
+
+  @override
+  String get emptyCart => 'Empty';
+
+  @override
+  String get proceedToCheckout => 'Proceed to Checkout';
+
+  @override
+  String get navigatingToCheckout => 'Navigating to checkout...';
+
+  @override
+  String get cartIsEmpty => 'Cart is Empty';
+
+  @override
+  String get startAddingProducts => 'Start by adding some products';
+
+  @override
+  String get numberOfItems => 'Number of Items';
+
+  @override
+  String get totalQuantity => 'Total Quantity';
+
+  @override
+  String get updateQuantityFailed => 'Failed to update quantity';
+
+  @override
+  String get noProductsInSection => 'No products in this category';
+
+  @override
+  String get showMore => 'Show More';
+
+  @override
+  String get loadMore => 'Load More';
 }

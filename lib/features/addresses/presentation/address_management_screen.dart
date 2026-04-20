@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/circel_back_cutton.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../../l10n/app_localizations.dart';
@@ -189,11 +190,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.address),
-        leading: BackButton(
-          onPressed: () {
-            context.pop();
-          },
-        ),
+        leading: CircleBackButton(),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_location_alt_outlined),

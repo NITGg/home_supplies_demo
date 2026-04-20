@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../data/models/product_model.dart';
@@ -147,7 +149,7 @@ class _ProductCardState extends State<ProductCard>
   void _showError(BuildContext ctx) {
     ScaffoldMessenger.of(ctx).showSnackBar(
       SnackBar(
-        content: const Text('تعذّر تحديث السلة'),
+        content: Text(AppLocalizations.of(ctx)!.cartUpdateFailed),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Theme.of(ctx).colorScheme.error,
       ),
@@ -161,6 +163,7 @@ class _ProductCardState extends State<ProductCard>
     final theme = Theme.of(context);
     final product = widget.product;
     final primaryColor = theme.colorScheme.primary;
+    final l10n = AppLocalizations.of(context)!;
 
     return BlocSelector<CartCubit, CartState, _CardCartState>(
       selector: (state) => _CardCartState.from(state, product.spId),
@@ -216,18 +219,26 @@ class _ProductCardState extends State<ProductCard>
                           top: 8,
                           right: 8,
                           child: _Badge(
-                            label: 'الأكثر مبيعاً',
+                            label: l10n.bestSeller,
                             color: Colors.amber.shade700,
                             icon: Icons.star_rounded,
                           ),
                         ),
 
+                      // Offer badge — shows discount percentage when available.
                       if (product.hasOffer)
                         Positioned(
                           top: 8,
                           left: 8,
-                          child: _Badge(
-                            label: 'عرض',
+                          child: product.discountPercent != null
+                              ? _Badge(
+                            label: l10n.percentOff(
+                                product.discountPercent!),
+                            color: theme.colorScheme.error,
+                            icon: Icons.local_offer_rounded,
+                          )
+                              : _Badge(
+                            label: l10n.offer,
                             color: theme.colorScheme.error,
                             icon: Icons.local_offer_rounded,
                           ),
@@ -248,9 +259,9 @@ class _ProductCardState extends State<ProductCard>
                                   color: Colors.white.withOpacity(0.92),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: const Text(
-                                  'نفد المخزون',
-                                  style: TextStyle(
+                                child: Text(
+                                  l10n.outOfStock,
+                                  style: const TextStyle(
                                     color: Colors.black87,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 11,
@@ -556,7 +567,10 @@ class _ProductImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (imageUrl != null && imageUrl!.isNotEmpty) {
-      return ImageWithIconFallback(imageUrl: imageUrl,fit: BoxFit.cover,);
+      return ImageWithIconFallback(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+      );
     }
     return _placeholder();
   }
@@ -618,6 +632,8 @@ class _Badge extends StatelessWidget {
   }
 }
 
+// ── Price row — uses highlighter on discounted price ──────────────────────────
+
 class _PriceRow extends StatelessWidget {
   final ProductModel product;
   final Color primaryColor;
@@ -628,22 +644,28 @@ class _PriceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     if (product.hasOffer) {
       return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            '${product.offer} ج.م',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.error,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
+          // ── Highlighted discounted price ───────────────────────────────
+          HighlighterWidget(
+            child: Text(
+              '${product.offer!.toStringAsFixed(0)} ج.م',
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
             ),
           ),
           const SizedBox(width: 5),
+          // ── Original price struck through ──────────────────────────────
           Text(
-            '${product.price} ج.م',
+            '${product.price.toStringAsFixed(0)} ج.م',
             style: TextStyle(
               color: Colors.grey.shade400,
               fontSize: 10,
               decoration: TextDecoration.lineThrough,
+              decorationColor: Colors.grey.shade400,
             ),
           ),
         ],

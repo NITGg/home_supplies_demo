@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/widgets/circel_back_cutton.dart';
+import '../../../l10n/app_localizations.dart';
 import '../manager/cart_cubit.dart';
 import '../manager/cart_state.dart';
 import 'cart_item_tile.dart';
@@ -14,31 +16,22 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   // ── BUG FIX: Do NOT create a private CartCubit here. ─────────────────────
-  // The old code did `_cubit = CartCubit()..fetchCart()` which produced an
-  // isolated instance unknown to AnimatedCartIcon, ProductCard, and
-  // ProductDetailScreen. Any mutation in this screen (clear, remove, update)
-  // never propagated to the badge or the product screens.
-  //
   // CartScreen must read the global CartCubit that is provided by an ancestor
   // BlocProvider so all widgets share the exact same state stream.
 
   @override
   void initState() {
     super.initState();
-    // context.read is not available during initState; schedule for first frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<CartCubit>().fetchCart();
     });
   }
 
-  /// Convenience getter — avoids repeating `context.read<CartCubit>()`.
   CartCubit get _cubit => context.read<CartCubit>();
 
   @override
   Widget build(BuildContext context) {
-    // No BlocProvider.value wrapper needed — the cubit lives in the ancestor tree.
     return BlocConsumer<CartCubit, CartState>(
-      // Surface errors as SnackBars without replacing the loaded view.
       listenWhen: (_, curr) => curr is CartError,
       listener: (context, state) {
         if (state is CartError) {
@@ -57,7 +50,8 @@ class _CartScreenState extends State<CartScreen> {
           body: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: switch (state) {
-              CartInitial() || CartLoading() =>
+              CartInitial() ||
+              CartLoading() =>
               const _LoadingView(key: ValueKey('loading')),
               CartError(:final message) => _ErrorView(
                 key: const ValueKey('error'),
@@ -66,8 +60,7 @@ class _CartScreenState extends State<CartScreen> {
               ),
               CartLoaded(:final data) when data.cartItems.isEmpty =>
               const _EmptyView(key: ValueKey('empty')),
-              CartLoaded() =>
-                  _buildLoaded(context, state as CartLoaded),
+              CartLoaded() => _buildLoaded(context, state as CartLoaded),
             },
           ),
         );
@@ -76,13 +69,15 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   AppBar _buildAppBar(BuildContext context, CartState state) {
+    final l10n = AppLocalizations.of(context)!;
     final count = state is CartLoaded ? state.data.summary.totalItems : 0;
 
     return AppBar(
+      leading: CircleBackButton(),
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('السلة'),
+          Text(l10n.cart),
           if (count > 0) ...[
             const SizedBox(width: 8),
             _CountBadge(count: count),
@@ -91,10 +86,17 @@ class _CartScreenState extends State<CartScreen> {
       ),
       actions: [
         if (state is CartLoaded && state.data.cartItems.isNotEmpty)
-          IconButton(
-            icon: const Icon(Icons.delete_sweep_outlined),
-            tooltip: 'تفريغ السلة',
-            onPressed: () => _confirmClear(context),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.grey.shade200,
+              child: IconButton(
+                icon: Icon(Icons.delete_sweep_outlined , color: Colors.grey.shade700,),
+                tooltip: l10n.clearCart,
+                onPressed: () => _confirmClear(context),
+              ),
+            ),
           ),
       ],
     );
@@ -104,9 +106,9 @@ class _CartScreenState extends State<CartScreen> {
     final items = state.data.cartItems;
     final summary = state.data.summary;
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    // Determine a responsive summary bar padding.
     final screenWidth = MediaQuery.of(context).size.width;
     final hPad = screenWidth < 360 ? 14.0 : 20.0;
 
@@ -149,36 +151,36 @@ class _CartScreenState extends State<CartScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _SummaryRow(
-                label: 'عدد الأصناف',
+                label: l10n.numberOfItems,
                 value: '${summary.itemCount}',
               ),
               const SizedBox(height: 4),
               _SummaryRow(
-                label: 'إجمالي الكميات',
+                label: l10n.totalQuantity,
                 value: '${summary.totalItems}',
               ),
               const Divider(height: 20),
               _SummaryRow(
-                label: 'الإجمالي',
-                value: '${summary.totalPrice.toStringAsFixed(0)} ج.م',
+                label: l10n.sum,
+                value: '${summary.totalPrice.toStringAsFixed(0)} ${l10n.egp}',
                 isTotal: true,
               ),
               const SizedBox(height: 16),
 
-              // Checkout button – full width on all screen sizes.
               FilledButton.icon(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('الانتقال إلى إتمام الطلب...'),
+                    SnackBar(
+                      content: Text(l10n.navigatingToCheckout),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                 },
                 icon: const Icon(Icons.check_circle_outline_rounded),
-                label: const Text(
-                  'إتمام الطلب',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                label: Text(
+                  l10n.proceedToCheckout,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 15),
                 ),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(50),
@@ -212,7 +214,7 @@ class _CartScreenState extends State<CartScreen> {
   void _showUpdateError(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('تعذّر تحديث الكمية'),
+        content: Text(AppLocalizations.of(context)!.updateQuantityFailed),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
@@ -220,19 +222,20 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _confirmClear(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('تفريغ السلة'),
-        content: const Text('هل أنت متأكد من حذف جميع المنتجات من السلة؟'),
+        title: Text(l10n.clearCart),
+        content: Text(l10n.clearCartConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('تفريغ'),
+            child: Text(l10n.emptyCart),
           ),
         ],
       ),
@@ -300,10 +303,8 @@ class _CountBadge extends StatelessWidget {
     final theme = Theme.of(context);
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 200),
-      transitionBuilder: (child, anim) => ScaleTransition(
-        scale: anim,
-        child: child,
-      ),
+      transitionBuilder: (child, anim) =>
+          ScaleTransition(scale: anim, child: child),
       child: Container(
         key: ValueKey(count),
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -341,6 +342,7 @@ class _EmptyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -354,13 +356,13 @@ class _EmptyView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'السلة فارغة',
+              l10n.cartIsEmpty,
               style: theme.textTheme.titleMedium
                   ?.copyWith(color: Colors.grey.shade500),
             ),
             const SizedBox(height: 8),
             Text(
-              'أضف بعض المنتجات للبدء',
+              l10n.startAddingProducts,
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: Colors.grey.shade400),
             ),
@@ -374,10 +376,12 @@ class _EmptyView extends StatelessWidget {
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-  const _ErrorView({super.key, required this.message, required this.onRetry});
+  const _ErrorView(
+      {super.key, required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -391,7 +395,7 @@ class _ErrorView extends StatelessWidget {
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('إعادة المحاولة'),
+              label: Text(l10n.retry),
             ),
           ],
         ),

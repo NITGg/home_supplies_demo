@@ -155,8 +155,8 @@ class ProductModel {
           .toList() ??
           [],
       units: (json['units'] as List<dynamic>?)
-          ?.map((e) =>
-          ProductUnitModel.fromJson(e as Map<String, dynamic>))
+          ?.map(
+              (e) => ProductUnitModel.fromJson(e as Map<String, dynamic>))
           .toList() ??
           [],
 
@@ -200,74 +200,109 @@ class ProductModel {
 
   // ── Cart factory — sp and product are now sibling keys in the cart item ──────
   //
-  // New response shape (cart item):
-  //   supplier_product: { id, price, stock, unit_price, original_price, active_offer, ... }
-  //   product:          { id, name, images, ... }
+  // Cart response shape (supplier_product):
+  //   {
+  //     id, price, stock,
+  //     original_price: 1000,   ← full price before discount
+  //     unit_price: 850,        ← discounted price (what the user pays)
+  //     active_offer: { offer_type: "PERCENT", offer_value: "15", ... }
+  //   }
+  //
+  // Strategy:
+  //   • price  = original_price (or price as fallback) — what the product
+  //              normally costs. Shown as strikethrough when discounted.
+  //   • offer  = unit_price  when unit_price < original_price — the
+  //              effective discounted price highlighted in the UI.
+  //              null if there is no discount (unit_price == original_price).
+
   factory ProductModel.fromCartJson({
     required Map<String, dynamic> sp,
     required Map<String, dynamic> product,
   }) {
     final p = product;
 
+    // Resolve original (full) price and the per-unit discounted price.
+    final originalPrice =
+        (sp['original_price'] as num?)?.toDouble() ??
+            (sp['price'] as num?)?.toDouble() ??
+            0.0;
+    final unitPrice = (sp['unit_price'] as num?)?.toDouble();
+
+    // Only treat unit_price as an "offer" when it is strictly less than the
+    // original price.  Equal values mean no active discount.
+    final offerPrice =
+    (unitPrice != null && unitPrice < originalPrice) ? unitPrice : null;
+
     return ProductModel(
       // ── Product identity ─────────────────────────────────────────────────
-      id:              p['id']           as int,
-      name:            p['name']         as String,
-      nameAr:          p['name_ar']      as String?,
-      description:     p['description']  as String?,
-      descriptionAr:   p['description_ar'] as String?,
-      sku:             p['sku']          as String? ?? '',
-      barcode:         p['barcode']      as String?,
-      slug:            p['slug']         as String? ?? '',
-      synonyms:        p['synonyms']     as String?,
-      images:          (p['images'] as List<dynamic>?)
-          ?.map((e) => e.toString()).toList() ?? [],
-      weight:          (p['weight'] as num?)?.toDouble(),
-      dimensions:      p['dimensions']   as Map<String, dynamic>?,
-      categoryId:      p['category_id']  as int? ?? 0,
-      brandId:         p['brand_id']     as int?,
-      sortId:          p['sort_id']      as int? ?? 0,
-      color:           p['color']        as String?,
-      refundPolicy:    p['refund_policy']    as String?,
-      refundable:      p['refundable']       as bool?,
+      id: p['id'] as int,
+      name: p['name'] as String,
+      nameAr: p['name_ar'] as String?,
+      description: p['description'] as String?,
+      descriptionAr: p['description_ar'] as String?,
+      sku: p['sku'] as String? ?? '',
+      barcode: p['barcode'] as String?,
+      slug: p['slug'] as String? ?? '',
+      synonyms: p['synonyms'] as String?,
+      images: (p['images'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList() ??
+          [],
+      weight: (p['weight'] as num?)?.toDouble(),
+      dimensions: p['dimensions'] as Map<String, dynamic>?,
+      categoryId: p['category_id'] as int? ?? 0,
+      brandId: p['brand_id'] as int?,
+      sortId: p['sort_id'] as int? ?? 0,
+      color: p['color'] as String?,
+      refundPolicy: p['refund_policy'] as String?,
+      refundable: p['refundable'] as bool?,
       refundablePeriod: p['refundable_period'] as int?,
-      createdAt: DateTime.tryParse(p['created_at'] as String? ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(p['updated_at'] as String? ?? '') ?? DateTime.now(),
+      createdAt:
+      DateTime.tryParse(p['created_at'] as String? ?? '') ?? DateTime.now(),
+      updatedAt:
+      DateTime.tryParse(p['updated_at'] as String? ?? '') ?? DateTime.now(),
       deletedAt: p['deleted_at'] != null
           ? DateTime.tryParse(p['deleted_at'] as String)
           : null,
 
       // ── Pricing & stock from supplier_product ────────────────────────────
-      spId:          sp['id']             as int?,
-      supplierId:    sp['supplier_id']    as int?,
-      price:         (sp['price']         as num?)?.toDouble() ?? 0.0,
-      costPrice:     (sp['cost_price']    as num?)?.toDouble(),
-      stock:         sp['stock']          as int? ?? 0,
-      minStock:      sp['min_stock']      as int? ?? 0,
-      isActive:      sp['is_active']      as bool? ?? true,
-      isFeatured:    sp['is_featured']    as bool? ?? false,
-      isBestSeller:  sp['is_best_seller'] as bool? ?? false,
-      rating:        (sp['rating']        as num?)?.toDouble() ?? 0.0,
-      totalReviews:  sp['total_reviews']  as int? ?? 0,
-      maxAmountForOneOrder:  int.tryParse(sp['max_amount_for_one_order']?.toString() ?? ''),
-      minAmountForOneOrder:  int.tryParse(sp['min_amount_for_one_order']?.toString() ?? ''),
-      maxAmountForOneUser:   int.tryParse(sp['max_amount_for_one_user']?.toString() ?? ''),
-      minAmountForOneUser:   int.tryParse(sp['min_amount_for_one_user']?.toString() ?? ''),
-      reservedInCartsAmount: int.tryParse(sp['reserved_in_carts_amount']?.toString() ?? ''),
-      pickupReadyDuration:   sp['pickup_ready_duration'] as int?,
+      spId: sp['id'] as int?,
+      supplierId: sp['supplier_id'] as int?,
+      // price = original (full) price; used as the strikethrough reference.
+      price: originalPrice,
+      costPrice: (sp['cost_price'] as num?)?.toDouble(),
+      stock: sp['stock'] as int? ?? 0,
+      minStock: sp['min_stock'] as int? ?? 0,
+      isActive: sp['is_active'] as bool? ?? true,
+      isFeatured: sp['is_featured'] as bool? ?? false,
+      isBestSeller: sp['is_best_seller'] as bool? ?? false,
+      rating: (sp['rating'] as num?)?.toDouble() ?? 0.0,
+      totalReviews: sp['total_reviews'] as int? ?? 0,
+      maxAmountForOneOrder:
+      int.tryParse(sp['max_amount_for_one_order']?.toString() ?? ''),
+      minAmountForOneOrder:
+      int.tryParse(sp['min_amount_for_one_order']?.toString() ?? ''),
+      maxAmountForOneUser:
+      int.tryParse(sp['max_amount_for_one_user']?.toString() ?? ''),
+      minAmountForOneUser:
+      int.tryParse(sp['min_amount_for_one_user']?.toString() ?? ''),
+      reservedInCartsAmount:
+      int.tryParse(sp['reserved_in_carts_amount']?.toString() ?? ''),
+      pickupReadyDuration: sp['pickup_ready_duration'] as int?,
 
-      // ── Offer: read from active_offer block if present ────────────────────
-      offer:              (sp['active_offer']?['discount_value'] as num?)?.toDouble(),
-      discountType:       sp['active_offer']?['discount_type'] as String?,
-      offerValidFrom:     null,
-      offerValidTo:       null,
+      // ── Offer: unit_price < original_price means an active discount ───────
+      // offer  = the discounted unit price (what the user actually pays).
+      // discountType = "PERCENT" | "FIXED" from active_offer.offer_type.
+      offer: offerPrice,
+      discountType: sp['active_offer']?['offer_type'] as String?,
+      offerValidFrom: null,
+      offerValidTo: null,
       discountValueTotal: null,
-      priceOutSite:       null,
-      attributes:         [],
-      units:              [],
+      priceOutSite: null,
+      attributes: [],
+      units: [],
     );
   }
-
 
   // ── Computed helpers ───────────────────────────────────────────────────────
 
@@ -281,4 +316,11 @@ class ProductModel {
   String? get primaryImage => images.isNotEmpty ? images.first : null;
 
   double get effectivePrice => hasOffer ? offer! : price;
+
+  /// Discount percentage relative to [price].
+  /// Returns null when there is no active offer or price is zero.
+  int? get discountPercent {
+    if (!hasOffer || price <= 0) return null;
+    return ((price - offer!) / price * 100).round();
+  }
 }

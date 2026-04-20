@@ -5,6 +5,7 @@ import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../core/widgets/loading_screen.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/circel_back_cutton.dart';
 import '../manager/reviews_cubit.dart';
 import '../manager/reviews_states.dart';
 
@@ -58,11 +59,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
         backgroundColor: AppColors.kBackgroundColor,
         appBar: AppBar(
           elevation: 0,
-          leading: BackButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
+          leading: CircleBackButton(),
           title: Text(l10n.reviews, style: AppTextStyles.bold18),
           centerTitle: true,
         ),

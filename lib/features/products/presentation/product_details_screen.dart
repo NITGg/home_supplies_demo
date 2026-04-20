@@ -3,7 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/circel_back_cutton.dart';
+import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/cart_icon.dart';
@@ -51,8 +54,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         builder: (context, state) {
           return switch (state) {
             ProductDetailInitial() ||
-            ProductDetailLoading() =>
-                _LoadingView(product: widget.product),
+            ProductDetailLoading() => _LoadingView(product: widget.product),
             ProductDetailError(:final message) => _ErrorView(
               message: message,
               product: widget.product,
@@ -66,6 +68,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildLoaded(ProductModel product) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -90,7 +94,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: 20),
 
                   if (product.displayDescription.isNotEmpty) ...[
-                    _SectionTitle(title: 'الوصف'),
+                    _SectionTitle(title: l10n.description),
                     const SizedBox(height: 8),
                     Text(
                       product.displayDescription,
@@ -103,14 +107,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ],
 
                   if (product.attributes.isNotEmpty) ...[
-                    _SectionTitle(title: 'المواصفات'),
+                    _SectionTitle(title: l10n.specifications),
                     const SizedBox(height: 8),
                     _AttributesTable(attributes: product.attributes),
                     const SizedBox(height: 20),
                   ],
 
                   if (product.units.isNotEmpty) ...[
-                    _SectionTitle(title: 'وحدات الشراء'),
+                    _SectionTitle(title: l10n.purchaseUnits),
                     const SizedBox(height: 8),
                     _UnitsRow(units: product.units),
                     const SizedBox(height: 20),
@@ -145,8 +149,7 @@ class _BarCartState {
     if (state is! CartLoaded || spId == null) {
       return const _BarCartState(inCartQty: 0, isBusy: false);
     }
-    final item =
-        state.data.cartItems.where((i) => i.spId == spId).firstOrNull;
+    final item = state.data.cartItems.where((i) => i.spId == spId).firstOrNull;
     return _BarCartState(
       inCartQty: item?.quantity ?? 0,
       isBusy: state.isItemBusy(spId),
@@ -164,12 +167,6 @@ class _BarCartState {
 }
 
 // ── Add-to-cart bottom bar ────────────────────────────────────────────────────
-//
-// Visual states:
-//   • Out of stock  → disabled full-width button
-//   • qty == 0      → full-width "أضف إلى السلة" button  (with bounce on tap)
-//   • qty >  0      → full-width quantity pill  (− qty +)
-//   • busy          → full-width centered spinner
 
 class _AddToCartBar extends StatefulWidget {
   final ProductModel product;
@@ -195,18 +192,24 @@ class _AddToCartBarState extends State<_AddToCartBar>
     // Spring: grow → overshoot → settle
     _bounceScale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 1.06)
-            .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween(
+          begin: 1.0,
+          end: 1.06,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.06, end: 0.96)
-            .chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween(
+          begin: 1.06,
+          end: 0.96,
+        ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 25,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 0.96, end: 1.0)
-            .chain(CurveTween(curve: Curves.elasticOut)),
+        tween: Tween(
+          begin: 0.96,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.elasticOut)),
         weight: 45,
       ),
     ]).animate(_bounceCtrl);
@@ -237,9 +240,9 @@ class _AddToCartBarState extends State<_AddToCartBar>
     HapticFeedback.selectionClick();
     _bounceCtrl.forward(from: 0);
     try {
-      await ctx
-          .read<CartCubit>()
-          .incrementItem(widget.product.spId ?? widget.product.id);
+      await ctx.read<CartCubit>().incrementItem(
+        widget.product.spId ?? widget.product.id,
+      );
     } catch (_) {
       if (ctx.mounted) _showError(ctx);
     }
@@ -248,9 +251,9 @@ class _AddToCartBarState extends State<_AddToCartBar>
   Future<void> _handleDecrement(BuildContext ctx) async {
     HapticFeedback.selectionClick();
     try {
-      await ctx
-          .read<CartCubit>()
-          .decrementItem(widget.product.spId ?? widget.product.id);
+      await ctx.read<CartCubit>().decrementItem(
+        widget.product.spId ?? widget.product.id,
+      );
     } catch (_) {
       if (ctx.mounted) _showError(ctx);
     }
@@ -259,7 +262,7 @@ class _AddToCartBarState extends State<_AddToCartBar>
   void _showError(BuildContext ctx) {
     ScaffoldMessenger.of(ctx).showSnackBar(
       SnackBar(
-        content: const Text('تعذّر تحديث السلة'),
+        content: Text(AppLocalizations.of(ctx)!.cartUpdateFailed),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Theme.of(ctx).colorScheme.error,
       ),
@@ -273,6 +276,7 @@ class _AddToCartBarState extends State<_AddToCartBar>
     final theme = Theme.of(context);
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final product = widget.product;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottomPadding),
@@ -289,30 +293,26 @@ class _AddToCartBarState extends State<_AddToCartBar>
       child: BlocSelector<CartCubit, CartState, _BarCartState>(
         selector: (state) => _BarCartState.from(state, product.spId),
         builder: (ctx, barState) {
-          // Determine which child AnimatedSwitcher should show.
           final Widget content;
 
           if (product.isOutOfStock) {
-            // ── Out of stock ───────────────────────────────────────────────
-            content = _OutOfStockButton(key: const ValueKey('oos'));
+            content = _OutOfStockButton(key: const ValueKey('oos'), l10n: l10n);
           } else if (barState.isBusy) {
-            // ── Busy (network in-flight) ───────────────────────────────────
             content = _BusyBar(
               key: const ValueKey('busy'),
               color: theme.colorScheme.primary,
             );
           } else if (barState.inCartQty == 0) {
-            // ── Not yet in cart: big add button ────────────────────────────
             content = ScaleTransition(
               key: const ValueKey('add'),
               scale: _bounceScale,
               child: _AddButton(
                 onTap: () => _handleAdd(ctx),
                 theme: theme,
+                l10n: l10n,
               ),
             );
           } else {
-            // ── Already in cart: full-width quantity pill ──────────────────
             content = _QuantityBar(
               key: const ValueKey('qty'),
               quantity: barState.inCartQty,
@@ -326,20 +326,10 @@ class _AddToCartBarState extends State<_AddToCartBar>
 
           return AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
-            // ⚠️  Do NOT set switchInCurve / switchOutCurve to any curve that
-            // overshoots [0, 1] (e.g. easeOutBack, elasticOut). Those curves
-            // are applied to the raw `animation` value before it reaches
-            // transitionBuilder, so FadeTransition.opacity would receive
-            // values like 1.056 and crash with a parametric-value assertion.
-            //
-            // Overshoot is fine for *scale* (applied only inside the builder
-            // below), but opacity must always stay in [0, 1].
             transitionBuilder: (child, animation) {
-              // Scale: safe to overshoot — easeOutBack gives the pop feel.
               final scaleAnim = Tween<double>(begin: 0.90, end: 1.0).animate(
                 CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
               );
-              // Fade: must stay in [0, 1] — use a plain easeIn.
               final fadeAnim = CurvedAnimation(
                 parent: animation,
                 curve: Curves.easeIn,
@@ -360,16 +350,18 @@ class _AddToCartBarState extends State<_AddToCartBar>
 // ── Out of stock button ───────────────────────────────────────────────────────
 
 class _OutOfStockButton extends StatelessWidget {
-  const _OutOfStockButton({super.key});
+  final AppLocalizations l10n;
+
+  const _OutOfStockButton({super.key, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
     return FilledButton.icon(
-      onPressed: null, // disabled
+      onPressed: null,
       icon: const Icon(Icons.remove_shopping_cart_outlined),
-      label: const Text(
-        'نفد المخزون',
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      label: Text(
+        l10n.outOfStock,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
       ),
       style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
     );
@@ -380,6 +372,7 @@ class _OutOfStockButton extends StatelessWidget {
 
 class _BusyBar extends StatelessWidget {
   final Color color;
+
   const _BusyBar({super.key, required this.color});
 
   @override
@@ -402,17 +395,22 @@ class _BusyBar extends StatelessWidget {
 class _AddButton extends StatelessWidget {
   final VoidCallback onTap;
   final ThemeData theme;
+  final AppLocalizations l10n;
 
-  const _AddButton({required this.onTap, required this.theme});
+  const _AddButton({
+    required this.onTap,
+    required this.theme,
+    required this.l10n,
+  });
 
   @override
   Widget build(BuildContext context) {
     return FilledButton.icon(
       onPressed: onTap,
       icon: const Icon(Icons.add_shopping_cart_rounded),
-      label: const Text(
-        'أضف إلى السلة',
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      label: Text(
+        l10n.addToCart,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
       ),
       style: FilledButton.styleFrom(
         minimumSize: const Size.fromHeight(56),
@@ -462,27 +460,26 @@ class _QuantityBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // ── Decrement ─────────────────────────────────────────────────────
-          // Tapping at qty=1 calls decrementItem which removes the item —
-          // the bar will animate back to the "Add" button automatically.
           _PillButton(
             icon: Icons.remove_rounded,
             onTap: onDecrement,
             enabled: true,
           ),
-
-          // ── Animated count ────────────────────────────────────────────────
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               transitionBuilder: (child, animation) => FadeTransition(
                 opacity: animation,
                 child: SlideTransition(
-                  position: Tween<Offset>(
+                  position:
+                  Tween<Offset>(
                     begin: const Offset(0, 0.35),
                     end: Offset.zero,
                   ).animate(
-                    CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOut,
+                    ),
                   ),
                   child: child,
                 ),
@@ -499,8 +496,6 @@ class _QuantityBar extends StatelessWidget {
               ),
             ),
           ),
-
-          // ── Increment ─────────────────────────────────────────────────────
           ScaleTransition(
             scale: bounceScale,
             child: _PillButton(
@@ -565,31 +560,23 @@ class _ImageGalleryAppBar extends StatelessWidget {
       expandedHeight: 300,
       pinned: true,
       stretch: true,
-      leading: Padding(
-        padding: const EdgeInsets.all(8),
-        child: CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey.shade200,
-          child: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 16,
-              color: Colors.grey.shade700,
-            ),
-            onPressed: () => Navigator.of(context).maybePop(),
-            padding: EdgeInsets.zero,
-          ),
-        ),
-      ),
-      actions: [
-        AnimatedCartIcon(onTap: () => context.push('/cart')),
-      ],
+      leading: CircleBackButton(),
+      actions: [AnimatedCartIcon(onTap: () => context.push('/cart'))],
       flexibleSpace: FlexibleSpaceBar(
         background: images.isEmpty
             ? _placeholder(theme)
             : Stack(
           children: [
-            ImageWithIconFallback(imageUrl: images[selectedIndex]),
+            Container(
+              color: theme.colorScheme.surfaceContainerLow,
+              child: ImageWithIconFallback(
+                imageUrl: images[selectedIndex],
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+                iconSize: 64,
+              ),
+            ),
             if (images.length > 1)
               Positioned(
                 bottom: 12,
@@ -656,7 +643,13 @@ class _ThumbnailRow extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(7),
-                child: Image.network(e.value, fit: BoxFit.cover),
+                child: ImageWithIconFallback(
+                  imageUrl: e.value,
+                  fit: BoxFit.cover,
+                  width: 48,
+                  height: 48,
+                  iconSize: 18,
+                ),
               ),
             ),
           );
@@ -670,11 +663,14 @@ class _ThumbnailRow extends StatelessWidget {
 
 class _NameRow extends StatelessWidget {
   final ProductModel product;
+
   const _NameRow({required this.product});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -683,9 +679,9 @@ class _NameRow extends StatelessWidget {
             spacing: 6,
             children: [
               if (product.isBestSeller)
-                _Chip(label: 'الأكثر مبيعاً', color: Colors.amber.shade700),
+                _Chip(label: l10n.bestSeller, color: Colors.amber.shade700),
               if (product.isFeatured)
-                _Chip(label: 'مميز', color: theme.colorScheme.tertiary),
+                _Chip(label: l10n.featured, color: theme.colorScheme.tertiary),
             ],
           ),
         const SizedBox(height: 4),
@@ -722,40 +718,94 @@ class _NameRow extends StatelessWidget {
   }
 }
 
-// ── Price section ─────────────────────────────────────────────────────────────
+// ── Price section — uses HighlighterWidget on the discounted price ─────────────
 
 class _PriceSection extends StatelessWidget {
   final ProductModel product;
+
   const _PriceSection({required this.product});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
     if (product.hasOffer) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${product.offer!.toStringAsFixed(0)} ج.م',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: theme.colorScheme.error,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // ── Highlighted discounted price ─────────────────────────────
+              HighlighterWidget(
+                child: Text(
+                  '${product.offer!.toStringAsFixed(0)} ${l10n.egp}',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // ── Original price struck through ────────────────────────────
+              Padding(
+                padding: const EdgeInsets.only(bottom: 3),
+                child: Text(
+                  '${product.price.toStringAsFixed(0)} ${l10n.egp}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.grey,
+                    decoration: TextDecoration.lineThrough,
+                    decorationColor: Colors.grey,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Text(
-            '${product.price.toStringAsFixed(0)} ج.م',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: Colors.grey,
-              decoration: TextDecoration.lineThrough,
+          // ── Saving label ─────────────────────────────────────────────────
+          if (product.discountPercent != null) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    border: Border.all(color: Colors.green.shade300),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.savings_outlined,
+                        size: 13,
+                        color: Colors.green.shade600,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${l10n.save} ${l10n.percentOff(product.discountPercent!)}',
+                        style: TextStyle(
+                          color: Colors.green.shade700,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
+          ],
         ],
       );
     }
 
     return Text(
-      '${product.effectivePrice.toStringAsFixed(0)} ج.م',
+      '${product.effectivePrice.toStringAsFixed(0)} ${l10n.egp}',
       style: theme.textTheme.headlineMedium?.copyWith(
         color: theme.colorScheme.primary,
         fontWeight: FontWeight.bold,
@@ -768,17 +818,23 @@ class _PriceSection extends StatelessWidget {
 
 class _StockChip extends StatelessWidget {
   final ProductModel product;
+
   const _StockChip({required this.product});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (product.isOutOfStock) {
-      return const _Chip(label: 'نفد المخزون', color: Colors.red);
+      return _Chip(label: l10n.outOfStock, color: Colors.red);
     }
     if (product.isLowStock) {
-      return _Chip(label: 'متبقي ${product.stock} فقط', color: Colors.orange);
+      return _Chip(
+        label: l10n.lowStockRemaining(product.stock),
+        color: Colors.orange,
+      );
     }
-    return _Chip(label: 'متوفر (${product.stock})', color: Colors.green);
+    return _Chip(label: l10n.inStockCount(product.stock), color: Colors.green);
   }
 }
 
@@ -786,6 +842,7 @@ class _StockChip extends StatelessWidget {
 
 class _AttributesTable extends StatelessWidget {
   final List<dynamic> attributes;
+
   const _AttributesTable({required this.attributes});
 
   @override
@@ -810,17 +867,22 @@ class _AttributesTable extends StatelessWidget {
             ),
             children: [
               Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 child: Text(
                   attr.key,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 child: Text(
                   attr.displayValue,
                   style: theme.textTheme.bodySmall,
@@ -838,11 +900,14 @@ class _AttributesTable extends StatelessWidget {
 
 class _UnitsRow extends StatelessWidget {
   final List<dynamic> units;
+
   const _UnitsRow({required this.units});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -854,7 +919,7 @@ class _UnitsRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            '${u.displayName} — ${u.price} ج.م',
+            '${u.displayName} — ${u.price} ${l10n.egp}',
             style: TextStyle(
               color: theme.colorScheme.primary,
               fontWeight: FontWeight.w600,
@@ -871,6 +936,7 @@ class _UnitsRow extends StatelessWidget {
 
 class _MetaInfo extends StatelessWidget {
   final ProductModel product;
+
   const _MetaInfo({required this.product});
 
   @override
@@ -883,8 +949,9 @@ class _MetaInfo extends StatelessWidget {
         runSpacing: 4,
         children: [
           Text('SKU: ${product.sku}'),
-          if (product.barcode != null) Text('باركود: ${product.barcode}'),
-          if (product.weight != null) Text('الوزن: ${product.weight} كجم'),
+          if (product.barcode != null) Text('${product.barcode}'),
+          if (product.weight != null)
+            Text('${product.weight} ${AppLocalizations.of(context)!.weight}'),
         ],
       ),
     );
@@ -896,6 +963,7 @@ class _MetaInfo extends StatelessWidget {
 class _Chip extends StatelessWidget {
   final String label;
   final Color color;
+
   const _Chip({required this.label, required this.color});
 
   @override
@@ -921,36 +989,197 @@ class _Chip extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   final String title;
+
   const _SectionTitle({required this.title});
 
   @override
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(context)
-          .textTheme
-          .titleSmall
-          ?.copyWith(fontWeight: FontWeight.bold),
+      style: Theme.of(
+        context,
+      ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 }
 
-// ── Loading & error views ─────────────────────────────────────────────────────
+// ── Loading view ──────────────────────────────────────────────────────────────
+// Matches the loaded view structure precisely:
+//  • Reuses [_ImageGalleryAppBar] — shows real images when [product] is known,
+//    otherwise falls back to the built-in inventory placeholder.
+//  • Skeleton rows below mimic the name, price, stock, description, and
+//    attributes layout so the transition to loaded is imperceptibly smooth.
+//  • A skeleton bottom bar matches the add-to-cart bar shape.
 
-class _LoadingView extends StatelessWidget {
+class _LoadingView extends StatefulWidget {
   final ProductModel? product;
+
   const _LoadingView({this.product});
 
   @override
+  State<_LoadingView> createState() => _LoadingViewState();
+}
+
+class _LoadingViewState extends State<_LoadingView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 950),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 0.07, end: 0.16).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: product != null ? Text(product!.displayName) : null,
-      ),
-      body: const Center(child: CircularProgressIndicator()),
+    final theme = Theme.of(context);
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (context, _) {
+        final shimmer = Colors.black.withOpacity(_pulse.value);
+
+        return Scaffold(
+          body: CustomScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            slivers: [
+              // ── Image gallery — real images (or placeholder) ─────────────
+              _ImageGalleryAppBar(
+                images: widget.product?.images ?? const [],
+                selectedIndex: 0,
+                onImageSelected: (_) {},
+              ),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Name skeleton ──────────────────────────────────────
+                      _Skel(color: shimmer, h: 26, w: double.infinity),
+                      const SizedBox(height: 7),
+                      _Skel(color: shimmer, h: 26, w: 180),
+                      const SizedBox(height: 18),
+
+                      // ── Price skeleton ─────────────────────────────────────
+                      Row(
+                        children: [
+                          _Skel(color: shimmer, h: 38, w: 130, r: 10),
+                          const SizedBox(width: 10),
+                          _Skel(color: shimmer, h: 22, w: 80),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ── Stock chip skeleton ────────────────────────────────
+                      _Skel(color: shimmer, h: 24, w: 110, r: 20),
+                      const SizedBox(height: 28),
+
+                      // ── Section title ──────────────────────────────────────
+                      _Skel(color: shimmer, h: 13, w: 70),
+                      const SizedBox(height: 12),
+
+                      // ── Description lines ──────────────────────────────────
+                      ...[1.0, 1.0, 1.0, 0.6].map(
+                            (fraction) => Padding(
+                          padding: const EdgeInsets.only(bottom: 9),
+                          child: _Skel(
+                            color: shimmer,
+                            h: 12,
+                            w: double.infinity,
+                            widthFactor: fraction,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ── Attributes table skeleton ──────────────────────────
+                      _Skel(color: shimmer, h: 13, w: 90),
+                      const SizedBox(height: 10),
+                      _Skel(color: shimmer, h: 100, w: double.infinity, r: 10),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // ── Bottom bar skeleton ────────────────────────────────────────────
+          bottomNavigationBar: Container(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottomPadding),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: _Skel(color: shimmer, h: 56, r: 16),
+          ),
+        );
+      },
     );
   }
 }
+
+// ── Skeleton box helper ───────────────────────────────────────────────────────
+
+class _Skel extends StatelessWidget {
+  final Color color;
+  final double h;
+  final double? w;
+  final double r;
+
+  /// Optionally shrink [w] by this factor (0.0–1.0). Used for partial lines.
+  final double widthFactor;
+
+  const _Skel({
+    required this.color,
+    required this.h,
+    this.w,
+    this.r = 7,
+    this.widthFactor = 1.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget box = Container(
+      height: h,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(r),
+      ),
+    );
+
+    if (w != null && w != double.infinity) {
+      box = SizedBox(width: w! * widthFactor, child: box);
+    } else if (widthFactor < 1.0) {
+      box = FractionallySizedBox(widthFactor: widthFactor, child: box);
+    }
+
+    return box;
+  }
+}
+
+// ── Error view ────────────────────────────────────────────────────────────────
 
 class _ErrorView extends StatelessWidget {
   final String message;
@@ -965,6 +1194,8 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
         title: product != null ? Text(product!.displayName) : null,
@@ -982,7 +1213,7 @@ class _ErrorView extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('إعادة المحاولة'),
+                label: Text(l10n.retry),
               ),
             ],
           ),

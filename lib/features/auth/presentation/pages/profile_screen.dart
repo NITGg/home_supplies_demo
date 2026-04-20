@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/widgets/change_password_sheet.dart';
 import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 import '../../../../core/style/app_colors.dart';
+import '../../../../core/widgets/circel_back_cutton.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/delete_account_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -129,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     floating: false,
                     pinned: true,
                     elevation: 0,
-                    leading: const BackButton(color: Colors.white),
+                    leading: CircleBackButton(),
                     backgroundColor: AppColors.kSecondaryColor,
                     flexibleSpace: FlexibleSpaceBar(
                       background: Container(
@@ -152,20 +153,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     actions: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.edit_outlined,
-                          color: Colors.white,
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.grey.shade200,
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.edit_outlined,
+                            color: Colors.grey.shade700,
+                          ),
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) =>
+                                  EditProfileBottomSheet(profile: profile),
+                            );
+                          },
                         ),
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (context) =>
-                                EditProfileBottomSheet(profile: profile),
-                          );
-                        },
                       ),
                       const SizedBox(width: 8),
                     ],
@@ -180,16 +185,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: Column(
                             children: [
-                              if(profile.loginType == 'LOCAL')
-                              AppCustomButton(
-                                onPressed: () {
-                                  showChangePasswordBottomSheet(context);
-                                },
-                                text: localizations.changePassword,
-                                isSecondary: true,
-                                isLoading: context.read<AuthCubit>().state
-                                is AuthLoading,
-                              ),
+                              if (profile.loginType == 'LOCAL')
+                                AppCustomButton(
+                                  onPressed: () {
+                                    showChangePasswordBottomSheet(context);
+                                  },
+                                  text: localizations.changePassword,
+                                  isSecondary: true,
+                                  isLoading:
+                                      context.read<AuthCubit>().state
+                                          is AuthLoading,
+                                ),
                               AppCustomButton(
                                 onPressed: () {
                                   showDialog(
@@ -201,8 +207,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 },
                                 text: localizations.deleteAccount,
                                 isDelete: true,
-                                isLoading: context.read<AuthCubit>().state
-                                is AuthLoading,
+                                isLoading:
+                                    context.read<AuthCubit>().state
+                                        is AuthLoading,
                               ),
                             ],
                           ),
@@ -257,7 +264,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             textDirection: TextDirection.ltr,
           ),
 
-          if (profile.extraPhones != null && profile.extraPhones!.isNotEmpty) ...[
+          if (profile.extraPhones != null &&
+              profile.extraPhones!.isNotEmpty) ...[
             const SizedBox(height: 12),
             _buildInfoRow(
               context,
@@ -283,13 +291,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildInfoRow(
-      BuildContext context,
-      IconData icon,
-      String label,
-      String value, {
-        Color? valueColor,
-        TextDirection? textDirection,
-      }) {
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value, {
+    Color? valueColor,
+    TextDirection? textDirection,
+  }) {
     return Row(
       children: [
         Container(

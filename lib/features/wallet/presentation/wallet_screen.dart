@@ -5,6 +5,7 @@ import 'package:tawreedat_go/features/wallet/presentation/widgets/penalty_card.d
 import 'package:tawreedat_go/features/wallet/presentation/widgets/section_header.dart';
 import 'package:tawreedat_go/features/wallet/presentation/widgets/transaction_card.dart';
 import 'package:tawreedat_go/features/wallet/presentation/widgets/wallet_shimmer.dart';
+import '../../../core/widgets/circel_back_cutton.dart';
 import '../manager/wallet_cubit.dart';
 import '../manager/wallet_state.dart';
 import 'widgets/balance_card.dart';
@@ -51,11 +52,9 @@ class _WalletScreenState extends State<WalletScreen> {
           isArabic ? 'المحفظة' : 'Wallet',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        leading: BackButton(
-          color: Colors.black,
-          onPressed: () =>
-              context.canPop() ? context.pop() : context.go('/mainHome'),
-        ),
+        leading: CircleBackButton(onPressed: (){
+          context.canPop() ? context.pop() : context.go('/mainHome');
+        },),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,

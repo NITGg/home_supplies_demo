@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 /// A compact increment / decrement selector.
 ///
 /// When [quantity] is 0 it renders a simple "أضف" pill.
@@ -42,6 +44,7 @@ class _QuantitySelectorState extends State<QuantitySelector> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     // ── Zero state: simple add pill ──────────────────────────────────────────
     if (widget.quantity == 0) {
@@ -52,7 +55,7 @@ class _QuantitySelectorState extends State<QuantitySelector> {
           icon: Icon(Icons.add, size: widget.compact ? 14 : 16),
           label: widget.compact
               ? const SizedBox.shrink()
-              : const Text('أضف', style: TextStyle(fontSize: 12)),
+              : Text(l10n.add, style: const TextStyle(fontSize: 12)),
           style: ElevatedButton.styleFrom(
             padding: EdgeInsets.symmetric(
               horizontal: widget.compact ? 8 : 12,

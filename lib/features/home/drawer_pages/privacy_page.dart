@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 
+import '../../../core/widgets/circel_back_cutton.dart';
 import '../../static_text/app_dynamic_info.dart';
 
 class PrivacyPage extends StatelessWidget {
@@ -20,7 +21,7 @@ class PrivacyPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(color: Colors.black,),
+        leading: CircleBackButton(),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),

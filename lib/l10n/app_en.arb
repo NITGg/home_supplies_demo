@@ -601,7 +601,56 @@
     "preparingOrder": "Your order is being prepared",
     "findingCourier": "We're finding you the best courier…",
 "offDeliveryFee": "off delivery fee",
-"nearMe": "Near Me"
+"nearMe": "Near Me",
 
+"offer": "Offer",
+"bestSeller": "Best Seller",
+"featured": "Featured",
+"outOfStock": "Out of Stock",
+"add": "Add",
+"addToCart": "Add to Cart",
+"cartUpdateFailed": "Failed to update cart",
+"description": "Description",
+"specifications": "Specifications",
+"purchaseUnits": "Purchase Units",
 
+"lowStockRemaining": "Only {count} left",
+"@lowStockRemaining": {
+  "placeholders": {
+    "count": { "type": "int" }
+  }
+},
+
+"inStockCount": "In stock ({count})",
+"@inStockCount": {
+  "placeholders": {
+    "count": { "type": "int" }
+  }
+},
+
+"percentOff": "{percent}% off",
+"@percentOff": {
+  "placeholders": {
+    "percent": { "type": "int" }
+  }
+},
+
+"save": "Save",
+"perUnit": "/ unit",
+
+"cart": "Cart",
+"clearCart": "Clear Cart",
+"clearCartConfirmation": "Are you sure you want to remove all items from the cart?",
+"emptyCart": "Empty",
+"proceedToCheckout": "Proceed to Checkout",
+"navigatingToCheckout": "Navigating to checkout...",
+"cartIsEmpty": "Cart is Empty",
+"startAddingProducts": "Start by adding some products",
+"numberOfItems": "Number of Items",
+"totalQuantity": "Total Quantity",
+"updateQuantityFailed": "Failed to update quantity",
+
+"noProductsInSection": "No products in this category",
+"showMore": "Show More",
+"loadMore": "Load More"
 }

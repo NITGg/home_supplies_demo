@@ -2842,6 +2842,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Near Me'**
   String get nearMe;
+
+  /// No description provided for @offer.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer'**
+  String get offer;
+
+  /// No description provided for @bestSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'Best Seller'**
+  String get bestSeller;
+
+  /// No description provided for @featured.
+  ///
+  /// In en, this message translates to:
+  /// **'Featured'**
+  String get featured;
+
+  /// No description provided for @outOfStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of Stock'**
+  String get outOfStock;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @addToCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Cart'**
+  String get addToCart;
+
+  /// No description provided for @cartUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update cart'**
+  String get cartUpdateFailed;
+
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// No description provided for @specifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Specifications'**
+  String get specifications;
+
+  /// No description provided for @purchaseUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase Units'**
+  String get purchaseUnits;
+
+  /// No description provided for @lowStockRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {count} left'**
+  String lowStockRemaining(int count);
+
+  /// No description provided for @inStockCount.
+  ///
+  /// In en, this message translates to:
+  /// **'In stock ({count})'**
+  String inStockCount(int count);
+
+  /// No description provided for @percentOff.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% off'**
+  String percentOff(int percent);
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @perUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'/ unit'**
+  String get perUnit;
+
+  /// No description provided for @cart.
+  ///
+  /// In en, this message translates to:
+  /// **'Cart'**
+  String get cart;
+
+  /// No description provided for @clearCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Cart'**
+  String get clearCart;
+
+  /// No description provided for @clearCartConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove all items from the cart?'**
+  String get clearCartConfirmation;
+
+  /// No description provided for @emptyCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty'**
+  String get emptyCart;
+
+  /// No description provided for @proceedToCheckout.
+  ///
+  /// In en, this message translates to:
+  /// **'Proceed to Checkout'**
+  String get proceedToCheckout;
+
+  /// No description provided for @navigatingToCheckout.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigating to checkout...'**
+  String get navigatingToCheckout;
+
+  /// No description provided for @cartIsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Cart is Empty'**
+  String get cartIsEmpty;
+
+  /// No description provided for @startAddingProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Start by adding some products'**
+  String get startAddingProducts;
+
+  /// No description provided for @numberOfItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of Items'**
+  String get numberOfItems;
+
+  /// No description provided for @totalQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Quantity'**
+  String get totalQuantity;
+
+  /// No description provided for @updateQuantityFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update quantity'**
+  String get updateQuantityFailed;
+
+  /// No description provided for @noProductsInSection.
+  ///
+  /// In en, this message translates to:
+  /// **'No products in this category'**
+  String get noProductsInSection;
+
+  /// No description provided for @showMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show More'**
+  String get showMore;
+
+  /// No description provided for @loadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load More'**
+  String get loadMore;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
