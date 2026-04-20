@@ -11,7 +11,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
   final CategoryRepository _categoryRepository;
   final ProductRepository _productRepository;
 
-  static const int _pageSize = 12;
+  static const int _pageSize = 5;
 
   CategoryDetailCubit({
     CategoryRepository? categoryRepository,

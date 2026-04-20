@@ -494,7 +494,7 @@ class _MyAppState extends State<MyApp> {
                   // ← invisible, no gesture surface
                   floatingWidgetWidth: show ? 40 : 0,
                   floatingWidgetHeight: show ? 40 : 0,
-                  dy: 250,
+                  dy: 500,
                   autoAlign: true,
                   autoAlignType: AlignmentType.both,
                   mainScreenWidget: mainScreenWidget,

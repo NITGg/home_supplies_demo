@@ -16,7 +16,7 @@ class CategoryDetailScreen extends StatefulWidget {
   final int? categoryId;
 
   const CategoryDetailScreen({super.key, this.category, this.categoryId})
-      : assert(category != null || categoryId != null);
+    : assert(category != null || categoryId != null);
 
   @override
   State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
@@ -34,6 +34,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     _cubit.load(_id);
   }
 
+
   @override
   void dispose() {
     _cubit.close();
@@ -49,7 +50,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           builder: (context, state) {
             return switch (state) {
               CategoryDetailInitial() || CategoryDetailLoading() =>
-                  _LoadingView(category: widget.category),
+                _LoadingView(category: widget.category),
               CategoryDetailError(:final message) => _ErrorView(
                 message: message,
                 category: widget.category,
@@ -109,6 +110,50 @@ class _LoadedViewState extends State<_LoadedView> {
     _scrollController.addListener(_onScroll);
   }
 
+  // ── Scroll listener — updates the active pill as user scrolls ─────────────
+  void _onScroll() {
+    if (_sectionKeys.isEmpty) return;
+
+    const threshold = 180.0;
+    for (int i = _sectionKeys.length - 1; i >= 0; i--) {
+      final ctx = _sectionKeys[i].currentContext;
+      if (ctx == null) continue;
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null) continue;
+      final dy = box.localToGlobal(Offset.zero).dy;
+      if (dy <= threshold) {
+        if (_activePillIndex != i) setState(() => _activePillIndex = i);
+        return;
+      }
+    }
+    if (_activePillIndex != 0) setState(() => _activePillIndex = 0);
+
+    // ── auto-load sections near the viewport bottom ────────────────────
+    _checkAutoLoad();
+  }
+
+  void _checkAutoLoad() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    const loadBuffer = 300.0;
+
+    for (int i = 0; i < _sectionKeys.length; i++) {
+      final section = widget.state.sections[i];
+      if (!section.hasMore || section.isLoading) continue;
+
+      final ctx = _sectionKeys[i].currentContext;
+      if (ctx == null) continue;
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null) continue;
+
+      final sectionBottomOnScreen =
+          box.localToGlobal(Offset(0, box.size.height)).dy;
+
+      if (sectionBottomOnScreen < screenHeight + loadBuffer) {
+        widget.onLoadMoreSection(section.subCategory.id);
+      }
+    }
+  }
+
   @override
   void didUpdateWidget(_LoadedView old) {
     super.didUpdateWidget(old);
@@ -127,32 +172,10 @@ class _LoadedViewState extends State<_LoadedView> {
   void _rebuildKeys() {
     _sectionKeys = List.generate(
       widget.state.sections.length,
-          (_) => GlobalKey(),
+      (_) => GlobalKey(),
     );
   }
 
-  // ── Scroll listener — updates the active pill as user scrolls ─────────────
-  void _onScroll() {
-    if (_sectionKeys.isEmpty) return;
-
-    // Walk sections from last to first; the first one whose top is at or above
-    // the viewport midpoint (adjusted for headers) becomes the active pill.
-    const threshold = 180.0; // approx. app-bar (280 collapsed) + pills (52)
-
-    for (int i = _sectionKeys.length - 1; i >= 0; i--) {
-      final ctx = _sectionKeys[i].currentContext;
-      if (ctx == null) continue;
-      final box = ctx.findRenderObject() as RenderBox?;
-      if (box == null) continue;
-      final dy = box.localToGlobal(Offset.zero).dy;
-      if (dy <= threshold) {
-        if (_activePillIndex != i) setState(() => _activePillIndex = i);
-        return;
-      }
-    }
-    // Nothing scrolled past threshold — first section is active.
-    if (_activePillIndex != 0) setState(() => _activePillIndex = 0);
-  }
 
   // ── Scroll to section when a pill is tapped ───────────────────────────────
   void _scrollToSection(int index) {
@@ -198,7 +221,7 @@ class _LoadedViewState extends State<_LoadedView> {
             SliverList.separated(
               itemCount: state.sections.length,
               separatorBuilder: (_, __) =>
-              const Divider(height: 1, indent: 16, endIndent: 16),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
               itemBuilder: (_, i) {
                 final section = state.sections[i];
                 return KeyedSubtree(
@@ -206,9 +229,7 @@ class _LoadedViewState extends State<_LoadedView> {
                   child: SubCategorySectionWidget(
                     section: section,
                     onProductTap: widget.onProductTap,
-                    onLoadMore: section.hasMore
-                        ? () => widget.onLoadMoreSection(section.subCategory.id)
-                        : null,
+                    onLoadMore: () => widget.onLoadMoreSection(section.subCategory.id),
                   ),
                 );
               },
@@ -217,18 +238,18 @@ class _LoadedViewState extends State<_LoadedView> {
             SliverToBoxAdapter(
               child: state.directProductsLoading && state.directProducts.isEmpty
                   ? const Padding(
-                padding: EdgeInsets.all(48),
-                child: Center(child: CircularProgressIndicator()),
-              )
+                      padding: EdgeInsets.all(48),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
                   : state.directProducts.isEmpty
                   ? const _EmptyProducts()
                   : DirectProductsGrid(
-                products: state.directProducts,
-                isLoadingMore: state.directProductsLoading,
-                hasMore: state.directProductsHasMore,
-                onProductTap: widget.onProductTap,
-                onLoadMore: widget.onLoadMoreDirect,
-              ),
+                      products: state.directProducts,
+                      isLoadingMore: state.directProductsLoading,
+                      hasMore: state.directProductsHasMore,
+                      onProductTap: widget.onProductTap,
+                      onLoadMore: widget.onLoadMoreDirect,
+                    ),
             ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
@@ -257,20 +278,20 @@ class _PillsHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   double get minExtent => _height;
+
   @override
   double get maxExtent => _height;
 
   @override
   bool shouldRebuild(_PillsHeaderDelegate old) =>
-      old.activeIndex != activeIndex ||
-          old.sections.length != sections.length;
+      old.activeIndex != activeIndex || old.sections.length != sections.length;
 
   @override
   Widget build(
-      BuildContext context,
-      double shrinkOffset,
-      bool overlapsContent,
-      ) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     // Subtle elevation shadow when the pills row is overlapping content below.
     final elevated = overlapsContent || shrinkOffset > 0;
 
@@ -287,8 +308,7 @@ class _PillsHeaderDelegate extends SliverPersistentHeaderDelegate {
           separatorBuilder: (_, __) => const SizedBox(width: 8),
           itemBuilder: (_, i) {
             final isActive = i == activeIndex;
-            final label =
-                sections[i].subCategory.displayName as String? ?? '';
+            final label = sections[i].subCategory.displayName as String? ?? '';
 
             return _PillChip(
               label: label,
@@ -331,9 +351,9 @@ class _PillChip extends StatelessWidget {
         border: isActive
             ? null
             : Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.35),
-          width: 0.8,
-        ),
+                color: theme.colorScheme.outline.withOpacity(0.35),
+                width: 0.8,
+              ),
       ),
       child: InkWell(
         onTap: onTap,
@@ -347,8 +367,7 @@ class _PillChip extends StatelessWidget {
                 color: isActive
                     ? theme.colorScheme.onPrimary
                     : theme.colorScheme.onSurfaceVariant,
-                fontWeight:
-                isActive ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
               ),
               child: Text(label),
             ),
@@ -377,11 +396,10 @@ class _CategorySliverAppBar extends StatelessWidget {
       stretch: true,
       backgroundColor: theme.colorScheme.surface,
       surfaceTintColor: Colors.transparent,
-      scrolledUnderElevation: 2,              elevation: 0,
+      scrolledUnderElevation: 2,
+      elevation: 0,
       leading: CircleBackButton(),
-      actions: [
-        AnimatedCartIcon(onTap: () => context.push('/cart')),
-      ],
+      actions: [AnimatedCartIcon(onTap: () => context.push('/cart'))],
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: EdgeInsets.zero,
         stretchModes: const [
@@ -545,9 +563,11 @@ class _GradientMesh extends StatelessWidget {
               colors: [
                 HSLColor.fromColor(primary)
                     .withLightness(
-                  (HSLColor.fromColor(primary).lightness - 0.12)
-                      .clamp(0.0, 1.0),
-                )
+                      (HSLColor.fromColor(primary).lightness - 0.12).clamp(
+                        0.0,
+                        1.0,
+                      ),
+                    )
                     .toColor(),
                 primary,
                 HSLColor.fromColor(secondary).withSaturation(0.9).toColor(),
@@ -616,14 +636,17 @@ class _EmptyProducts extends StatelessWidget {
       padding: const EdgeInsets.all(48),
       child: Column(
         children: [
-          Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade400),
+          Icon(
+            Icons.inventory_2_outlined,
+            size: 64,
+            color: Colors.grey.shade400,
+          ),
           const SizedBox(height: 16),
           Text(
             'لا توجد منتجات في هذا التصنيف',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: Colors.grey.shade600),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -654,9 +677,10 @@ class _LoadingViewState extends State<_LoadingView>
       vsync: this,
       duration: const Duration(milliseconds: 950),
     )..repeat(reverse: true);
-    _pulse = Tween<double>(begin: 0.06, end: 0.15).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _pulse = Tween<double>(
+      begin: 0.06,
+      end: 0.15,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -688,7 +712,7 @@ class _LoadingViewState extends State<_LoadingView>
                 childAspectRatio: 0.72,
                 children: List.generate(
                   6,
-                      (_) => _SkeletonProductCard(shimmer: shimmer),
+                  (_) => _SkeletonProductCard(shimmer: shimmer),
                 ),
               ),
             ),
@@ -724,8 +748,11 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
           radius: 20,
           backgroundColor: Colors.grey.shade200,
           child: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded,
-                size: 16, color: Colors.grey.shade700),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 16,
+              color: Colors.grey.shade700,
+            ),
             onPressed: () => Navigator.of(context).maybePop(),
             padding: EdgeInsets.zero,
           ),
@@ -747,9 +774,11 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
                   colors: [
                     HSLColor.fromColor(primary)
                         .withLightness(
-                      (HSLColor.fromColor(primary).lightness - 0.12)
-                          .clamp(0.0, 1.0),
-                    )
+                          (HSLColor.fromColor(primary).lightness - 0.12).clamp(
+                            0.0,
+                            1.0,
+                          ),
+                        )
                         .toColor(),
                     primary,
                     HSLColor.fromColor(secondary).withSaturation(0.9).toColor(),
@@ -769,7 +798,10 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: [Colors.white.withOpacity(0.12), Colors.transparent],
+                    colors: [
+                      Colors.white.withOpacity(0.12),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
               ),
@@ -930,7 +962,11 @@ class _ErrorView extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
                   Text(message, textAlign: TextAlign.center),
                   const SizedBox(height: 24),

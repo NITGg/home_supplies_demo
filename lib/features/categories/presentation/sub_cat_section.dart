@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../cart/manager/cart_cubit.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/presentation/product_card.dart';
 import '../manager/category_detail_states.dart';
 
-/// Widget that renders a single sub-category header + its products grid.
-/// Named [SubCategorySectionWidget] to avoid collision with the
-/// [SubCategorySection] data class defined in category_detail_state.dart.
 class SubCategorySectionWidget extends StatelessWidget {
   final SubCategorySection section;
   final void Function(ProductModel product) onProductTap;
-  final VoidCallback? onLoadMore;
+  final VoidCallback? onLoadMore; // restored
 
   const SubCategorySectionWidget({
     super.key,
@@ -28,7 +23,7 @@ class SubCategorySectionWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Section header ─────────────────────────────────────────────────
+        // ── Section header ───────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
           child: Row(
@@ -54,9 +49,9 @@ class SubCategorySectionWidget extends StatelessWidget {
           ),
         ),
 
-        // ── Products grid or skeleton ──────────────────────────────────────
+        // ── Products list or skeleton ────────────────────────────────────
         if (section.isLoading && section.products.isEmpty)
-          _ProductGridSkeleton()
+          const _ProductListSkeleton()
         else if (section.products.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -68,101 +63,125 @@ class SubCategorySectionWidget extends StatelessWidget {
             ),
           )
         else
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: _ProductGrid(
-              products: section.products,
-              onProductTap: onProductTap,
-            ),
-          ),
-
-        // ── Load more ─────────────────────────────────────────────────────
-        if (section.hasMore && section.products.isNotEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: section.isLoading
-                  ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-                  : TextButton.icon(
-                onPressed: onLoadMore,
-                icon: const Icon(Icons.expand_more, size: 18),
-                label: const Text('عرض المزيد'),
-              ),
-            ),
+          _ProductList(
+            products: section.products,
+            isLoadingMore: section.isLoading,
+            hasMore: section.hasMore,
+            onProductTap: onProductTap,
+            onLoadMore: onLoadMore,
           ),
       ],
     );
   }
 }
 
-// ── Product grid ──────────────────────────────────────────────────────────────
+// ── Horizontal product list ───────────────────────────────────────────────────
 
-class _ProductGrid extends StatelessWidget {
+class _ProductList extends StatefulWidget {
   final List<ProductModel> products;
+  final bool isLoadingMore;
+  final bool hasMore;
   final void Function(ProductModel) onProductTap;
+  final VoidCallback? onLoadMore;
 
-  const _ProductGrid({required this.products, required this.onProductTap});
+  const _ProductList({
+    required this.products,
+    required this.isLoadingMore,
+    required this.hasMore,
+    required this.onProductTap,
+    this.onLoadMore,
+  });
+
+  @override
+  State<_ProductList> createState() => _ProductListState();
+}
+
+class _ProductListState extends State<_ProductList> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!widget.hasMore || widget.isLoadingMore) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 200) {
+      widget.onLoadMore?.call();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = _crossAxisCount(constraints.maxWidth);
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 0.72,
-          ),
-          itemCount: products.length,
-          itemBuilder: (_, i) {
-            final product = products[i];
-            return ProductCard(
-              product: product,
-              onTap: () => onProductTap(product),
-              // ProductCard calls CartCubit directly for every cart operation.
-              // Do NOT call addItem here — that would fire a second addItem
-              // on the first tap and double the quantity.
-            );
-          },
-        );
-      },
-    );
-  }
+    // +1 for the trailing loader slot when loading more
+    final itemCount = widget.products.length + (widget.hasMore ? 1 : 0);
 
-  int _crossAxisCount(double width) {
-    if (width >= 900) return 5;
-    if (width >= 700) return 4;
-    if (width >= 500) return 3;
-    return 2;
+    return SizedBox(
+      height: 260,
+      child: ListView.builder(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: itemCount,
+        itemBuilder: (_, i) {
+          // Trailing spinner card
+          if (i == widget.products.length) {
+            return const Padding(
+              padding: EdgeInsets.only(right: 10),
+              child: SizedBox(
+                width: 48,
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          final product = widget.products[i];
+          return SizedBox(
+            width: 160,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 10,bottom: 20),
+              child: ProductCard(
+                product: product,
+                onTap: () => widget.onProductTap(product),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
 
-// ── Loading skeleton ──────────────────────────────────────────────────────────
+class _ProductListSkeleton extends StatelessWidget {
+  const _ProductListSkeleton();
 
-class _ProductGridSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          childAspectRatio: 0.72,
-        ),
+    return SizedBox(
+      height: 260,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: 4,
-        itemBuilder: (_, __) => const _SkeletonCard(),
+        itemBuilder: (_, __) => const Padding(
+          padding: EdgeInsets.only(right: 10),
+          child: SizedBox(width: 160, child: _SkeletonCard()),
+        ),
       ),
     );
   }
@@ -239,7 +258,13 @@ class DirectProductsGrid extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: _ProductGrid(products: products, onProductTap: onProductTap),
+          child: _ProductList(
+            products: products,
+            onProductTap: onProductTap,
+            isLoadingMore: isLoadingMore,
+            hasMore: hasMore,
+            onLoadMore: onLoadMore,
+          ),
         ),
         if (hasMore)
           Padding(
@@ -247,10 +272,10 @@ class DirectProductsGrid extends StatelessWidget {
             child: isLoadingMore
                 ? const CircularProgressIndicator()
                 : ElevatedButton.icon(
-              onPressed: onLoadMore,
-              icon: const Icon(Icons.expand_more),
-              label: const Text('تحميل المزيد'),
-            ),
+                    onPressed: onLoadMore,
+                    icon: const Icon(Icons.expand_more),
+                    label: const Text('تحميل المزيد'),
+                  ),
           ),
       ],
     );

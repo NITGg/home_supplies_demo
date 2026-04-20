@@ -9,7 +9,7 @@ import 'category_states.dart';
 class CategoriesCubit extends Cubit<CategoriesState> {
   final CategoryRepository _repository;
 
-  static const int _pageSize = 20;
+  static const int _pageSize = 10000;
   int _currentSkip = 0;
 
   CategoriesCubit({CategoryRepository? repository})
