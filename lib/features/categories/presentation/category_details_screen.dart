@@ -76,7 +76,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 
 // ── Loaded View ───────────────────────────────────────────────────────────────
 
-class _LoadedView extends StatelessWidget {
+class _LoadedView extends StatefulWidget {
   final CategoryDetailLoaded state;
   final void Function(ProductModel) onProductTap;
   final void Function(int subCatId) onLoadMoreSection;
@@ -92,12 +92,108 @@ class _LoadedView extends StatelessWidget {
   });
 
   @override
+  State<_LoadedView> createState() => _LoadedViewState();
+}
+
+class _LoadedViewState extends State<_LoadedView> {
+  final ScrollController _scrollController = ScrollController();
+
+  // One GlobalKey per section — used to measure positions for scrolling.
+  late List<GlobalKey> _sectionKeys;
+  int _activePillIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _rebuildKeys();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didUpdateWidget(_LoadedView old) {
+    super.didUpdateWidget(old);
+    if (old.state.sections.length != widget.state.sections.length) {
+      _rebuildKeys();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _rebuildKeys() {
+    _sectionKeys = List.generate(
+      widget.state.sections.length,
+          (_) => GlobalKey(),
+    );
+  }
+
+  // ── Scroll listener — updates the active pill as user scrolls ─────────────
+  void _onScroll() {
+    if (_sectionKeys.isEmpty) return;
+
+    // Walk sections from last to first; the first one whose top is at or above
+    // the viewport midpoint (adjusted for headers) becomes the active pill.
+    const threshold = 180.0; // approx. app-bar (280 collapsed) + pills (52)
+
+    for (int i = _sectionKeys.length - 1; i >= 0; i--) {
+      final ctx = _sectionKeys[i].currentContext;
+      if (ctx == null) continue;
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null) continue;
+      final dy = box.localToGlobal(Offset.zero).dy;
+      if (dy <= threshold) {
+        if (_activePillIndex != i) setState(() => _activePillIndex = i);
+        return;
+      }
+    }
+    // Nothing scrolled past threshold — first section is active.
+    if (_activePillIndex != 0) setState(() => _activePillIndex = 0);
+  }
+
+  // ── Scroll to section when a pill is tapped ───────────────────────────────
+  void _scrollToSection(int index) {
+    final ctx = _sectionKeys[index].currentContext;
+    if (ctx == null) return;
+    setState(() => _activePillIndex = index);
+    Scrollable.ensureVisible(
+      ctx,
+      alignment: 0,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeInOutCubic,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
+    final theme = Theme.of(context);
+    final hasPills = state.hasSections && state.sections.length > 1;
+
     return RefreshIndicator(
-      onRefresh: onRefresh,
+      onRefresh: widget.onRefresh,
       child: CustomScrollView(
+        controller: _scrollController,
         slivers: [
+          // ── Hero app bar ──────────────────────────────────────────────────
           _CategorySliverAppBar(category: state.category),
+
+          // ── Sticky pills row (only when there are multiple sections) ──────
+          if (hasPills)
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _PillsHeaderDelegate(
+                sections: state.sections,
+                activeIndex: _activePillIndex,
+                onPillTap: _scrollToSection,
+                theme: theme,
+              ),
+            ),
+
+          // ── Content ───────────────────────────────────────────────────────
           if (state.hasSections)
             SliverList.separated(
               itemCount: state.sections.length,
@@ -105,12 +201,15 @@ class _LoadedView extends StatelessWidget {
               const Divider(height: 1, indent: 16, endIndent: 16),
               itemBuilder: (_, i) {
                 final section = state.sections[i];
-                return SubCategorySectionWidget(
-                  section: section,
-                  onProductTap: onProductTap,
-                  onLoadMore: section.hasMore
-                      ? () => onLoadMoreSection(section.subCategory.id)
-                      : null,
+                return KeyedSubtree(
+                  key: _sectionKeys[i],
+                  child: SubCategorySectionWidget(
+                    section: section,
+                    onProductTap: widget.onProductTap,
+                    onLoadMore: section.hasMore
+                        ? () => widget.onLoadMoreSection(section.subCategory.id)
+                        : null,
+                  ),
                 );
               },
             )
@@ -127,12 +226,134 @@ class _LoadedView extends StatelessWidget {
                 products: state.directProducts,
                 isLoadingMore: state.directProductsLoading,
                 hasMore: state.directProductsHasMore,
-                onProductTap: onProductTap,
-                onLoadMore: onLoadMoreDirect,
+                onProductTap: widget.onProductTap,
+                onLoadMore: widget.onLoadMoreDirect,
               ),
             ),
+
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
+      ),
+    );
+  }
+}
+
+// ── Sticky pills header delegate ──────────────────────────────────────────────
+
+class _PillsHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final List<dynamic> sections; // CategorySectionState or similar
+  final int activeIndex;
+  final void Function(int) onPillTap;
+  final ThemeData theme;
+
+  const _PillsHeaderDelegate({
+    required this.sections,
+    required this.activeIndex,
+    required this.onPillTap,
+    required this.theme,
+  });
+
+  static const double _height = 52.0;
+
+  @override
+  double get minExtent => _height;
+  @override
+  double get maxExtent => _height;
+
+  @override
+  bool shouldRebuild(_PillsHeaderDelegate old) =>
+      old.activeIndex != activeIndex ||
+          old.sections.length != sections.length;
+
+  @override
+  Widget build(
+      BuildContext context,
+      double shrinkOffset,
+      bool overlapsContent,
+      ) {
+    // Subtle elevation shadow when the pills row is overlapping content below.
+    final elevated = overlapsContent || shrinkOffset > 0;
+
+    return Material(
+      color: theme.colorScheme.surface,
+      elevation: elevated ? 2 : 0,
+      shadowColor: Colors.black.withOpacity(0.10),
+      child: SizedBox(
+        height: _height,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          itemCount: sections.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (_, i) {
+            final isActive = i == activeIndex;
+            final label =
+                sections[i].subCategory.displayName as String? ?? '';
+
+            return _PillChip(
+              label: label,
+              isActive: isActive,
+              theme: theme,
+              onTap: () => onPillTap(i),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ── Individual pill chip ──────────────────────────────────────────────────────
+
+class _PillChip extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final ThemeData theme;
+  final VoidCallback onTap;
+
+  const _PillChip({
+    required this.label,
+    required this.isActive,
+    required this.theme,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        color: isActive
+            ? theme.colorScheme.primary
+            : theme.colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(20),
+        border: isActive
+            ? null
+            : Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.35),
+          width: 0.8,
+        ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+          child: Center(
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 220),
+              style: theme.textTheme.labelMedium!.copyWith(
+                color: isActive
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.onSurfaceVariant,
+                fontWeight:
+                isActive ? FontWeight.w700 : FontWeight.w500,
+              ),
+              child: Text(label),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -158,7 +379,6 @@ class _CategorySliverAppBar extends StatelessWidget {
       elevation: 0,
       leading: CircleBackButton(),
       actions: [
-        // Animated cart icon with bounce-on-add animation.
         AnimatedCartIcon(onTap: () => context.push('/cart')),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -176,7 +396,6 @@ class _CategorySliverAppBar extends StatelessWidget {
     );
   }
 }
-
 
 // ── Header background ─────────────────────────────────────────────────────────
 
@@ -201,7 +420,6 @@ class _HeaderBackground extends StatelessWidget {
         else
           _GradientMesh(theme: theme, category: category),
 
-        // Cinematic bottom-heavy scrim
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -220,7 +438,6 @@ class _HeaderBackground extends StatelessWidget {
           ),
         ),
 
-        // Title block
         Positioned(
           left: 20,
           right: 20,
@@ -327,10 +544,8 @@ class _GradientMesh extends StatelessWidget {
               colors: [
                 HSLColor.fromColor(primary)
                     .withLightness(
-                  (HSLColor.fromColor(primary).lightness - 0.12).clamp(
-                    0.0,
-                    1.0,
-                  ),
+                  (HSLColor.fromColor(primary).lightness - 0.12)
+                      .clamp(0.0, 1.0),
                 )
                     .toColor(),
                 primary,
@@ -400,17 +615,14 @@ class _EmptyProducts extends StatelessWidget {
       padding: const EdgeInsets.all(48),
       child: Column(
         children: [
-          Icon(
-            Icons.inventory_2_outlined,
-            size: 64,
-            color: Colors.grey.shade400,
-          ),
+          Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade400),
           const SizedBox(height: 16),
           Text(
             'لا توجد منتجات في هذا التصنيف',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -419,11 +631,6 @@ class _EmptyProducts extends StatelessWidget {
 }
 
 // ── Loading view ──────────────────────────────────────────────────────────────
-// Matches the loaded view structure exactly:
-//  • When a [category] is available (navigation from list), the real
-//    _CategorySliverAppBar is rendered so the header snaps in instantly.
-//  • When only an ID was supplied, a matching gradient placeholder is shown.
-//  • Below the header, a pulsing skeleton product grid fills the content area.
 
 class _LoadingView extends StatefulWidget {
   final CategoryModel? category;
@@ -466,13 +673,11 @@ class _LoadingViewState extends State<_LoadingView>
         return CustomScrollView(
           physics: const NeverScrollableScrollPhysics(),
           slivers: [
-            // ── Header: reuse the real widget when category is known ─────────
             if (widget.category != null)
               _CategorySliverAppBar(category: widget.category!)
             else
               _GradientPlaceholderAppBar(shimmer: shimmer),
 
-            // ── Skeleton product grid ────────────────────────────────────────
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
               sliver: SliverGrid.count(
@@ -493,7 +698,7 @@ class _LoadingViewState extends State<_LoadingView>
   }
 }
 
-// ── Gradient placeholder app bar (used when category model is not yet known) ──
+// ── Gradient placeholder app bar ──────────────────────────────────────────────
 
 class _GradientPlaceholderAppBar extends StatelessWidget {
   final Color shimmer;
@@ -518,11 +723,8 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
           radius: 20,
           backgroundColor: Colors.grey.shade200,
           child: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 16,
-              color: Colors.grey.shade700,
-            ),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                size: 16, color: Colors.grey.shade700),
             onPressed: () => Navigator.of(context).maybePop(),
             padding: EdgeInsets.zero,
           ),
@@ -538,7 +740,6 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            // Gradient mesh matching _GradientMesh aesthetic
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -558,7 +759,6 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
                 ),
               ),
             ),
-            // Radial highlight orb
             Positioned(
               top: -60,
               right: -40,
@@ -568,15 +768,11 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.12),
-                      Colors.transparent,
-                    ],
+                    colors: [Colors.white.withOpacity(0.12), Colors.transparent],
                   ),
                 ),
               ),
             ),
-            // Cinematic scrim
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -594,7 +790,6 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
                 ),
               ),
             ),
-            // Skeleton title block
             Positioned(
               left: 20,
               right: 20,
@@ -654,7 +849,6 @@ class _SkeletonProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image area
           Expanded(
             flex: 5,
             child: Container(
@@ -666,7 +860,6 @@ class _SkeletonProductCard extends StatelessWidget {
               ),
             ),
           ),
-          // Info area
           Expanded(
             flex: 2,
             child: Padding(
@@ -675,7 +868,6 @@ class _SkeletonProductCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Name line 1
                   Container(
                     height: 10,
                     decoration: BoxDecoration(
@@ -683,7 +875,6 @@ class _SkeletonProductCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
-                  // Name line 2 (shorter)
                   Container(
                     height: 10,
                     width: 80,
@@ -692,7 +883,6 @@ class _SkeletonProductCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
-                  // Price stub
                   Container(
                     height: 10,
                     width: 55,
@@ -739,11 +929,7 @@ class _ErrorView extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.grey.shade400,
-                  ),
+                  Icon(Icons.error_outline, size: 64, color: Colors.grey.shade400),
                   const SizedBox(height: 16),
                   Text(message, textAlign: TextAlign.center),
                   const SizedBox(height: 24),
