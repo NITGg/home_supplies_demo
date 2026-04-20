@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/utils/secure_storage_service.dart';
@@ -31,7 +29,7 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final token = await SecureStorageService().getToken();
-          log('Token: $token');
+          // log('Token: $token');
           if (token != null && token.isNotEmpty) {
             // Add the authorization token to the headers
             options.headers['Authorization'] = 'Bearer $token';
