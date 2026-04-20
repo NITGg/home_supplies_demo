@@ -236,6 +236,8 @@ class _SkeletonCardState extends State<_SkeletonCard>
 
 // ── Standalone product grid (for direct products / no sub-categories) ─────────
 
+// ── Standalone product grid (for direct products / no sub-categories) ─────────
+
 class DirectProductsGrid extends StatelessWidget {
   final List<ProductModel> products;
   final bool isLoadingMore;
@@ -254,30 +256,34 @@ class DirectProductsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: _ProductList(
-            products: products,
-            onProductTap: onProductTap,
-            isLoadingMore: isLoadingMore,
-            hasMore: hasMore,
-            onLoadMore: onLoadMore,
-          ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(), // outer CustomScrollView handles scrolling
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 0.72,
         ),
-        if (hasMore)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: isLoadingMore
-                ? const CircularProgressIndicator()
-                : ElevatedButton.icon(
-                    onPressed: onLoadMore,
-                    icon: const Icon(Icons.expand_more),
-                    label: const Text('تحميل المزيد'),
-                  ),
-          ),
-      ],
+        itemCount: products.length + (isLoadingMore ? 2 : 0), // 2 skeleton placeholders at end
+        itemBuilder: (_, i) {
+          if (i >= products.length) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            );
+          }
+          final product = products[i];
+          return ProductCard(
+            product: product,
+            onTap: () => onProductTap(product),
+          );
+        },
+      ),
     );
   }
 }

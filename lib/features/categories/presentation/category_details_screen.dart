@@ -112,26 +112,37 @@ class _LoadedViewState extends State<_LoadedView> {
 
   // ── Scroll listener — updates the active pill as user scrolls ─────────────
   void _onScroll() {
-    if (_sectionKeys.isEmpty) return;
-
-    const threshold = 180.0;
-    for (int i = _sectionKeys.length - 1; i >= 0; i--) {
-      final ctx = _sectionKeys[i].currentContext;
-      if (ctx == null) continue;
-      final box = ctx.findRenderObject() as RenderBox?;
-      if (box == null) continue;
-      final dy = box.localToGlobal(Offset.zero).dy;
-      if (dy <= threshold) {
-        if (_activePillIndex != i) setState(() => _activePillIndex = i);
-        return;
+    // ── update active pill ─────────────────────────────────────────────
+    if (_sectionKeys.isNotEmpty) {
+      const threshold = 180.0;
+      for (int i = _sectionKeys.length - 1; i >= 0; i--) {
+        final ctx = _sectionKeys[i].currentContext;
+        if (ctx == null) continue;
+        final box = ctx.findRenderObject() as RenderBox?;
+        if (box == null) continue;
+        final dy = box.localToGlobal(Offset.zero).dy;
+        if (dy <= threshold) {
+          if (_activePillIndex != i) setState(() => _activePillIndex = i);
+          break;
+        }
       }
     }
-    if (_activePillIndex != 0) setState(() => _activePillIndex = 0);
 
-    // ── auto-load sections near the viewport bottom ────────────────────
     _checkAutoLoad();
+    _checkAutoLoadDirect();
   }
 
+  void _checkAutoLoadDirect() {
+    final state = widget.state;
+    if (state.hasSections) return;
+    if (!state.directProductsHasMore || state.directProductsLoading) return;
+
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 300) {
+      debugPrint('🔄 Loading more direct products');
+      widget.onLoadMoreDirect();
+    }
+  }
   void _checkAutoLoad() {
     final screenHeight = MediaQuery.of(context).size.height;
     const loadBuffer = 300.0;
@@ -198,7 +209,9 @@ class _LoadedViewState extends State<_LoadedView> {
 
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
+      notificationPredicate: (notification) => notification.depth == 0, // add this
       child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(), // add this
         controller: _scrollController,
         slivers: [
           // ── Hero app bar ──────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import '../../../../l10n/manager/locale_cubit.dart';
 import 'product_attribute_model.dart';
 import 'product_unit_model.dart';
 
@@ -306,7 +307,7 @@ class ProductModel {
 
   // ── Computed helpers ───────────────────────────────────────────────────────
 
-  String get displayName => nameAr ?? name;
+  String get displayName => LocaleManager.currentLocale == 'ar' ?  (nameAr ?? name) : name;
   String get displayDescription => descriptionAr ?? description ?? '';
   bool get hasOffer => offer != null && offer! > 0;
 

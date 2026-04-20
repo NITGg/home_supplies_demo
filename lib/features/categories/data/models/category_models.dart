@@ -1,3 +1,7 @@
+import 'package:tawreedat_go/l10n/manager/locale_cubit.dart';
+
+import '../../../../l10n/app_localizations.dart';
+
 class CategoryModel {
   final int id;
   final String name;
@@ -58,9 +62,10 @@ class CategoryModel {
     );
   }
 
+
   bool get isRoot => parentId == null;
 
-  String get displayName => nameAr ?? name;
+  String get displayName => LocaleManager.currentLocale == 'ar' ?  (nameAr ?? name) : name;
 
   String get displayDescription => descriptionAr ?? description ?? '';
 }

@@ -331,8 +331,8 @@ class _SwipeDeleteBackground extends StatelessWidget {
         color: theme.colorScheme.error,
         borderRadius: BorderRadius.circular(16),
       ),
-      alignment: Alignment.centerRight,
-      padding: const EdgeInsets.only(right: 20),
+      alignment: AlignmentDirectional.centerEnd,
+      padding: const EdgeInsetsDirectional.only(end: 20),
       child: const Icon(
         Icons.delete_outline_rounded,
         color: Colors.white,
