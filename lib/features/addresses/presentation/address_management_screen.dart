@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/circel_back_cutton.dart';
 import '../../../core/widgets/custom_button.dart';
@@ -192,10 +191,17 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
         title: Text(AppLocalizations.of(context)!.address),
         leading: CircleBackButton(),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add_location_alt_outlined),
-            tooltip: AppLocalizations.of(context)!.addAddress,
-            onPressed: _showAddSheet,
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.grey.shade200,
+              child: IconButton(
+                icon: Icon(Icons.add_location_alt_outlined,color: Colors.grey.shade700,),
+                tooltip: AppLocalizations.of(context)!.addAddress,
+                onPressed: _showAddSheet,
+              ),
+            ),
           ),
         ],
       ),
