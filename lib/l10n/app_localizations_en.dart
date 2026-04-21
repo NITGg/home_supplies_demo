@@ -962,6 +962,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yourFee => 'Your Fee';
 
   @override
+  String get vat => 'VAT';
+
+  @override
   String get totalFee => 'Total Fee';
 
   @override

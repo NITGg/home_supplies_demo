@@ -429,6 +429,8 @@
   "offerAccepted": "Offer Accepted",
   "customer": "Customer",
   "yourFee": "Your Fee",
+  "vat": "VAT",
+
     "totalFee": "Total Fee",
   "otherReason": "Other Reason",
   "productUnAvailable": "Product Unavailable",

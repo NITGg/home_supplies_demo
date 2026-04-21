@@ -962,6 +962,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get yourFee => 'رسومك';
 
   @override
+  String get vat => 'ضريبة القيمة المضافة';
+
+  @override
   String get totalFee => 'رسوم التوصيل';
 
   @override

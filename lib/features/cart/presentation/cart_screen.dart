@@ -14,6 +14,7 @@ import '../../addresses/presentation/default_address_chip.dart';
 import '../../orders/manager/order_cubit.dart';
 import '../../orders/manager/order_states.dart';
 import '../../orders/presentation/widgets/sheets/create_order_sheet/coupon_section.dart';
+import '../data/models/order_preview_model.dart';
 import '../manager/cart_cubit.dart';
 import '../manager/cart_state.dart';
 import 'cart_item_tile.dart';
@@ -143,7 +144,10 @@ class _CartScreenState extends State<CartScreen> {
             context.go('/mainHome', extra: HomeCubit.ordersTabIndex);
           }
           context.read<CartCubit>().fetchCart();
-          showSuccessBanner(context, '${l10n.created}: ${state.order.orderNumber}');
+          showSuccessBanner(
+            context,
+            '${l10n.created}: ${state.order.orderNumber}',
+          );
         } else if (state is OrderError) {
           Fluttertoast.showToast(
             msg: state.message,
@@ -265,6 +269,7 @@ class _CartScreenState extends State<CartScreen> {
         // ── Summary bar ───────────────────────────────────────────────────
         _CartSummaryBar(
           summary: summary,
+          preview: state.preview,
           hPad: hPad,
           bottomPadding: bottomPadding,
           theme: theme,
@@ -302,7 +307,10 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _showUpdateError(BuildContext context) {
-    showErrorBanner(context, AppLocalizations.of(context)!.updateQuantityFailed);
+    showErrorBanner(
+      context,
+      AppLocalizations.of(context)!.updateQuantityFailed,
+    );
   }
 
   Future<void> _confirmClear(BuildContext context) async {
@@ -348,8 +356,10 @@ class _CartSummaryBar extends StatelessWidget {
   final VoidCallback onRemoveCoupon;
 
   final VoidCallback onCheckout;
+  final OrderPreviewModel? preview;
 
   const _CartSummaryBar({
+    required this.preview,
     required this.summary,
     required this.hPad,
     required this.bottomPadding,
@@ -456,14 +466,44 @@ class _CartSummaryBar extends StatelessWidget {
             ),
           ],
 
+          // Replace the current dashed divider + subtotal block with:
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: DashedDivider(color: theme.dividerColor),
           ),
 
+          // Products subtotal
+          if(finalTotal != (summary.originalTotal as double))
           _SummaryRow(
-            label: appliedCoupon != null ? l10n.subtotal : l10n.subtotal,
+            label: l10n.subtotal,
             value: '${finalTotal.toStringAsFixed(0)} ${l10n.egp}',
+          ),
+
+          // Delivery fee — only shown when preview is available
+          if (preview != null) ...[
+            const SizedBox(height: 6),
+            _SummaryRow(
+              label: l10n.deliveryFee, // add this key to your l10n
+              value: '${preview!.deliveryFee.toStringAsFixed(0)} ${l10n.egp}',
+            ),
+            const SizedBox(height: 6),
+            _SummaryRow(
+              label: l10n.vat, // add this key to your l10n
+              value: '${preview!.vatAmount.toStringAsFixed(0)} ${l10n.egp}',
+            ),
+          ],
+
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: DashedDivider(color: theme.dividerColor),
+          ),
+
+          // Grand total
+          _SummaryRow(
+            label: l10n.subtotal,
+            value: preview != null
+                ? '${(finalTotal + preview!.deliveryFee + preview!.vatAmount).toStringAsFixed(0)} ${l10n.egp}'
+                : '${finalTotal.toStringAsFixed(0)} ${l10n.egp}',
             isTotal: true,
           ),
 

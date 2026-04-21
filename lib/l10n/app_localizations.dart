@@ -1967,6 +1967,12 @@ abstract class AppLocalizations {
   /// **'Your Fee'**
   String get yourFee;
 
+  /// No description provided for @vat.
+  ///
+  /// In en, this message translates to:
+  /// **'VAT'**
+  String get vat;
+
   /// No description provided for @totalFee.
   ///
   /// In en, this message translates to:

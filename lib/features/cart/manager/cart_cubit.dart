@@ -34,6 +34,9 @@ class CartCubit extends Cubit<CartState> {
     try {
       final data = await _repository.getCart();
       _safeEmit(CartLoaded(_enrichSummary(data)));
+      if (data.cartItems.isNotEmpty) {
+        unawaited(_fetchPreviewSilently()); // ← add this
+      }
     } catch (e) {
       _safeEmit(CartError(extractErrorMessage(e)));
     }
@@ -43,7 +46,11 @@ class CartCubit extends Cubit<CartState> {
   Future<void> _silentRefresh() async {
     try {
       final data = await _repository.getCart();
-      _safeEmit(CartLoaded(_enrichSummary(data)));
+      final currentPreview = _loaded?.preview; // ← preserve so UI doesn't flicker
+      _safeEmit(CartLoaded(_enrichSummary(data), preview: currentPreview));
+      if (data.cartItems.isNotEmpty) {
+        unawaited(_fetchPreviewSilently()); // ← re-fetch fees after every mutation
+      }
     } catch (e) {
       log('[CartCubit] silentRefresh error: $e');
     }
@@ -78,6 +85,19 @@ class CartCubit extends Cubit<CartState> {
       log('[CartCubit] addItem error: $e');
       if (_loaded != null) rethrow;
       _safeEmit(CartError(extractErrorMessage(e)));
+    }
+  }
+
+  Future<void> _fetchPreviewSilently() async {
+    try {
+      final preview = await _repository.getOrderPreview();
+      final loaded = _loaded;
+      if (loaded != null) {
+        _safeEmit(loaded.copyWith(preview: preview));
+      }
+    } catch (e) {
+      log('[CartCubit] fetchPreview error: $e');
+      // non-fatal — summary still shows product totals
     }
   }
 

@@ -4,6 +4,7 @@ import '../../../../core/utils/api_client.dart';
 import '../models/cart_response_model.dart';
 import '../models/cart_item_model.dart';
 import '../models/multiple_supplier_exception.dart';
+import '../models/order_preview_model.dart';
 
 enum CartUpdateAction { increment, decrement, set }
 
@@ -20,6 +21,9 @@ abstract class CartRemoteDataSource {
     required int quantity,
   });
   Future<void> clearCart();
+
+  Future<OrderPreviewModel> getOrderPreview();
+
 }
 
 class CartRemoteDataSourceImpl implements CartRemoteDataSource {
@@ -32,6 +36,13 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
     final response = await _dio.get('/cart');
     log('[Cart] GET /cart → ${response.statusCode}');
     return CartResponseModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<OrderPreviewModel> getOrderPreview() async {
+    final response = await _dio.post('/orders/preview',data: {});
+    log('[Cart] GET /orders/preview → ${response.statusCode}');
+    return OrderPreviewModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
