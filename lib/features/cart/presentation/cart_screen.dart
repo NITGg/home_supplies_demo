@@ -14,6 +14,9 @@ import '../../addresses/presentation/default_address_chip.dart';
 import '../../orders/manager/order_cubit.dart';
 import '../../orders/manager/order_states.dart';
 import '../../orders/presentation/widgets/sheets/create_order_sheet/coupon_section.dart';
+import '../../orders/presentation/widgets/sheets/create_order_sheet/insufficient_balance_sheet.dart';
+import '../../wallet/manager/wallet_cubit.dart';
+import '../../wallet/manager/wallet_state.dart';
 import '../data/models/order_preview_model.dart';
 import '../manager/cart_cubit.dart';
 import '../manager/cart_state.dart';
@@ -37,7 +40,9 @@ double? _computeCouponCartDiscount(CouponValid coupon, double subtotal) {
     return value.clamp(0.0, subtotal);
   }
   return null;
-} // ─────────────────────────────────────────────────────────────────────────────
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -47,6 +52,8 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  double _walletBalance = 0.0;
+
   // ── Payment & coupon state ─────────────────────────────────────────────────
   String _paymentMethod = 'CASH';
   CouponValid? _appliedCoupon;
@@ -54,11 +61,29 @@ class _CartScreenState extends State<CartScreen> {
   final _couponController = TextEditingController();
   final FocusNode _couponFocus = FocusNode();
 
+
+  double _computeRequiredAmount(CartLoaded state) {
+    final summary = state.data.summary;
+    final hasDiscount = summary.hasDiscount as bool;
+    final originalTotal = summary.originalTotal as double;
+    final totalDiscount = hasDiscount ? summary.totalDiscount as double : 0.0;
+    final priceBeforeCoupon = originalTotal - totalDiscount;
+    final couponDiscount = _appliedCoupon != null
+        ? _computeCouponCartDiscount(_appliedCoupon!, priceBeforeCoupon)
+        : null;
+    final finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
+    final preview = state.preview;
+    return preview != null
+        ? finalTotal + preview.deliveryFee + preview.vatAmount
+        : finalTotal;
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<CartCubit>().fetchCart();
+      if (mounted) context.read<WalletCubit>().fetchWalletData();
     });
   }
 
@@ -93,98 +118,143 @@ class _CartScreenState extends State<CartScreen> {
   // ── Checkout ───────────────────────────────────────────────────────────────
 
   Future<void> _checkout() async {
+    if (_paymentMethod == 'WALLET') {
+      final cartState = context.read<CartCubit>().state;
+      if (cartState is CartLoaded) {
+        final required = _computeRequiredAmount(cartState);
+        if (_walletBalance < required) {
+          _showInsufficientBalanceDialog(
+            required: required,
+            balance: _walletBalance,
+          );
+          return;
+        }
+      }
+    }
     await context.read<OrderCubit>().createCatalogOrder(
       paymentMethod: _paymentMethod,
       couponCode: _appliedCoupon?.code,
     );
   }
+  void _showInsufficientBalanceDialog({
+    required double required,
+    required double balance,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final shortfall = (required - balance).ceilToDouble();
 
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetCtx) => InsufficientBalanceSheet(
+        currentBalance: balance,
+        requiredAmount: required.ceilToDouble(),
+        shortfall: shortfall,
+        isShopping: true, // catalog cart is always shopping
+        l10n: l10n,
+        onTopUp: () async {
+          Navigator.pop(sheetCtx);
+          await context.push('/wallet/topup');
+        },
+      ),
+    );
+  }
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return BlocListener<OrderCubit, OrderState>(
+    return BlocListener<WalletCubit, WalletState>(
+      listenWhen: (_, curr) => curr is WalletLoaded,
+
       listener: (context, state) {
-        if (state is CouponValidating) {
-          if (!_couponValidating) setState(() => _couponValidating = true);
-        } else if (state is CouponRedeemed) {
-          setState(() {
-            _couponValidating = false;
-            if (state.coupon != null) _appliedCoupon = state.coupon;
-          });
-          Fluttertoast.showToast(
-            msg: l10n.couponRedeemed,
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.green.shade700,
-          );
-        } else if (state is CouponInvalid) {
-          setState(() => _couponValidating = false);
-          Fluttertoast.showToast(
-            msg: state.message,
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
-        } else if (state is CouponRedeemError) {
-          setState(() => _couponValidating = false);
-          Fluttertoast.showToast(
-            msg: state.message,
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.orange,
-            textColor: Colors.white,
-          );
-        } else if (state is OrderSuccess) {
-          if (mounted) {
-            FocusScope.of(context).unfocus();
-            context.go('/mainHome', extra: HomeCubit.ordersTabIndex);
-          }
-          context.read<CartCubit>().fetchCart();
-          showSuccessBanner(
-            context,
-            '${l10n.created}: ${state.order.orderNumber}',
-          );
-        } else if (state is OrderError) {
-          Fluttertoast.showToast(
-            msg: state.message,
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
+        if (state is WalletLoaded) {
+          setState(() => _walletBalance = state.walletData.wallet.balance);
         }
       },
-      child: BlocConsumer<CartCubit, CartState>(
-        listenWhen: (_, curr) => curr is CartError,
+      child: BlocListener<OrderCubit, OrderState>(
         listener: (context, state) {
-          if (state is CartError) {
-            showErrorBanner(context, state.message);
+          if (state is CouponValidating) {
+            if (!_couponValidating) setState(() => _couponValidating = true);
+          } else if (state is CouponRedeemed) {
+            setState(() {
+              _couponValidating = false;
+              if (state.coupon != null) _appliedCoupon = state.coupon;
+            });
+            Fluttertoast.showToast(
+              msg: l10n.couponRedeemed,
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.green.shade700,
+            );
+          } else if (state is CouponInvalid) {
+            setState(() => _couponValidating = false);
+            Fluttertoast.showToast(
+              msg: state.message,
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+            );
+          } else if (state is CouponRedeemError) {
+            setState(() => _couponValidating = false);
+            Fluttertoast.showToast(
+              msg: state.message,
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.orange,
+              textColor: Colors.white,
+            );
+          } else if (state is OrderSuccess) {
+            if (mounted) {
+              FocusScope.of(context).unfocus();
+              context.go('/mainHome', extra: HomeCubit.ordersTabIndex);
+            }
+            context.read<CartCubit>().fetchCart();
+            showSuccessBanner(
+              context,
+              '${l10n.created}: ${state.order.orderNumber}',
+            );
+          } else if (state is OrderError) {
+            Fluttertoast.showToast(
+              msg: state.message,
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+            );
           }
         },
-        builder: (context, state) {
-          return Scaffold(
-            appBar: _buildAppBar(context, state),
-            body: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: switch (state) {
-                CartInitial() ||
-                CartLoading() => const _LoadingView(key: ValueKey('loading')),
-                CartError(:final message) => _ErrorView(
-                  key: const ValueKey('error'),
-                  message: message,
-                  onRetry: _cubit.fetchCart,
-                ),
-                CartLoaded(:final data) when data.cartItems.isEmpty =>
-                  const _EmptyView(key: ValueKey('empty')),
-                CartLoaded() => _buildLoaded(context, state as CartLoaded),
-              },
-            ),
-          );
-        },
+        child: BlocConsumer<CartCubit, CartState>(
+          listenWhen: (_, curr) => curr is CartError,
+          listener: (context, state) {
+            if (state is CartError) {
+              showErrorBanner(context, state.message);
+            }
+          },
+          builder: (context, state) {
+            return Scaffold(
+              appBar: _buildAppBar(context, state),
+              body: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: switch (state) {
+                  CartInitial() ||
+                  CartLoading() => const _LoadingView(key: ValueKey('loading')),
+                  CartError(:final message) => _ErrorView(
+                    key: const ValueKey('error'),
+                    message: message,
+                    onRetry: _cubit.fetchCart,
+                  ),
+                  CartLoaded(:final data) when data.cartItems.isEmpty =>
+                    const _EmptyView(key: ValueKey('empty')),
+                  CartLoaded() => _buildLoaded(context, state as CartLoaded),
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -441,7 +511,7 @@ class _CartSummaryBar extends StatelessWidget {
           _SummaryRow(
             label: l10n.cartTotal,
             value:
-                '${(summary.originalTotal as double).toStringAsFixed(0)} ${l10n.egp}',
+                '${(summary.originalTotal as double).toStringAsFixed(1)} ${l10n.egp}',
           ),
 
           // Backend sale discount
@@ -473,23 +543,23 @@ class _CartSummaryBar extends StatelessWidget {
           ),
 
           // Products subtotal
-          if(finalTotal != (summary.originalTotal as double))
-          _SummaryRow(
-            label: l10n.subtotal,
-            value: '${finalTotal.toStringAsFixed(0)} ${l10n.egp}',
-          ),
+          if (finalTotal != (summary.originalTotal as double))
+            _SummaryRow(
+              label: l10n.subtotal,
+              value: '${finalTotal.toStringAsFixed(2)} ${l10n.egp}',
+            ),
 
           // Delivery fee — only shown when preview is available
           if (preview != null) ...[
             const SizedBox(height: 6),
             _SummaryRow(
               label: l10n.deliveryFee, // add this key to your l10n
-              value: '${preview!.deliveryFee.toStringAsFixed(0)} ${l10n.egp}',
+              value: '${preview!.deliveryFee.toStringAsFixed(2)} ${l10n.egp}',
             ),
             const SizedBox(height: 6),
             _SummaryRow(
               label: l10n.vat, // add this key to your l10n
-              value: '${preview!.vatAmount.toStringAsFixed(0)} ${l10n.egp}',
+              value: '${preview!.vatAmount.toStringAsFixed(2)} ${l10n.egp}',
             ),
           ],
 
@@ -503,7 +573,7 @@ class _CartSummaryBar extends StatelessWidget {
             label: l10n.subtotal,
             value: preview != null
                 ? '${(finalTotal + preview!.deliveryFee + preview!.vatAmount).toStringAsFixed(0)} ${l10n.egp}'
-                : '${finalTotal.toStringAsFixed(0)} ${l10n.egp}',
+                : '${finalTotal.toStringAsFixed(2)} ${l10n.egp}',
             isTotal: true,
           ),
 
