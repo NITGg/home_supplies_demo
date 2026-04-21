@@ -115,7 +115,7 @@ class _DefaultAddressChipState extends State<DefaultAddressChip>
         return GestureDetector(
           onTap: () => _showAddressSheet(context),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 800),
+            constraints: const BoxConstraints(maxWidth: 1000),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: Colors.grey.shade100,

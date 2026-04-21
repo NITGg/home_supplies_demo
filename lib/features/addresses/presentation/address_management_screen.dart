@@ -10,6 +10,7 @@ import '../data/models/address_model.dart';
 import '../manager/address_cubit.dart';
 import '../manager/address_states.dart';
 import 'address_form_sheet.dart';
+import 'default_address_picker_sheet.dart';
 
 class AddressManagementScreen extends StatefulWidget {
   const AddressManagementScreen({super.key});
@@ -20,6 +21,8 @@ class AddressManagementScreen extends StatefulWidget {
 }
 
 class _AddressManagementScreenState extends State<AddressManagementScreen> {
+  bool _defaultPickerShown = false;
+
   @override
   void initState() {
     super.initState();
@@ -33,10 +36,8 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => MultiBlocProvider(
-        providers: [
-          BlocProvider.value(value: addressCubit),
-        ],
+      builder: (_) => BlocProvider.value(
+        value: addressCubit,
         child: const AddressFormBottomSheet(),
       ),
     );
@@ -49,11 +50,23 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => MultiBlocProvider(
-        providers: [
-          BlocProvider.value(value: addressCubit),
-        ],
+      builder: (_) => BlocProvider.value(
+        value: addressCubit,
         child: AddressFormBottomSheet(address: address),
+      ),
+    );
+  }
+
+  Future<void> _showDefaultPickerSheet() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (_) => BlocProvider.value(
+        value: context.read<AddressCubit>(),
+        child: const DefaultAddressPickerSheet(),
       ),
     );
   }
@@ -65,9 +78,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Container(
@@ -119,11 +130,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.location_on,
-                    size: 18,
-                    color: Colors.red,
-                  ),
+                  const Icon(Icons.location_on, size: 18, color: Colors.red),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -190,7 +197,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.address),
-        leading: CircleBackButton(onPressed: context.pop,),
+        leading: CircleBackButton(onPressed: context.pop),
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -198,7 +205,10 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
               radius: 20,
               backgroundColor: Colors.grey.shade200,
               child: IconButton(
-                icon: Icon(Icons.add_location_alt_outlined,color: Colors.grey.shade700,),
+                icon: Icon(
+                  Icons.add_location_alt_outlined,
+                  color: Colors.grey.shade700,
+                ),
                 tooltip: AppLocalizations.of(context)!.addAddress,
                 onPressed: _showAddSheet,
               ),
@@ -206,7 +216,21 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
           ),
         ],
       ),
-      body: BlocBuilder<AddressCubit, AddressState>(
+      body: BlocConsumer<AddressCubit, AddressState>(
+        listener: (context, state) {
+          if (state is AddressesLoaded &&
+              state.addresses.isEmpty &&
+              !_defaultPickerShown) {
+            _defaultPickerShown = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _showDefaultPickerSheet();
+            });
+          }
+          // Reset when addresses exist again so future deletes can re-trigger.
+          if (state is AddressesLoaded && state.addresses.isNotEmpty) {
+            _defaultPickerShown = false;
+          }
+        },
         builder: (context, state) {
           if (state is AddressLoading) {
             return const Center(
@@ -248,14 +272,6 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
                     Text(
                       AppLocalizations.of(context)!.addAddress,
                       style: TextStyle(color: Colors.grey.shade600),
-                    ),
-                    const SizedBox(height: 24),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 48),
-                      child: AppCustomButton(
-                        onPressed: _showAddSheet,
-                        text: AppLocalizations.of(context)!.addAddress,
-                      ),
                     ),
                   ],
                 ),
