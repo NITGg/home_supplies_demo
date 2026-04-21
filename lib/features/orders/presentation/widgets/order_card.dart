@@ -214,9 +214,10 @@ class OrderCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        if(order.productDescription != null)
                         Expanded(
                           child: Text(
-                            order.productDescription,
+                            order.productDescription!,
                             style: AppTextStyles.bold14.copyWith(
                               fontSize: 15,
                               height: 1.3,
@@ -237,11 +238,11 @@ class OrderCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    if (order.budget != '0')
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          OrderBudgetChip(
+                          if (order.budget != '0' && order.budget != null)
+                            OrderBudgetChip(
                             budget: order.actualPrice == '0'
                                 ? order.budget
                                 : order.actualPrice,
@@ -548,6 +549,7 @@ class OrderCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
           child: Row(
             children: [
+              if(order.type != 'CATALOG_PURCHASE')...[
               Expanded(
                 child: Stack(
                   clipBehavior: Clip.none,
@@ -580,7 +582,7 @@ class OrderCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 12),],
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: onCancel,

@@ -219,7 +219,6 @@ Future<GoRouter> createAppRouter({
         name: 'mainHome',
         builder: (context, state) => const HomeLayout(),
       ),
-
       GoRoute(
         path: '/categories/:id',
         builder: (context, state) => CategoryDetailScreen(

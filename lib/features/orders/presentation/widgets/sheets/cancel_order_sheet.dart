@@ -5,6 +5,7 @@ import 'package:tawreedat_go/features/auth/manager/profile_cubit.dart';
 
 import '../../../../../core/style/text_styles.dart';
 import '../../../../../core/utils/api_client.dart';
+import '../../../../../core/widgets/banners.dart';
 import '../../../../../core/widgets/custom_button.dart';
 import '../../../../../core/widgets/text_form.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -139,22 +140,7 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
           Navigator.pop(context, true);
         } else if (state is OrderCancelError) {
           Navigator.pop(context, true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(state.message)),
-                ],
-              ),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
+          showErrorBanner(context, state.message);
         }
       },
       child: Container(

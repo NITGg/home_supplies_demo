@@ -250,6 +250,42 @@ class OrderCubit extends Cubit<OrderState> {
     }
   }
 
+
+  /// Creates a catalog-purchase order from the cart.
+  ///
+  /// Sends:
+  /// ```json
+  /// {
+  ///   "type": "CATALOG_PURCHASE",
+  ///   "payment_method": "CASH" | "WALLET",
+  ///   "coupon_code": "..."   // optional
+  /// }
+  /// ```
+  Future<void> createCatalogOrder({
+    required String paymentMethod,
+    String? couponCode,
+  }) async {
+    emit(OrderOperationLoading());
+    try {
+      log('OrderCubit: Creating catalog order — payment: $paymentMethod');
+
+      final response = await _repository.createCatalogOrder(
+        paymentMethod: paymentMethod,
+        couponCode: couponCode,
+      );
+
+      log('OrderCubit: Catalog order created — ${response.order.orderNumber}');
+      emit(OrderSuccess(message: response.message, order: response.order));
+
+      // Reload active orders so the new PENDING order appears immediately.
+      await loadActiveOrders(loadMore: false);
+    } catch (e) {
+      log('OrderCubit: Error creating catalog order: $e');
+      emit(OrderError(extractErrorMessage(e)));
+    }
+  }
+
+
   // ── Cancel Order ───────────────────────────────────────────────────────────
 
   Future<void> cancelOrder(int orderId, String reason) async {

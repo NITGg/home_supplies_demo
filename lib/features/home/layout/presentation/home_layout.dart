@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -79,7 +80,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
         );
       }
     });
-
   }
 
   void _onExternalNotificationTrigger() {
@@ -125,6 +125,22 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
       _ensureSocketConnection();
+    }
+  }
+
+  int? _lastHandledExtra;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final extra = GoRouterState.of(context).extra;
+    if (extra is int && extra != _lastHandledExtra) {
+      _lastHandledExtra = extra;
+      _homeCubit.changeTab(extra);
+      // Reset so the same value works again on the next navigation
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _lastHandledExtra = null;
+      });
     }
   }
 
@@ -499,7 +515,17 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                               ),
                                             ),
                                           ],
-
+                                          const Divider(),
+                                          ListTile(
+                                            onTap: () => context.push('/cart'),
+                                            leading: const Icon(
+                                              Icons.shopping_cart_rounded,
+                                            ),
+                                            title: Text(
+                                              localizations.cart,
+                                              style: AppTextStyles.bold16,
+                                            ),
+                                          ),
                                           const Divider(),
                                           ListTile(
                                             onTap: () =>
@@ -1085,11 +1111,6 @@ class AppLayoutAppBar extends StatefulWidget {
 class _AppLayoutAppBarState extends State<AppLayoutAppBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _rotationAnimation;
-  late Animation<double> _companyLogoOpacity;
-  late Animation<double> _companyLogoScale;
-  late Animation<double> _appLogoOpacity;
 
   @override
   void initState() {
@@ -1098,127 +1119,12 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-
-    _scaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.0,
-          end: 1.3,
-        ).chain(CurveTween(curve: Curves.easeOut)),
-        weight: 30,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.3,
-          end: 0.9,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
-        weight: 30,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.9,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.elasticOut)),
-        weight: 40,
-      ),
-    ]).animate(_controller);
-
-    _rotationAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.0,
-          end: 0.1,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
-        weight: 25,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.1,
-          end: -0.1,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
-        weight: 25,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: -0.1,
-          end: 0.05,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
-        weight: 25,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.05,
-          end: 0.0,
-        ).chain(CurveTween(curve: Curves.easeOut)),
-        weight: 25,
-      ),
-    ]).animate(_controller);
-
-    _appLogoOpacity = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.0,
-          end: 0.0,
-        ).chain(CurveTween(curve: Curves.easeOut)),
-        weight: 30,
-      ),
-      TweenSequenceItem(tween: ConstantTween<double>(0.0), weight: 40),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.0,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeIn)),
-        weight: 30,
-      ),
-    ]).animate(_controller);
-
-    _companyLogoOpacity = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.0,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeIn)),
-        weight: 30,
-      ),
-      TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 40),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.0,
-          end: 0.0,
-        ).chain(CurveTween(curve: Curves.easeOut)),
-        weight: 30,
-      ),
-    ]).animate(_controller);
-
-    _companyLogoScale = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.5,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeOut)),
-        weight: 30,
-      ),
-      TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 40),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.0,
-          end: 1.2,
-        ).chain(CurveTween(curve: Curves.easeIn)),
-        weight: 30,
-      ),
-    ]).animate(_controller);
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  void _triggerEasterEgg() {
-    if (!_controller.isAnimating) {
-      _controller.forward(from: 0.0);
-    }
   }
 
   @override
@@ -1256,44 +1162,6 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: CouponTickerTitle(),
-              ),
-            ),
-            GestureDetector(
-              onTap: _triggerEasterEgg,
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _scaleAnimation.value,
-                    child: Transform.rotate(
-                      angle: _rotationAnimation.value,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Opacity(
-                            opacity: _appLogoOpacity.value,
-                            child: child!,
-                          ),
-                          if (_companyLogoOpacity.value > 0)
-                            Opacity(
-                              opacity: _companyLogoOpacity.value,
-                              child: Transform.scale(
-                                scale: _companyLogoScale.value,
-                                child: SvgPicture.asset(
-                                  'assets/images/appbar/company_logo.svg',
-                                  height: 20,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-                child: SvgPicture.asset(
-                  'assets/images/appbar/logo.svg',
-                  height: 20,
-                ),
               ),
             ),
           ],

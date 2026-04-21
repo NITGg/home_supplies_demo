@@ -5,17 +5,18 @@ class Order {
   final int? customerId;
   final int? courierId;
   final String? orderNumber;
-  final String productDescription;
+  final String? type;
+  final String? productDescription; // was required String
   final String? productImage;
   final File? productImageFile;
-  final String budget;
+  final String? budget; // was required String
   final String? actualPrice;
-  final int pickupAreaId;
-  final String pickupAddressDescription;
+  final int? pickupAreaId; // was required int
+  final String? pickupAddressDescription; // was required String
   final String? pickupLat;
   final String? pickupLong;
-  final int deliveryAreaId;
-  final String deliveryAddressDescription;
+  final int? deliveryAreaId; // was required int
+  final String? deliveryAddressDescription; // was required String
   final String? deliveryLat;
   final String? deliveryLong;
   final String? minDeliveryFee;
@@ -44,6 +45,7 @@ class Order {
 
   Order({
     this.courierName,
+    this.type,
     this.courierPhone,
     this.courierPhoto,
     this.priceAdjustmentStatus,
@@ -51,18 +53,18 @@ class Order {
     this.customerId,
     this.courierId,
     this.orderNumber,
-    required this.productDescription,
+    this.productDescription, // no longer required
     this.productImage,
     this.productImageFile,
-    required this.budget,
+    this.budget, // no longer required
     this.actualPrice,
     this.collectedAt,
-    required this.pickupAreaId,
-    required this.pickupAddressDescription,
-    required this.pickupLat,
-    required this.pickupLong,
-    required this.deliveryAreaId,
-    required this.deliveryAddressDescription,
+    this.pickupAreaId, // no longer required
+    this.pickupAddressDescription, // no longer required
+    this.pickupLat,
+    this.pickupLong,
+    this.deliveryAreaId, // no longer required
+    this.deliveryAddressDescription, // no longer required
     required this.deliveryLat,
     required this.deliveryLong,
     this.minDeliveryFee,
@@ -88,31 +90,39 @@ class Order {
     final user = courier?['user'] as Map<String, dynamic>?;
 
     return Order(
+      type: json['type'] as String?,
       courierName: user?['full_name'] as String?,
       courierPhone: user?['phone'] as String?,
       courierPhoto: user?['personal_photo'] as String?,
       priceAdjustmentStatus: json['price_adjustment_status'] as String?,
-
       id: json['id'] as int?,
       customerId: json['customer_id'] as int?,
       courierId: json['courier_id'] as int?,
       orderNumber: json['order_number'] as String?,
-      productDescription: json['product_description'] as String,
+      productDescription: json['product_description'] as String?,
+      // nullable
       productImage: json['product_image'] as String?,
-      budget: ((num.tryParse(json['budget']?.toString() ?? '0') ?? 0) / 100)
-          .toStringAsFixed(0),
-      actualPrice:
-          ((num.tryParse(json['actual_price']?.toString() ?? '0') ?? 0) / 100)
-              .toStringAsFixed(0),
-      pickupAreaId: json['pickup_area_id'] as int,
-      pickupAddressDescription: json['pickup_address_description'] as String,
-      pickupLat: json['pickup_lat'],
-      pickupLong: json['pickup_long'],
-      deliveryAreaId: json['delivery_area_id'] as int,
+      budget: json['budget'] == null
+          ? null
+          : ((num.tryParse(json['budget'].toString()) ?? 0) / 100)
+                .toStringAsFixed(0),
+      actualPrice: json['actual_price'] == null
+          ? null
+          : ((num.tryParse(json['actual_price'].toString()) ?? 0) / 100)
+                .toStringAsFixed(0),
+      pickupAreaId: json['pickup_area_id'] as int?,
+      // nullable
+      pickupAddressDescription: json['pickup_address_description'] as String?,
+      // nullable
+      pickupLat: json['pickup_lat']?.toString(),
+      pickupLong: json['pickup_long']?.toString(),
+      deliveryAreaId: json['delivery_area_id'] as int?,
+      // nullable
       deliveryAddressDescription:
-          json['delivery_address_description'] as String,
-      deliveryLat: json['delivery_lat'],
-      deliveryLong: json['delivery_long'],
+          json['delivery_address_description'] as String?,
+      // nullable
+      deliveryLat: json['delivery_lat']?.toString(),
+      deliveryLong: json['delivery_long']?.toString(),
       minDeliveryFee: json['min_delivery_fee']?.toString(),
       maxDeliveryFee: json['max_delivery_fee']?.toString(),
       totalFee: json['total_fee']?.toString(),

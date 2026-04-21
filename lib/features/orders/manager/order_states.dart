@@ -209,9 +209,15 @@ class CouponValid extends OrderState {
 
   bool get isPercentDiscount => discountType == 'PERCENT';
 
-  bool get isFixedDiscount => discountType == 'FIXED';
-
+  bool get isFixedDiscount =>
+      discountType == 'FIXED' || discountType == 'FIXED_CENTS';
   bool get isDeliveryFeeDiscount => scope == 'DELIVERY_FEE';
+
+  double? get discountValueInEgp {
+    if (discountValue == null) return null;
+    if (discountType == 'FIXED_CENTS') return discountValue! / 100.0;
+    return discountValue; // PERCENT or plain FIXED are already in their natural unit
+  }
 
   @override
   List<Object?> get props => [

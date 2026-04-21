@@ -156,7 +156,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (!mounted) return;
       if (state is AddressesLoaded && state.addresses.isNotEmpty) {
         final defaultAddr = state.addresses.firstWhere(
-              (a) => a.isDefault,
+          (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
         // Only use the preloaded default when the draft has no delivery address. // ← DRAFT
@@ -229,8 +229,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
       log(
         '📏 [Distance] ${result.distanceMeters} m  '
-            '⏱ ${result.durationSeconds} s  '
-            '(${result.provider})',
+        '⏱ ${result.durationSeconds} s  '
+        '(${result.provider})',
       );
 
       if (mounted) setState(() => _distanceResult = result);
@@ -727,9 +727,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             style: selected
                 ? AppTextStyles.bold14.copyWith(fontSize: 9)
                 : AppTextStyles.regular14.copyWith(
-              color: Colors.grey,
-              fontSize: 9,
-            ),
+                    color: Colors.grey,
+                    fontSize: 9,
+                  ),
           ),
         ],
       ),
@@ -737,10 +737,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 
   Widget _buildFeeAndPaymentRow(
-      AppLocalizations l10n,
-      double fee,
-      bool isOverBudget,
-      ) {
+    AppLocalizations l10n,
+    double fee,
+    bool isOverBudget,
+  ) {
     double? discountedFee;
     if (_appliedCoupon != null && _appliedCoupon!.isDeliveryFeeDiscount) {
       if (_appliedCoupon!.isPercentDiscount &&
@@ -876,9 +876,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_isShopping && _productImage == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.tapToSelectImage)));
+      Fluttertoast.showToast(
+        msg: AppLocalizations.of(context)!.tapToSelectImage,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
       return;
     }
 
@@ -949,10 +953,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final budget = double.tryParse(_budgetController.text.trim()) ?? 0;
     final limit =
         (double.tryParse(
-          AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
-        ) ??
+              AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
+            ) ??
             0) /
-            100;
+        100;
     final isOverBudget = _isShopping && budget > limit;
 
     final bool usesWallet =
@@ -974,8 +978,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         productImageFile: _productImage,
         budget: _isShopping
             ? (double.parse(_budgetController.text.trim()) * 100)
-            .round()
-            .toString()
+                  .round()
+                  .toString()
             : '1',
         pickupAreaId: effectivePickup.areaId,
         pickupAddressDescription: effectivePickup.detailedAddress,
@@ -986,7 +990,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         deliveryLat: _deliveryAddress!.addressLat,
         deliveryLong: _deliveryAddress!.addressLong,
       ),
-      estimatedDeliveryFee: ((_calculateShippingFee() ?? 0 )* 100).toString(),
+      estimatedDeliveryFee: ((_calculateShippingFee() ?? 0) * 100).toString(),
       _isShopping ? _paymentMethod : 'WALLET',
       couponCode: _appliedCoupon?.code,
     );
@@ -1157,10 +1161,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
             final limit =
                 (double.tryParse(
-                  AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
-                ) ??
+                      AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
+                    ) ??
                     0) /
-                    100;
+                100;
 
             final isOverBudget = budget > limit;
             return Container(
@@ -1216,8 +1220,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           child: Text(
                             _isShopping
                                 ? (isOverBudget
-                                ? '${l10n.walletBalanceHintOverBudget} $limit ${l10n.walletBalanceHintOverBudget2}'
-                                : l10n.walletBalanceHintShopping)
+                                      ? '${l10n.walletBalanceHintOverBudget} $limit ${l10n.walletBalanceHintOverBudget2}'
+                                      : l10n.walletBalanceHintShopping)
                                 : l10n.walletBalanceHintShipping,
                             style: TextStyle(
                               fontSize: 12,
@@ -1274,9 +1278,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               keyboardType: TextInputType.number,
                               validator: (v) {
                                 if (!_isShopping) return null;
-                                if (v == null ||
-                                    v.trim().isEmpty ||
-                                    v == '0') {
+                                if (v == null || v.trim().isEmpty || v == '0') {
                                   return l10n.pleaseEnterBudget;
                                 }
                                 if (double.tryParse(v) == null) {
@@ -1327,7 +1329,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       padding: const EdgeInsets.all(16),
                       child: BlocBuilder<OrderCubit, OrderState>(
                         buildWhen: (_, s) =>
-                        s is OrderOperationLoading ||
+                            s is OrderOperationLoading ||
                             s is OrdersLoaded ||
                             s is OrderError ||
                             s is OrderSuccess,

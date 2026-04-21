@@ -10,6 +10,7 @@ import 'package:tawreedat_go/features/orders/presentation/widgets/status_banner.
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
 import '../../../core/utils/socket_service.dart';
+import '../../../core/widgets/banners.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/manager/profile_cubit.dart';
 import '../../home/layout/manager/home_cubit.dart';
@@ -86,10 +87,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     final nextExpiry = orders
         .where(
           (o) =>
-      o.status == 'PENDING' &&
-          o.expiresAt != null &&
-          o.expiresAt!.isAfter(now),
-    )
+              o.status == 'PENDING' &&
+              o.expiresAt != null &&
+              o.expiresAt!.isAfter(now),
+        )
         .map((o) => o.expiresAt!)
         .minOrNull;
 
@@ -152,48 +153,20 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
   void _handleNewOffer(Map<String, dynamic> data) {
     final orderId = data['orderId'] as int?;
-    if (orderId != null) setState(() => _ordersWithNewOffers.add(orderId));
+    if (orderId != null) {
+      setState(() => _ordersWithNewOffers.add(orderId));
+    }
 
     final l10n = AppLocalizations.of(context);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.local_offer, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n?.newProposalReceived ?? 'New Proposal Received!',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                  Text(
-                    l10n?.tapToView ?? 'Tap to view details',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 6),
-        action: SnackBarAction(
-          label: l10n?.view ?? 'View',
-          textColor: Colors.white,
-          onPressed: () {
-            final id = data['orderId'] as int?;
-            if (id != null) _findAndShowProposals(id);
-          },
-        ),
-      ),
+    showSuccessBanner(
+      context,
+      l10n?.newProposalReceived ?? 'New Proposal Received!',
+      actionLabel: l10n?.view ?? 'View',
+      onAction: () {
+        final id = data['orderId'] as int?;
+        if (id != null) _findAndShowProposals(id);
+      },
     );
   }
 
@@ -201,31 +174,17 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     final l10n = AppLocalizations.of(context);
     final orderId = data['orderId'] as int?;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.cancel_outlined, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                reason == 'unavailable'
-                    ? l10n!.orderCancelledUnavailable
-                    : l10n!.orderCancelled,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.orange.shade700,
-        duration: const Duration(seconds: 4),
-      ),
+    showErrorBanner(
+      context,
+      reason == 'unavailable'
+          ? l10n!.orderCancelledUnavailable
+          : l10n!.orderCancelled,
     );
 
-    if (orderId != null) SocketService().leaveOrder(orderId);
+    if (orderId != null) {
+      SocketService().leaveOrder(orderId);
+    }
+
     if (_viewMode == ViewMode.active) {
       context.read<OrderCubit>().loadActiveOrders(loadMore: false);
     }
@@ -263,7 +222,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         _scheduleExpirationReload(state.orders);
         final activeIds = state.orders.map((o) => o.id).toSet();
         setState(
-              () =>
+          () =>
               _ordersWithNewOffers.removeWhere((id) => !activeIds.contains(id)),
         );
       }
@@ -274,7 +233,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       final freshState = cubit.state;
       if (freshState is OrdersLoaded) {
         final order = freshState.orders.firstWhereOrNull(
-              (o) => o.id == orderId,
+          (o) => o.id == orderId,
         );
         if (order != null) _showProposals(order);
       }
@@ -387,14 +346,14 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
               await (_viewMode == ViewMode.active
                   ? cubit.loadActiveOrders(loadMore: false)
                   : cubit.loadHistoryOrders(
-                loadMore: false,
-                filter: _currentFilter,
-              ));
+                      loadMore: false,
+                      filter: _currentFilter,
+                    ));
             },
             color: AppColors.kPrimaryColor,
             child: BlocConsumer<OrderCubit, OrderState>(
               listenWhen: (_, current) =>
-              current is OrdersLoaded ||
+                  current is OrdersLoaded ||
                   current is OrderCancelled ||
                   current is OrderCancelError ||
                   current is DeliveryConfirmed ||
@@ -413,32 +372,21 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                 }
 
                 if (state is OrderCancelled) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        AppLocalizations.of(context)!.orderCancelled,
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
+                  showInfoBanner(
+                    context,
+                    AppLocalizations.of(context)!.orderCancelled,
                   );
                 } else if (state is DeliveryConfirmed) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(AppLocalizations.of(context)!.delivered),
-                      backgroundColor: Colors.green,
-                    ),
+                  showSuccessBanner(
+                    context,
+                    AppLocalizations.of(context)!.delivered,
                   );
                 } else if (state is OrderError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.message),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  showErrorBanner(context, state.message);
                 }
               },
               buildWhen: (_, current) =>
-              current is OrderLoading ||
+                  current is OrderLoading ||
                   current is OrdersLoaded ||
                   current is OrderError,
               builder: (context, orderState) {
@@ -464,13 +412,13 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                             const Spacer(),
                             BlocBuilder<OrderCubit, OrderState>(
                               buildWhen: (_, current) =>
-                              current is OrdersLoaded ||
+                                  current is OrdersLoaded ||
                                   current is OrderLoading,
                               builder: (context, state) {
                                 final hasActiveOrders =
                                     state is OrdersLoaded &&
-                                        state.viewMode == OrderViewMode.active &&
-                                        state.orders.any((o) => o.isInProgress);
+                                    state.viewMode == OrderViewMode.active &&
+                                    state.orders.any((o) => o.isInProgress);
                                 if (!hasActiveOrders)
                                   return const SizedBox.shrink();
                                 return CircleAvatar(
@@ -516,8 +464,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       final isCorrectMode =
           (_viewMode == ViewMode.active &&
               state.viewMode == OrderViewMode.active) ||
-              (_viewMode == ViewMode.history &&
-                  state.viewMode == OrderViewMode.history);
+          (_viewMode == ViewMode.history &&
+              state.viewMode == OrderViewMode.history);
 
       if (!isCorrectMode) {
         return [SliverFillRemaining(child: _buildShimmerView())];
@@ -556,8 +504,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             bottom: 16,
           ),
           sliver: SliverList.builder(
-            itemCount: orders.length +
-                (_shouldShowPaginationSpinner(state) ? 1 : 0),
+            itemCount:
+                orders.length + (_shouldShowPaginationSpinner(state) ? 1 : 0),
             itemBuilder: (context, index) {
               // Pagination spinner
               if (index == orders.length) {
@@ -573,14 +521,12 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
               final order = orders[index];
               return OrderCard(
-                roleId:
-                context.read<ProfileCubit>().currentProfile?.roleId,
+                roleId: context.read<ProfileCubit>().currentProfile?.roleId,
                 order: order,
                 hasNewOffer: _ordersWithNewOffers.contains(order.id),
                 onViewProposals: () {
                   if (order.id != null) {
-                    setState(
-                            () => _ordersWithNewOffers.remove(order.id));
+                    setState(() => _ordersWithNewOffers.remove(order.id));
                   }
                   _showProposals(order);
                 },

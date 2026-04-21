@@ -65,6 +65,33 @@ class OrderRemoteDataSource {
     }
   }
 
+
+  Future<OrderResponse> createCatalogOrder({
+    required String paymentMethod,
+    String? couponCode,
+  }) async {
+    log('Creating catalog order — payment: $paymentMethod, coupon: $couponCode');
+
+    final response = await _dio.post(
+      'https://adminapis-dev.nitg-eg.com/api/v1/orders?lang=${LocaleManager.currentLocale}',
+      data: {
+        'type': 'CATALOG_PURCHASE',
+        'payment_method': paymentMethod,
+        if (couponCode != null && couponCode.isNotEmpty)
+          'coupon_code': couponCode,
+      },
+      options: Options()
+    );
+
+    log('Create catalog order response: ${response.data}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return OrderResponse.fromJson(response.data);
+    } else {
+      throw Exception('Failed to create catalog order');
+    }
+  }
+
   // Get All Orders
   Future<OrdersListResponse> getOrders({
     int skip = 0,
@@ -85,7 +112,7 @@ class OrderRemoteDataSource {
     };
 
     final response = await _dio.get(
-      '/orders',
+      'https://adminapis-dev.nitg-eg.com/api/v1/orders',
       queryParameters: queryParams,
     );
 
@@ -103,7 +130,7 @@ class OrderRemoteDataSource {
     log('Cancelling order $orderId with reason: $reason');
 
     final response = await _dio.post(
-      '/orders/$orderId/cancel?lang=${LocaleManager.currentLocale}',
+      'https://adminapis-dev.nitg-eg.com/api/v1/orders/$orderId/cancel?lang=${LocaleManager.currentLocale}',
       data: {'cancelled_reason': reason},
     );
 

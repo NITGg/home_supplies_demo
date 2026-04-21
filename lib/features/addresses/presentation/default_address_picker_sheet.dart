@@ -44,6 +44,7 @@ class _DefaultAddressPickerSheetState
     final addressCubit = context.read<AddressCubit>();
 
     await showModalBottomSheet<Address>(
+      isDismissible: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

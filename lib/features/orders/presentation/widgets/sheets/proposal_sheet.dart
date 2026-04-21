@@ -9,6 +9,7 @@ import '../../../../../core/style/app_colors.dart';
 import '../../../../../core/style/text_styles.dart';
 import '../../../../../core/utils/phone_dialer.dart';
 import '../../../../../core/utils/socket_service.dart';
+import '../../../../../core/widgets/banners.dart';
 import '../../../../../core/widgets/egy_plate.dart';
 import '../../../../../core/widgets/loading_screen.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -62,24 +63,9 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
   void _handleNewOffer() {
     final l10n = AppLocalizations.of(context)!;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.refresh, color: Colors.white, size: 20),
-            const SizedBox(width: 12),
-            Text(
-              l10n.newProposalReceived ?? 'New proposal received!',
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+    showSuccessBanner(
+      context,
+      l10n.newProposalReceived ?? 'New proposal received!',
     );
 
     setState(() => _isRefreshing = true);

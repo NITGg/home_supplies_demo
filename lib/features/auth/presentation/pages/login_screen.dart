@@ -106,9 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
             if (Navigator.of(context, rootNavigator: true).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
             }
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
+            showErrorBanner(context, state.message);
           }
         },
         child: Directionality(

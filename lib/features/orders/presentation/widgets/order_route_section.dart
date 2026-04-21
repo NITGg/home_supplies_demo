@@ -73,7 +73,7 @@ class _OrderRouteSectionState extends State<OrderRouteSection>
                   if (!_isExpanded)
                     Flexible(
                       child: Text(
-                        widget.order.deliveryAddressDescription,
+                        widget.order.deliveryAddressDescription??'',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.regular14.copyWith(
@@ -110,7 +110,7 @@ class _OrderRouteSectionState extends State<OrderRouteSection>
                       _LocationRow(
                         icon: Icons.store_outlined,
                         label: l10n?.pickup ?? 'Pickup',
-                        address: widget.order.pickupAddressDescription,
+                        address: widget.order.pickupAddressDescription??'',
                         color: Colors.green,
                       ),
                       Padding(
@@ -130,7 +130,7 @@ class _OrderRouteSectionState extends State<OrderRouteSection>
                       _LocationRow(
                         icon: Icons.location_on,
                         label: l10n?.delivery ?? 'Delivery',
-                        address: widget.order.deliveryAddressDescription,
+                        address: widget.order.deliveryAddressDescription??'',
                         color: Colors.blue,
                       ),
                     ],

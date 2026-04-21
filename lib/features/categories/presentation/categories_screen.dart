@@ -45,6 +45,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 key: _categoriesKey,
                 onCategoryTap: _navigateToCategory,
               ),
+              SizedBox(height: 300,)
             ],
           ),
         ),

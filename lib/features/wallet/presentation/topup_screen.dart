@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tawreedat_go/core/widgets/banners.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/text_form.dart';
@@ -59,9 +60,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
   void _showPaymentMethodSelection() {
     final error = _validateAmount(context);
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
-      );
+      showErrorBanner(context, error);
       return;
     }
 
@@ -118,9 +117,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
             );
           }
           if (state is TopUpError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-            );
+            showErrorBanner(context, state.message);
           }
         },
         builder: (context, state) {

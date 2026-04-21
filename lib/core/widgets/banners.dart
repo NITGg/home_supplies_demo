@@ -72,8 +72,14 @@ void showInfoBanner(BuildContext context, String message) {
     );
 }
 
-void showSuccessBanner(BuildContext context, String message) {
+void showSuccessBanner(
+    BuildContext context,
+    String message, {
+      String? actionLabel,
+      VoidCallback? onAction,
+    }) {
   if (!context.mounted) return;
+
   ScaffoldMessenger.of(context)
     ..clearSnackBars()
     ..showSnackBar(
@@ -96,9 +102,18 @@ void showSuccessBanner(BuildContext context, String message) {
         ),
         backgroundColor: Colors.green,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 4),
+        action: (actionLabel != null && onAction != null)
+            ? SnackBarAction(
+          label: actionLabel,
+          textColor: Colors.white,
+          onPressed: onAction,
+        )
+            : null,
       ),
     );
 }
