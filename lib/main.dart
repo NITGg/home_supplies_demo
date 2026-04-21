@@ -47,6 +47,7 @@ import 'l10n/manager/locale_cubit.dart';
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 final ValueNotifier<bool> showFloatingButton = ValueNotifier(true);
 final ValueNotifier<int> notificationDialogTrigger = ValueNotifier(0);
+VoidCallback? openCreateOrderSheet;
 
 /// Payload from a notification tap that arrived before the home screen was
 /// ready. HomeLayout checks this on first build and consumes it.

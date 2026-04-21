@@ -10,6 +10,7 @@ import '../../cart/presentation/cart_icon.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_cubit.dart';
 import '../manager/category_states.dart';
+import 'categories_fallback.dart';
 import 'category_card.dart';
 
 /// A self-contained, embeddable categories section.
@@ -61,7 +62,7 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
           return switch (state) {
             CategoriesInitial() ||
             CategoriesLoading() => const _CategoriesSkeletonRow(),
-            CategoriesError() => const SizedBox.shrink(),
+            CategoriesError() => Center(child: CategoriesFallbackWidget(title: AppLocalizations.of(context)!.welcome, subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice, lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',)),
             CategoriesLoaded() => _CategoriesSection(
               state: state,
               onCategoryTap: widget.onCategoryTap,
@@ -107,12 +108,8 @@ class _CategoriesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    void navigateToCart() {
-      context.push('/cart');
-    }
-
     return state.totalCount == 0
-        ? SizedBox.shrink()
+        ? Center(child: CategoriesFallbackWidget(title: AppLocalizations.of(context)!.welcome, subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice, lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',))
         : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,

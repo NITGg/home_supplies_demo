@@ -35,7 +35,7 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
     };
 
     final response = await _dio.get(
-      '/categories',
+      '/categoriesss',
       queryParameters: queryParams,
     );
     log(response.data.toString());

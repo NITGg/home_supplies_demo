@@ -78,6 +78,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
         );
       }
     });
+
   }
 
   void _onExternalNotificationTrigger() {
