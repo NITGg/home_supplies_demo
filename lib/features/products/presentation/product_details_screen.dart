@@ -184,6 +184,10 @@ class _AddToCartBarState extends State<_AddToCartBar>
   late final AnimationController _bounceCtrl;
   late final Animation<double> _bounceScale;
 
+  /// True only during the [addItem] call, before the cubit emits a state
+  /// that carries a busyItemId. Prevents double-tapping the add button.
+  bool _isAdding = false;
+
   @override
   void initState() {
     super.initState();
@@ -226,22 +230,23 @@ class _AddToCartBarState extends State<_AddToCartBar>
   // ── Handlers ────────────────────────────────────────────────────────────
 
   Future<void> _handleAdd(BuildContext ctx) async {
+    if (_isAdding) return; // guard against rapid double-tap
     HapticFeedback.lightImpact();
     _bounceCtrl.forward(from: 0);
+    setState(() => _isAdding = true);
     try {
       await ctx.read<CartCubit>().addItem(
         spId: widget.product.spId ?? widget.product.id,
         quantity: 1,
       );
     } on MultipleSupplierException catch (e) {
-      // Backend rejected the add because the product belongs to a different
-      // supplier. Show the resolution dialog — the user can choose to clear
-      // their cart and proceed, or keep the existing cart.
       if (ctx.mounted) {
         await MultipleSupplierDialog.show(ctx, exception: e);
       }
     } catch (_) {
       if (ctx.mounted) _showError(ctx);
+    } finally {
+      if (mounted) setState(() => _isAdding = false);
     }
   }
 
@@ -302,11 +307,16 @@ class _AddToCartBarState extends State<_AddToCartBar>
       child: BlocSelector<CartCubit, CartState, _BarCartState>(
         selector: (state) => _BarCartState.from(state, product.spId),
         builder: (ctx, barState) {
+          // Merge the local adding flag with the cubit's busy signal so the
+          // busy indicator shows from the very first tap until the item
+          // appears in the cart state.
+          final isBusy = _isAdding || barState.isBusy;
+
           final Widget content;
 
           if (product.isOutOfStock) {
             content = _OutOfStockButton(key: const ValueKey('oos'), l10n: l10n);
-          } else if (barState.isBusy) {
+          } else if (isBusy) {
             content = _BusyBar(
               key: const ValueKey('busy'),
               color: theme.colorScheme.primary,
@@ -776,34 +786,13 @@ class _PriceSection extends StatelessWidget {
             const SizedBox(height: 4),
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    border: Border.all(color: Colors.green.shade300),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.savings_outlined,
-                        size: 13,
-                        color: Colors.green.shade600,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${l10n.save} ${l10n.percentOff(product.discountPercent!)}',
-                        style: TextStyle(
-                          color: Colors.green.shade700,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                HighlighterWidget(
+                  child: Text(
+                    l10n.percentOff(product.discountPercent!),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],

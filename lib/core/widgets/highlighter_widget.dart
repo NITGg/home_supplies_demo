@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tawreedat_go/core/style/app_colors.dart';
 
 /// Controls which painting style [HighlighterWidget] uses.
 enum HighlighterStyle {
@@ -56,7 +57,7 @@ class HighlighterWidget extends StatelessWidget {
   const HighlighterWidget({
     super.key,
     required this.child,
-    this.color = const Color(0xFFd1fe07),
+    this.color = AppColors.kDiscountColor,
     this.opacity,
     this.paddingH = 0.0,
     this.paddingV = 0.0,

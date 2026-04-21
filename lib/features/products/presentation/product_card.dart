@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/style/app_colors.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
 import '../../../l10n/app_localizations.dart';
@@ -12,8 +13,6 @@ import '../../cart/presentation/multiple_supplier_dialog.dart';
 import '../data/models/product_model.dart';
 
 // ── Selector DTO ──────────────────────────────────────────────────────────────
-// A tiny value object so [BlocSelector] only triggers rebuilds when this
-// product's specific cart data changes, not on every cart mutation.
 
 class _CardCartState {
   final int quantity;
@@ -48,9 +47,6 @@ class _CardCartState {
 class ProductCard extends StatefulWidget {
   final ProductModel product;
   final VoidCallback? onTap;
-
-  // Kept for backward compatibility; callers can still observe quantity changes
-  // via this callback, but cart state is now the source of truth.
   final void Function(int quantity)? onQuantityChanged;
 
   const ProductCard({
@@ -66,7 +62,6 @@ class ProductCard extends StatefulWidget {
 
 class _ProductCardState extends State<ProductCard>
     with SingleTickerProviderStateMixin {
-  /// Drives the bounce animation on the add/increment button.
   late final AnimationController _bounceCtrl;
   late final Animation<double> _bounceScale;
 
@@ -77,8 +72,6 @@ class _ProductCardState extends State<ProductCard>
       vsync: this,
       duration: const Duration(milliseconds: 420),
     );
-
-    // Spring-like: grow → overshoot → settle.
     _bounceScale = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween(begin: 1.0, end: 1.30)
@@ -119,9 +112,6 @@ class _ProductCardState extends State<ProductCard>
       );
       widget.onQuantityChanged?.call(1);
     } on MultipleSupplierException catch (e) {
-      // Backend rejected the add because the product belongs to a different
-      // supplier. Show the resolution dialog — the user can choose to clear
-      // their cart and proceed, or keep the existing cart.
       if (ctx.mounted) {
         await MultipleSupplierDialog.show(ctx, exception: e);
       }
@@ -203,7 +193,6 @@ class _ProductCardState extends State<ProductCard>
                     children: [
                       _ProductImage(imageUrl: product.primaryImage),
 
-                      // Bottom gradient for badge readability
                       Positioned(
                         bottom: 0,
                         left: 0,
@@ -234,7 +223,6 @@ class _ProductCardState extends State<ProductCard>
                           ),
                         ),
 
-                      // Offer badge — shows discount percentage when available.
                       if (product.hasOffer)
                         Positioned(
                           top: 8,
@@ -243,17 +231,16 @@ class _ProductCardState extends State<ProductCard>
                               ? _Badge(
                             label: l10n.percentOff(
                                 product.discountPercent!),
-                            color: theme.colorScheme.error,
+                            color: AppColors.kDiscountColor,
                             icon: Icons.local_offer_rounded,
                           )
                               : _Badge(
                             label: l10n.offer,
-                            color: theme.colorScheme.error,
+                            color: AppColors.kDiscountColor,
                             icon: Icons.local_offer_rounded,
                           ),
                         ),
 
-                      // Out-of-stock overlay
                       if (product.isOutOfStock)
                         Positioned.fill(
                           child: ColoredBox(
@@ -281,7 +268,6 @@ class _ProductCardState extends State<ProductCard>
                           ),
                         ),
 
-                      // ── Cart widget (add button ↔ quantity pill) ─────────
                       Positioned(
                         bottom: 8,
                         right: 8,
@@ -305,11 +291,12 @@ class _ProductCardState extends State<ProductCard>
                 Expanded(
                   flex: 2,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                    padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // Product name
                         Text(
                           product.displayName,
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -321,9 +308,31 @@ class _ProductCardState extends State<ProductCard>
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        _PriceRow(
-                          product: product,
-                          primaryColor: primaryColor,
+
+                        // Rating + price on the same row to save vertical space
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Rating pill — only shown when reviews exist
+                            if (product.totalReviews > 0) ...[
+                              _RatingPill(
+                                rating: product.rating,
+                                reviewCount: product.totalReviews,
+                              ),
+                              const SizedBox(width: 5),
+                            ],
+
+                            // Price pushes to the end
+                            Expanded(
+                              child: Align(
+                                alignment: AlignmentDirectional.centerEnd,
+                                child: _PriceRow(
+                                  product: product,
+                                  primaryColor: primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -338,7 +347,7 @@ class _ProductCardState extends State<ProductCard>
   }
 }
 
-// ── Cart control (add button ↔ quantity pill) ─────────────────────────────────
+// ── Cart control ──────────────────────────────────────────────────────────────
 
 class _CartControl extends StatelessWidget {
   final _CardCartState cartState;
@@ -361,7 +370,6 @@ class _CartControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine which child to show; AnimatedSwitcher keys drive the transition.
     final Widget child;
     if (cartState.isBusy) {
       child = _BusyIndicator(key: const ValueKey('busy'), color: primaryColor);
@@ -399,7 +407,7 @@ class _CartControl extends StatelessWidget {
   }
 }
 
-// ── Add button (circle with + icon) ──────────────────────────────────────────
+// ── Add button ────────────────────────────────────────────────────────────────
 
 class _AddButton extends StatelessWidget {
   final VoidCallback? onTap;
@@ -479,21 +487,14 @@ class _QuantityPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Decrement
           GestureDetector(
             onTap: onDecrement,
-            child: SizedBox(
+            child: const SizedBox(
               width: 36,
               height: 36,
-              child: const Icon(
-                Icons.remove_rounded,
-                color: Colors.white,
-                size: 18,
-              ),
+              child: Icon(Icons.remove_rounded, color: Colors.white, size: 18),
             ),
           ),
-
-          // Animated quantity number
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: AnimatedSwitcher(
@@ -521,8 +522,6 @@ class _QuantityPill extends StatelessWidget {
               ),
             ),
           ),
-
-          // Increment (bounce-animated)
           GestureDetector(
             onTap: atMax ? null : onIncrement,
             child: ScaleTransition(
@@ -567,6 +566,62 @@ class _BusyIndicator extends StatelessWidget {
   }
 }
 
+// ── Rating pill ───────────────────────────────────────────────────────────────
+//
+// Compact star + score + "(N)" badge shown only when totalReviews > 0.
+// Fits comfortably alongside the price in the narrow card footer.
+
+class _RatingPill extends StatelessWidget {
+  final double rating;
+  final int reviewCount;
+
+  const _RatingPill({required this.rating, required this.reviewCount});
+
+  @override
+  Widget build(BuildContext context) {
+    // Format score: show one decimal only when it adds information (e.g. 4.7
+    // not 4.0 → show "4").
+    final score = rating % 1 == 0
+        ? rating.toInt().toString()
+        : rating.toStringAsFixed(1);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.amber.shade200, width: 0.8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.star_rounded, size: 10, color: Colors.amber.shade600),
+          const SizedBox(width: 2),
+          Text(
+            score,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: Colors.amber.shade800,
+              height: 1,
+            ),
+          ),
+          // Review count — muted so it doesn't compete with the score
+          Text(
+            ' ($reviewCount)',
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade500,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ── Sub-widgets ───────────────────────────────────────────────────────────────
 
 class _ProductImage extends StatelessWidget {
@@ -576,10 +631,7 @@ class _ProductImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (imageUrl != null && imageUrl!.isNotEmpty) {
-      return ImageWithIconFallback(
-        imageUrl: imageUrl,
-        fit: BoxFit.cover,
-      );
+      return ImageWithIconFallback(imageUrl: imageUrl, fit: BoxFit.cover);
     }
     return _placeholder();
   }
@@ -601,11 +653,7 @@ class _Badge extends StatelessWidget {
   final Color color;
   final IconData icon;
 
-  const _Badge({
-    required this.label,
-    required this.color,
-    required this.icon,
-  });
+  const _Badge({required this.label, required this.color, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -625,12 +673,12 @@ class _Badge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 9),
+          Icon(icon, color: Colors.black, size: 9),
           const SizedBox(width: 3),
           Text(
             label,
             style: const TextStyle(
-              color: Colors.white,
+              color: Colors.black,
               fontSize: 9,
               fontWeight: FontWeight.bold,
             ),
@@ -641,7 +689,7 @@ class _Badge extends StatelessWidget {
   }
 }
 
-// ── Price row — uses highlighter on discounted price ──────────────────────────
+// ── Price row ─────────────────────────────────────────────────────────────────
 
 class _PriceRow extends StatelessWidget {
   final ProductModel product;
@@ -652,27 +700,25 @@ class _PriceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (product.hasOffer) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Highlighted discounted price ───────────────────────────────
           HighlighterWidget(
             child: Text(
-              '${product.offer!.toStringAsFixed(0)} ج.م',
+              '${product.offer!.toStringAsFixed(0)} ${AppLocalizations.of(context)!.egp}',
               style: const TextStyle(
                 color: Colors.black87,
                 fontWeight: FontWeight.bold,
-                fontSize: 13,
+                fontSize: 12,
               ),
             ),
           ),
-          const SizedBox(width: 5),
-          // ── Original price struck through ──────────────────────────────
           Text(
-            '${product.price.toStringAsFixed(0)} ج.م',
+            '${product.price.toStringAsFixed(0)} ${AppLocalizations.of(context)!.egp}',
             style: TextStyle(
               color: Colors.grey.shade400,
-              fontSize: 10,
+              fontSize: 9,
               decoration: TextDecoration.lineThrough,
               decorationColor: Colors.grey.shade400,
             ),
@@ -682,7 +728,7 @@ class _PriceRow extends StatelessWidget {
     }
 
     return Text(
-      '${product.effectivePrice.toStringAsFixed(0)} ج.م',
+      '${product.effectivePrice.toStringAsFixed(0)} ${AppLocalizations.of(context)!.egp}',
       style: TextStyle(
         color: primaryColor,
         fontWeight: FontWeight.bold,
