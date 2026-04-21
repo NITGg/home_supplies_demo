@@ -21,6 +21,7 @@ import '../../../addresses/manager/address_cubit.dart';
 import '../../../addresses/manager/governorate_cubit.dart';
 import '../../../addresses/manager/governorate_states.dart';
 import '../../../addresses/presentation/default_address_picker_sheet.dart';
+import '../../../ads/ad_manager/ad_cubit.dart';
 import '../../../auth/manager/auth_cubit.dart';
 import '../../../../core/utils/secure_storage_service.dart';
 import '../../../../core/style/app_colors.dart';
@@ -157,6 +158,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
         BlocProvider<GovernorateCubit>(
           create: (_) => GovernorateCubit()..loadGovernorates(),
         ),
+        BlocProvider(create: (context) => AdsCubit()..getHomeAds()),
       ],
       child: BlocBuilder<HomeCubit, HomeState>(
         builder: (context, state) {

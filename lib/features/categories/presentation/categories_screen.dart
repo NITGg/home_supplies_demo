@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/style/app_colors.dart';
+import '../../ads/presentation/widgets/home_ads_carousel.dart';
+import '../../ads/presentation/widgets/popups.dart';
 import '../data/models/category_models.dart';
 import 'categories_grid_widget.dart';
 
@@ -35,9 +37,15 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           // AlwaysScrollableScrollPhysics ensures the RefreshIndicator is
           // reachable even when the grid doesn't overflow the viewport.
           physics: const AlwaysScrollableScrollPhysics(),
-          child: CategoriesGridWidget(
-            key: _categoriesKey,
-            onCategoryTap: _navigateToCategory,
+          child: Column(
+            children: [
+              const PopupAdsHandler(),
+              const HomeAdsCarousel(),
+              CategoriesGridWidget(
+                key: _categoriesKey,
+                onCategoryTap: _navigateToCategory,
+              ),
+            ],
           ),
         ),
       ),
