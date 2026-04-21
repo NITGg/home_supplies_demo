@@ -117,10 +117,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get selectDate => 'اختر التاريخ';
 
   @override
-  String get to => 'من';
+  String get to => 'إلى';
 
   @override
-  String get from => 'إلى';
+  String get from => 'من';
 
   @override
   String get today => 'اليوم';

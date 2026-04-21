@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../addresses/presentation/default_address_chip.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/cart_icon.dart';
@@ -62,7 +63,13 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
           return switch (state) {
             CategoriesInitial() ||
             CategoriesLoading() => const _CategoriesSkeletonRow(),
-            CategoriesError() => Center(child: CategoriesFallbackWidget(title: AppLocalizations.of(context)!.welcome, subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice, lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',)),
+            CategoriesError() => Center(
+              child: CategoriesFallbackWidget(
+                title: AppLocalizations.of(context)!.welcome,
+                subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice,
+                lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',
+              ),
+            ),
             CategoriesLoaded() => _CategoriesSection(
               state: state,
               onCategoryTap: widget.onCategoryTap,
@@ -93,7 +100,6 @@ class _CategoriesSection extends StatelessWidget {
   List<CategoryModel> get _parents =>
       state.categories.where((c) => c.parentId == null).toList();
 
-  // bool get _useCompact => _parents.length > 6;
   bool get _useCompact => false;
 
   int get _crossAxisCount {
@@ -109,106 +115,122 @@ class _CategoriesSection extends StatelessWidget {
     final theme = Theme.of(context);
 
     return state.totalCount == 0
-        ? Center(child: CategoriesFallbackWidget(title: AppLocalizations.of(context)!.welcome, subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice, lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',))
+        ? Center(
+      child: CategoriesFallbackWidget(
+        title: AppLocalizations.of(context)!.welcome,
+        subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice,
+        lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',
+      ),
+    )
         : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // ── Header ───────────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
+          child: Row(
             children: [
-              // ── Header ─────────────────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: AppColors.kPrimaryColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      AppLocalizations.of(context)!.categories,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.grey.shade200,
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.search_rounded,
-                          color: Colors.grey.shade700,
-                        ),
-                        onPressed: () {},
-                        padding: EdgeInsets.zero,
-                      ),
-                    ),
-                    if (state.isLoadingMore)
-                      SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    BlocSelector<CartCubit, CartState, int>(
-                      selector: (state) {
-                        if (state is CartLoaded) {
-                          final total = state.data.summary.totalItems;
-                          return total < 0 ? 0 : total;
-                        }
-                        return 0;
-                      },
-                      builder: (context, count) {
-                        return AnimatedCartIcon(
-                          onTap: () => context.push('/cart'),
-                        );
-                      },
-                    ),
-                  ],
+              // Title accent bar
+              Container(
+                width: 4,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: AppColors.kPrimaryColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                AppLocalizations.of(context)!.categories,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+
+              // ── Default address chip ──────────────────────────────
+              const DefaultAddressChip(),
+              const SizedBox(width: 8),
+
+              // ── Search button ─────────────────────────────────────
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.grey.shade200,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.search_rounded,
+                    color: Colors.grey.shade700,
+                  ),
+                  onPressed: () {},
+                  padding: EdgeInsets.zero,
                 ),
               ),
 
-              // ── Always a grid, compact style when many ──────────────────────
-              NotificationListener<ScrollNotification>(
-                onNotification: (n) {
-                  if (n is ScrollEndNotification &&
-                      n.metrics.pixels >= n.metrics.maxScrollExtent - 40 &&
-                      state.hasMore) {
-                    onLoadMore();
+              if (state.isLoadingMore)
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+
+              // ── Cart icon ─────────────────────────────────────────
+              BlocSelector<CartCubit, CartState, int>(
+                selector: (state) {
+                  if (state is CartLoaded) {
+                    final total = state.data.summary.totalItems;
+                    return total < 0 ? 0 : total;
                   }
-                  return false;
+                  return 0;
                 },
-                child: GridView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _crossAxisCount,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: _childAspectRatio,
-                  ),
-                  itemCount: _parents.length,
-                  itemBuilder: (_, i) => CategoryCard(
-                    category: _parents[i],
-                    onTap: () => onCategoryTap(_parents[i]),
-                    style: _useCompact
-                        ? CategoryCardStyle.compact
-                        : CategoryCardStyle.regular,
-                  ),
-                ),
+                builder: (context, count) {
+                  return AnimatedCartIcon(
+                    onTap: () => context.push('/cart'),
+                  );
+                },
               ),
-
-              const SizedBox(height: 4),
-              Divider(color: Colors.grey.shade200, height: 1),
             ],
-          );
+          ),
+        ),
+
+        // ── Always a grid ─────────────────────────────────────────────
+        NotificationListener<ScrollNotification>(
+          onNotification: (n) {
+            if (n is ScrollEndNotification &&
+                n.metrics.pixels >= n.metrics.maxScrollExtent - 40 &&
+                state.hasMore) {
+              onLoadMore();
+            }
+            return false;
+          },
+          child: GridView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: _crossAxisCount,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: _childAspectRatio,
+            ),
+            itemCount: _parents.length,
+            itemBuilder: (_, i) => CategoryCard(
+              category: _parents[i],
+              onTap: () => onCategoryTap(_parents[i]),
+              style: _useCompact
+                  ? CategoryCardStyle.compact
+                  : CategoryCardStyle.regular,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 4),
+        Divider(color: Colors.grey.shade200, height: 1),
+      ],
+    );
   }
 }
 
@@ -272,7 +294,7 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
           ),
         ),
 
-        // ── Skeleton grid (4 columns compact — matches most common layout) ─
+        // ── Skeleton grid ─────────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: GridView.builder(

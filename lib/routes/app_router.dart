@@ -7,6 +7,7 @@ import '../core/utils/check_for_updates.dart';
 import '../core/widgets/loading_screen.dart';
 import '../features/addresses/manager/address_cubit.dart';
 import '../features/addresses/presentation/address_management_screen.dart';
+import '../features/addresses/presentation/default_address_chip.dart';
 import '../features/auth/presentation/pages/auth_otp_screen.dart';
 import '../features/auth/presentation/pages/forgot_password_screen.dart';
 import '../features/auth/presentation/pages/login_screen.dart';
@@ -45,6 +46,7 @@ Future<GoRouter> createAppRouter({
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
+    observers: [addressChipRouteObserver],
     routes: [
       GoRoute(
         path: '/splash',

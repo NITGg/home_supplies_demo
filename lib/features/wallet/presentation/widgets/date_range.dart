@@ -120,7 +120,7 @@ class _DateRangeSelectorState extends State<DateRangeSelector> {
                 children: [
                   Expanded(
                     child: _buildDateButton(
-                      label: AppLocalizations.of(context)!.to,
+                      label: AppLocalizations.of(context)!.from,
                       date: _startDate,
                       onTap: () => _selectDate(context, true),
                     ),
@@ -128,7 +128,7 @@ class _DateRangeSelectorState extends State<DateRangeSelector> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildDateButton(
-                      label: AppLocalizations.of(context)!.from,
+                      label: AppLocalizations.of(context)!.to,
                       date: _endDate,
                       onTap: () => _selectDate(context, false),
                     ),

@@ -134,7 +134,7 @@ class _DefaultAddressPickerSheetState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        l10n.address,
+                        l10n.deliveryLocation,
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
