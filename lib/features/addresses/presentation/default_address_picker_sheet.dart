@@ -25,10 +25,7 @@ class DefaultAddressPickerSheet extends StatefulWidget {
 
 class _DefaultAddressPickerSheetState
     extends State<DefaultAddressPickerSheet> {
-  // The address the user has tapped (highlighted but not yet confirmed).
   int? _pendingDefaultId;
-
-  // Whether we are mid-save (updating the address to isDefault = true).
   bool _saving = false;
 
   @override
@@ -37,9 +34,10 @@ class _DefaultAddressPickerSheetState
     context.read<AddressCubit>().loadAddresses();
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  /// Returns true only when the user has ≥1 address AND has a pending selection.
+  bool _canDismiss(List<Address> addresses) =>
+      addresses.isNotEmpty && _pendingDefaultId != null;
 
-  /// Opens [AddressFormBottomSheet] in add-mode and reloads the list after.
   Future<void> _openAddSheet() async {
     final addressCubit = context.read<AddressCubit>();
 
@@ -54,19 +52,14 @@ class _DefaultAddressPickerSheetState
       ),
     );
 
-    // AddressCubit.createAddress() already calls loadAddresses() internally,
-    // but we call it again in case the user only dismissed the form sheet.
     if (mounted) addressCubit.loadAddresses();
   }
 
-  /// Saves the pending selection as default and closes the sheet.
-  /// If the selected address is already the default, just closes — no API call.
   Future<void> _confirmDefault(List<Address> addresses) async {
     if (_pendingDefaultId == null) return;
 
     final address = addresses.firstWhere((a) => a.id == _pendingDefaultId);
 
-    // Already the default — nothing to update, just dismiss.
     if (address.isDefault) {
       if (mounted) Navigator.pop(context);
       return;
@@ -74,8 +67,6 @@ class _DefaultAddressPickerSheetState
 
     setState(() => _saving = true);
 
-    // Re-use the existing update flow; the cubit emits AddressOperationSuccess
-    // then reloads the list.
     await context
         .read<AddressCubit>()
         .updateAddress(address.id!, address.copyWith(isDefault: true));
@@ -83,222 +74,220 @@ class _DefaultAddressPickerSheetState
     if (mounted) Navigator.pop(context);
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Container(
-      // Match the height profile of AddressSelectionBottomSheet.
-      height: MediaQuery.sizeOf(context).height * 0.65,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.75,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          // ── Drag handle ──────────────────────────────────────────────────
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+    return BlocConsumer<AddressCubit, AddressState>(
+      listener: (context, state) {
+        if (state is AddressError || state is AddressesLoaded) {
+          if (_saving && mounted) setState(() => _saving = false);
+        }
+      },
+      builder: (context, state) {
+        final addresses =
+        state is AddressesLoaded ? state.addresses : <Address>[];
 
-          // ── Header ───────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
-            child: Row(
+        // Pre-select the current default as soon as addresses are available.
+        if (addresses.isNotEmpty) {
+          _pendingDefaultId ??= addresses
+              .firstWhere((a) => a.isDefault, orElse: () => addresses.first)
+              .id;
+        }
+
+        final canDismiss = _canDismiss(addresses);
+
+        return PopScope(
+          // Block the Android back gesture/button until condition is met.
+          canPop: canDismiss,
+          child: Container(
+            height: MediaQuery.sizeOf(context).height * 0.65,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.kSecondaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.home_outlined,
-                    color: AppColors.kSecondaryColor,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.deliveryLocation,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        l10n.setAsDefault,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(height: 1),
-
-          // ── Add-address shortcut ─────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: AppCustomButton(
-              onPressed: _openAddSheet,
-              text: l10n.addAddress,
-              isSecondary: true,
-            ),
-          ),
-
-          // ── Address list ─────────────────────────────────────────────────
-          Expanded(
-            child: BlocConsumer<AddressCubit, AddressState>(
-              listener: (context, state) {
-                // If the cubit finished an operation (error or loaded),
-                // clear the saving spinner.
-                if (state is AddressError || state is AddressesLoaded) {
-                  if (_saving && mounted) setState(() => _saving = false);
-                }
-              },
-              builder: (context, state) {
-                // ── Loading ──────────────────────────────────────────────
-                if (state is AddressLoading && !_saving) {
-                  return const Center(
-                    child: LoadingScreen(isOne: true, asWidget: true),
-                  );
-                }
-
-                // ── Error ────────────────────────────────────────────────
-                if (state is AddressError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Colors.red,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(state.message),
-                        const SizedBox(height: 12),
-                        TextButton.icon(
-                          onPressed: () =>
-                              context.read<AddressCubit>().loadAddresses(),
-                          icon: const Icon(Icons.refresh),
-                          label: Text(l10n.retry),
-                        ),
-                      ],
+                // ── Drag handle — hidden when user must not dismiss ──────
+                AnimatedOpacity(
+                  opacity: canDismiss ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                  );
-                }
+                  ),
+                ),
 
-                // ── Loaded ───────────────────────────────────────────────
-                if (state is AddressesLoaded) {
-                  final addresses = state.addresses;
-
-                  if (addresses.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
+                // ── Header ───────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.kSecondaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.home_outlined,
+                          color: AppColors.kSecondaryColor,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
                         child: Column(
-                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.add_location_alt_outlined,
-                              size: 56,
-                              color: Colors.grey.shade300,
-                            ),
-                            const SizedBox(height: 12),
                             Text(
-                              l10n.addAddress,
-                              style: TextStyle(color: Colors.grey.shade500),
+                              l10n.deliveryLocation,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              l10n.setAsDefault,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade500,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    );
-                  }
 
-                  // Pre-select the current default so the UI is coherent.
-                  _pendingDefaultId ??=
-                      addresses.firstWhere(
-                            (a) => a.isDefault,
-                        orElse: () => addresses.first,
-                      ).id;
+                      // Close button only shown when dismissal is allowed.
+                      if (canDismiss)
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                    ],
+                  ),
+                ),
 
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    itemCount: addresses.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final address = addresses[index];
-                      final isSelected = address.id == _pendingDefaultId;
-                      final isCurrentDefault = address.isDefault;
+                const Divider(height: 1),
 
-                      return _AddressTile(
-                        address: address,
-                        isSelected: isSelected,
-                        isCurrentDefault: isCurrentDefault,
-                        onTap: () =>
-                            setState(() => _pendingDefaultId = address.id),
+                // ── Add-address shortcut ─────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: AppCustomButton(
+                    onPressed: _openAddSheet,
+                    text: l10n.addAddress,
+                    isSecondary: true,
+                  ),
+                ),
+
+                // ── Address list ─────────────────────────────────────────
+                Expanded(
+                  child: Builder(
+                    builder: (context) {
+                      if (state is AddressLoading && !_saving) {
+                        return const Center(
+                          child: LoadingScreen(isOne: true, asWidget: true),
+                        );
+                      }
+
+                      if (state is AddressError) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline,
+                                  size: 48, color: Colors.red),
+                              const SizedBox(height: 12),
+                              Text(state.message),
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: () =>
+                                    context.read<AddressCubit>().loadAddresses(),
+                                icon: const Icon(Icons.refresh),
+                                label: Text(l10n.retry),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      if (addresses.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add_location_alt_outlined,
+                                    size: 56, color: Colors.grey.shade300),
+                                const SizedBox(height: 12),
+                                Text(
+                                  l10n.addAddress,
+                                  style:
+                                  TextStyle(color: Colors.grey.shade500),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                        itemCount: addresses.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final address = addresses[index];
+                          final isSelected = address.id == _pendingDefaultId;
+                          final isCurrentDefault = address.isDefault;
+
+                          return _AddressTile(
+                            address: address,
+                            isSelected: isSelected,
+                            isCurrentDefault: isCurrentDefault,
+                            onTap: () => setState(
+                                    () => _pendingDefaultId = address.id),
+                          );
+                        },
                       );
                     },
-                  );
-                }
+                  ),
+                ),
 
-                return const SizedBox();
-              },
+                // ── Confirm button ───────────────────────────────────────
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: Builder(
+                      builder: (context) {
+                        final isLoading = _saving || state is AddressLoading;
+
+                        if (addresses.isEmpty) return const SizedBox();
+
+                        return AppCustomButton(
+                          onPressed: isLoading
+                              ? () {}
+                              : () => _confirmDefault(addresses),
+                          text: l10n.confirm,
+                          isLoading: isLoading,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-
-          // ── Confirm button ───────────────────────────────────────────────
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: BlocBuilder<AddressCubit, AddressState>(
-                builder: (context, state) {
-                  final addresses =
-                  state is AddressesLoaded ? state.addresses : <Address>[];
-                  final isLoading =
-                      _saving || state is AddressLoading;
-
-                  // Hide the confirm button when there is nothing to confirm.
-                  if (addresses.isEmpty) return const SizedBox();
-
-                  return AppCustomButton(
-                    onPressed:
-                    isLoading ? () {} : () => _confirmDefault(addresses),
-                    text: l10n.confirm,
-                    isLoading: isLoading,
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

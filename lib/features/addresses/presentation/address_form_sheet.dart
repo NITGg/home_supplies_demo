@@ -312,7 +312,8 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
         addressLat: _latController.text.trim(),
         addressLong: _longController.text.trim(),
         detailedAddress: _detailedAddressController.text.trim(),
-        isDefault: widget.saveAddress ? _isDefault : false,
+        //todo check do you need all of them to be default
+        isDefault: widget.saveAddress ? _isDefault : true,
       );
 
       if (widget.saveAddress) {
@@ -561,19 +562,19 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                         const SizedBox(height: 16),
 
                         // ── Set as Default (only when saving) ──────────────
-                        if (widget.saveAddress) ...[
-                          CheckboxListTile(
-                            activeColor: Colors.orangeAccent,
-                            title: Text(l10n.setAsDefault),
-                            value: _isDefault,
-                            onChanged: (value) {
-                              setState(() => _isDefault = value ?? false);
-                            },
-                            contentPadding: EdgeInsets.zero,
-                            controlAffinity: ListTileControlAffinity.leading,
-                          ),
-                          const SizedBox(height: 16),
-                        ],
+                        // if (widget.saveAddress) ...[
+                        //   CheckboxListTile(
+                        //     activeColor: Colors.orangeAccent,
+                        //     title: Text(l10n.setAsDefault),
+                        //     value: _isDefault,
+                        //     onChanged: (value) {
+                        //       setState(() => _isDefault = value ?? false);
+                        //     },
+                        //     contentPadding: EdgeInsets.zero,
+                        //     controlAffinity: ListTileControlAffinity.leading,
+                        //   ),
+                        //   const SizedBox(height: 16),
+                        // ],
 
                         // ── Location status + pick on map button ───────────
                         Column(

@@ -57,7 +57,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   bool _phoneSheetShown = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-
   // Screens indexed by HomeCubit.currentIndex.
   // 0 → Categories   1 → Orders
   static const List<Widget> _screens = [CategoriesScreen(), OrdersListScreen()];
@@ -238,12 +237,17 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
                       // ── 3. Default address picker (only for regular customers, roleId != 4)
                       if (profileState.profile.roleId != 4) {
-                        await showModalBottomSheet(
+                        if (!context.mounted) return;
+                        showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
+                          isDismissible: false,
+                          // ← blocks tap-outside dismiss
+                          enableDrag: false,
+                          // ← blocks drag-down dismiss
                           backgroundColor: Colors.transparent,
-                          builder: (_) => BlocProvider(
-                            create: (_) => AddressCubit(),
+                          builder: (_) => BlocProvider.value(
+                            value: context.read<AddressCubit>(),
                             child: const DefaultAddressPickerSheet(),
                           ),
                         );
