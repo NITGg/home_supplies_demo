@@ -139,6 +139,7 @@ class _CartScreenState extends State<CartScreen> {
           );
         } else if (state is OrderSuccess) {
           if (mounted) {
+            FocusScope.of(context).unfocus();
             context.go('/mainHome', extra: HomeCubit.ordersTabIndex);
           }
           context.read<CartCubit>().fetchCart();

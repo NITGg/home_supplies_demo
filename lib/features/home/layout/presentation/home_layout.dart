@@ -55,6 +55,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   late final CouponCubit _couponCubit = CouponCubit()..loadCoupons();
   bool _firstOrderChecked = false;
   bool _phoneSheetShown = false;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
 
   // Screens indexed by HomeCubit.currentIndex.
   // 0 → Categories   1 → Orders
@@ -164,7 +166,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final scaffoldKey = GlobalKey<ScaffoldState>();
     final localizations = AppLocalizations.of(context)!;
 
     return MultiBlocProvider(
@@ -287,7 +288,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                   ),
                 ],
                 child: Scaffold(
-                  key: scaffoldKey,
+                  key: _scaffoldKey,
                   appBar: PreferredSize(
                     preferredSize: const Size.fromHeight(60),
                     child: Padding(
@@ -295,7 +296,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                           ? const EdgeInsets.only(top: 0.0)
                           : const EdgeInsets.only(top: 10.0),
                       child: AppLayoutAppBar(
-                        scaffoldKey: scaffoldKey,
+                        scaffoldKey: _scaffoldKey,
                         localizations: localizations,
                         userId: _userId,
                       ),
