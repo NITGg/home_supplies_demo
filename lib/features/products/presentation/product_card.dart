@@ -5,8 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../cart/data/models/multiple_supplier_exception.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
+import '../../cart/presentation/multiple_supplier_dialog.dart';
 import '../data/models/product_model.dart';
 
 // ── Selector DTO ──────────────────────────────────────────────────────────────
@@ -116,6 +118,13 @@ class _ProductCardState extends State<ProductCard>
         quantity: 1,
       );
       widget.onQuantityChanged?.call(1);
+    } on MultipleSupplierException catch (e) {
+      // Backend rejected the add because the product belongs to a different
+      // supplier. Show the resolution dialog — the user can choose to clear
+      // their cart and proceed, or keep the existing cart.
+      if (ctx.mounted) {
+        await MultipleSupplierDialog.show(ctx, exception: e);
+      }
     } catch (_) {
       if (ctx.mounted) _showError(ctx);
     }

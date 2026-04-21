@@ -655,5 +655,9 @@
 
 "noProductsInSection": "لا توجد منتجات في هذه الفئة",
 "showMore": "عرض المزيد",
-"loadMore": "تحميل المزيد"
+"loadMore": "تحميل المزيد",
+"differentSupplierTitle": "متجر مختلف",
+  "differentSupplierBody": "سلة التسوق تحتوي على منتجات من متجر آخر. يمكنك مسح السلة وإضافة هذا المنتج، أو الاحتفاظ بالسلة الحالية.",
+  "clearCartAndAdd": "مسح السلة وإضافة المنتج",
+  "keepMyCart": "الاحتفاظ بسلتي"
 }

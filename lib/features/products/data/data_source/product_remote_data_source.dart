@@ -26,12 +26,11 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     int skip = 0,
     int limit = 20,
     int? categoryId,
-    String includes = 'attributes,suppliers',
   }) async {
     final queryParams = <String, dynamic>{
       'skip': skip,
       'limit': limit,
-      'includes': includes,
+      'supplier_id': 3, // tawreedat go = 3
       if (categoryId != null) 'category_id': categoryId,
     };
 
@@ -41,6 +40,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     );
 
     log(response.statusCode.toString());
+    log(response.data.toString());
 
     return ProductsResponseModel.fromJson(
       response.data as Map<String, dynamic>,
@@ -51,7 +51,6 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   Future<ProductModel> getProductById(int id) async {
     final response = await _dio.get(
       '/products/$id',
-      queryParameters: {'includes': 'attributes,suppliers'},
     );
 
     final data = response.data as Map<String, dynamic>;

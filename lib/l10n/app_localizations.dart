@@ -3022,6 +3022,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Load More'**
   String get loadMore;
+
+  /// No description provided for @differentSupplierTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Different Store'**
+  String get differentSupplierTitle;
+
+  /// No description provided for @differentSupplierBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your cart already has items from another store. You can clear your cart and start fresh with this item, or keep your existing cart.'**
+  String get differentSupplierBody;
+
+  /// No description provided for @clearCartAndAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Cart & Add Item'**
+  String get clearCartAndAdd;
+
+  /// No description provided for @keepMyCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep My Cart'**
+  String get keepMyCart;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

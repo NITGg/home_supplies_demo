@@ -7,6 +7,7 @@ import '../data/data_source/cart_remote_data_source.dart';
 import '../data/models/cart_item_model.dart';
 import '../data/models/cart_response_model.dart';
 import '../data/models/cart_summary_model.dart';
+import '../data/models/multiple_supplier_exception.dart';
 import '../data/repo/cart_repo.dart';
 import 'cart_state.dart';
 
@@ -32,8 +33,6 @@ class CartCubit extends Cubit<CartState> {
     _safeEmit(const CartLoading());
     try {
       final data = await _repository.getCart();
-      // Server summary is missing originalTotal / totalDiscount — recompute
-      // locally from the item list so the summary bar always has correct data.
       _safeEmit(CartLoaded(_enrichSummary(data)));
     } catch (e) {
       _safeEmit(CartError(extractErrorMessage(e)));
@@ -51,14 +50,17 @@ class CartCubit extends Cubit<CartState> {
   }
 
   /// Replaces the server-provided summary with one computed from the items.
-  /// This gives us [CartSummaryModel.originalTotal] and [totalDiscount] which
-  /// the backend does not currently return.
   CartResponseModel _enrichSummary(CartResponseModel data) {
     return data.copyWith(summary: _computeSummary(data.cartItems));
   }
 
   // ── Add item ─────────────────────────────────────────────────────────────
 
+  /// Adds an item to the cart.
+  ///
+  /// Throws [MultipleSupplierException] if the backend rejects the request
+  /// due to a supplier conflict — callers are expected to catch this and
+  /// show the resolution dialog.
   Future<void> addItem({required int spId, required int quantity}) async {
     try {
       final item = await _repository.addItem(spId: spId, quantity: quantity);
@@ -69,10 +71,50 @@ class CartCubit extends Cubit<CartState> {
       } else {
         await fetchCart();
       }
+    } on MultipleSupplierException {
+      // Let the UI handle the supplier-conflict dialog — don't swallow it.
+      rethrow;
     } catch (e) {
       log('[CartCubit] addItem error: $e');
       if (_loaded != null) rethrow;
       _safeEmit(CartError(extractErrorMessage(e)));
+    }
+  }
+
+  /// Clears the current cart and immediately adds [spId] with [quantity].
+  ///
+  /// Used by the supplier-conflict dialog's "Clear & add" action.
+  /// Emits an optimistic empty-cart state before the network calls so the
+  /// UI feels instant.
+  Future<void> clearAndAddItem({
+    required int spId,
+    required int quantity,
+  }) async {
+    final loaded = _loaded;
+
+    // Optimistically wipe the cart so the UI updates immediately.
+    if (loaded != null) {
+      _safeEmit(CartLoaded(CartResponseModel(
+        cart: loaded.data.cart,
+        cartItems: const [],
+        summary: const CartSummaryModel(
+          itemCount: 0,
+          totalItems: 0,
+          originalTotal: 0,
+          totalDiscount: 0,
+          subtotal: 0,
+        ),
+      )));
+    }
+
+    try {
+      await _repository.clearCart();
+      await addItem(spId: spId, quantity: quantity);
+    } catch (e) {
+      log('[CartCubit] clearAndAddItem error: $e');
+      // Restore cart state from server if anything fails.
+      await fetchCart();
+      rethrow;
     }
   }
 
@@ -267,9 +309,6 @@ class CartCubit extends Cubit<CartState> {
 
   // ── Summary computation ───────────────────────────────────────────────────
 
-  /// Derives all summary fields from [items].
-  /// This is the single source of truth for the summary bar — the server
-  /// value is intentionally discarded after every fetch (see [_enrichSummary]).
   CartSummaryModel _computeSummary(List<CartItemModel> items) {
     final originalTotal =
     items.fold(0.0, (sum, i) => sum + i.originalLineTotal);

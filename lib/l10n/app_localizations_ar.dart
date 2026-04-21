@@ -1506,4 +1506,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get loadMore => 'تحميل المزيد';
+
+  @override
+  String get differentSupplierTitle => 'متجر مختلف';
+
+  @override
+  String get differentSupplierBody => 'سلة التسوق تحتوي على منتجات من متجر آخر. يمكنك مسح السلة وإضافة هذا المنتج، أو الاحتفاظ بالسلة الحالية.';
+
+  @override
+  String get clearCartAndAdd => 'مسح السلة وإضافة المنتج';
+
+  @override
+  String get keepMyCart => 'الاحتفاظ بسلتي';
 }

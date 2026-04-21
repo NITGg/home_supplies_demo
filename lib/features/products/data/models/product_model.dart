@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../../l10n/manager/locale_cubit.dart';
 import 'product_attribute_model.dart';
 import 'product_unit_model.dart';
@@ -103,48 +105,104 @@ class ProductModel {
     this.pickupReadyDuration,
   });
 
+  // ── Type-coercion helpers ─────────────────────────────────────────────────
+  //
+  // The backend is inconsistent: numeric fields arrive as int, as "10"
+  // (string), or as null.  These helpers normalise all three cases so neither
+  // factory needs a single hard `as int?` / `as double?` cast.
+
+  static int? _parseInt(dynamic v) =>
+      v == null ? null : int.tryParse(v.toString());
+
+  static int _parseIntOr0(dynamic v) => _parseInt(v) ?? 0;
+
+  static double? _parseDouble(dynamic v) =>
+      v == null ? null : double.tryParse(v.toString());
+
+  static double _parseDoubleOr0(dynamic v) => _parseDouble(v) ?? 0.0;
+
+  /// Accepts true/false booleans AND "true"/"false" strings.
+  static bool _parseBool(dynamic v, {bool fallback = false}) {
+    if (v == null) return fallback;
+    if (v is bool) return v;
+    return v.toString().toLowerCase() == 'true';
+  }
+
+  /// Accepts a real List, a JSON-encoded string ("[\"url\"]"), or null.
+  static List<String> _parseImages(dynamic raw) {
+    if (raw == null) return [];
+    if (raw is List) return raw.map((e) => e.toString()).toList();
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) return decoded.map((e) => e.toString()).toList();
+      } catch (_) {
+        return [raw]; // bare URL string
+      }
+    }
+    return [];
+  }
+
+  /// synonyms can arrive as a plain String or as a JSON List.
+  static String? _parseSynonyms(dynamic v) {
+    if (v == null) return null;
+    if (v is String) return v;
+    if (v is List) return v.join(', ');
+    return v.toString();
+  }
+
+  /// dimensions can arrive as a Map or as a plain String ("20x15x8 cm").
+  static Map<String, dynamic>? _parseDimensions(dynamic v) {
+    if (v is Map) return v.cast<String, dynamic>();
+    return null;
+  }
+
   // ── Products list / detail API ────────────────────────────────────────────
   //
   // Response shape:
   // {
   //   "id": 3, "name": "iPhone 15", ...
-  //   "suppliers": [
-  //     { "id": 4, "price": 1000, "stock": 10, ... }  ← pricing lives here
-  //   ]
+  //   "images": "[\"https://...\"]",   ← JSON-encoded string, List, or null
+  //   "supplier_data": {               ← single object (not an array)
+  //     "id": 4,
+  //     "original_price": 1000,        ← full price (shown as strikethrough)
+  //     "unit_price": 850,             ← discounted price (what user pays)
+  //     "active_offer": { "offer_type": "PERCENT", ... } | null
+  //   }
   // }
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-    // Take the first supplier as the default pricing source.
-    // Products with an empty suppliers array are treated as out-of-stock.
-    final suppliers = json['suppliers'] as List<dynamic>? ?? [];
-    final sp = suppliers.isNotEmpty
-        ? suppliers.first as Map<String, dynamic>
-        : null;
+    final sp = json['supplier_data'] as Map<String, dynamic>?;
+
+    final originalPrice =
+        _parseDouble(sp?['original_price']) ??
+            _parseDouble(sp?['price']) ??
+            0.0;
+    final unitPrice  = _parseDouble(sp?['unit_price']);
+    final offerPrice =
+    (unitPrice != null && unitPrice < originalPrice) ? unitPrice : null;
 
     return ProductModel(
       // ── Product identity ─────────────────────────────────────────────────
-      id: json['id'] as int,
-      name: json['name'] as String,
-      nameAr: json['name_ar'] as String?,
-      description: json['description'] as String?,
+      id:            _parseIntOr0(json['id']),
+      name:          json['name'] as String,
+      nameAr:        json['name_ar'] as String?,
+      description:   json['description'] as String?,
       descriptionAr: json['description_ar'] as String?,
-      sku: json['sku'] as String? ?? '',
-      barcode: json['barcode'] as String?,
-      slug: json['slug'] as String? ?? '',
-      synonyms: json['synonyms'] as String?,
-      images: (json['images'] as List<dynamic>?)
-          ?.map((e) => e.toString())
-          .toList() ??
-          [],
-      weight: (json['weight'] as num?)?.toDouble(),
-      dimensions: json['dimensions'] as Map<String, dynamic>?,
-      categoryId: json['category_id'] as int,
-      brandId: json['brand_id'] as int?,
-      sortId: json['sort_id'] as int? ?? 0,
-      color: json['color'] as String?,
-      refundPolicy: json['refund_policy'] as String?,
-      refundable: json['refundable'] as bool?,
-      refundablePeriod: json['refundable_period'] as int?,
+      sku:           json['sku']?.toString() ?? '',
+      barcode:       json['barcode'] as String?,
+      slug:          json['slug']?.toString() ?? '',
+      synonyms:      _parseSynonyms(json['synonyms']),
+      images:        _parseImages(json['images']),
+      weight:        _parseDouble(json['weight']),
+      dimensions:    _parseDimensions(json['dimensions']),
+      categoryId:    _parseIntOr0(json['category_id']),
+      brandId:       _parseInt(json['brand_id']),
+      sortId:        _parseIntOr0(json['sort_id']),
+      color:         json['color'] as String?,
+      refundPolicy:  json['refund_policy'] as String?,
+      refundable:    json['refundable'] as bool?,
+      refundablePeriod: _parseInt(json['refundable_period']),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       deletedAt: json['deleted_at'] != null
@@ -156,50 +214,45 @@ class ProductModel {
           .toList() ??
           [],
       units: (json['units'] as List<dynamic>?)
-          ?.map(
-              (e) => ProductUnitModel.fromJson(e as Map<String, dynamic>))
+          ?.map((e) =>
+          ProductUnitModel.fromJson(e as Map<String, dynamic>))
           .toList() ??
           [],
 
-      // ── Pricing & stock from suppliers[0] ────────────────────────────────
-      spId: sp?['id'] as int?,
-      supplierId: sp?['supplier_id'] as int?,
-      price: (sp?['price'] as num?)?.toDouble() ?? 0.0,
-      costPrice: (sp?['cost_price'] as num?)?.toDouble(),
-      stock: sp?['stock'] as int? ?? 0,
-      minStock: sp?['min_stock'] as int? ?? 0,
-      isActive: sp?['is_active'] as bool? ?? false,
-      isFeatured: sp?['is_featured'] as bool? ?? false,
-      isBestSeller: sp?['is_best_seller'] as bool? ?? false,
-      rating: (sp?['rating'] as num?)?.toDouble() ?? 0.0,
-      totalReviews: sp?['total_reviews'] as int? ?? 0,
-      maxAmountForOneOrder:
-      int.tryParse(sp?['max_amount_for_one_order']?.toString() ?? ''),
-      minAmountForOneOrder:
-      int.tryParse(sp?['min_amount_for_one_order']?.toString() ?? ''),
-      maxAmountForOneUser:
-      int.tryParse(sp?['max_amount_for_one_user']?.toString() ?? ''),
-      minAmountForOneUser:
-      int.tryParse(sp?['min_amount_for_one_user']?.toString() ?? ''),
-      reservedInCartsAmount:
-      int.tryParse(sp?['reserved_in_carts_amount']?.toString() ?? ''),
-      pickupReadyDuration: sp?['pickup_ready_duration'] as int?,
+      // ── Pricing & stock from supplier_data ───────────────────────────────
+      spId:         _parseInt(sp?['id']),
+      supplierId:   _parseInt(sp?['supplier_id']),
+      price:        originalPrice,
+      costPrice:    _parseDouble(sp?['cost_price']),
+      stock:        _parseIntOr0(sp?['stock']),
+      minStock:     _parseIntOr0(sp?['min_stock']),
+      isActive:     _parseBool(sp?['is_active']),
+      isFeatured:   _parseBool(sp?['is_featured']),
+      isBestSeller: _parseBool(sp?['is_best_seller']),
+      rating:       _parseDoubleOr0(sp?['rating']),
+      totalReviews: _parseIntOr0(sp?['total_reviews']),
+      maxAmountForOneOrder:  _parseInt(sp?['max_amount_for_one_order']),
+      minAmountForOneOrder:  _parseInt(sp?['min_amount_for_one_order']),
+      maxAmountForOneUser:   _parseInt(sp?['max_amount_for_one_user']),
+      minAmountForOneUser:   _parseInt(sp?['min_amount_for_one_user']),
+      reservedInCartsAmount: _parseInt(sp?['reserved_in_carts_amount']),
+      pickupReadyDuration:   _parseInt(sp?['pickup_ready_duration']),
 
-      // ── Offer / discount fields (product-level when available) ────────────
-      offer: (json['offer'] as num?)?.toDouble(),
-      offerValidFrom: json['offer_valid_from'] != null
-          ? DateTime.tryParse(json['offer_valid_from'] as String)
+      // ── Offer: unit_price < original_price means an active discount ───────
+      offer:        offerPrice,
+      discountType: sp?['active_offer']?['offer_type'] as String?,
+      offerValidFrom: sp?['active_offer']?['start_date'] != null
+          ? DateTime.tryParse(sp!['active_offer']['start_date'] as String)
           : null,
-      offerValidTo: json['offer_valid_to'] != null
-          ? DateTime.tryParse(json['offer_valid_to'] as String)
+      offerValidTo: sp?['active_offer']?['end_date'] != null
+          ? DateTime.tryParse(sp!['active_offer']['end_date'] as String)
           : null,
-      discountType: json['discount_type'] as String?,
-      discountValueTotal: (json['discount_value_total'] as num?)?.toDouble(),
-      priceOutSite: (json['price_out_site'] as num?)?.toDouble(),
+      discountValueTotal: _parseDouble(sp?['active_offer']?['offer_value']),
+      priceOutSite:       _parseDouble(json['price_out_site']),
     );
   }
 
-  // ── Cart factory — sp and product are now sibling keys in the cart item ──────
+  // ── Cart factory ──────────────────────────────────────────────────────────
   //
   // Cart response shape (supplier_product):
   //   {
@@ -208,13 +261,6 @@ class ProductModel {
   //     unit_price: 850,        ← discounted price (what the user pays)
   //     active_offer: { offer_type: "PERCENT", offer_value: "15", ... }
   //   }
-  //
-  // Strategy:
-  //   • price  = original_price (or price as fallback) — what the product
-  //              normally costs. Shown as strikethrough when discounted.
-  //   • offer  = unit_price  when unit_price < original_price — the
-  //              effective discounted price highlighted in the UI.
-  //              null if there is no discount (unit_price == original_price).
 
   factory ProductModel.fromCartJson({
     required Map<String, dynamic> sp,
@@ -222,92 +268,78 @@ class ProductModel {
   }) {
     final p = product;
 
-    // Resolve original (full) price and the per-unit discounted price.
     final originalPrice =
-        (sp['original_price'] as num?)?.toDouble() ??
-            (sp['price'] as num?)?.toDouble() ??
+        _parseDouble(sp['original_price']) ??
+            _parseDouble(sp['price']) ??
             0.0;
-    final unitPrice = (sp['unit_price'] as num?)?.toDouble();
-
-    // Only treat unit_price as an "offer" when it is strictly less than the
-    // original price.  Equal values mean no active discount.
+    final unitPrice  = _parseDouble(sp['unit_price']);
     final offerPrice =
     (unitPrice != null && unitPrice < originalPrice) ? unitPrice : null;
 
     return ProductModel(
       // ── Product identity ─────────────────────────────────────────────────
-      id: p['id'] as int,
-      name: p['name'] as String,
-      nameAr: p['name_ar'] as String?,
-      description: p['description'] as String?,
+      id:            _parseIntOr0(p['id']),
+      name:          p['name'] as String,
+      nameAr:        p['name_ar'] as String?,
+      description:   p['description'] as String?,
       descriptionAr: p['description_ar'] as String?,
-      sku: p['sku'] as String? ?? '',
-      barcode: p['barcode'] as String?,
-      slug: p['slug'] as String? ?? '',
-      synonyms: p['synonyms'] as String?,
-      images: (p['images'] as List<dynamic>?)
-          ?.map((e) => e.toString())
-          .toList() ??
-          [],
-      weight: (p['weight'] as num?)?.toDouble(),
-      dimensions: p['dimensions'] as Map<String, dynamic>?,
-      categoryId: p['category_id'] as int? ?? 0,
-      brandId: p['brand_id'] as int?,
-      sortId: p['sort_id'] as int? ?? 0,
-      color: p['color'] as String?,
-      refundPolicy: p['refund_policy'] as String?,
-      refundable: p['refundable'] as bool?,
-      refundablePeriod: p['refundable_period'] as int?,
+      sku:           p['sku']?.toString() ?? '',
+      barcode:       p['barcode'] as String?,
+      slug:          p['slug']?.toString() ?? '',
+      synonyms:      _parseSynonyms(p['synonyms']),
+      images:        _parseImages(p['images']),
+      weight:        _parseDouble(p['weight']),
+      dimensions:    _parseDimensions(p['dimensions']),
+      categoryId:    _parseIntOr0(p['category_id']),
+      brandId:       _parseInt(p['brand_id']),
+      sortId:        _parseIntOr0(p['sort_id']),
+      color:         p['color'] as String?,
+      refundPolicy:  p['refund_policy'] as String?,
+      refundable:    p['refundable'] as bool?,
+      refundablePeriod: _parseInt(p['refundable_period']),
       createdAt:
-      DateTime.tryParse(p['created_at'] as String? ?? '') ?? DateTime.now(),
+      DateTime.tryParse(p['created_at']?.toString() ?? '') ?? DateTime.now(),
       updatedAt:
-      DateTime.tryParse(p['updated_at'] as String? ?? '') ?? DateTime.now(),
+      DateTime.tryParse(p['updated_at']?.toString() ?? '') ?? DateTime.now(),
       deletedAt: p['deleted_at'] != null
           ? DateTime.tryParse(p['deleted_at'] as String)
           : null,
 
-      // ── Pricing & stock from supplier_product ────────────────────────────
-      spId: sp['id'] as int?,
-      supplierId: sp['supplier_id'] as int?,
-      // price = original (full) price; used as the strikethrough reference.
-      price: originalPrice,
-      costPrice: (sp['cost_price'] as num?)?.toDouble(),
-      stock: sp['stock'] as int? ?? 0,
-      minStock: sp['min_stock'] as int? ?? 0,
-      isActive: sp['is_active'] as bool? ?? true,
-      isFeatured: sp['is_featured'] as bool? ?? false,
-      isBestSeller: sp['is_best_seller'] as bool? ?? false,
-      rating: (sp['rating'] as num?)?.toDouble() ?? 0.0,
-      totalReviews: sp['total_reviews'] as int? ?? 0,
-      maxAmountForOneOrder:
-      int.tryParse(sp['max_amount_for_one_order']?.toString() ?? ''),
-      minAmountForOneOrder:
-      int.tryParse(sp['min_amount_for_one_order']?.toString() ?? ''),
-      maxAmountForOneUser:
-      int.tryParse(sp['max_amount_for_one_user']?.toString() ?? ''),
-      minAmountForOneUser:
-      int.tryParse(sp['min_amount_for_one_user']?.toString() ?? ''),
-      reservedInCartsAmount:
-      int.tryParse(sp['reserved_in_carts_amount']?.toString() ?? ''),
-      pickupReadyDuration: sp['pickup_ready_duration'] as int?,
+      // ── Pricing & stock from supplier_product ─────────────────────────────
+      spId:         _parseInt(sp['id']),
+      supplierId:   _parseInt(sp['supplier_id']),
+      price:        originalPrice,
+      costPrice:    _parseDouble(sp['cost_price']),
+      stock:        _parseIntOr0(sp['stock']),
+      minStock:     _parseIntOr0(sp['min_stock']),
+      isActive:     _parseBool(sp['is_active'], fallback: true),
+      isFeatured:   _parseBool(sp['is_featured']),
+      isBestSeller: _parseBool(sp['is_best_seller']),
+      rating:       _parseDoubleOr0(sp['rating']),
+      totalReviews: _parseIntOr0(sp['total_reviews']),
+      maxAmountForOneOrder:  _parseInt(sp['max_amount_for_one_order']),
+      minAmountForOneOrder:  _parseInt(sp['min_amount_for_one_order']),
+      maxAmountForOneUser:   _parseInt(sp['max_amount_for_one_user']),
+      minAmountForOneUser:   _parseInt(sp['min_amount_for_one_user']),
+      reservedInCartsAmount: _parseInt(sp['reserved_in_carts_amount']),
+      pickupReadyDuration:   _parseInt(sp['pickup_ready_duration']),
 
-      // ── Offer: unit_price < original_price means an active discount ───────
-      // offer  = the discounted unit price (what the user actually pays).
-      // discountType = "PERCENT" | "FIXED" from active_offer.offer_type.
-      offer: offerPrice,
-      discountType: sp['active_offer']?['offer_type'] as String?,
-      offerValidFrom: null,
-      offerValidTo: null,
+      // ── Offer ─────────────────────────────────────────────────────────────
+      offer:             offerPrice,
+      discountType:      sp['active_offer']?['offer_type'] as String?,
+      offerValidFrom:    null,
+      offerValidTo:      null,
       discountValueTotal: null,
-      priceOutSite: null,
+      priceOutSite:      null,
       attributes: [],
-      units: [],
+      units:      [],
     );
   }
 
   // ── Computed helpers ───────────────────────────────────────────────────────
 
-  String get displayName => LocaleManager.currentLocale == 'ar' ?  (nameAr ?? name) : name;
+  String get displayName =>
+      LocaleManager.currentLocale == 'ar' ? (nameAr ?? name) : name;
   String get displayDescription => descriptionAr ?? description ?? '';
   bool get hasOffer => offer != null && offer! > 0;
 

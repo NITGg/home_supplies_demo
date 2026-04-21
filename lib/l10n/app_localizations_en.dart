@@ -1506,4 +1506,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loadMore => 'Load More';
+
+  @override
+  String get differentSupplierTitle => 'Different Store';
+
+  @override
+  String get differentSupplierBody => 'Your cart already has items from another store. You can clear your cart and start fresh with this item, or keep your existing cart.';
+
+  @override
+  String get clearCartAndAdd => 'Clear Cart & Add Item';
+
+  @override
+  String get keepMyCart => 'Keep My Cart';
 }

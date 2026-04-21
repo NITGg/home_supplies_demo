@@ -7,9 +7,11 @@ import '../../../core/widgets/circel_back_cutton.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../cart/data/models/multiple_supplier_exception.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/cart_icon.dart';
+import '../../cart/presentation/multiple_supplier_dialog.dart';
 import '../data/models/product_model.dart';
 import '../manager/product_detail_cubit.dart';
 import '../manager/product_details_states.dart';
@@ -231,6 +233,13 @@ class _AddToCartBarState extends State<_AddToCartBar>
         spId: widget.product.spId ?? widget.product.id,
         quantity: 1,
       );
+    } on MultipleSupplierException catch (e) {
+      // Backend rejected the add because the product belongs to a different
+      // supplier. Show the resolution dialog — the user can choose to clear
+      // their cart and proceed, or keep the existing cart.
+      if (ctx.mounted) {
+        await MultipleSupplierDialog.show(ctx, exception: e);
+      }
     } catch (_) {
       if (ctx.mounted) _showError(ctx);
     }
