@@ -257,13 +257,13 @@ class OrderCard extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (order.budget != '0' && order.budget != null)
+                        if (order.budget != '0')
                           OrderBudgetChip(
                             budget:
-                                order.actualPrice == '0' ||
+                                '${order.actualPrice == '0' ||
                                     order.actualPrice == null
-                                ? order.budget
-                                : order.actualPrice,
+                                    ? order.budget
+                                    : order.actualPrice} + ${(((double.tryParse(order.totalFee??'')??0))/100).round()}',
                           ),
                         if (order.paymentMethod == 'CASH' ||
                             order.paymentMethod == 'WALLET') ...[

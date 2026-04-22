@@ -50,7 +50,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   @override
   Future<ProductModel> getProductById(int id) async {
     final response = await _dio.get(
-      '/products/$id?supplier_id=3&include=attributes',
+      '/products/$id?supplier_id=9&include=attributes',
     );
 
     final data = response.data as Map<String, dynamic>;
