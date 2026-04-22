@@ -103,7 +103,7 @@ class AppliedCouponBadge extends StatelessWidget {
         return '${coupon.discountValue!.toStringAsFixed(0)}% $target';
       }
       if (coupon.isFixedDiscount) {
-        return '${coupon.discountValue!.toStringAsFixed(0)} ${l10n.egp} $target';
+        return coupon.discountType == 'FIXED_CENTS' ? '${(coupon.discountValue!/100).toStringAsFixed(0)} ${l10n.egp} $target' : '${coupon.discountValue!.toStringAsFixed(0)} ${l10n.egp} $target';
       }
     }
 

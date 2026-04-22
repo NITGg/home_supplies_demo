@@ -23,14 +23,11 @@ import '../manager/cart_state.dart';
 import 'cart_item_tile.dart';
 
 // ── Helper: compute coupon discount against a cart subtotal ───────────────────
-// Mirrors the same branching logic used in AppliedCouponBadge._buildRewardText.
-// Returns null when the coupon does not reduce the cart total (wallet-credit
-// coupons and delivery-fee-only coupons fall through to null).
 double? _computeCouponCartDiscount(CouponValid coupon, double subtotal) {
   if (coupon.isWalletCredit) return null;
   if (coupon.isDeliveryFeeDiscount) return null;
 
-  final value = coupon.discountValueInEgp; // ← use the EGP-normalised value
+  final value = coupon.discountValueInEgp;
   if (value == null) return null;
 
   if (coupon.isPercentDiscount) {
@@ -61,20 +58,24 @@ class _CartScreenState extends State<CartScreen> {
   final _couponController = TextEditingController();
   final FocusNode _couponFocus = FocusNode();
 
-
-  double _computeRequiredAmount(CartLoaded state) {
+  // ── All monetary values are normalised to int:
+  //    • originalTotal / totalDiscount  → already whole from backend (.toInt())
+  //    • couponDiscount                 → already whole from backend (.toInt())
+  //    • deliveryFee / vatAmount        → ceiled (.ceil())
+  // ─────────────────────────────────────────────────────────────────────────
+  int _computeRequiredAmount(CartLoaded state) {
     final summary = state.data.summary;
     final hasDiscount = summary.hasDiscount as bool;
-    final originalTotal = summary.originalTotal as double;
-    final totalDiscount = hasDiscount ? summary.totalDiscount as double : 0.0;
+    final originalTotal = (summary.originalTotal as double).toInt();
+    final totalDiscount = hasDiscount ? (summary.totalDiscount as double).toInt() : 0;
     final priceBeforeCoupon = originalTotal - totalDiscount;
     final couponDiscount = _appliedCoupon != null
-        ? _computeCouponCartDiscount(_appliedCoupon!, priceBeforeCoupon)
+        ? _computeCouponCartDiscount(_appliedCoupon!, priceBeforeCoupon.toDouble())
         : null;
-    final finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
+    final finalTotal = priceBeforeCoupon - (couponDiscount?.toInt() ?? 0);
     final preview = state.preview;
     return preview != null
-        ? finalTotal + preview.deliveryFee + preview.vatAmount
+        ? finalTotal + preview.deliveryFee.ceil() + preview.vatAmount.ceil()
         : finalTotal;
   }
 
@@ -124,7 +125,7 @@ class _CartScreenState extends State<CartScreen> {
         final required = _computeRequiredAmount(cartState);
         if (_walletBalance < required) {
           _showInsufficientBalanceDialog(
-            required: required,
+            required: required.toDouble(),
             balance: _walletBalance,
           );
           return;
@@ -136,6 +137,7 @@ class _CartScreenState extends State<CartScreen> {
       couponCode: _appliedCoupon?.code,
     );
   }
+
   void _showInsufficientBalanceDialog({
     required double required,
     required double balance,
@@ -149,9 +151,9 @@ class _CartScreenState extends State<CartScreen> {
       isScrollControlled: true,
       builder: (sheetCtx) => InsufficientBalanceSheet(
         currentBalance: balance,
-        requiredAmount: required.ceilToDouble(),
+        requiredAmount: required,
         shortfall: shortfall,
-        isShopping: true, // catalog cart is always shopping
+        isShopping: true,
         l10n: l10n,
         onTopUp: () async {
           Navigator.pop(sheetCtx);
@@ -160,6 +162,7 @@ class _CartScreenState extends State<CartScreen> {
       ),
     );
   }
+
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -168,7 +171,6 @@ class _CartScreenState extends State<CartScreen> {
 
     return BlocListener<WalletCubit, WalletState>(
       listenWhen: (_, curr) => curr is WalletLoaded,
-
       listener: (context, state) {
         if (state is WalletLoaded) {
           setState(() => _walletBalance = state.walletData.wallet.balance);
@@ -248,7 +250,7 @@ class _CartScreenState extends State<CartScreen> {
                     onRetry: _cubit.fetchCart,
                   ),
                   CartLoaded(:final data) when data.cartItems.isEmpty =>
-                    const _EmptyView(key: ValueKey('empty')),
+                  const _EmptyView(key: ValueKey('empty')),
                   CartLoaded() => _buildLoaded(context, state as CartLoaded),
                 },
               ),
@@ -308,7 +310,6 @@ class _CartScreenState extends State<CartScreen> {
     return Column(
       key: ValueKey('loaded_${items.length}'),
       children: [
-        // ── Default address chip ──────────────────────────────────────────
         Padding(
           padding: EdgeInsets.fromLTRB(hPad, 10, hPad, 0),
           child: const Align(
@@ -316,8 +317,6 @@ class _CartScreenState extends State<CartScreen> {
             child: DefaultAddressChip(),
           ),
         ),
-
-        // ── Items list ────────────────────────────────────────────────────
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -335,8 +334,6 @@ class _CartScreenState extends State<CartScreen> {
             },
           ),
         ),
-
-        // ── Summary bar ───────────────────────────────────────────────────
         _CartSummaryBar(
           summary: summary,
           preview: state.preview,
@@ -449,18 +446,26 @@ class _CartSummaryBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasDiscount = summary.hasDiscount as bool;
-    final originalTotal = summary.originalTotal as double;
-    final totalDiscount = hasDiscount ? summary.totalDiscount as double : 0.0;
 
-    // Price the customer owes before any coupon is applied.
-    final priceBeforeCoupon = originalTotal - totalDiscount;
+    // ── All values normalised to int ───────────────────────────────────────
+    // deliveryFee / vatAmount may have decimals   → .ceil()
+    final int originalTotal = (summary.originalTotal as double).ceil();
+    final int totalDiscount = hasDiscount ? (summary.totalDiscount as double).ceil() : 0;
+    final int priceBeforeCoupon = originalTotal - totalDiscount;
 
-    // Always base the coupon on the post-sale price, not the raw original.
-    final couponDiscount = appliedCoupon != null
-        ? _computeCouponCartDiscount(appliedCoupon!, priceBeforeCoupon)
+    final int? couponDiscountInt = appliedCoupon != null
+        ? _computeCouponCartDiscount(appliedCoupon!, priceBeforeCoupon.toDouble())?.toInt()
         : null;
 
-    final finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
+    final int finalTotal = priceBeforeCoupon - (couponDiscountInt ?? 0);
+
+    // Ceiled fee values
+    final int? deliveryFeeCeiled = preview?.deliveryFee.ceil();
+    final int? vatAmountCeiled = preview?.vatAmount.ceil();
+    final int? grandTotal = preview != null
+        ? finalTotal + deliveryFeeCeiled! + vatAmountCeiled!
+        : null;
+
     return Container(
       padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 16 + bottomPadding),
       decoration: BoxDecoration(
@@ -510,56 +515,53 @@ class _CartSummaryBar extends StatelessWidget {
           // ── Pricing breakdown ──────────────────────────────────────────
           _SummaryRow(
             label: l10n.cartTotal,
-            value:
-                '${(summary.originalTotal as double).toStringAsFixed(1)} ${l10n.egp}',
+            value: '$originalTotal ${l10n.egp}',
           ),
 
           // Backend sale discount
           if (hasDiscount) ...[
             const SizedBox(height: 6),
             _DiscountRow(
-              discount: summary.totalDiscount as double,
+              discount: totalDiscount,
               egp: l10n.egp,
               theme: theme,
             ),
           ],
 
           // Coupon discount — only rendered for order-total coupons.
-          // wallet-credit & delivery-fee coupons produce null and are skipped.
-          if (couponDiscount != null) ...[
+          if (couponDiscountInt != null) ...[
             const SizedBox(height: 6),
             _CouponDiscountRow(
               coupon: appliedCoupon!,
-              discount: couponDiscount, // ← derived from priceBeforeCoupon now
+              discount: couponDiscountInt,
               egp: l10n.egp,
               theme: theme,
             ),
           ],
 
-          // Replace the current dashed divider + subtotal block with:
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: DashedDivider(color: theme.dividerColor),
           ),
 
-          // Products subtotal
-          if (finalTotal != (summary.originalTotal as double))
+          // Products subtotal (only shown when different from original)
+          if (finalTotal != originalTotal)
             _SummaryRow(
               label: l10n.subtotal,
-              value: '${finalTotal.toStringAsFixed(2)} ${l10n.egp}',
+              value: '$finalTotal ${l10n.egp}',
             ),
 
-          // Delivery fee — only shown when preview is available
+          // Delivery fee + VAT — only shown when preview is available
           if (preview != null) ...[
             const SizedBox(height: 6),
             _SummaryRow(
-              label: l10n.deliveryFee, // add this key to your l10n
-              value: '${preview!.deliveryFee.toStringAsFixed(2)} ${l10n.egp}',
+              label: l10n.deliveryFee,
+              value: '$deliveryFeeCeiled ${l10n.egp}',
             ),
             const SizedBox(height: 6),
             _SummaryRow(
-              label: l10n.vat, // add this key to your l10n
-              value: '${preview!.vatAmount.toStringAsFixed(2)} ${l10n.egp}',
+              label: l10n.vat,
+              value: '$vatAmountCeiled ${l10n.egp}',
             ),
           ],
 
@@ -571,9 +573,9 @@ class _CartSummaryBar extends StatelessWidget {
           // Grand total
           _SummaryRow(
             label: l10n.subtotal,
-            value: preview != null
-                ? '${(finalTotal + preview!.deliveryFee + preview!.vatAmount).toStringAsFixed(0)} ${l10n.egp}'
-                : '${finalTotal.toStringAsFixed(2)} ${l10n.egp}',
+            value: grandTotal != null
+                ? '$grandTotal ${l10n.egp}'
+                : '$finalTotal ${l10n.egp}',
             isTotal: true,
           ),
 
@@ -582,7 +584,7 @@ class _CartSummaryBar extends StatelessWidget {
           // ── Checkout button ─────────────────────────────────────────────
           BlocBuilder<OrderCubit, OrderState>(
             buildWhen: (_, s) =>
-                s is OrderOperationLoading ||
+            s is OrderOperationLoading ||
                 s is OrderSuccess ||
                 s is OrderError ||
                 s is OrdersLoaded,
@@ -592,13 +594,13 @@ class _CartSummaryBar extends StatelessWidget {
                 onPressed: isLoading ? null : onCheckout,
                 icon: isLoading
                     ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
                     : const Icon(Icons.check_circle_outline_rounded),
                 label: Text(
                   l10n.proceedToCheckout,
@@ -739,9 +741,9 @@ class _PaymentOption extends StatelessWidget {
             style: selected
                 ? AppTextStyles.bold14.copyWith(fontSize: 12)
                 : AppTextStyles.regular14.copyWith(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
+              color: Colors.grey,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -752,7 +754,7 @@ class _PaymentOption extends StatelessWidget {
 // ── Backend sale discount row ─────────────────────────────────────────────────
 
 class _DiscountRow extends StatelessWidget {
-  final double discount;
+  final int discount;
   final String egp;
   final ThemeData theme;
 
@@ -801,11 +803,10 @@ class _DiscountRow extends StatelessWidget {
 }
 
 // ── Coupon discount row ───────────────────────────────────────────────────────
-// Label mirrors AppliedCouponBadge._buildRewardText so the two are consistent.
 
 class _CouponDiscountRow extends StatelessWidget {
   final CouponValid coupon;
-  final double discount;
+  final int discount;
   final String egp;
   final ThemeData theme;
 
@@ -817,12 +818,12 @@ class _CouponDiscountRow extends StatelessWidget {
   });
 
   String _label(AppLocalizations l10n) {
-    final value = coupon.discountValueInEgp; // ← here too
+    final value = coupon.discountValueInEgp;
     if (coupon.isPercentDiscount && value != null) {
-      return '${value.toStringAsFixed(0)}% ${l10n.offYourOrder}';
+      return '${value.toInt()}% ${l10n.offYourOrder}';
     }
     if (coupon.isFixedDiscount && value != null) {
-      return '${value.toStringAsFixed(0)} $egp ${l10n.offYourOrder}';
+      return '${value.toInt()} $egp ${l10n.offYourOrder}';
     }
     return coupon.title;
   }
@@ -854,7 +855,7 @@ class _CouponDiscountRow extends StatelessWidget {
           child: HighlighterWidget(
             key: ValueKey(discount),
             child: Text(
-              '${discount.toStringAsFixed(0)} $egp',
+              '$discount $egp',
               style: const TextStyle(
                 color: Colors.black87,
                 fontWeight: FontWeight.w700,
@@ -885,7 +886,7 @@ class DashedDivider extends StatelessWidget {
         return Row(
           children: List.generate(
             count,
-            (_) => Container(
+                (_) => Container(
               width: dashWidth,
               height: 1,
               margin: const EdgeInsets.only(right: gapWidth),
@@ -921,11 +922,11 @@ class _SummaryRow extends StatelessWidget {
           label,
           style: isTotal
               ? theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                )
+            fontWeight: FontWeight.bold,
+          )
               : theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
+            color: Colors.grey.shade600,
+          ),
         ),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
@@ -936,9 +937,9 @@ class _SummaryRow extends StatelessWidget {
             key: ValueKey(value),
             style: isTotal
                 ? theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  )
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            )
                 : theme.textTheme.bodyMedium,
           ),
         ),
