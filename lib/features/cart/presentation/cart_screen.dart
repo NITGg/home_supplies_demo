@@ -11,6 +11,9 @@ import '../../../core/widgets/circel_back_cutton.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../addresses/presentation/default_address_chip.dart';
+import '../../auth/manager/profile_cubit.dart';
+import '../../auth/manager/profile_states.dart';
+import '../../coupons/manager/coupons_cubit.dart';
 import '../../orders/manager/order_cubit.dart';
 import '../../orders/manager/order_states.dart';
 import '../../orders/presentation/widgets/sheets/create_order_sheet/coupon_section.dart';
@@ -37,6 +40,19 @@ bool _toBool(dynamic v) {
   if (v == null) return false;
   if (v is bool) return v;
   return v.toString().toLowerCase() == 'true';
+}
+
+double? _computeDeliveryFeeDiscount(CouponValid coupon, double rawFee) {
+  if (!coupon.isDeliveryFeeDiscount) return null;
+  final value = coupon.discountValueInEgp;
+  if (value == null) return null;
+  if (coupon.isPercentDiscount) {
+    return (rawFee * value / 100).clamp(0.0, rawFee);
+  }
+  if (coupon.isFixedDiscount) {
+    return value.clamp(0.0, rawFee);
+  }
+  return null;
 }
 
 // ── Helper: compute coupon discount against a cart subtotal ───────────────────
@@ -67,6 +83,8 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   double _walletBalance = 0.0;
+  late final CouponCubit _couponCubit = CouponCubit()..loadCoupons();
+
 
   // ── Payment & coupon state ─────────────────────────────────────────────────
   String _paymentMethod = 'CASH';
@@ -99,14 +117,28 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<CartCubit>().fetchCart();
-      if (mounted) context.read<WalletCubit>().fetchWalletData();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      context.read<CartCubit>().fetchCart();
+      context.read<WalletCubit>().fetchWalletData();
+
+      if (_couponController.text.isNotEmpty) return;
+
+      final profileState = context.read<ProfileCubit>().state;
+      if (profileState is ProfileLoaded &&
+          profileState.profile.roleId == 4) return;
+
+      // ── Use the local cubit directly — no context.read needed ──────────
+      final code = await _couponCubit.getOrFetchFirstOrderCoupon();
+
+      if (!mounted || code == null || code.isEmpty) return;
+      _couponController.text = code;
+      _validateCoupon();
     });
   }
-
   @override
   void dispose() {
+    _couponCubit.close();
     _couponController.dispose();
     _couponFocus.dispose();
     super.dispose();
@@ -186,7 +218,9 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return BlocListener<WalletCubit, WalletState>(
+    return BlocProvider.value(
+  value: _couponCubit,
+  child: BlocListener<WalletCubit, WalletState>(
       listenWhen: (_, curr) => curr is WalletLoaded,
       listener: (context, state) {
         if (state is WalletLoaded) {
@@ -276,7 +310,8 @@ class _CartScreenState extends State<CartScreen> {
           },
         ),
       ),
-    );
+    ),
+);
   }
 
   AppBar _buildAppBar(BuildContext context, CartState state) {
@@ -479,10 +514,21 @@ class _CartSummaryBar extends StatelessWidget {
     final double finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
 
     // Delivery / VAT: ceil to avoid showing fractions for fee lines.
-    final int? deliveryFeeCeiled = preview?.deliveryFee.ceil();
+    final double rawDeliveryFee = preview?.deliveryFee ?? 0.0;
+    final int? deliveryFeeCeiled = preview != null ? rawDeliveryFee.ceil() : null;
     final int? vatAmountCeiled = preview?.vatAmount.ceil();
+
+    final double? deliveryFeeDiscount = (appliedCoupon != null && preview != null)
+        ? _computeDeliveryFeeDiscount(appliedCoupon!, rawDeliveryFee)
+        : null;
+    final int? discountedDeliveryFeeCeiled = deliveryFeeDiscount != null
+        ? (rawDeliveryFee - deliveryFeeDiscount).clamp(0.0, rawDeliveryFee).ceilToDouble().toInt()
+        : null;
+
+    final double effectiveDeliveryFee =
+        discountedDeliveryFeeCeiled?.toDouble() ?? deliveryFeeCeiled?.toDouble() ?? 0;
     final double? grandTotal = preview != null
-        ? finalTotal + deliveryFeeCeiled! + vatAmountCeiled!
+        ? finalTotal + effectiveDeliveryFee + vatAmountCeiled!
         : null;
 
     return Container(
@@ -574,9 +620,12 @@ class _CartSummaryBar extends StatelessWidget {
           // Delivery fee + VAT — only shown when preview is available
           if (preview != null) ...[
             const SizedBox(height: 6),
-            _SummaryRow(
+            _DeliveryFeeRow(
+              original: deliveryFeeCeiled!,
+              discounted: discountedDeliveryFeeCeiled,
+              egp: l10n.egp,
               label: l10n.deliveryFee,
-              value: '$deliveryFeeCeiled ${l10n.egp}',
+              theme: theme,
             ),
             const SizedBox(height: 6),
             _SummaryRow(
@@ -637,6 +686,75 @@ class _CartSummaryBar extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+class _DeliveryFeeRow extends StatelessWidget {
+  final int original;
+  final int? discounted;
+  final String egp;
+  final String label;
+  final ThemeData theme;
+
+  const _DeliveryFeeRow({
+    required this.original,
+    required this.discounted,
+    required this.egp,
+    required this.label,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasDiscount = discounted != null && discounted != original;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: Colors.grey.shade600,
+          ),
+        ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, anim) =>
+              FadeTransition(opacity: anim, child: child),
+          child: hasDiscount
+              ? Row(
+            key: ValueKey('discounted_$discounted'),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$original $egp',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.red.shade400,
+                  decoration: TextDecoration.lineThrough,
+                  decorationColor: Colors.red.shade400,
+                ),
+              ),
+              const SizedBox(width: 6),
+              HighlighterWidget(
+                child: Text(
+                  '$discounted $egp',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          )
+              : Text(
+            key: ValueKey('normal_$original'),
+            '$original $egp',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+      ],
     );
   }
 }

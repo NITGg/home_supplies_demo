@@ -14,6 +14,7 @@ class Order {
   final int? pickupAreaId; // was required int
   final String? pickupAddressDescription; // was required String
   final String? pickupLat;
+  final String? confirmationOtp;
   final String? pickupLong;
   final int? deliveryAreaId; // was required int
   final String? deliveryAddressDescription; // was required String
@@ -45,6 +46,7 @@ class Order {
 
   Order({
     this.courierName,
+    this.confirmationOtp,
     this.type,
     this.courierPhone,
     this.courierPhoto,
@@ -91,6 +93,7 @@ class Order {
 
     return Order(
       type: json['type'] as String?,
+      confirmationOtp: json['confirmation_otp'] as String?,
       courierName: user?['full_name'] as String?,
       courierPhone: user?['phone'] as String?,
       courierPhoto: user?['personal_photo'] as String?,

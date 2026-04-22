@@ -33,7 +33,8 @@ class CartSummaryModel {
   /// (via [CartCubit._computeSummary]) immediately after a fetch, so
   /// these neutral values are never actually displayed.
   factory CartSummaryModel.fromJson(Map<String, dynamic> json) {
-    final subtotal = (json['totalPrice'] as num?)?.toDouble() ?? 0.0;
+    // Backend sends monetary values in cents → divide by 100 to get EGP.
+    final subtotal = ((json['totalPrice'] as num?)?.toDouble() ?? 0.0) / 100.0;
     return CartSummaryModel(
       itemCount: json['itemCount'] as int? ?? 0,
       totalItems: json['totalItems'] as int? ?? 0,

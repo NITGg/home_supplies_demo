@@ -2789,6 +2789,12 @@ abstract class AppLocalizations {
   /// **'Confirm Delivery'**
   String get confirmDelivery;
 
+  /// No description provided for @confirmDeliveryCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Delivery Code'**
+  String get confirmDeliveryCode;
+
   /// No description provided for @confirmDeliveryMessage.
   ///
   /// In en, this message translates to:

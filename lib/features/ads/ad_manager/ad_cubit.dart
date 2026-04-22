@@ -7,7 +7,7 @@ import '../data/models/ad_model.dart';
 import 'ad_state.dart';
 
 class AdsCubit extends Cubit<AdsState> {
-  final Dio _dio = ApiClient.instance.dioDEV;
+  final Dio _dio = ApiClient.instance.dio;
 
   AdsCubit() : super(AdsInitial());
 

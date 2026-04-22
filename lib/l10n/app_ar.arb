@@ -601,6 +601,7 @@
     "preparingOrder": "جارٍ تحضير طلبك",
         "findingCourier": "جارٍ العثور على أفضل مندوب لك…",
     "confirmDelivery": "تأكيد التوصيل",
+    "confirmDeliveryCode": "كود تأكيد التوصيل",
     "confirmDeliveryMessage": "هل أنت متاكد من وصول الطلب للعميل؟",
 
 "nearMe": "بالقرب مني",

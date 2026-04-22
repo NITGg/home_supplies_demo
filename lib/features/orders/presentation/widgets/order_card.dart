@@ -90,6 +90,7 @@ class OrderCard extends StatelessWidget {
         return order.status ?? '';
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -122,8 +123,23 @@ class OrderCard extends StatelessWidget {
             if (order.isPending) _buildActionButtons(l10n),
             // inside the Column children list in build():
             if (order.status == 'EXPIRED') _buildRetryFooter(context, order.id),
-            if (order.status == "IN_PROGRESS" && roleId == 4) // ← ADD
+            if (order.status == "IN_PROGRESS" && roleId == 4)
               _buildConfirmDeliveryFooter(context),
+            if (order.status == "IN_PROGRESS" && order.confirmationOtp != null)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  spacing: 10,
+                  children: [
+                    Icon(Icons.qr_code_rounded),
+                    Text(
+                      style: AppTextStyles.bold14.copyWith(fontSize: 12),
+                      "${l10n.confirmDeliveryCode}: ${order.confirmationOtp}",
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -214,18 +230,18 @@ class OrderCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if(order.productDescription != null)
-                        Expanded(
-                          child: Text(
-                            order.productDescription!,
-                            style: AppTextStyles.bold14.copyWith(
-                              fontSize: 15,
-                              height: 1.3,
+                        if (order.productDescription != null)
+                          Expanded(
+                            child: Text(
+                              order.productDescription!,
+                              style: AppTextStyles.bold14.copyWith(
+                                fontSize: 15,
+                                height: 1.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
                         if (order.status == 'IN_PROGRESS' &&
                             order.collectedAt == null)
                           IconButton(
@@ -238,24 +254,26 @@ class OrderCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (order.budget != '0' && order.budget != null)
-                            OrderBudgetChip(
-                            budget: order.actualPrice == '0'
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (order.budget != '0' && order.budget != null)
+                          OrderBudgetChip(
+                            budget:
+                                order.actualPrice == '0' ||
+                                    order.actualPrice == null
                                 ? order.budget
                                 : order.actualPrice,
                           ),
-                          if (order.paymentMethod == 'CASH' ||
-                              order.paymentMethod == 'WALLET') ...[
-                            const SizedBox(width: 8),
-                            _PaymentMethodChip(
-                              paymentMethod: order.paymentMethod!,
-                            ),
-                          ],
+                        if (order.paymentMethod == 'CASH' ||
+                            order.paymentMethod == 'WALLET') ...[
+                          const SizedBox(width: 8),
+                          _PaymentMethodChip(
+                            paymentMethod: order.paymentMethod!,
+                          ),
                         ],
-                      ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -549,40 +567,41 @@ class OrderCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
           child: Row(
             children: [
-              if(order.type != 'CATALOG_PURCHASE')...[
-              Expanded(
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: onViewProposals,
-                        icon: const Icon(Icons.payments_outlined, size: 18),
-                        label: Text(
-                          l10n.viewProposals,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.kPrimaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+              if (order.type != 'CATALOG_PURCHASE') ...[
+                Expanded(
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: onViewProposals,
+                          icon: const Icon(Icons.payments_outlined, size: 18),
+                          label: Text(
+                            l10n.viewProposals,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.kPrimaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    if (hasNewOffer)
-                      Positioned(
-                        top: -6,
-                        right: -6,
-                        child: _PulsingNewOfferDot(),
-                      ),
-                  ],
+                      if (hasNewOffer)
+                        Positioned(
+                          top: -6,
+                          right: -6,
+                          child: _PulsingNewOfferDot(),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),],
+                const SizedBox(width: 12),
+              ],
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: onCancel,

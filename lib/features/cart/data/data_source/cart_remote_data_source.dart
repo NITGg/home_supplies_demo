@@ -29,7 +29,7 @@ abstract class CartRemoteDataSource {
 class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   final Dio _dio;
 
-  CartRemoteDataSourceImpl() : _dio = ApiClient.instance.dioDEV;
+  CartRemoteDataSourceImpl() : _dio = ApiClient.instance.dio;
 
   @override
   Future<CartResponseModel> getCart() async {

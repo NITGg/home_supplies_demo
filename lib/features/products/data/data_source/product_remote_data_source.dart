@@ -19,7 +19,7 @@ abstract class ProductRemoteDataSource {
 class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   final Dio _dio;
 
-  ProductRemoteDataSourceImpl() : _dio = ApiClient.instance.dioDEV;
+  ProductRemoteDataSourceImpl() : _dio = ApiClient.instance.dio;
 
   @override
   Future<ProductsResponseModel> getProducts({
@@ -30,7 +30,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     final queryParams = <String, dynamic>{
       'skip': skip,
       'limit': limit,
-      'supplier_id': 3, // tawreedat go = 3
+      'supplier_id': 9, // tawreedat go = 9
       if (categoryId != null) 'category_id': categoryId,
     };
 

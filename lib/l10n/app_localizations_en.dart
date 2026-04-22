@@ -1385,6 +1385,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmDelivery => 'Confirm Delivery';
 
   @override
+  String get confirmDeliveryCode => 'Confirm Delivery Code';
+
+  @override
   String get confirmDeliveryMessage => 'Are you sure the order has been delivered to the customer?';
 
   @override

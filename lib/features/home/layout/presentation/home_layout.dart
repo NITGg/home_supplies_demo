@@ -1,6 +1,6 @@
-import 'dart:developer';
+import 'dart:async';
 import 'dart:io';
-
+import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -10,7 +10,6 @@ import 'package:tawreedat_go/features/coupons/manager/coupons_cubit.dart';
 import 'package:tawreedat_go/features/wallet/manager/wallet_cubit.dart';
 import 'package:tawreedat_go/features/wallet/manager/wallet_state.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../../../../core/utils/socket_service.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/loading_screen.dart';
@@ -35,8 +34,12 @@ import '../../../categories/presentation/categories_screen.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
 import '../../../coupons/presentation/first_order_discount_dialog.dart';
 import '../../../notifications/presentation/widgets/notification_dialog.dart';
+import '../../../orders/data/models/order_model.dart';
+import '../../../orders/manager/order_cubit.dart';
+import '../../../orders/manager/order_states.dart';
 import '../../../orders/presentation/orders_list_screen.dart';
 import '../../../orders/presentation/widgets/sheets/create_order_sheet/create_order_sheet.dart';
+import '../../../orders/presentation/widgets/sheets/proposal_sheet.dart';
 import '../../../referral/refferal_service.dart';
 import '../../../static_text/app_dynamic_info.dart';
 import '../manager/home_cubit.dart';
@@ -50,6 +53,8 @@ class HomeLayout extends StatefulWidget {
 }
 
 class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
+  StreamSubscription? _newOfferSubscription;
+
   String _userId = '';
   late final HomeCubit _homeCubit = HomeCubit();
   late final CouponCubit _couponCubit = CouponCubit()..loadCoupons();
@@ -80,6 +85,27 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
           accessToken: token,
         );
       }
+
+      _newOfferSubscription = SocketService().onNewOffer.listen((data) {
+        debugPrint('🔔 [HomeLayout] fired');
+        if (mounted) _handleNewOffer(data);
+      });
+
+      // Add this right after:
+      debugPrint(
+        '🔔 [HomeLayout] subscription isPaused: ${_newOfferSubscription?.isPaused}',
+      );
+      debugPrint('🔔 [HomeLayout] same stream instance test — listening now');
+
+      // Force a test emit after 3 seconds to confirm the subscription works at all:
+      Future.delayed(const Duration(seconds: 3), () {
+        debugPrint('🔔 [HomeLayout] firing test event into controller...');
+        SocketService().onNewOffer; // just access it
+        // Manually test if our subscription receives anything:
+        debugPrint(
+          '🔔 [HomeLayout] subscription still active: ${_newOfferSubscription != null}',
+        );
+      });
     });
   }
 
@@ -114,6 +140,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    debugPrint(
+      '🗑️ [HomeLayout] dispose called — cancelling _newOfferSubscription',
+    );
+    _newOfferSubscription?.cancel();
     _homeCubit.close();
     _couponCubit.close();
     WidgetsBinding.instance.removeObserver(this);
@@ -161,6 +191,124 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     } catch (e) {
       debugPrint('Error ensuring socket connection: $e');
     }
+  }
+
+  // ── 2. Replace _handleNewOffer ──────────────────────────────────────────────
+
+  void _handleNewOffer(Map<String, dynamic> data) {
+    debugPrint('🔔 [HomeLayout] _handleNewOffer — mounted=$mounted data=$data');
+
+    final ctx = _scaffoldKey.currentContext;
+    debugPrint('🔔 [HomeLayout] scaffoldKey.currentContext=$ctx');
+
+    if (ctx == null) {
+      debugPrint('❌ [HomeLayout] ctx is null — Scaffold not ready, bailing');
+      return;
+    }
+
+    final l10n = AppLocalizations.of(ctx);
+    debugPrint('🔔 [HomeLayout] l10n=$l10n');
+
+    final orderId = data['orderId'] as int?;
+    debugPrint('🔔 [HomeLayout] orderId=$orderId');
+
+    debugPrint('🔔 [HomeLayout] calling showSuccessBanner...');
+    showSuccessBanner(
+      ctx,
+      l10n?.newProposalReceived ?? 'New Proposal Received!',
+      actionLabel: l10n?.view ?? 'View',
+      onAction: () {
+        debugPrint('🔔 [HomeLayout] banner "View" tapped — orderId=$orderId');
+        if (orderId != null) _findAndShowProposals(orderId);
+      },
+    );
+    debugPrint('🔔 [HomeLayout] showSuccessBanner returned');
+  }
+
+  // ── 3. Replace _findAndShowProposals ────────────────────────────────────────
+
+  void _findAndShowProposals(int orderId) {
+    debugPrint('🔍 [HomeLayout] _findAndShowProposals — orderId=$orderId');
+
+    final ctx = _scaffoldKey.currentContext;
+    debugPrint('🔍 [HomeLayout] scaffoldKey.currentContext=$ctx');
+
+    if (ctx == null) {
+      debugPrint(
+        '❌ [HomeLayout] ctx is null in _findAndShowProposals, bailing',
+      );
+      return;
+    }
+
+    OrderCubit cubit;
+    try {
+      cubit = ctx.read<OrderCubit>();
+      debugPrint('🔍 [HomeLayout] OrderCubit found: $cubit');
+    } catch (e) {
+      debugPrint('❌ [HomeLayout] OrderCubit NOT found in tree: $e');
+      return;
+    }
+
+    debugPrint('🔍 [HomeLayout] calling loadActiveOrders...');
+    cubit.loadActiveOrders(loadMore: false).then((_) {
+      debugPrint('🔍 [HomeLayout] loadActiveOrders complete, mounted=$mounted');
+      if (!mounted) return;
+
+      final state = cubit.state;
+      debugPrint('🔍 [HomeLayout] cubit.state after reload: $state');
+
+      if (state is OrdersLoaded) {
+        debugPrint('🔍 [HomeLayout] orders count: ${state.orders.length}');
+        final order = state.orders.firstWhereOrNull((o) => o.id == orderId);
+        debugPrint('🔍 [HomeLayout] found order for id=$orderId: $order');
+        if (order != null) {
+          _showProposals(order);
+        } else {
+          debugPrint(
+            '❌ [HomeLayout] order $orderId not found in loaded orders',
+          );
+        }
+      } else {
+        debugPrint('❌ [HomeLayout] state is not OrdersLoaded: $state');
+      }
+    });
+  }
+
+  // ── 4. Replace _showProposals ───────────────────────────────────────────────
+
+  void _showProposals(Order order) {
+    debugPrint('📋 [HomeLayout] _showProposals — order.id=${order.id}');
+
+    final ctx = _scaffoldKey.currentContext;
+    debugPrint('📋 [HomeLayout] scaffoldKey.currentContext=$ctx');
+
+    if (ctx == null) {
+      debugPrint('❌ [HomeLayout] ctx is null in _showProposals, bailing');
+      return;
+    }
+
+    OrderCubit cubit;
+    try {
+      cubit = ctx.read<OrderCubit>();
+      debugPrint('📋 [HomeLayout] OrderCubit found for sheet: $cubit');
+    } catch (e) {
+      debugPrint('❌ [HomeLayout] OrderCubit NOT found for sheet: $e');
+      return;
+    }
+
+    debugPrint('📋 [HomeLayout] showing modal bottom sheet...');
+    showModalBottomSheet(
+      context: ctx,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        debugPrint('📋 [HomeLayout] modal builder called');
+        return BlocProvider.value(
+          value: cubit,
+          child: OrderProposalsSheet(order: order),
+        );
+      },
+    );
   }
 
   @override

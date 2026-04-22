@@ -87,9 +87,11 @@ class SocketService {
 
     // New offer event
     _socket!.on('offer:new', (data) {
-      log('📦 NEW OFFER: $data');
+      log('📦 NEW OFFER raw socket event — data: $data');
+      log('📦 controller.hasListener: ${_newOfferController.hasListener}');
       if (data is Map<String, dynamic>) {
         _newOfferController.add(data);
+        log('📦 added to controller');
       }
     });
 

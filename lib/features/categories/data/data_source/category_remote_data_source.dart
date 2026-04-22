@@ -20,7 +20,7 @@ abstract class CategoryRemoteDataSource {
 class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
   final Dio _dio;
 
-  CategoryRemoteDataSourceImpl() : _dio = ApiClient.instance.dioDEV;
+  CategoryRemoteDataSourceImpl() : _dio = ApiClient.instance.dio;
 
   @override
   Future<CategoriesResponseModel> getCategories({

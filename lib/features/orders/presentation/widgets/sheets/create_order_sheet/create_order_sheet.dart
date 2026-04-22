@@ -1048,7 +1048,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             height: 24,
             child: Checkbox(
               value: _pickupNearMe,
-              activeColor: AppColors.kSecondaryColor,
+              activeColor: AppColors.kPrimaryColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),

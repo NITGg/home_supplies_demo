@@ -7,11 +7,6 @@ import '../../ads/presentation/widgets/popups.dart';
 import '../data/models/category_models.dart';
 import 'categories_grid_widget.dart';
 
-/// Standalone screen that shows the full categories grid.
-///
-/// Owns the refresh key so pull-to-refresh works independently of
-/// the orders screen. Navigation to category details is handled here
-/// via go_router, exactly as it was when the grid lived in OrdersListScreen.
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
 

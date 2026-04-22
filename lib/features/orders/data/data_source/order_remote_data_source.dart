@@ -22,6 +22,7 @@ class OrderRemoteDataSource {
 
     if (order.productImageFile != null) {
       formData = FormData.fromMap({
+        'type' : 'CUSTOM_PICKUP',
         'product_description': order.productDescription,
         'budget': order.budget,
         'pickup_area_id': order.pickupAreaId,
@@ -44,6 +45,7 @@ class OrderRemoteDataSource {
     } else {
       formData = FormData.fromMap({
         ...order.toJson(),
+        'type' : 'CUSTOM_PICKUP',
         'payment_method': paymentMethod,
         if (couponCode != null) 'coupon_code': couponCode,
         'estemated_delivery_fee': estimatedDeliveryFee,
@@ -73,7 +75,7 @@ class OrderRemoteDataSource {
     log('Creating catalog order — payment: $paymentMethod, coupon: $couponCode');
 
     final response = await _dio.post(
-      'https://adminapis-dev.nitg-eg.com/api/v1/orders?lang=${LocaleManager.currentLocale}',
+      '/orders?lang=${LocaleManager.currentLocale}',
       data: {
         'type': 'CATALOG_PURCHASE',
         'payment_method': paymentMethod,
@@ -112,7 +114,7 @@ class OrderRemoteDataSource {
     };
 
     final response = await _dio.get(
-      'https://adminapis-dev.nitg-eg.com/api/v1/orders',
+      '/orders',
       queryParameters: queryParams,
     );
 
@@ -130,7 +132,7 @@ class OrderRemoteDataSource {
     log('Cancelling order $orderId with reason: $reason');
 
     final response = await _dio.post(
-      'https://adminapis-dev.nitg-eg.com/api/v1/orders/$orderId/cancel?lang=${LocaleManager.currentLocale}',
+      '/orders/$orderId/cancel?lang=${LocaleManager.currentLocale}',
       data: {'cancelled_reason': reason},
     );
 

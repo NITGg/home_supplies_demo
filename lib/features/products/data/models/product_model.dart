@@ -121,6 +121,16 @@ class ProductModel {
 
   static double _parseDoubleOr0(dynamic v) => _parseDouble(v) ?? 0.0;
 
+  /// Parses a monetary value sent by the backend in **cents** and converts it
+  /// to EGP by dividing by 100.  Returns null when the raw value is absent.
+  static double? _parseCents(dynamic v) {
+    final raw = _parseDouble(v);
+    return raw == null ? null : raw / 100.0;
+  }
+
+  /// Like [_parseCents] but returns 0.0 instead of null.
+  static double _parseCentsOr0(dynamic v) => _parseCents(v) ?? 0.0;
+
   /// Accepts true/false booleans AND "true"/"false" strings.
   static bool _parseBool(dynamic v, {bool fallback = false}) {
     if (v == null) return fallback;
@@ -165,8 +175,8 @@ class ProductModel {
   //   "images": "[\"https://...\"]",   ← JSON-encoded string, List, or null
   //   "supplier_data": {               ← single object (not an array)
   //     "id": 4,
-  //     "original_price": 1000,        ← full price (shown as strikethrough)
-  //     "unit_price": 850,             ← discounted price (what user pays)
+  //     "original_price": 100000,      ← cents (÷100 → 1000.00 EGP)
+  //     "unit_price": 85000,           ← cents (÷100 →  850.00 EGP)
   //     "active_offer": { "offer_type": "PERCENT", ... } | null
   //   }
   // }
@@ -175,10 +185,10 @@ class ProductModel {
     final sp = json['supplier_data'] as Map<String, dynamic>?;
 
     final originalPrice =
-        _parseDouble(sp?['original_price']) ??
-            _parseDouble(sp?['price']) ??
+        _parseCents(sp?['original_price']) ??
+            _parseCents(sp?['price']) ??
             0.0;
-    final unitPrice  = _parseDouble(sp?['unit_price']);
+    final unitPrice  = _parseCents(sp?['unit_price']);
     final offerPrice =
     (unitPrice != null && unitPrice < originalPrice) ? unitPrice : null;
 
@@ -223,7 +233,7 @@ class ProductModel {
       spId:         _parseInt(sp?['id']),
       supplierId:   _parseInt(sp?['supplier_id']),
       price:        originalPrice,
-      costPrice:    _parseDouble(sp?['cost_price']),
+      costPrice:    _parseCents(sp?['cost_price']),
       stock:        _parseIntOr0(sp?['stock']),
       minStock:     _parseIntOr0(sp?['min_stock']),
       isActive:     _parseBool(sp?['is_active']),
@@ -247,8 +257,8 @@ class ProductModel {
       offerValidTo: sp?['active_offer']?['end_date'] != null
           ? DateTime.tryParse(sp!['active_offer']['end_date'] as String)
           : null,
-      discountValueTotal: _parseDouble(sp?['active_offer']?['offer_value']),
-      priceOutSite:       _parseDouble(json['price_out_site']),
+      discountValueTotal: _parseCents(sp?['active_offer']?['offer_value']),
+      priceOutSite:       _parseCents(json['price_out_site']),
     );
   }
 
@@ -257,8 +267,8 @@ class ProductModel {
   // Cart response shape (supplier_product):
   //   {
   //     id, price, stock,
-  //     original_price: 1000,   ← full price before discount
-  //     unit_price: 850,        ← discounted price (what the user pays)
+  //     original_price: 100000,  ← cents (÷100 → 1000.00 EGP)
+  //     unit_price: 85000,       ← cents (÷100 →  850.00 EGP)
   //     active_offer: { offer_type: "PERCENT", offer_value: "15", ... }
   //   }
 
@@ -269,10 +279,10 @@ class ProductModel {
     final p = product;
 
     final originalPrice =
-        _parseDouble(sp['original_price']) ??
-            _parseDouble(sp['price']) ??
+        _parseCents(sp['original_price']) ??
+            _parseCents(sp['price']) ??
             0.0;
-    final unitPrice  = _parseDouble(sp['unit_price']);
+    final unitPrice  = _parseCents(sp['unit_price']);
     final offerPrice =
     (unitPrice != null && unitPrice < originalPrice) ? unitPrice : null;
 
@@ -309,7 +319,7 @@ class ProductModel {
       spId:         _parseInt(sp['id']),
       supplierId:   _parseInt(sp['supplier_id']),
       price:        originalPrice,
-      costPrice:    _parseDouble(sp['cost_price']),
+      costPrice:    _parseCents(sp['cost_price']),
       stock:        _parseIntOr0(sp['stock']),
       minStock:     _parseIntOr0(sp['min_stock']),
       isActive:     _parseBool(sp['is_active'], fallback: true),

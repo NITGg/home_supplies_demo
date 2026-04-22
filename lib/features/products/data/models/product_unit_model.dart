@@ -21,7 +21,8 @@ class ProductUnitModel {
     return ProductUnitModel(
       id: json['id'] as int,
       name: json['name'] as String,
-      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+      // Backend sends monetary values in cents → divide by 100 to get EGP.
+      price: (double.tryParse(json['price']?.toString() ?? '0') ?? 0.0) / 100.0,
       description: json['description'] as String?,
       descriptionAr: json['description_ar'] as String?,
       nameAr: json['name_ar'] as String?,

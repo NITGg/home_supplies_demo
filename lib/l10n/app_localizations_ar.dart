@@ -1385,6 +1385,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get confirmDelivery => 'تأكيد التوصيل';
 
   @override
+  String get confirmDeliveryCode => 'كود تأكيد التوصيل';
+
+  @override
   String get confirmDeliveryMessage => 'هل أنت متاكد من وصول الطلب للعميل؟';
 
   @override

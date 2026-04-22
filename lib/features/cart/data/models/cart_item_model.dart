@@ -34,9 +34,10 @@ class CartItemModel {
       spId: json['sp_id'] as int,
       quantity: json['quantity'] as int? ?? 1,
       product: ProductModel.fromCartJson(sp: sp, product: p),
-      unitPrice: (sp['unit_price'] as num?)?.toDouble() ?? 0.0,
-      originalPrice: (sp['original_price'] as num?)?.toDouble() ?? 0.0,
-      lineTotal: (json['line_total'] as num?)?.toDouble() ?? 0.0,
+      // Backend sends monetary values in cents → divide by 100 to get EGP.
+      unitPrice: ((sp['unit_price'] as num?)?.toDouble() ?? 0.0) / 100.0,
+      originalPrice: ((sp['original_price'] as num?)?.toDouble() ?? 0.0) / 100.0,
+      lineTotal: ((json['line_total'] as num?)?.toDouble() ?? 0.0) / 100.0,
     );
   }
 
