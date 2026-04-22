@@ -12,6 +12,9 @@ import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/multiple_supplier_dialog.dart';
 import '../data/models/product_model.dart';
 
+// ── Price formatting helper ───────────────────────────────────────────────────
+String _fmt(double v) => v.toStringAsFixed(2);
+
 // ── Selector DTO ──────────────────────────────────────────────────────────────
 
 class _CardCartState {
@@ -232,12 +235,12 @@ class _ProductCardState extends State<ProductCard>
                             label: l10n.percentOff(
                                 product.discountPercent!),
                             color: AppColors.kDiscountColor,
-                            icon: Icons.local_offer_rounded,
+                            icon: Icons.card_giftcard,
                           )
                               : _Badge(
                             label: l10n.offer,
                             color: AppColors.kDiscountColor,
-                            icon: Icons.local_offer_rounded,
+                            icon: Icons.card_giftcard,
                           ),
                         ),
 
@@ -567,9 +570,6 @@ class _BusyIndicator extends StatelessWidget {
 }
 
 // ── Rating pill ───────────────────────────────────────────────────────────────
-//
-// Compact star + score + "(N)" badge shown only when totalReviews > 0.
-// Fits comfortably alongside the price in the narrow card footer.
 
 class _RatingPill extends StatelessWidget {
   final double rating;
@@ -579,8 +579,6 @@ class _RatingPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Format score: show one decimal only when it adds information (e.g. 4.7
-    // not 4.0 → show "4").
     final score = rating % 1 == 0
         ? rating.toInt().toString()
         : rating.toStringAsFixed(1);
@@ -606,7 +604,6 @@ class _RatingPill extends StatelessWidget {
               height: 1,
             ),
           ),
-          // Review count — muted so it doesn't compete with the score
           Text(
             ' ($reviewCount)',
             style: TextStyle(
@@ -699,6 +696,8 @@ class _PriceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (product.hasOffer) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -706,7 +705,8 @@ class _PriceRow extends StatelessWidget {
         children: [
           HighlighterWidget(
             child: Text(
-              '${product.offer!.toStringAsFixed(0)} ${AppLocalizations.of(context)!.egp}',
+              // Fixed: was toStringAsFixed(0) — now shows cents
+              '${_fmt(product.offer!)} ${l10n.egp}',
               style: const TextStyle(
                 color: Colors.black87,
                 fontWeight: FontWeight.bold,
@@ -715,7 +715,7 @@ class _PriceRow extends StatelessWidget {
             ),
           ),
           Text(
-            '${product.price.toStringAsFixed(0)} ${AppLocalizations.of(context)!.egp}',
+            '${_fmt(product.price)} ${l10n.egp}',
             style: TextStyle(
               color: Colors.grey.shade400,
               fontSize: 9,
@@ -728,7 +728,7 @@ class _PriceRow extends StatelessWidget {
     }
 
     return Text(
-      '${product.effectivePrice.toStringAsFixed(0)} ${AppLocalizations.of(context)!.egp}',
+      '${_fmt(product.effectivePrice)} ${l10n.egp}',
       style: TextStyle(
         color: primaryColor,
         fontWeight: FontWeight.bold,

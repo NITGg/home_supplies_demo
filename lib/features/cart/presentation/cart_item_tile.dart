@@ -5,6 +5,11 @@ import '../../../l10n/app_localizations.dart';
 import '../../products/presentation/quantity_selector.dart';
 import '../data/models/cart_item_model.dart';
 
+// ── Price formatting helper ───────────────────────────────────────────────────
+// All monetary values in the app are displayed with exactly 2 decimal places
+// so the user always sees "850.00 EGP" instead of "850 EGP".
+String _fmt(double v) => v.toStringAsFixed(2);
+
 class CartItemTile extends StatelessWidget {
   final CartItemModel item;
   final bool isBusy;
@@ -111,7 +116,7 @@ class CartItemTile extends StatelessWidget {
 
                     const SizedBox(height: 9),
 
-                    // ── ROW 3: Line total + save — occupies where qty was ────
+                    // ── ROW 3: Line total + save ───────────────────────────────
                     _LineTotalBlock(item: item, theme: theme, l10n: l10n),
                   ],
                 ),
@@ -149,7 +154,7 @@ class _PriceBlock extends StatelessWidget {
           HighlighterWidget(
             style: HighlighterStyle.underline,
             child: Text(
-              '${item.unitPrice.toStringAsFixed(0)} ${l10n.egp}',
+              '${_fmt(item.unitPrice)} ${l10n.egp}',
               style: const TextStyle(
                 color: Colors.black87,
                 fontWeight: FontWeight.w700,
@@ -160,7 +165,7 @@ class _PriceBlock extends StatelessWidget {
           const SizedBox(width: 6),
           // ── Original price struck through ─────────────────────────────────
           Text(
-            '${item.originalPrice.toStringAsFixed(0)} ${l10n.egp}',
+            '${_fmt(item.originalPrice)} ${l10n.egp}',
             style: TextStyle(
               color: Colors.grey.shade400,
               fontSize: 11,
@@ -180,7 +185,7 @@ class _PriceBlock extends StatelessWidget {
 
     // No discount — simple muted unit price label.
     return Text(
-      '${item.unitPrice.toStringAsFixed(0)} ${l10n.egp} ${l10n.perUnit}',
+      '${_fmt(item.unitPrice)} ${l10n.egp} ${l10n.perUnit}',
       style: theme.textTheme.bodySmall?.copyWith(
         color: Colors.grey.shade500,
       ),
@@ -190,8 +195,7 @@ class _PriceBlock extends StatelessWidget {
 
 // ── Line total block ──────────────────────────────────────────────────────────
 // Shows the line total and, when a discount applies, a full-block highlighted
-// saving label — moved to the bottom-start where the quantity selector used to
-// live, giving it more visual breathing room.
+// saving label.
 
 class _LineTotalBlock extends StatelessWidget {
   final CartItemModel item;
@@ -224,7 +228,7 @@ class _LineTotalBlock extends StatelessWidget {
             ),
           ),
           child: Text(
-            '${item.lineTotal.toStringAsFixed(0)} ${l10n.egp}',
+            '${_fmt(item.lineTotal)} ${l10n.egp}',
             key: ValueKey(item.lineTotal),
             style: theme.textTheme.titleSmall?.copyWith(
               color: theme.colorScheme.primary,
@@ -238,8 +242,8 @@ class _LineTotalBlock extends StatelessWidget {
           const SizedBox(height: 4),
           HighlighterWidget(
             child: Text(
-              '${l10n.save} ${item.lineSaving.toStringAsFixed(0)} ${l10n.egp}',
-              style: TextStyle(
+              '${l10n.save} ${_fmt(item.lineSaving)} ${l10n.egp}',
+              style: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.1,

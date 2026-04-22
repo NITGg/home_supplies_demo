@@ -771,7 +771,7 @@ class _PriceSection extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 3),
                 child: Text(
-                  '${product.price.toStringAsFixed(0)} ${l10n.egp}',
+                  '${product.price.toStringAsFixed(2)} ${l10n.egp}',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: Colors.grey,
                     decoration: TextDecoration.lineThrough,
@@ -803,7 +803,7 @@ class _PriceSection extends StatelessWidget {
     }
 
     return Text(
-      '${product.effectivePrice.toStringAsFixed(0)} ${l10n.egp}',
+      '${product.effectivePrice.toStringAsFixed(2)} ${l10n.egp}',
       style: theme.textTheme.headlineMedium?.copyWith(
         color: theme.colorScheme.primary,
         fontWeight: FontWeight.bold,

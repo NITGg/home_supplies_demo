@@ -22,6 +22,23 @@ import '../manager/cart_cubit.dart';
 import '../manager/cart_state.dart';
 import 'cart_item_tile.dart';
 
+// ── Price formatting helper ───────────────────────────────────────────────────
+// Centralised so every monetary value in this file shows exactly 2 decimals.
+String _fmt(double v) => v.toStringAsFixed(2);
+
+// ── Safe numeric coercions ────────────────────────────────────────────────────
+// The summary DTO fields are typed as `dynamic` (or occasionally come back as
+// int/String from the backend serialiser).  These helpers normalise all three
+// variants without ever throwing a runtime cast error.
+double _toDouble(dynamic v) =>
+    v == null ? 0.0 : double.tryParse(v.toString()) ?? 0.0;
+
+bool _toBool(dynamic v) {
+  if (v == null) return false;
+  if (v is bool) return v;
+  return v.toString().toLowerCase() == 'true';
+}
+
 // ── Helper: compute coupon discount against a cart subtotal ───────────────────
 double? _computeCouponCartDiscount(CouponValid coupon, double subtotal) {
   if (coupon.isWalletCredit) return null;
@@ -58,24 +75,24 @@ class _CartScreenState extends State<CartScreen> {
   final _couponController = TextEditingController();
   final FocusNode _couponFocus = FocusNode();
 
-  // ── All monetary values are normalised to int:
-  //    • originalTotal / totalDiscount  → already whole from backend (.toInt())
-  //    • couponDiscount                 → already whole from backend (.toInt())
-  //    • deliveryFee / vatAmount        → ceiled (.ceil())
-  // ─────────────────────────────────────────────────────────────────────────
-  int _computeRequiredAmount(CartLoaded state) {
+  // ── Required amount for wallet validation ──────────────────────────────────
+  // All intermediate values are doubles; only the final wallet comparison
+  // rounds up via .ceil() to avoid false "insufficient balance" rejections.
+  double _computeRequiredAmount(CartLoaded state) {
     final summary = state.data.summary;
-    final hasDiscount = summary.hasDiscount as bool;
-    final originalTotal = (summary.originalTotal as double).toInt();
-    final totalDiscount = hasDiscount ? (summary.totalDiscount as double).toInt() : 0;
+    final originalTotal = _toDouble(summary.originalTotal);
+    final totalDiscount =
+    _toBool(summary.hasDiscount) ? _toDouble(summary.totalDiscount) : 0.0;
     final priceBeforeCoupon = originalTotal - totalDiscount;
     final couponDiscount = _appliedCoupon != null
-        ? _computeCouponCartDiscount(_appliedCoupon!, priceBeforeCoupon.toDouble())
+        ? _computeCouponCartDiscount(_appliedCoupon!, priceBeforeCoupon)
         : null;
-    final finalTotal = priceBeforeCoupon - (couponDiscount?.toInt() ?? 0);
+    final finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
     final preview = state.preview;
     return preview != null
-        ? finalTotal + preview.deliveryFee.ceil() + preview.vatAmount.ceil()
+        ? finalTotal +
+        preview.deliveryFee.ceilToDouble() +
+        preview.vatAmount.ceilToDouble()
         : finalTotal;
   }
 
@@ -125,7 +142,7 @@ class _CartScreenState extends State<CartScreen> {
         final required = _computeRequiredAmount(cartState);
         if (_walletBalance < required) {
           _showInsufficientBalanceDialog(
-            required: required.toDouble(),
+            required: required,
             balance: _walletBalance,
           );
           return;
@@ -243,7 +260,8 @@ class _CartScreenState extends State<CartScreen> {
                 duration: const Duration(milliseconds: 300),
                 child: switch (state) {
                   CartInitial() ||
-                  CartLoading() => const _LoadingView(key: ValueKey('loading')),
+                  CartLoading() =>
+                  const _LoadingView(key: ValueKey('loading')),
                   CartError(:final message) => _ErrorView(
                     key: const ValueKey('error'),
                     message: message,
@@ -445,24 +463,25 @@ class _CartSummaryBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasDiscount = summary.hasDiscount as bool;
+    // ── Safe coercions — no hard `as double` casts ─────────────────────────
+    // Previously `(summary.originalTotal??0 as double)` only cast the literal
+    // `0` (the fallback) and threw when the actual value was an int or String.
+    final bool hasDiscount = _toBool(summary.hasDiscount);
+    final double originalTotal = _toDouble(summary.originalTotal);
+    final double totalDiscount =
+    hasDiscount ? _toDouble(summary.totalDiscount) : 0.0;
+    final double priceBeforeCoupon = originalTotal - totalDiscount;
 
-    // ── All values normalised to int ───────────────────────────────────────
-    // deliveryFee / vatAmount may have decimals   → .ceil()
-    final int originalTotal = (summary.originalTotal as double).ceil();
-    final int totalDiscount = hasDiscount ? (summary.totalDiscount as double).ceil() : 0;
-    final int priceBeforeCoupon = originalTotal - totalDiscount;
-
-    final int? couponDiscountInt = appliedCoupon != null
-        ? _computeCouponCartDiscount(appliedCoupon!, priceBeforeCoupon.toDouble())?.toInt()
+    final double? couponDiscount = appliedCoupon != null
+        ? _computeCouponCartDiscount(appliedCoupon!, priceBeforeCoupon)
         : null;
 
-    final int finalTotal = priceBeforeCoupon - (couponDiscountInt ?? 0);
+    final double finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
 
-    // Ceiled fee values
+    // Delivery / VAT: ceil to avoid showing fractions for fee lines.
     final int? deliveryFeeCeiled = preview?.deliveryFee.ceil();
     final int? vatAmountCeiled = preview?.vatAmount.ceil();
-    final int? grandTotal = preview != null
+    final double? grandTotal = preview != null
         ? finalTotal + deliveryFeeCeiled! + vatAmountCeiled!
         : null;
 
@@ -515,7 +534,8 @@ class _CartSummaryBar extends StatelessWidget {
           // ── Pricing breakdown ──────────────────────────────────────────
           _SummaryRow(
             label: l10n.cartTotal,
-            value: '$originalTotal ${l10n.egp}',
+            // Fixed: was '$originalTotal' which printed "1000.0"; now "1000.00"
+            value: '${_fmt(originalTotal)} ${l10n.egp}',
           ),
 
           // Backend sale discount
@@ -529,11 +549,11 @@ class _CartSummaryBar extends StatelessWidget {
           ],
 
           // Coupon discount — only rendered for order-total coupons.
-          if (couponDiscountInt != null) ...[
+          if (couponDiscount != null) ...[
             const SizedBox(height: 6),
             _CouponDiscountRow(
               coupon: appliedCoupon!,
-              discount: couponDiscountInt,
+              discount: couponDiscount,
               egp: l10n.egp,
               theme: theme,
             ),
@@ -548,7 +568,7 @@ class _CartSummaryBar extends StatelessWidget {
           if (finalTotal != originalTotal)
             _SummaryRow(
               label: l10n.subtotal,
-              value: '$finalTotal ${l10n.egp}',
+              value: '${_fmt(finalTotal)} ${l10n.egp}',
             ),
 
           // Delivery fee + VAT — only shown when preview is available
@@ -574,8 +594,8 @@ class _CartSummaryBar extends StatelessWidget {
           _SummaryRow(
             label: l10n.subtotal,
             value: grandTotal != null
-                ? '$grandTotal ${l10n.egp}'
-                : '$finalTotal ${l10n.egp}',
+                ? '${_fmt(grandTotal)} ${l10n.egp}'
+                : '${_fmt(finalTotal)} ${l10n.egp}',
             isTotal: true,
           ),
 
@@ -754,7 +774,7 @@ class _PaymentOption extends StatelessWidget {
 // ── Backend sale discount row ─────────────────────────────────────────────────
 
 class _DiscountRow extends StatelessWidget {
-  final int discount;
+  final double discount;
   final String egp;
   final ThemeData theme;
 
@@ -788,7 +808,7 @@ class _DiscountRow extends StatelessWidget {
               FadeTransition(opacity: anim, child: child),
           child: HighlighterWidget(
             child: Text(
-              '$discount $egp',
+              '${_fmt(discount)} $egp',
               style: const TextStyle(
                 color: Colors.black87,
                 fontWeight: FontWeight.w700,
@@ -806,7 +826,7 @@ class _DiscountRow extends StatelessWidget {
 
 class _CouponDiscountRow extends StatelessWidget {
   final CouponValid coupon;
-  final int discount;
+  final double discount; // changed from int — keeps the cents
   final String egp;
   final ThemeData theme;
 
@@ -823,7 +843,7 @@ class _CouponDiscountRow extends StatelessWidget {
       return '${value.toInt()}% ${l10n.offYourOrder}';
     }
     if (coupon.isFixedDiscount && value != null) {
-      return '${value.toInt()} $egp ${l10n.offYourOrder}';
+      return '${_fmt(value)} $egp ${l10n.offYourOrder}';
     }
     return coupon.title;
   }
@@ -855,7 +875,7 @@ class _CouponDiscountRow extends StatelessWidget {
           child: HighlighterWidget(
             key: ValueKey(discount),
             child: Text(
-              '$discount $egp',
+              '${_fmt(discount)} $egp',
               style: const TextStyle(
                 color: Colors.black87,
                 fontWeight: FontWeight.w700,

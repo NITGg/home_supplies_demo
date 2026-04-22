@@ -133,7 +133,7 @@ class _DefaultAddressChipState extends State<DefaultAddressChip>
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(
-                    '${AppLocalizations.of(context)!.shipping} ${AppLocalizations.of(context)!.to} $label',
+                    '${AppLocalizations.of(context)!.delivery} ${AppLocalizations.of(context)!.to} $label',
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,

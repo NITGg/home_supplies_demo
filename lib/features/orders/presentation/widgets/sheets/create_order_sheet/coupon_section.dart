@@ -42,7 +42,7 @@ class CouponSection extends StatelessWidget {
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => onValidate(),
             prefixIcon: const Icon(
-              Icons.local_offer_outlined,
+              Icons.card_giftcard,
               color: Colors.grey,
             ),
           ),
