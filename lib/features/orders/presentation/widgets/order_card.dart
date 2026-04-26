@@ -263,7 +263,7 @@ class OrderCard extends StatelessWidget {
                                 '${order.actualPrice == '0' ||
                                     order.actualPrice == null
                                     ? order.budget
-                                    : order.actualPrice} + ${(((double.tryParse(order.totalFee??'')??0))/100).round()}',
+                                    : order.actualPrice} + ${(((double.tryParse(order.totalFee??'')??0))/100).toStringAsFixed(2)}',
                           ),
                         if (order.paymentMethod == 'CASH' ||
                             order.paymentMethod == 'WALLET') ...[

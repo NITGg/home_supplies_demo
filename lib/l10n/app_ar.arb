@@ -491,6 +491,7 @@
 "noProposalsYet": "لا توجد عروض حتى الآن",
 "orderCancelledUnavailable": "تم إلغاء الطلب - المنتج غير متوفر",
 "view": "عرض",
+"estimate": "(قيمة تقديرية)",
 "tapToView": "اضغط لعرضه",
 "newProposalReceived": "تم استلام عرض جديد",
 "reviewsCount": "{count} تقييم",

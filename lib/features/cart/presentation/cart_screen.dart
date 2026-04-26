@@ -624,7 +624,7 @@ class _CartSummaryBar extends StatelessWidget {
               original: deliveryFeeCeiled!,
               discounted: discountedDeliveryFeeCeiled,
               egp: l10n.egp,
-              label: l10n.deliveryFee,
+              label: '${l10n.deliveryFee} ${l10n.estimate}',
               theme: theme,
             ),
             const SizedBox(height: 6),

@@ -159,6 +159,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     }
   }
 
+// AFTER
   int? _lastHandledExtra;
 
   @override
@@ -168,10 +169,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     if (extra is int && extra != _lastHandledExtra) {
       _lastHandledExtra = extra;
       _homeCubit.changeTab(extra);
-      // Reset so the same value works again on the next navigation
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _lastHandledExtra = null;
-      });
+      // No reset — GoRouter retains the extra on pop, so resetting to null
+      // causes this block to re-run and switch tabs every time a child pops back.
     }
   }
 

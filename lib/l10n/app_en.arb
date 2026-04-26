@@ -487,6 +487,7 @@
 "view": "View",
 "tapToView": "Tap To View",
 "newProposalReceived": "New Proposal Received",
+"estimate": "(estimate)",
 
       "cancelOrderWarning": "Are you sure you want to cancel this order? This action cannot be undone.",
 "reviewsCount": "{count} Reviews",

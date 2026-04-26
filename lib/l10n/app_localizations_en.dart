@@ -1108,6 +1108,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newProposalReceived => 'New Proposal Received';
 
   @override
+  String get estimate => '(estimate)';
+
+  @override
   String get cancelOrderWarning => 'Are you sure you want to cancel this order? This action cannot be undone.';
 
   @override

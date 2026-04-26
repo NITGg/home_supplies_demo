@@ -2255,6 +2255,12 @@ abstract class AppLocalizations {
   /// **'New Proposal Received'**
   String get newProposalReceived;
 
+  /// No description provided for @estimate.
+  ///
+  /// In en, this message translates to:
+  /// **'(estimate)'**
+  String get estimate;
+
   /// No description provided for @cancelOrderWarning.
   ///
   /// In en, this message translates to:

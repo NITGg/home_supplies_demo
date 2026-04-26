@@ -1108,6 +1108,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get newProposalReceived => 'تم استلام عرض جديد';
 
   @override
+  String get estimate => '(قيمة تقديرية)';
+
+  @override
   String get cancelOrderWarning => 'هل أنت متأكد من إلغاء الطلب؟ .. هذه العملية لا يمكن الرجوع فيها';
 
   @override
