@@ -1,6 +1,19 @@
 import 'dart:io';
 
+import 'order_items.dart';
+
 class Order {
+  String get itemsSummary {
+    if (orderItems.isEmpty) return '';
+
+    return orderItems.map((item) {
+      final name = item.product.nameAr.isNotEmpty
+          ? item.product.nameAr
+          : item.product.name;
+
+      return '$name (${item.quantity})';
+    }).join(' ');
+  }
   final int? id;
   final int? customerId;
   final int? courierId;
@@ -44,6 +57,9 @@ class Order {
   final String?
   priceAdjustmentStatus; // ← NEW: NONE | ACCEPTED | REJECTED | PENDING
 
+  final List<OrderItem> orderItems;
+
+
   Order({
     this.courierName,
     this.confirmationOtp,
@@ -69,6 +85,7 @@ class Order {
     this.deliveryAddressDescription, // no longer required
     required this.deliveryLat,
     required this.deliveryLong,
+    required this.orderItems,
     this.minDeliveryFee,
     this.maxDeliveryFee,
     this.totalFee,
@@ -92,6 +109,9 @@ class Order {
     final user = courier?['user'] as Map<String, dynamic>?;
 
     return Order(
+      orderItems: (json['orderItems'] as List? ?? [])
+          .map((e) => OrderItem.fromJson(e))
+          .toList(),
       type: json['type'] as String?,
       confirmationOtp: json['confirmation_otp'] as String?,
       courierName: user?['full_name'] as String?,

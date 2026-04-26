@@ -974,6 +974,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
     context.read<OrderCubit>().createOrder(
       Order(
+        orderItems: [],
         productDescription: _productDescriptionController.text.trim(),
         productImageFile: _productImage,
         budget: _isShopping

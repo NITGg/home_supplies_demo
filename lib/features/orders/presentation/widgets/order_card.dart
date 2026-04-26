@@ -230,7 +230,7 @@ class OrderCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (order.productDescription != null)
+                        order.productDescription != null?
                           Expanded(
                             child: Text(
                               order.productDescription!,
@@ -241,7 +241,17 @@ class OrderCard extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
+                          ):  Expanded(
+                          child: Text(
+                            order.itemsSummary,
+                            style: AppTextStyles.bold14.copyWith(
+                              fontSize: 15,
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
+                        ),
                         if (order.status == 'IN_PROGRESS' &&
                             order.collectedAt == null)
                           IconButton(
