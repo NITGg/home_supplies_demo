@@ -564,20 +564,24 @@ class _CartSummaryBar extends StatelessWidget {
     hasDiscount ? _toDouble(summary.totalDiscount) : 0.0;
     final double priceBeforeCoupon = originalTotal - totalDiscount;
 
-    final double? couponDiscount = appliedCoupon != null
+// DELIVERY_FEE / PRODUCTS_ONLY coupons reduce the subtotal
+// ORDER_TOTAL coupons reduce the grand total — handled separately below
+    final bool isOrderTotalCoupon =
+        appliedCoupon?.isOrderTotalDiscount ?? false;
+
+    final double? couponDiscount = (appliedCoupon != null && !isOrderTotalCoupon)
         ? _computeCouponCartDiscount(appliedCoupon!, priceBeforeCoupon)
         : null;
 
     final double finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
 
     final double rawDeliveryFee = preview?.deliveryFee ?? 0.0;
-    final double? deliveryFeeRounded = preview != null
-        ? double.parse(rawDeliveryFee.toStringAsFixed(2))
-        : null;
+    final double? deliveryFeeRounded =
+    preview != null ? double.parse(rawDeliveryFee.toStringAsFixed(2)) : null;
     final double? vatAmountRounded = preview?.vatAmount;
 
     final double? deliveryFeeDiscount =
-    (appliedCoupon != null && preview != null)
+    (appliedCoupon != null && preview != null && !isOrderTotalCoupon)
         ? _computeDeliveryFeeDiscount(appliedCoupon!, rawDeliveryFee)
         : null;
     final double? discountedDeliveryFee = deliveryFeeDiscount != null
@@ -586,8 +590,20 @@ class _CartSummaryBar extends StatelessWidget {
 
     final double effectiveDeliveryFee =
         discountedDeliveryFee ?? deliveryFeeRounded ?? 0.0;
-    final double? grandTotal = preview != null
+
+// Grand total before ORDER_TOTAL coupon
+    final double? grandTotalRaw = preview != null
         ? finalTotal + effectiveDeliveryFee + vatAmountRounded!
+        : null;
+
+// ORDER_TOTAL coupon discount applies to the full grand total
+    final double? orderTotalCouponDiscount =
+    (isOrderTotalCoupon && appliedCoupon != null && grandTotalRaw != null)
+        ? _computeCouponCartDiscount(appliedCoupon!, grandTotalRaw)
+        : null;
+
+    final double? grandTotal = grandTotalRaw != null
+        ? grandTotalRaw - (orderTotalCouponDiscount ?? 0.0)
         : null;
 
     return Container(
@@ -680,12 +696,13 @@ class _CartSummaryBar extends StatelessWidget {
               egp: l10n.egp,
               label: l10n.deliveryFee,
               theme: theme,
+              isCouponDiscount: appliedCoupon?.isDeliveryFeeDiscount ?? false,
             ),
-            const SizedBox(height: 6),
-            _SummaryRow(
-              label: l10n.vat,
-              value: '$vatAmountRounded ${l10n.egp}',
-            ),
+            // const SizedBox(height: 6),
+            // _SummaryRow(
+            //   label: l10n.vat,
+            //   value: '$vatAmountRounded ${l10n.egp}',
+            // ),
           ],
 
           Padding(
@@ -693,6 +710,15 @@ class _CartSummaryBar extends StatelessWidget {
             child: DashedDivider(color: theme.dividerColor),
           ),
 
+          if (orderTotalCouponDiscount != null) ...[
+            _CouponDiscountRow(
+              coupon: appliedCoupon!,
+              discount: orderTotalCouponDiscount,
+              egp: l10n.egp,
+              theme: theme,
+            ),
+            const SizedBox(height: 6),
+          ],
           _SummaryRow(
             label: l10n.subtotal,
             value: grandTotal != null
@@ -751,6 +777,7 @@ class _DeliveryFeeRow extends StatelessWidget {
   final String egp;
   final String label;
   final ThemeData theme;
+  final bool isCouponDiscount; // ← NEW
 
   const _DeliveryFeeRow({
     required this.original,
@@ -758,6 +785,7 @@ class _DeliveryFeeRow extends StatelessWidget {
     required this.egp,
     required this.label,
     required this.theme,
+    this.isCouponDiscount = false, // ← NEW
   });
 
   @override
@@ -767,11 +795,16 @@ class _DeliveryFeeRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: Colors.grey.shade600,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ],
         ),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
@@ -814,7 +847,6 @@ class _DeliveryFeeRow extends StatelessWidget {
     );
   }
 }
-
 // ── Payment toggle ────────────────────────────────────────────────────────────
 
 class _PaymentToggle extends StatelessWidget {
@@ -1014,6 +1046,19 @@ class _CouponDiscountRow extends StatelessWidget {
 
   String _label(AppLocalizations l10n) {
     final value = coupon.discountValueInEgp;
+
+    // ── Delivery-fee discount ───────────────────────────────────────────────
+    if (coupon.isDeliveryFeeDiscount) {
+      if (coupon.isPercentDiscount && value != null) {
+        return '${value.toInt()}% ${l10n.offDeliveryFee}';
+      }
+      if (coupon.isFixedDiscount && value != null) {
+        return '${_fmt(value)} $egp ${l10n.offDeliveryFee}';
+      }
+      return coupon.title;
+    }
+
+    // ── Order (cart) discount ───────────────────────────────────────────────
     if (coupon.isPercentDiscount && value != null) {
       return '${value.toInt()}% ${l10n.offYourOrder}';
     }
@@ -1119,8 +1164,7 @@ class _SummaryRow extends StatelessWidget {
           style: isTotal
               ? theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
-          )
-              : theme.textTheme.bodyMedium?.copyWith(
+          ): theme.textTheme.bodyMedium?.copyWith(
             color: Colors.grey.shade600,
           ),
         ),

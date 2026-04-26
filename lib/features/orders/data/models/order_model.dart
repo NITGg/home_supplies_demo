@@ -36,10 +36,12 @@ class Order {
   final String? minDeliveryFee;
   final String? maxDeliveryFee;
   final String? totalFee;
+  final String? discountAmount;
   final String? courierFee;
   final String? platformFee;
   final String? paymentMethod;
   final String? status;
+  final String? couponType;
   final String? cancelledReason;
   final String? cancellationFee;
   final int? cancelledBy;
@@ -68,6 +70,7 @@ class Order {
     this.courierPhoto,
     this.priceAdjustmentStatus,
     this.id,
+    this.couponType,
     this.customerId,
     this.courierId,
     this.orderNumber,
@@ -89,6 +92,7 @@ class Order {
     this.minDeliveryFee,
     this.maxDeliveryFee,
     this.totalFee,
+    this.discountAmount,
     this.courierFee,
     this.platformFee,
     this.paymentMethod,
@@ -113,6 +117,7 @@ class Order {
           .map((e) => OrderItem.fromJson(e))
           .toList(),
       type: json['type'] as String?,
+      couponType: json['coupon_type'] as String?,
       confirmationOtp: json['confirmation_otp'] as String?,
       courierName: user?['full_name'] as String?,
       courierPhone: user?['phone'] as String?,
@@ -149,6 +154,7 @@ class Order {
       minDeliveryFee: json['min_delivery_fee']?.toString(),
       maxDeliveryFee: json['max_delivery_fee']?.toString(),
       totalFee: json['total_fee']?.toString(),
+      discountAmount: json['discount_amount']?.toString(),
       courierFee: json['courier_fee']?.toString(),
       platformFee: json['platform_fee']?.toString(),
       paymentMethod: json['payment_method'] as String?,

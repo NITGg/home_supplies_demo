@@ -230,7 +230,7 @@ class OrderCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        order.productDescription != null?
+                        if (order.productDescription != null)
                           Expanded(
                             child: Text(
                               order.productDescription!,
@@ -241,17 +241,7 @@ class OrderCard extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ):  Expanded(
-                          child: Text(
-                            order.itemsSummary,
-                            style: AppTextStyles.bold14.copyWith(
-                              fontSize: 15,
-                              height: 1.3,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
                         if (order.status == 'IN_PROGRESS' &&
                             order.collectedAt == null)
                           IconButton(
@@ -267,14 +257,37 @@ class OrderCard extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (order.budget != '0')
-                          OrderBudgetChip(
-                            budget:
-                                '${order.actualPrice == '0' ||
-                                    order.actualPrice == null
-                                    ? order.budget
-                                    : order.actualPrice} + ${(((double.tryParse(order.totalFee??'')??0))/100).toStringAsFixed(2)}',
-                          ),
+                        if (order.budget != '0') ...[
+                          Builder(builder: (_) {
+                            final productPrice = double.tryParse(
+                              (order.actualPrice == '0' || order.actualPrice == null)
+                                  ? (order.budget ?? '0')
+                                  : (order.actualPrice ?? '0'),
+                            ) ?? 0.0;
+
+                            final fee      = (double.tryParse(order.totalFee ?? '')      ?? 0) / 100;
+                            final discount = (double.tryParse(order.discountAmount ?? '') ?? 0) / 100;
+
+                            String budgetText;
+
+                            if (order.couponType == 'DELIVERY_FEE') {
+                              // Discount reduces the delivery fee portion only
+                              final discountedFee = (fee - discount).clamp(0, double.infinity);
+                              budgetText =
+                              '${productPrice.toStringAsFixed(2)} + ${discountedFee.toStringAsFixed(2)}';
+                            } else if (order.couponType == 'ORDER_TOTAL' && discount > 0) {
+                              // Discount applies to the whole order — show it as a trailing deduction
+                              budgetText =
+                              '${productPrice.toStringAsFixed(2)} + ${fee.toStringAsFixed(2)} - ${discount.toStringAsFixed(2)}';
+                            } else {
+                              // No coupon / unrecognised type — plain display
+                              budgetText =
+                              '${productPrice.toStringAsFixed(2)} + ${fee.toStringAsFixed(2)}';
+                            }
+
+                            return OrderBudgetChip(budget: budgetText);
+                          }),
+                        ],
                         if (order.paymentMethod == 'CASH' ||
                             order.paymentMethod == 'WALLET') ...[
                           const SizedBox(width: 8),

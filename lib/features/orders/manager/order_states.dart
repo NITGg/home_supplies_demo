@@ -212,7 +212,7 @@ class CouponValid extends OrderState {
   bool get isFixedDiscount =>
       discountType == 'FIXED' || discountType == 'FIXED_CENTS';
   bool get isDeliveryFeeDiscount => scope == 'DELIVERY_FEE';
-
+  bool get isOrderTotalDiscount => scope == 'ORDER_TOTAL';
   double? get discountValueInEgp {
     if (discountValue == null) return null;
     if (discountType == 'FIXED_CENTS') return discountValue! / 100.0;
