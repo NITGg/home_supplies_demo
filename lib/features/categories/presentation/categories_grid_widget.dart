@@ -7,7 +7,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../addresses/presentation/default_address_chip.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
-import '../../cart/presentation/cart_icon.dart';
+import '../../cart/presentation/widgets/cart_icon.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_cubit.dart';
 import '../manager/category_states.dart';

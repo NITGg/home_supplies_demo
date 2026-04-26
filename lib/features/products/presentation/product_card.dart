@@ -9,7 +9,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../cart/data/models/multiple_supplier_exception.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
-import '../../cart/presentation/multiple_supplier_dialog.dart';
+import '../../cart/presentation/widgets/multiple_supplier_dialog.dart';
 import '../data/models/product_model.dart';
 
 // ── Price formatting helper ───────────────────────────────────────────────────

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../cart/manager/cart_cubit.dart';
-import '../../cart/manager/cart_state.dart';
-import '../../../core/style/app_colors.dart';
+import '../../manager/cart_cubit.dart';
+import '../../manager/cart_state.dart';
+import '../../../../core/style/app_colors.dart';
 
 /// A cart icon badge that:
 /// - Shows the total item count from [CartCubit].

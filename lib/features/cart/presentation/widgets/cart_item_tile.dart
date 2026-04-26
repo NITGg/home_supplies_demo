@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/highlighter_widget.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../products/presentation/quantity_selector.dart';
-import '../data/models/cart_item_model.dart';
+import '../../../../core/widgets/highlighter_widget.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../products/presentation/quantity_selector.dart';
+import '../../data/models/cart_item_model.dart';
 
 // ── Price formatting helper ───────────────────────────────────────────────────
 // All monetary values in the app are displayed with exactly 2 decimal places

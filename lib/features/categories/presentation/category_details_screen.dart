@@ -5,7 +5,7 @@ import 'package:tawreedat_go/features/categories/presentation/sub_cat_section.da
 
 import '../../../core/widgets/circel_back_cutton.dart';
 import '../../../core/widgets/image_with_fallback.dart';
-import '../../cart/presentation/cart_icon.dart';
+import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../products/data/models/product_model.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_detail_cubit.dart';
