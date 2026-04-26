@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 part 'home_state.dart';
 
 class HomeCubit extends Cubit<HomeState> {
@@ -22,7 +23,14 @@ class HomeCubit extends Cubit<HomeState> {
     // Emit the intent — OrdersListScreen's BlocListener catches this
     emit(HomeHistoryTabRequested());
   }
+
   void consumePendingHistoryTab() {
     pendingHistoryTab = false; // 👈 clear after consuming
   }
+}
+
+class GoToTab {
+  final int index;
+
+  const GoToTab(this.index);
 }

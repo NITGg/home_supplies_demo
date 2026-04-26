@@ -160,19 +160,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   }
 
 // AFTER
-  int? _lastHandledExtra;
+  Object? _lastHandledExtra;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final extra = GoRouterState.of(context).extra;
-    if (extra is int && extra != _lastHandledExtra) {
-      _lastHandledExtra = extra;
-      _homeCubit.changeTab(extra);
-      // No reset — GoRouter retains the extra on pop, so resetting to null
-      // causes this block to re-run and switch tabs every time a child pops back.
-    }
-  }
 
   Future<void> _ensureSocketConnection() async {
     try {
@@ -313,7 +302,13 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-
+    final extra = GoRouterState.of(context).extra;
+    if (extra is GoToTab && extra != _lastHandledExtra) {
+      _lastHandledExtra = extra;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _homeCubit.changeTab(extra.index);
+      });
+    }
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: _homeCubit),
@@ -469,7 +464,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       final balance =
                           walletCubit.cachedWalletData?.wallet.balance ?? 0.0;
 
-                      showModalBottomSheet(
+                      // HomeLayout — FAB onPressed
+                      showModalBottomSheet<Order>(           // ← type the sheet's return
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
@@ -480,7 +476,11 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                             walletBalance: balance,
                           ),
                         ),
-                      );
+                      ).then((order) {
+                        if (order != null && mounted) {      // sheet pops with the Order on success
+                          _homeCubit.changeTab(1);
+                        }
+                      });
                     },
                     backgroundColor: AppColors.kSecondaryColor,
                     shape: const CircleBorder(),
