@@ -10,6 +10,8 @@ import '../../../core/style/text_styles.dart';
 import '../../../core/widgets/circel_back_cutton.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../addresses/manager/address_cubit.dart';
+import '../../addresses/manager/address_states.dart';
 import '../../addresses/presentation/default_address_chip.dart';
 import '../../auth/manager/profile_cubit.dart';
 import '../../auth/manager/profile_states.dart';
@@ -26,13 +28,9 @@ import '../manager/cart_state.dart';
 import 'cart_item_tile.dart';
 
 // ── Price formatting helper ───────────────────────────────────────────────────
-// Centralised so every monetary value in this file shows exactly 2 decimals.
 String _fmt(double v) => v.toStringAsFixed(2);
 
 // ── Safe numeric coercions ────────────────────────────────────────────────────
-// The summary DTO fields are typed as `dynamic` (or occasionally come back as
-// int/String from the backend serialiser).  These helpers normalise all three
-// variants without ever throwing a runtime cast error.
 double _toDouble(dynamic v) =>
     v == null ? 0.0 : double.tryParse(v.toString()) ?? 0.0;
 
@@ -55,7 +53,6 @@ double? _computeDeliveryFeeDiscount(CouponValid coupon, double rawFee) {
   return null;
 }
 
-// ── Helper: compute coupon discount against a cart subtotal ───────────────────
 double? _computeCouponCartDiscount(CouponValid coupon, double subtotal) {
   if (coupon.isWalletCredit) return null;
   if (coupon.isDeliveryFeeDiscount) return null;
@@ -85,17 +82,17 @@ class _CartScreenState extends State<CartScreen> {
   double _walletBalance = 0.0;
   late final CouponCubit _couponCubit = CouponCubit()..loadCoupons();
 
+  // ── Track default address to detect changes ──────────────────────────────
+  int? _currentDefaultAddressId;
 
-  // ── Payment & coupon state ─────────────────────────────────────────────────
+  // ── Payment & coupon state ───────────────────────────────────────────────
   String _paymentMethod = 'CASH';
   CouponValid? _appliedCoupon;
   bool _couponValidating = false;
   final _couponController = TextEditingController();
   final FocusNode _couponFocus = FocusNode();
 
-  // ── Required amount for wallet validation ──────────────────────────────────
-  // All intermediate values are doubles; only the final wallet comparison
-  // rounds up via .ceil() to avoid false "insufficient balance" rejections.
+  // ── Required amount for wallet validation ────────────────────────────────
   double _computeRequiredAmount(CartLoaded state) {
     final summary = state.data.summary;
     final originalTotal = _toDouble(summary.originalTotal);
@@ -125,10 +122,10 @@ class _CartScreenState extends State<CartScreen> {
       if (_couponController.text.isNotEmpty) return;
 
       final profileState = context.read<ProfileCubit>().state;
-      if (profileState is ProfileLoaded &&
-          profileState.profile.roleId == 4) return;
+      if (profileState is ProfileLoaded && profileState.profile.roleId == 4) {
+        return;
+      }
 
-      // ── Use the local cubit directly — no context.read needed ──────────
       final code = await _couponCubit.getOrFetchFirstOrderCoupon();
 
       if (!mounted || code == null || code.isEmpty) return;
@@ -136,6 +133,7 @@ class _CartScreenState extends State<CartScreen> {
       _validateCoupon();
     });
   }
+
   @override
   void dispose() {
     _couponCubit.close();
@@ -146,7 +144,22 @@ class _CartScreenState extends State<CartScreen> {
 
   CartCubit get _cubit => context.read<CartCubit>();
 
-  // ── Coupon helpers ─────────────────────────────────────────────────────────
+  // ── Pull-to-refresh ──────────────────────────────────────────────────────
+
+  Future<void> _onRefresh() async {
+    context.read<CartCubit>().fetchCart();
+    context.read<WalletCubit>().fetchWalletData();
+    // Wait for the cart state to settle (loaded or error) before ending
+    // the refresh indicator, up to a max of 4 seconds.
+    await Future.any([
+      context.read<CartCubit>().stream.firstWhere(
+            (s) => s is CartLoaded || s is CartError,
+      ),
+      Future.delayed(const Duration(seconds: 4)),
+    ]);
+  }
+
+  // ── Coupon helpers ───────────────────────────────────────────────────────
 
   void _validateCoupon() {
     final code = _couponController.text.trim();
@@ -165,7 +178,7 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
-  // ── Checkout ───────────────────────────────────────────────────────────────
+  // ── Checkout ─────────────────────────────────────────────────────────────
 
   Future<void> _checkout() async {
     if (_paymentMethod == 'WALLET') {
@@ -212,106 +225,131 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
+  // ── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return BlocProvider.value(
-  value: _couponCubit,
-  child: BlocListener<WalletCubit, WalletState>(
-      listenWhen: (_, curr) => curr is WalletLoaded,
-      listener: (context, state) {
-        if (state is WalletLoaded) {
-          setState(() => _walletBalance = state.walletData.wallet.balance);
-        }
-      },
-      child: BlocListener<OrderCubit, OrderState>(
+      value: _couponCubit,
+      child: BlocListener<AddressCubit, AddressState>(
+        listenWhen: (_, curr) => curr is AddressesLoaded,
         listener: (context, state) {
-          if (state is CouponValidating) {
-            if (!_couponValidating) setState(() => _couponValidating = true);
-          } else if (state is CouponRedeemed) {
-            setState(() {
-              _couponValidating = false;
-              if (state.coupon != null) _appliedCoupon = state.coupon;
-            });
-            Fluttertoast.showToast(
-              msg: l10n.couponRedeemed,
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.BOTTOM,
-              backgroundColor: Colors.green.shade700,
-            );
-          } else if (state is CouponInvalid) {
-            setState(() => _couponValidating = false);
-            Fluttertoast.showToast(
-              msg: state.message,
-              toastLength: Toast.LENGTH_LONG,
-              gravity: ToastGravity.BOTTOM,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-            );
-          } else if (state is CouponRedeemError) {
-            setState(() => _couponValidating = false);
-            Fluttertoast.showToast(
-              msg: state.message,
-              toastLength: Toast.LENGTH_LONG,
-              gravity: ToastGravity.BOTTOM,
-              backgroundColor: Colors.orange,
-              textColor: Colors.white,
-            );
-          } else if (state is OrderSuccess) {
-            if (mounted) {
-              FocusScope.of(context).unfocus();
-              context.go('/mainHome', extra: GoToTab(HomeCubit.ordersTabIndex));
+          if (state is AddressesLoaded) {
+            final newDefaultId =
+                state.addresses.where((a) => a.isDefault).firstOrNull?.id;
+            if (newDefaultId != _currentDefaultAddressId) {
+              _currentDefaultAddressId = newDefaultId;
+              // Skip the very first emission (initial load — id was null).
+              if (newDefaultId != null) {
+                _cubit.fetchCart();
+              }
             }
-            context.read<CartCubit>().fetchCart();
-            showSuccessBanner(
-              context,
-              '${l10n.created}: ${state.order.orderNumber}',
-            );
-          } else if (state is OrderError) {
-            Fluttertoast.showToast(
-              msg: state.message,
-              toastLength: Toast.LENGTH_LONG,
-              gravity: ToastGravity.BOTTOM,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-            );
           }
         },
-        child: BlocConsumer<CartCubit, CartState>(
-          listenWhen: (_, curr) => curr is CartError,
+        child: BlocListener<WalletCubit, WalletState>(
+          listenWhen: (_, curr) => curr is WalletLoaded,
           listener: (context, state) {
-            if (state is CartError) {
-              showErrorBanner(context, state.message);
+            if (state is WalletLoaded) {
+              setState(() => _walletBalance = state.walletData.wallet.balance);
             }
           },
-          builder: (context, state) {
-            return Scaffold(
-              appBar: _buildAppBar(context, state),
-              body: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: switch (state) {
-                  CartInitial() ||
-                  CartLoading() =>
-                  const _LoadingView(key: ValueKey('loading')),
-                  CartError(:final message) => _ErrorView(
-                    key: const ValueKey('error'),
-                    message: message,
-                    onRetry: _cubit.fetchCart,
+          child: BlocListener<OrderCubit, OrderState>(
+            listener: (context, state) {
+              if (state is CouponValidating) {
+                if (!_couponValidating) {
+                  setState(() => _couponValidating = true);
+                }
+              } else if (state is CouponRedeemed) {
+                setState(() {
+                  _couponValidating = false;
+                  if (state.coupon != null) _appliedCoupon = state.coupon;
+                });
+                Fluttertoast.showToast(
+                  msg: l10n.couponRedeemed,
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  backgroundColor: Colors.green.shade700,
+                );
+              } else if (state is CouponInvalid) {
+                setState(() => _couponValidating = false);
+                Fluttertoast.showToast(
+                  msg: state.message,
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.BOTTOM,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                );
+              } else if (state is CouponRedeemError) {
+                setState(() => _couponValidating = false);
+                Fluttertoast.showToast(
+                  msg: state.message,
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.BOTTOM,
+                  backgroundColor: Colors.orange,
+                  textColor: Colors.white,
+                );
+              } else if (state is OrderSuccess) {
+                if (mounted) {
+                  FocusScope.of(context).unfocus();
+                  context.go(
+                    '/mainHome',
+                    extra: GoToTab(HomeCubit.ordersTabIndex),
+                  );
+                }
+                context.read<CartCubit>().fetchCart();
+                showSuccessBanner(
+                  context,
+                  '${l10n.created}: ${state.order.orderNumber}',
+                );
+              } else if (state is OrderError) {
+                Fluttertoast.showToast(
+                  msg: state.message,
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.BOTTOM,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                );
+              }
+            },
+            child: BlocConsumer<CartCubit, CartState>(
+              listenWhen: (_, curr) => curr is CartError,
+              listener: (context, state) {
+                if (state is CartError) {
+                  showErrorBanner(context, state.message);
+                }
+              },
+              builder: (context, state) {
+                return Scaffold(
+                  appBar: _buildAppBar(context, state),
+                  body: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: switch (state) {
+                      CartInitial() ||
+                      CartLoading() =>
+                      const _LoadingView(key: ValueKey('loading')),
+                      CartError(:final message) => _ErrorView(
+                        key: const ValueKey('error'),
+                        message: message,
+                        onRetry: _cubit.fetchCart,
+                      ),
+                      CartLoaded(:final data)
+                      when data.cartItems.isEmpty =>
+                          _buildEmptyWithRefresh(
+                            key: const ValueKey('empty'),
+                          ),
+                      CartLoaded() =>
+                          _buildLoaded(context, state as CartLoaded),
+                    },
                   ),
-                  CartLoaded(:final data) when data.cartItems.isEmpty =>
-                  const _EmptyView(key: ValueKey('empty')),
-                  CartLoaded() => _buildLoaded(context, state as CartLoaded),
-                },
-              ),
-            );
-          },
+                );
+              },
+            ),
+          ),
         ),
       ),
-    ),
-);
+    );
   }
 
   AppBar _buildAppBar(BuildContext context, CartState state) {
@@ -351,6 +389,24 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  // ── Empty state wrapped in RefreshIndicator ──────────────────────────────
+
+  Widget _buildEmptyWithRefresh({Key? key}) {
+    return RefreshIndicator(
+      key: key,
+      onRefresh: _onRefresh,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: const _EmptyView(),
+        ),
+      ),
+    );
+  }
+
+  // ── Loaded state ─────────────────────────────────────────────────────────
+
   Widget _buildLoaded(BuildContext context, CartLoaded state) {
     final items = state.data.cartItems;
     final summary = state.data.summary;
@@ -371,20 +427,24 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.only(top: 12, bottom: 8),
-            itemCount: items.length,
-            itemBuilder: (_, index) {
-              final item = items[index];
-              return CartItemTile(
-                key: ValueKey(item.id),
-                item: item,
-                isBusy: state.isItemBusy(item.spId),
-                onIncrement: () => _handleIncrement(context, item.spId),
-                onDecrement: () => _handleDecrement(context, item.spId),
-                onRemove: () => _cubit.removeItem(item.spId),
-              );
-            },
+          child: RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.only(top: 12, bottom: 8),
+              itemCount: items.length,
+              itemBuilder: (_, index) {
+                final item = items[index];
+                return CartItemTile(
+                  key: ValueKey(item.id),
+                  item: item,
+                  isBusy: state.isItemBusy(item.spId),
+                  onIncrement: () => _handleIncrement(context, item.spId),
+                  onDecrement: () => _handleDecrement(context, item.spId),
+                  onRemove: () => _cubit.removeItem(item.spId),
+                );
+              },
+            ),
           ),
         ),
         _CartSummaryBar(
@@ -408,7 +468,7 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  // ── Action handlers ────────────────────────────────────────────────────────
+  // ── Action handlers ──────────────────────────────────────────────────────
 
   void _handleIncrement(BuildContext context, int spId) async {
     try {
@@ -498,9 +558,6 @@ class _CartSummaryBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ── Safe coercions — no hard `as double` casts ─────────────────────────
-    // Previously `(summary.originalTotal??0 as double)` only cast the literal
-    // `0` (the fallback) and threw when the actual value was an int or String.
     final bool hasDiscount = _toBool(summary.hasDiscount);
     final double originalTotal = _toDouble(summary.originalTotal);
     final double totalDiscount =
@@ -513,18 +570,18 @@ class _CartSummaryBar extends StatelessWidget {
 
     final double finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
 
-    // Delivery / VAT: ceil to avoid showing fractions for fee lines.
     final double rawDeliveryFee = preview?.deliveryFee ?? 0.0;
-    final double? deliveryFeeRounded = preview != null ? double.parse(rawDeliveryFee.toStringAsFixed(2)): null;
+    final double? deliveryFeeRounded = preview != null
+        ? double.parse(rawDeliveryFee.toStringAsFixed(2))
+        : null;
     final double? vatAmountRounded = preview?.vatAmount;
 
-    final double? deliveryFeeDiscount = (appliedCoupon != null && preview != null)
+    final double? deliveryFeeDiscount =
+    (appliedCoupon != null && preview != null)
         ? _computeDeliveryFeeDiscount(appliedCoupon!, rawDeliveryFee)
         : null;
-    final double? discountedDeliveryFee =
-    deliveryFeeDiscount != null
-        ? (rawDeliveryFee - deliveryFeeDiscount)
-        .clamp(0.0, rawDeliveryFee)
+    final double? discountedDeliveryFee = deliveryFeeDiscount != null
+        ? (rawDeliveryFee - deliveryFeeDiscount).clamp(0.0, rawDeliveryFee)
         : null;
 
     final double effectiveDeliveryFee =
@@ -548,7 +605,7 @@ class _CartSummaryBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Coupon section ──────────────────────────────────────────────
+          // ── Coupon section ───────────────────────────────────────────────
           CouponSection(
             couponController: couponController,
             couponFocus: couponFocus,
@@ -560,7 +617,7 @@ class _CartSummaryBar extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // ── Payment method toggle ───────────────────────────────────────
+          // ── Payment method toggle ────────────────────────────────────────
           _PaymentToggle(
             paymentMethod: paymentMethod,
             onChanged: onPaymentMethodChanged,
@@ -569,7 +626,7 @@ class _CartSummaryBar extends StatelessWidget {
 
           const Divider(height: 24),
 
-          // ── Item counts ─────────────────────────────────────────────────
+          // ── Item counts ──────────────────────────────────────────────────
           _SummaryRow(label: l10n.numberOfItems, value: '${summary.itemCount}'),
           const SizedBox(height: 4),
           _SummaryRow(
@@ -579,14 +636,12 @@ class _CartSummaryBar extends StatelessWidget {
 
           const Divider(height: 20),
 
-          // ── Pricing breakdown ──────────────────────────────────────────
+          // ── Pricing breakdown ────────────────────────────────────────────
           _SummaryRow(
             label: l10n.cartTotal,
-            // Fixed: was '$originalTotal' which printed "1000.0"; now "1000.00"
             value: '${_fmt(originalTotal)} ${l10n.egp}',
           ),
 
-          // Backend sale discount
           if (hasDiscount) ...[
             const SizedBox(height: 6),
             _DiscountRow(
@@ -596,7 +651,6 @@ class _CartSummaryBar extends StatelessWidget {
             ),
           ],
 
-          // Coupon discount — only rendered for order-total coupons.
           if (couponDiscount != null) ...[
             const SizedBox(height: 6),
             _CouponDiscountRow(
@@ -612,21 +666,19 @@ class _CartSummaryBar extends StatelessWidget {
             child: DashedDivider(color: theme.dividerColor),
           ),
 
-          // Products subtotal (only shown when different from original)
           if (finalTotal != originalTotal)
             _SummaryRow(
               label: l10n.subtotal,
               value: '${_fmt(finalTotal)} ${l10n.egp}',
             ),
 
-          // Delivery fee + VAT — only shown when preview is available
           if (preview != null) ...[
             const SizedBox(height: 6),
             _DeliveryFeeRow(
               original: deliveryFeeRounded!,
               discounted: discountedDeliveryFee,
               egp: l10n.egp,
-              label: '${l10n.deliveryFee} ${l10n.estimate}',
+              label: l10n.deliveryFee,
               theme: theme,
             ),
             const SizedBox(height: 6),
@@ -641,7 +693,6 @@ class _CartSummaryBar extends StatelessWidget {
             child: DashedDivider(color: theme.dividerColor),
           ),
 
-          // Grand total
           _SummaryRow(
             label: l10n.subtotal,
             value: grandTotal != null
@@ -652,7 +703,7 @@ class _CartSummaryBar extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // ── Checkout button ─────────────────────────────────────────────
+          // ── Checkout button ──────────────────────────────────────────────
           BlocBuilder<OrderCubit, OrderState>(
             buildWhen: (_, s) =>
             s is OrderOperationLoading ||
@@ -691,6 +742,9 @@ class _CartSummaryBar extends StatelessWidget {
     );
   }
 }
+
+// ── Delivery fee row ──────────────────────────────────────────────────────────
+
 class _DeliveryFeeRow extends StatelessWidget {
   final double original;
   final double? discounted;
@@ -792,7 +846,8 @@ class _PaymentToggle extends StatelessWidget {
             child: AnimatedAlign(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
-              alignment: isCash ? Alignment.centerLeft : Alignment.centerRight,
+              alignment:
+              isCash ? Alignment.centerLeft : Alignment.centerRight,
               child: FractionallySizedBox(
                 widthFactor: 0.5,
                 child: Container(
@@ -946,7 +1001,7 @@ class _DiscountRow extends StatelessWidget {
 
 class _CouponDiscountRow extends StatelessWidget {
   final CouponValid coupon;
-  final double discount; // changed from int — keeps the cents
+  final double discount;
   final String egp;
   final ThemeData theme;
 
@@ -1022,7 +1077,8 @@ class DashedDivider extends StatelessWidget {
       builder: (_, constraints) {
         const dashWidth = 6.0;
         const gapWidth = 4.0;
-        final count = (constraints.maxWidth / (dashWidth + gapWidth)).floor();
+        final count =
+        (constraints.maxWidth / (dashWidth + gapWidth)).floor();
         return Row(
           children: List.generate(
             count,
