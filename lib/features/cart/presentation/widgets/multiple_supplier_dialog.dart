@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../l10n/app_localizations.dart';
-import '../../cart/manager/cart_cubit.dart';
-import '../data/models/multiple_supplier_exception.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../manager/cart_cubit.dart';
+import '../../data/models/multiple_supplier_exception.dart';
 
 /// Shows a modal bottom sheet when the user tries to add a product from a
 /// different supplier than the items already in their cart.
