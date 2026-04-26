@@ -515,20 +515,22 @@ class _CartSummaryBar extends StatelessWidget {
 
     // Delivery / VAT: ceil to avoid showing fractions for fee lines.
     final double rawDeliveryFee = preview?.deliveryFee ?? 0.0;
-    final int? deliveryFeeCeiled = preview != null ? rawDeliveryFee.ceil() : null;
-    final int? vatAmountCeiled = preview?.vatAmount.ceil();
+    final double? deliveryFeeRounded = preview != null ? double.parse(rawDeliveryFee.toStringAsFixed(2)): null;
+    final double? vatAmountRounded = preview?.vatAmount;
 
     final double? deliveryFeeDiscount = (appliedCoupon != null && preview != null)
         ? _computeDeliveryFeeDiscount(appliedCoupon!, rawDeliveryFee)
         : null;
-    final int? discountedDeliveryFeeCeiled = deliveryFeeDiscount != null
-        ? (rawDeliveryFee - deliveryFeeDiscount).clamp(0.0, rawDeliveryFee).ceilToDouble().toInt()
+    final double? discountedDeliveryFee =
+    deliveryFeeDiscount != null
+        ? (rawDeliveryFee - deliveryFeeDiscount)
+        .clamp(0.0, rawDeliveryFee)
         : null;
 
     final double effectiveDeliveryFee =
-        discountedDeliveryFeeCeiled?.toDouble() ?? deliveryFeeCeiled?.toDouble() ?? 0;
+        discountedDeliveryFee ?? deliveryFeeRounded ?? 0.0;
     final double? grandTotal = preview != null
-        ? finalTotal + effectiveDeliveryFee + vatAmountCeiled!
+        ? finalTotal + effectiveDeliveryFee + vatAmountRounded!
         : null;
 
     return Container(
@@ -621,8 +623,8 @@ class _CartSummaryBar extends StatelessWidget {
           if (preview != null) ...[
             const SizedBox(height: 6),
             _DeliveryFeeRow(
-              original: deliveryFeeCeiled!,
-              discounted: discountedDeliveryFeeCeiled,
+              original: deliveryFeeRounded!,
+              discounted: discountedDeliveryFee,
               egp: l10n.egp,
               label: '${l10n.deliveryFee} ${l10n.estimate}',
               theme: theme,
@@ -630,7 +632,7 @@ class _CartSummaryBar extends StatelessWidget {
             const SizedBox(height: 6),
             _SummaryRow(
               label: l10n.vat,
-              value: '$vatAmountCeiled ${l10n.egp}',
+              value: '$vatAmountRounded ${l10n.egp}',
             ),
           ],
 
@@ -690,8 +692,8 @@ class _CartSummaryBar extends StatelessWidget {
   }
 }
 class _DeliveryFeeRow extends StatelessWidget {
-  final int original;
-  final int? discounted;
+  final double original;
+  final double? discounted;
   final String egp;
   final String label;
   final ThemeData theme;
