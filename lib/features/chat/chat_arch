@@ -1,0 +1,88 @@
+# Chat Module — How It Works
+
+## Overview
+
+Both apps share the same chat layer (models, cubit, repository, UI). The only difference is **how the socket is obtained**.
+
+---
+
+## Socket Strategy
+
+### Courier App (Android)
+The main socket lives in a **background foreground-service isolate** (`KeepAliveService`) so it survives the app being swiped away. `SocketService` bridges the two isolates via `FlutterForegroundTask` data channels.
+
+`ChatSocketService` has two sub-modes depending on whether a direct socket is available:
+- **Task-isolate mode** — emits go through `SocketService.emitChatEvent`, incoming events arrive via a delegate callback set on `SocketService`.
+- **Direct/borrowed mode** (iOS or Android fallback) — `ChatSocketService` attaches its listeners directly onto the live `IO.Socket` from `SocketService.rawSocket`.
+
+### Customer App
+A single shared `IO.Socket` is created in `SocketService.connect()` and used for both order events and chat. `ChatSocketService.attach()` borrows that socket and registers only the three chat listeners on it (`chat:new_message`, `chat:user_typing`, `chat:user_stopped_typing`). The shared socket is never disconnected by the chat layer.
+
+---
+
+## Startup Sequence
+
+```
+App starts
+  └─ SocketService.connect()          # socket created (handshake may still be in progress)
+  └─ ProfileCubit loads profile
+       └─ ChatModule.init(userId)
+            └─ ChatSocketService.attach()   # borrows socket; buffers any joinChat calls
+                                            # until the connect event fires
+```
+
+---
+
+## Opening a Chat
+
+`ChatNavigator.openChatWithUser(context, targetUserId: X)` or `openExistingChat(context, chatId: Y)` pushes a `ChatScreen` and creates a `ChatCubit`.
+
+Inside `ChatCubit.openChat(targetUserId)`:
+1. Calls `repo.createOrGetChat(targetUserId)` — server deduplicates, always returns the correct chat.
+2. Calls `repo.openChat(chatId)` — fetches first page of messages.
+3. Calls `repo.joinChat(chatId)` — emits `chat:join` on the socket (buffered if not yet connected).
+4. Subscribes to `onNewMessage`, `onUserTyping`, `onUserStoppedTyping` streams.
+
+---
+
+## Message Flow
+
+```
+Sender types → ChatCubit.sendTextMessage()
+  ├─ Optimistic message added to UI immediately (status: sending)
+  └─ HTTP POST /chat/send-message/:chatId
+       └─ Server broadcasts chat:new_message to all room members
+
+Receiver's socket fires chat:new_message
+  └─ ChatSocketService forwards to _newMessageController stream
+       └─ ChatCubit._subscribeToEvents listener
+            ├─ Unwraps { message: { chat_id, sender_id, ... } } envelope
+            ├─ Flattens nested sender: { id } → sender_id
+            ├─ Filters by chatId
+            └─ Appends to message list / confirms optimistic message
+```
+
+---
+
+## Typing Indicators
+
+- Keystroke → `ChatCubit.onUserTyping()` → debounced emit of `chat:typing`
+- After 500 ms silence → `chat:stop_typing`
+- Server payload uses camelCase (`chatId`, `userId`); cubit reads both casings as fallback
+- Auto-hides after 4 s if `stop_typing` never arrives
+
+---
+
+## Inbox (Unread Badges)
+
+`InboxCubit` lives at the top of the authenticated widget tree (`ChatInboxProvider`). It listens to `onNewMessage` globally — even when no chat screen is open — and increments unread counts. When a chat screen is opened, `InboxCubit.setActiveChat(id)` suppresses incrementing for that chat.
+
+---
+
+## Teardown
+
+| Event | Action |
+|---|---|
+| Screen popped | `ChatCubit.close()` cancels stream subs; `leaveChat()` emits `chat:leave` |
+| Logout | `ChatModule.dispose()` → `ChatSocketService.detach()` removes chat listeners, leaves all rooms; shared socket untouched |
+| Order confirmed | `ChatCubit.closeChatForOrder()` sets `isClosed: true`; input is disabled |

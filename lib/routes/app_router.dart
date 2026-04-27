@@ -17,6 +17,7 @@ import '../features/auth/presentation/pages/register_screen.dart';
 import '../features/cart/presentation/cart_screen.dart';
 import '../features/categories/data/models/category_models.dart';
 import '../features/categories/presentation/category_details_screen.dart';
+import '../features/chat/config/chat_injection.dart';
 import '../features/home/drawer_pages/faq_page.dart';
 import '../features/home/drawer_pages/privacy_page.dart';
 import '../features/home/drawer_pages/support_page.dart';
@@ -217,7 +218,7 @@ Future<GoRouter> createAppRouter({
       GoRoute(
         path: '/mainHome',
         name: 'mainHome',
-        builder: (context, state) => const HomeLayout(),
+        builder: (context, state) => ChatInboxProvider(child: const HomeLayout()),
       ),
       GoRoute(
         path: '/categories/:id',

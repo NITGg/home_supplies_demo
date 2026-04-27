@@ -2153,6 +2153,12 @@ abstract class AppLocalizations {
   /// **'Categories'**
   String get categories;
 
+  /// No description provided for @subCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Sub-Category'**
+  String get subCategory;
+
   /// No description provided for @imageTooLargeDetailed.
   ///
   /// In en, this message translates to:

@@ -5,6 +5,7 @@ import 'package:tawreedat_go/features/categories/presentation/sub_cat_section.da
 
 import '../../../core/widgets/circel_back_cutton.dart';
 import '../../../core/widgets/image_with_fallback.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../products/data/models/product_model.dart';
 import '../data/models/category_models.dart';
@@ -502,7 +503,7 @@ class _HeaderBackground extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'تصنيف فرعي',
+                        AppLocalizations.of(context)!.subCategory,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.82),
                           fontSize: 10,
@@ -656,7 +657,7 @@ class _EmptyProducts extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'لا توجد منتجات في هذا التصنيف',
+            AppLocalizations.of(context)!.noProductsInSection,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
@@ -986,7 +987,7 @@ class _ErrorView extends StatelessWidget {
                   FilledButton.icon(
                     onPressed: onRetry,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('إعادة المحاولة'),
+                    label: Text(AppLocalizations.of(context)!.refresh),
                   ),
                 ],
               ),

@@ -31,6 +31,7 @@ import '../../../auth/manager/auth_state.dart';
 import '../../../auth/manager/profile_cubit.dart';
 import '../../../auth/manager/profile_states.dart';
 import '../../../categories/presentation/categories_screen.dart';
+import '../../../chat/config/chat_injection.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
 import '../../../coupons/presentation/first_order_discount_dialog.dart';
 import '../../../notifications/presentation/widgets/notification_dialog.dart';
@@ -62,8 +63,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   bool _phoneSheetShown = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Screens indexed by HomeCubit.currentIndex.
-  // 0 → Categories   1 → Orders
   static const List<Widget> _screens = [CategoriesScreen(), OrdersListScreen()];
 
   @override
@@ -71,42 +70,39 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     notificationDialogTrigger.addListener(_onExternalNotificationTrigger);
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // ── 1. Connect socket FIRST ──────────────────────────────────────────
+      // Must happen before fetchProfile() so that by the time the
+      // ProfileCubit BlocListener fires and calls ChatModule.init(),
+      // SocketService.rawSocket is already set and attachWhenReady() can
+      // attach immediately instead of waiting.
+      await _connectSocket();
+
+      // ── 2. Fetch profile and wallet (triggers ChatModule.init via listener)
       if (mounted) {
         context.read<ProfileCubit>().fetchProfile();
         context.read<WalletCubit>().fetchWalletData();
       }
 
-      final token = await SecureStorageService().getToken();
-      if (token != null && token.isNotEmpty) {
-        final socketService = SocketService();
-        socketService.connect(
-          baseUrl: 'https://tawreedat.nitg-eg.com',
-          accessToken: token,
-        );
-      }
-
+      // ── 3. Subscribe to order offer events ───────────────────────────────
       _newOfferSubscription = SocketService().onNewOffer.listen((data) {
-        debugPrint('🔔 [HomeLayout] fired');
         if (mounted) _handleNewOffer(data);
       });
-
-      // Add this right after:
-      debugPrint(
-        '🔔 [HomeLayout] subscription isPaused: ${_newOfferSubscription?.isPaused}',
-      );
-      debugPrint('🔔 [HomeLayout] same stream instance test — listening now');
-
-      // Force a test emit after 3 seconds to confirm the subscription works at all:
-      Future.delayed(const Duration(seconds: 3), () {
-        debugPrint('🔔 [HomeLayout] firing test event into controller...');
-        SocketService().onNewOffer; // just access it
-        // Manually test if our subscription receives anything:
-        debugPrint(
-          '🔔 [HomeLayout] subscription still active: ${_newOfferSubscription != null}',
-        );
-      });
     });
+  }
+
+  /// Reads the token and connects the shared socket.
+  /// Synchronous from the caller's perspective — awaits the token read,
+  /// then [SocketService.connect] creates the socket object synchronously
+  /// so rawSocket is non-null before this method returns.
+  Future<void> _connectSocket() async {
+    final token = await SecureStorageService().getToken();
+    if (token == null || token.isEmpty) return;
+    SocketService().connect(
+      baseUrl: 'https://tawreedat.nitg-eg.com',
+      accessToken: token,
+    );
   }
 
   void _onExternalNotificationTrigger() {
@@ -140,9 +136,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    debugPrint(
-      '🗑️ [HomeLayout] dispose called — cancelling _newOfferSubscription',
-    );
     _newOfferSubscription?.cancel();
     _homeCubit.close();
     _couponCubit.close();
@@ -159,143 +152,72 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     }
   }
 
-// AFTER
   Object? _lastHandledExtra;
 
-
   Future<void> _ensureSocketConnection() async {
-    try {
-      final socketService = SocketService();
-      if (!socketService.isConnected) {
-        debugPrint('🔄 Socket disconnected, attempting to reconnect...');
-        final token = await SecureStorageService().getToken();
-        if (token != null && token.isNotEmpty) {
-          socketService.connect(
-            baseUrl: 'https://tawreedat.nitg-eg.com',
-            accessToken: token,
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint('Error ensuring socket connection: $e');
+    final socketService = SocketService();
+    if (!socketService.isConnected) {
+      await _connectSocket();
     }
   }
 
-  // ── 2. Replace _handleNewOffer ──────────────────────────────────────────────
-
   void _handleNewOffer(Map<String, dynamic> data) {
-    debugPrint('🔔 [HomeLayout] _handleNewOffer — mounted=$mounted data=$data');
-
     final ctx = _scaffoldKey.currentContext;
-    debugPrint('🔔 [HomeLayout] scaffoldKey.currentContext=$ctx');
-
-    if (ctx == null) {
-      debugPrint('❌ [HomeLayout] ctx is null — Scaffold not ready, bailing');
-      return;
-    }
+    if (ctx == null) return;
 
     final l10n = AppLocalizations.of(ctx);
-    debugPrint('🔔 [HomeLayout] l10n=$l10n');
-
     final orderId = data['orderId'] as int?;
-    debugPrint('🔔 [HomeLayout] orderId=$orderId');
 
-    debugPrint('🔔 [HomeLayout] calling showSuccessBanner...');
     showSuccessBanner(
       ctx,
       l10n?.newProposalReceived ?? 'New Proposal Received!',
       actionLabel: l10n?.view ?? 'View',
       onAction: () {
-        debugPrint('🔔 [HomeLayout] banner "View" tapped — orderId=$orderId');
         if (orderId != null) _findAndShowProposals(orderId);
       },
     );
-    debugPrint('🔔 [HomeLayout] showSuccessBanner returned');
   }
 
-  // ── 3. Replace _findAndShowProposals ────────────────────────────────────────
-
   void _findAndShowProposals(int orderId) {
-    debugPrint('🔍 [HomeLayout] _findAndShowProposals — orderId=$orderId');
-
     final ctx = _scaffoldKey.currentContext;
-    debugPrint('🔍 [HomeLayout] scaffoldKey.currentContext=$ctx');
-
-    if (ctx == null) {
-      debugPrint(
-        '❌ [HomeLayout] ctx is null in _findAndShowProposals, bailing',
-      );
-      return;
-    }
+    if (ctx == null) return;
 
     OrderCubit cubit;
     try {
       cubit = ctx.read<OrderCubit>();
-      debugPrint('🔍 [HomeLayout] OrderCubit found: $cubit');
-    } catch (e) {
-      debugPrint('❌ [HomeLayout] OrderCubit NOT found in tree: $e');
+    } catch (_) {
       return;
     }
 
-    debugPrint('🔍 [HomeLayout] calling loadActiveOrders...');
     cubit.loadActiveOrders(loadMore: false).then((_) {
-      debugPrint('🔍 [HomeLayout] loadActiveOrders complete, mounted=$mounted');
       if (!mounted) return;
-
       final state = cubit.state;
-      debugPrint('🔍 [HomeLayout] cubit.state after reload: $state');
-
       if (state is OrdersLoaded) {
-        debugPrint('🔍 [HomeLayout] orders count: ${state.orders.length}');
         final order = state.orders.firstWhereOrNull((o) => o.id == orderId);
-        debugPrint('🔍 [HomeLayout] found order for id=$orderId: $order');
-        if (order != null) {
-          _showProposals(order);
-        } else {
-          debugPrint(
-            '❌ [HomeLayout] order $orderId not found in loaded orders',
-          );
-        }
-      } else {
-        debugPrint('❌ [HomeLayout] state is not OrdersLoaded: $state');
+        if (order != null) _showProposals(order);
       }
     });
   }
 
-  // ── 4. Replace _showProposals ───────────────────────────────────────────────
-
   void _showProposals(Order order) {
-    debugPrint('📋 [HomeLayout] _showProposals — order.id=${order.id}');
-
     final ctx = _scaffoldKey.currentContext;
-    debugPrint('📋 [HomeLayout] scaffoldKey.currentContext=$ctx');
-
-    if (ctx == null) {
-      debugPrint('❌ [HomeLayout] ctx is null in _showProposals, bailing');
-      return;
-    }
+    if (ctx == null) return;
 
     OrderCubit cubit;
     try {
       cubit = ctx.read<OrderCubit>();
-      debugPrint('📋 [HomeLayout] OrderCubit found for sheet: $cubit');
-    } catch (e) {
-      debugPrint('❌ [HomeLayout] OrderCubit NOT found for sheet: $e');
+    } catch (_) {
       return;
     }
 
-    debugPrint('📋 [HomeLayout] showing modal bottom sheet...');
     showModalBottomSheet(
       context: ctx,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) {
-        debugPrint('📋 [HomeLayout] modal builder called');
-        return BlocProvider.value(
-          value: cubit,
-          child: OrderProposalsSheet(order: order),
-        );
-      },
+      builder: (_) => BlocProvider.value(
+        value: cubit,
+        child: OrderProposalsSheet(order: order),
+      ),
     );
   }
 
@@ -309,6 +231,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
         if (mounted) _homeCubit.changeTab(extra.index);
       });
     }
+
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: _homeCubit),
@@ -342,10 +265,19 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       if (profileState is! ProfileLoaded) return;
 
                       setState(
-                        () => _userId = profileState.profile.id.toString(),
+                            () => _userId = profileState.profile.id.toString(),
                       );
 
-                      // ── Referral capture (fire-and-forget, no await needed) ─────────────
+                      // Initialise chat module — safe to call even if the
+                      // socket handshake hasn't completed yet; attachWhenReady
+                      // inside ChatModule.init handles the timing.
+                      if (!ChatModule.isInitialized) {
+                        ChatModule.init(
+                          currentUserId: profileState.profile.id,
+                        );
+                      }
+
+                      // ── Referral capture ───────────────────────────────────
                       if (profileState.profile.referralCode == null) {
                         ReferralCaptureService.captureOnFirstLaunch(
                           userId: _userId,
@@ -359,11 +291,11 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                         });
                       }
 
-                      // ── Only run the startup-sheet sequence once per session ─────────────
+                      // ── Startup-sheet sequence (once per session) ──────────
                       if (_firstOrderChecked) return;
                       _firstOrderChecked = true;
 
-                      // ── 1. Phone number sheet (blocking) ─────────────────────────────────
+                      // 1. Phone number sheet
                       if (profileState.profile.phone == null &&
                           !_phoneSheetShown) {
                         _phoneSheetShown = true;
@@ -372,21 +304,19 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
                       if (!mounted) return;
 
-                      // ── 2. Pending notification dialog ───────────────────────────────────
+                      // 2. Pending notification dialog
                       _showPendingNotificationDialog();
 
                       if (!mounted) return;
 
-                      // ── 3. Default address picker (only for regular customers, roleId != 4)
+                      // 3. Default address picker (regular customers only)
                       if (profileState.profile.roleId != 4) {
                         if (!context.mounted) return;
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
                           isDismissible: false,
-                          // ← blocks tap-outside dismiss
                           enableDrag: false,
-                          // ← blocks drag-down dismiss
                           backgroundColor: Colors.transparent,
                           builder: (_) => BlocProvider.value(
                             value: context.read<AddressCubit>(),
@@ -397,27 +327,26 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
                       if (!mounted) return;
 
-                      // ── 4. First-order coupon dialog (non-dismissible, comes last) ────────
+                      // 4. First-order coupon dialog
                       if (profileState.profile.roleId == 4) return;
 
-                      final coupon = await _couponCubit
-                          .checkFirstOrderDiscount();
+                      final coupon =
+                      await _couponCubit.checkFirstOrderDiscount();
                       if (coupon == null || !context.mounted) return;
 
                       final govState = context.read<GovernorateCubit>().state;
                       final governorates = govState is GovernoratesLoaded
                           ? govState.response
                           : GovernoratesResponse(
-                              governorates: [],
-                              totalCount: 0,
-                              totalPages: 0,
-                            );
-                      final balance =
-                          context
-                              .read<WalletCubit>()
-                              .cachedWalletData
-                              ?.wallet
-                              .balance ??
+                        governorates: [],
+                        totalCount: 0,
+                        totalPages: 0,
+                      );
+                      final balance = context
+                          .read<WalletCubit>()
+                          .cachedWalletData
+                          ?.wallet
+                          .balance ??
                           0.0;
 
                       showDialog(
@@ -449,23 +378,22 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                     ),
                   ),
                   floatingActionButtonLocation:
-                      FloatingActionButtonLocation.centerDocked,
+                  FloatingActionButtonLocation.centerDocked,
                   floatingActionButton: FloatingActionButton.large(
                     onPressed: () {
                       final govState = context.read<GovernorateCubit>().state;
                       final governorates = govState is GovernoratesLoaded
                           ? govState.response
                           : GovernoratesResponse(
-                              governorates: [],
-                              totalCount: 0,
-                              totalPages: 0,
-                            );
+                        governorates: [],
+                        totalCount: 0,
+                        totalPages: 0,
+                      );
                       final walletCubit = context.read<WalletCubit>();
                       final balance =
                           walletCubit.cachedWalletData?.wallet.balance ?? 0.0;
 
-                      // HomeLayout — FAB onPressed
-                      showModalBottomSheet<Order>(           // ← type the sheet's return
+                      showModalBottomSheet<Order>(
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
@@ -477,7 +405,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                           ),
                         ),
                       ).then((order) {
-                        if (order != null && mounted) {      // sheet pops with the Order on success
+                        if (order != null && mounted) {
                           _homeCubit.changeTab(1);
                         }
                       });
@@ -499,8 +427,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                 children: [
                                   BlocBuilder<WalletCubit, WalletState>(
                                     builder: (context, walletState) {
-                                      final walletCubit = context
-                                          .read<WalletCubit>();
+                                      final walletCubit =
+                                      context.read<WalletCubit>();
                                       final badge = walletCubit.currentBadge;
                                       final isArabic =
                                           localizations.localeName == 'ar';
@@ -508,8 +436,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                       final badgeName = badge == null
                                           ? null
                                           : isArabic &&
-                                                (badge.nameAr?.isNotEmpty ??
-                                                    false)
+                                          (badge.nameAr?.isNotEmpty ??
+                                              false)
                                           ? badge.nameAr
                                           : badge.name;
 
@@ -525,9 +453,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           ),
                                         ),
                                         child: GestureDetector(
-                                          onTap: () {
-                                            context.push('/ProfileScreen');
-                                          },
+                                          onTap: () =>
+                                              context.push('/ProfileScreen'),
                                           child: Row(
                                             spacing: 10,
                                             children: [
@@ -537,16 +464,16 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                 ),
                                                 child: _ProfileAvatar(
                                                   imageUrl:
-                                                      profile?.personalPhoto,
+                                                  profile?.personalPhoto,
                                                   badgeName: badgeName,
                                                 ),
                                               ),
                                               Expanded(
                                                 child: Column(
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment.center,
+                                                  MainAxisAlignment.center,
                                                   crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
+                                                  CrossAxisAlignment.start,
                                                   spacing: 10,
                                                   children: [
                                                     Text(
@@ -554,8 +481,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                       style: AppTextStyles
                                                           .bold16
                                                           .copyWith(
-                                                            color: Colors.white,
-                                                          ),
+                                                        color: Colors.white,
+                                                      ),
                                                     ),
                                                     Text(
                                                       localizations
@@ -563,11 +490,11 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                       style: AppTextStyles
                                                           .regular14
                                                           .copyWith(
-                                                            fontSize: 12,
-                                                            color: Colors.white,
-                                                          ),
+                                                        fontSize: 12,
+                                                        color: Colors.white,
+                                                      ),
                                                       overflow:
-                                                          TextOverflow.ellipsis,
+                                                      TextOverflow.ellipsis,
                                                       maxLines: 2,
                                                     ),
                                                   ],
@@ -579,15 +506,13 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                       );
                                     },
                                   ),
-
                                   Padding(
                                     padding: const EdgeInsets.all(17.0),
                                     child: Material(
                                       elevation: 4,
                                       color: Colors.white,
-                                      shadowColor: Colors.black.withOpacity(
-                                        0.1,
-                                      ),
+                                      shadowColor:
+                                      Colors.black.withOpacity(0.1),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),
@@ -607,41 +532,41 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
+                                                MainAxisAlignment
+                                                    .spaceBetween,
                                                 children: [
                                                   Text(
                                                     'EN',
                                                     style:
-                                                        AppTextStyles.regular14,
+                                                    AppTextStyles.regular14,
                                                   ),
                                                   Switch(
-                                                    value:
-                                                        localizations
-                                                            .localeName ==
+                                                    value: localizations
+                                                        .localeName ==
                                                         'ar',
                                                     onChanged: (value) =>
                                                         context
                                                             .read<LocaleCubit>()
                                                             .toggleLocale(),
                                                     trackOutlineColor:
-                                                        WidgetStateProperty.resolveWith(
+                                                    WidgetStateProperty
+                                                        .resolveWith(
                                                           (_) => AppColors
-                                                              .kPrimaryColor,
-                                                        ),
+                                                          .kPrimaryColor,
+                                                    ),
                                                     activeThumbColor:
-                                                        AppColors.kPrimaryColor,
+                                                    AppColors.kPrimaryColor,
                                                     activeTrackColor:
-                                                        Colors.white,
+                                                    Colors.white,
                                                     inactiveTrackColor:
-                                                        Colors.white,
+                                                    Colors.white,
                                                     inactiveThumbColor:
-                                                        AppColors.kPrimaryColor,
+                                                    AppColors.kPrimaryColor,
                                                   ),
                                                   Text(
                                                     'AR',
                                                     style:
-                                                        AppTextStyles.regular14,
+                                                    AppTextStyles.regular14,
                                                   ),
                                                 ],
                                               ),
@@ -650,16 +575,14 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                 .read<LocaleCubit>()
                                                 .toggleLocale(),
                                           ),
-
                                           if (profileState is ProfileLoaded &&
                                               profileState.profile.roleId
-                                                      .toString() ==
+                                                  .toString() ==
                                                   '4') ...[
                                             const Divider(),
                                             ListTile(
-                                              onTap: () => context.push(
-                                                '/ReferralQrScreen',
-                                              ),
+                                              onTap: () => context
+                                                  .push('/ReferralQrScreen'),
                                               leading: const Icon(Icons.share),
                                               title: Text(
                                                 localizations.referral,
@@ -669,7 +592,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           ],
                                           const Divider(),
                                           ListTile(
-                                            onTap: () => context.push('/cart'),
+                                            onTap: () =>
+                                                context.push('/cart'),
                                             leading: const Icon(
                                               Icons.shopping_cart_rounded,
                                             ),
@@ -693,9 +617,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () => context.push(
-                                              '/addressesManagement',
-                                            ),
+                                            onTap: () => context
+                                                .push('/addressesManagement'),
                                             leading: const Icon(
                                               Icons.location_pin,
                                             ),
@@ -740,10 +663,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () => context.push(
-                                              '/KnowUsMoreScreen',
-                                            ),
-                                            leading: const Icon(Icons.favorite),
+                                            onTap: () => context
+                                                .push('/KnowUsMoreScreen'),
+                                            leading:
+                                            const Icon(Icons.favorite),
                                             title: Text(
                                               localizations.knowUsMore,
                                               style: AppTextStyles.bold16,
@@ -782,7 +705,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () => context.push('/Terms'),
+                                            onTap: () =>
+                                                context.push('/Terms'),
                                             leading: const Icon(Icons.lock),
                                             title: Text(
                                               localizations.termsAndConditions,
@@ -797,6 +721,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                               ),
                             ),
 
+                            // ── Logout button ──────────────────────────────
                             FutureBuilder(
                               future: SecureStorageService().getToken(),
                               builder: (context, snapshot) {
@@ -818,11 +743,16 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                       color: Colors.white,
                                       shadowColor: AppColors.kPrimaryColor,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
+                                        borderRadius:
+                                        BorderRadius.circular(18),
                                       ),
                                       clipBehavior: Clip.antiAlias,
                                       child: InkWell(
                                         onTap: () async {
+                                          // Tear down chat before clearing
+                                          // storage so dispose() can still
+                                          // emit socket leave events.
+                                          ChatModule.dispose();
                                           await SecureStorageService()
                                               .clearAll();
                                           if (context.mounted) {
@@ -835,7 +765,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           width: double.infinity,
                                           child: Row(
                                             mainAxisAlignment:
-                                                MainAxisAlignment.center,
+                                            MainAxisAlignment.center,
                                             spacing: 10,
                                             children: [
                                               SvgPicture.asset(
@@ -845,9 +775,9 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                 localizations.logout,
                                                 style: AppTextStyles.bold16
                                                     .copyWith(
-                                                      color: AppColors
-                                                          .kPrimaryColor,
-                                                    ),
+                                                  color:
+                                                  AppColors.kPrimaryColor,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -950,7 +880,6 @@ class _PhoneNumberSheetState extends State<_PhoneNumberSheet> {
       bloc: widget.parentContext.read<ProfileCubit>(),
       listener: (_, state) {
         if (!_submitted) return;
-
         if (state is ProfileLoaded) {
           if (mounted) Navigator.pop(context);
         } else if (state is ProfileFailure) {
@@ -994,19 +923,14 @@ class _PhoneNumberSheetState extends State<_PhoneNumberSheet> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 14,
-                    color: Colors.red.shade700,
-                  ),
+                  Icon(Icons.error_outline,
+                      size: 14, color: Colors.red.shade700),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       _errorMessage!,
                       style: TextStyle(
-                        color: Colors.red.shade700,
-                        fontSize: 13,
-                      ),
+                          color: Colors.red.shade700, fontSize: 13),
                     ),
                   ),
                 ],
@@ -1027,7 +951,7 @@ class _PhoneNumberSheetState extends State<_PhoneNumberSheet> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Bottom nav bar
+// Bottom nav bar (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _BottomNavBar extends StatelessWidget {
@@ -1035,7 +959,7 @@ class _BottomNavBar extends StatelessWidget {
   final String userId;
   final AppLocalizations localizations;
   final VoidCallback onOrdersTap;
-  final VoidCallback onCategoriesTap; // ← new
+  final VoidCallback onCategoriesTap;
   final VoidCallback onNotificationsTap;
 
   const _BottomNavBar({
@@ -1080,12 +1004,10 @@ class _BottomNavBar extends StatelessWidget {
           return Stack(
             alignment: Alignment.topCenter,
             children: [
-              // ── Tab items ───────────────────────────────────────────────
               Positioned.fill(
                 top: 8,
                 child: Row(
                   children: [
-                    // Tab 0 — Categories
                     Expanded(
                       child: InkWell(
                         onTap: onCategoriesTap,
@@ -1117,7 +1039,6 @@ class _BottomNavBar extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Tab 1 — Orders
                     Expanded(
                       child: InkWell(
                         onTap: onOrdersTap,
@@ -1152,8 +1073,6 @@ class _BottomNavBar extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // ── Sliding indicator ────────────────────────────────────────
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -1207,16 +1126,16 @@ class _ProfileAvatar extends StatelessWidget {
             child: ClipOval(
               child: imageUrl != null && imageUrl!.isNotEmpty
                   ? Image.network(
-                      imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          SvgPicture.asset(
-                            'assets/images/drawer/profile_placholder.svg',
-                          ),
-                    )
-                  : SvgPicture.asset(
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    SvgPicture.asset(
                       'assets/images/drawer/profile_placholder.svg',
                     ),
+              )
+                  : SvgPicture.asset(
+                'assets/images/drawer/profile_placholder.svg',
+              ),
             ),
           ),
         ),
@@ -1299,9 +1218,8 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
               child: IconButton(
                 icon: const Icon(Icons.menu),
                 color: Colors.grey.shade700,
-                onPressed: () {
-                  widget.scaffoldKey.currentState?.openEndDrawer();
-                },
+                onPressed: () =>
+                    widget.scaffoldKey.currentState?.openEndDrawer(),
               ),
             ),
             const SizedBox(width: 5),

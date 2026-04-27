@@ -1055,6 +1055,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get categories => 'التصنيفات';
 
   @override
+  String get subCategory => 'تصنيف فرعي';
+
+  @override
   String imageTooLargeDetailed(Object size, Object limit) {
     return 'حجم الصورة $size ميجابايت. الحد الأقصى المسموح $limit ميجابايت';
   }

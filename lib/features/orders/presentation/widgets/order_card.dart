@@ -487,21 +487,16 @@ class OrderCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Chat button — module is lazily initialised on first tap.
-              if (canChat && kDebugMode) ...[
+              if (canChat) ...[
                 Material(
                   color: Colors.blue.shade600,
                   borderRadius: BorderRadius.circular(10),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(10),
                     onTap: () {
-                      // Init is a no-op if already running, so it is safe
-                      // to call every time.
-                      if (!ChatModule.isInitialized) {
-                        ChatModule.init(currentUserId: currentUserId);
-                      }
                       ChatNavigator.openChatWithUser(
                         context,
-                        targetUserId: order.courierId!,
+                        targetUserId: order.courierUserId??0,
                         chatTitle: order.courierName,
                         chatAvatarUrl: order.courierPhoto,
                       );

@@ -461,6 +461,7 @@
           "newOrder": "New Order",
           "imageTooLarge": "Image Too Large",
   "categories": "Categories",
+  "subCategory": "Sub-Category",
 
 
   "imageTooLargeDetailed": "Image is {size} MB. Max allowed is {limit} MB",

@@ -17,6 +17,7 @@ class Order {
   final int? id;
   final int? customerId;
   final int? courierId;
+  final int? courierUserId;
   final String? orderNumber;
   final String? type;
   final String? productDescription; // was required String
@@ -73,6 +74,7 @@ class Order {
     this.couponType,
     this.customerId,
     this.courierId,
+    this.courierUserId,
     this.orderNumber,
     this.productDescription, // no longer required
     this.productImage,
@@ -121,6 +123,7 @@ class Order {
       confirmationOtp: json['confirmation_otp'] as String?,
       courierName: user?['full_name'] as String?,
       courierPhone: user?['phone'] as String?,
+      courierUserId: user?['id'] as int?,
       courierPhoto: user?['personal_photo'] as String?,
       priceAdjustmentStatus: json['price_adjustment_status'] as String?,
       id: json['id'] as int?,

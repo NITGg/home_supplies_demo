@@ -11,32 +11,33 @@ class SocketService {
 
   IO.Socket? _socket;
 
-  // Stream controllers for events
+  // Stream controllers for order/offer events
   final _newOfferController =
-      StreamController<Map<String, dynamic>>.broadcast();
+  StreamController<Map<String, dynamic>>.broadcast();
   final _priceReportController =
-      StreamController<Map<String, dynamic>>.broadcast();
+  StreamController<Map<String, dynamic>>.broadcast();
   final _orderCancelledController =
-      StreamController<Map<String, dynamic>>.broadcast();
+  StreamController<Map<String, dynamic>>.broadcast();
   final _orderCollectedController =
-      StreamController<Map<String, dynamic>>.broadcast();
+  StreamController<Map<String, dynamic>>.broadcast();
 
   // Track which orders we're currently in rooms for
   final Set<int> _activeOrderRooms = {};
 
   // Public streams
   Stream<Map<String, dynamic>> get onNewOffer => _newOfferController.stream;
-
   Stream<Map<String, dynamic>> get onPriceReport =>
       _priceReportController.stream;
-
   Stream<Map<String, dynamic>> get onOrderCancelled =>
       _orderCancelledController.stream;
-
   Stream<Map<String, dynamic>> get onOrderCollected =>
       _orderCollectedController.stream;
 
   bool get isConnected => _socket?.connected ?? false;
+
+  /// Exposes the raw socket so the chat module can attach its own listeners.
+  /// Returns null if the socket has not been connected yet.
+  IO.Socket? get rawSocket => _socket;
 
   // ================= CONNECT =================
   void connect({required String baseUrl, required String accessToken}) {
@@ -85,7 +86,6 @@ class SocketService {
       }
     });
 
-    // New offer event
     _socket!.on('offer:new', (data) {
       log('📦 NEW OFFER raw socket event — data: $data');
       log('📦 controller.hasListener: ${_newOfferController.hasListener}');
@@ -95,7 +95,6 @@ class SocketService {
       }
     });
 
-    // Price report event
     _socket!.on('order:price_report', (data) {
       log('💰 NEW PRICE REPORT: $data');
       if (data is Map<String, dynamic>) {
@@ -103,7 +102,6 @@ class SocketService {
       }
     });
 
-    // Order cancelled - unavailable
     _socket!.on('order:cancelledUnavailable', (data) {
       log('🚫 ORDER CANCELLED (UNAVAILABLE): $data');
       if (data is Map<String, dynamic>) {
@@ -111,7 +109,6 @@ class SocketService {
       }
     });
 
-    // Order cancelled - other
     _socket!.on('order:cancelledOther', (data) {
       log('🚫 ORDER CANCELLED (OTHER): $data');
       if (data is Map<String, dynamic>) {
@@ -139,9 +136,7 @@ class SocketService {
 
   // ================= LEAVE ORDER =================
   void leaveOrder(int orderId) {
-    if (!_activeOrderRooms.contains(orderId)) {
-      return;
-    }
+    if (!_activeOrderRooms.contains(orderId)) return;
 
     _socket?.emit('leave:order', {'orderId': orderId});
     _activeOrderRooms.remove(orderId);
