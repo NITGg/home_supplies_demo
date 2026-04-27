@@ -10,6 +10,9 @@ import '../../../../core/widgets/loading_screen.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../main.dart';
 
+import '../../../chat/config/chat_injection.dart';
+import '../../../chat/manager/chat_cubit.dart';
+import '../../../chat/presentation/chat_screen.dart';
 import '../../../coupons/manager/coupons_cubit.dart';
 import '../../../coupons/manager/coupons_states.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
@@ -27,6 +30,7 @@ class _NotifType {
 
   // static const couponExpiring = 'customer_COUPON_EXPIRING';
   static const couponCreated = 'customer_coupon_created';
+  static const newMessage = 'NEW_MESSAGE';
   static const couponUpdated = 'customer_coupon_updated';
   static const orderCancelled = 'ORDER_CANCELLED';
   static const orderExpired = 'ORDER_EXPIRED';
@@ -173,6 +177,11 @@ class NotificationsDialog extends StatelessWidget {
         _requestHistoryTab();
         return;
 
+      case _NotifType.newMessage:
+        log('messagenoti');
+        _openChat(context, payload, notifData); // pass context and payload
+        return;
+
       case _NotifType.badgeUpdated:
         context.push('/WalletScreen');
         return;
@@ -184,6 +193,39 @@ class NotificationsDialog extends StatelessWidget {
   }
 
   // ── HomeCubit helpers (use injected reference — no context.read needed) ───
+  void _openChat(
+      BuildContext context,
+      Map<String, dynamic> payload,
+      Map<String, dynamic> notifData,
+      ) {
+    final chatId = payload['chatId'];
+    if (chatId == null) return;
+    final id = chatId is int ? chatId : int.tryParse(chatId.toString());
+    if (id == null) return;
+
+    // Pull sender info directly from the Firestore notification document
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final chatTitle = isAr
+        ? (notifData['title_ar'] ?? notifData['title']) as String?
+        : notifData['title'] as String?;
+    final chatAvatarUrl = notifData['sender_photo'] as String?;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (_) => ChatCubit(
+            repo: ChatModule.repository,
+            currentUserId: ChatModule.currentUserId,
+          )..joinExistingChat(id),
+          child: ChatScreen(
+            currentUserId: ChatModule.currentUserId,
+            chatTitle: chatTitle,
+            chatAvatarUrl: chatAvatarUrl,
+          ),
+        ),
+      ),
+    );
+  }
 
   void _changeTab(int index) {
     if (homeCubit != null) {
@@ -439,9 +481,7 @@ class NotificationButton extends StatelessWidget {
             alignment: Alignment.topRight,
             count: unreadCount,
             child: Icon(
-              unreadCount > 0
-                  ? Icons.notifications
-                  : Icons.notifications_none,
+              unreadCount > 0 ? Icons.notifications : Icons.notifications_none,
               color: Colors.grey.shade700,
             ),
           ),
