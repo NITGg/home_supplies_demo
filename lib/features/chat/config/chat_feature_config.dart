@@ -1,10 +1,12 @@
+import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
+
 /// Central configuration for the Chat feature.
 class ChatFeatureConfig {
   const ChatFeatureConfig._();
 
   // ─── Media Feature Toggles ─────────────────────────────────────────────────
   static const bool enableVoiceNotes = false;
-  static const bool enableImages = true;  // ← enabled
+  static final bool enableImages = AppSettings.chat_enable_send_images?? false;  // ← enabled
   static const bool enableFiles = false;
 
   // ─── Pagination ────────────────────────────────────────────────────────────
