@@ -3,22 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/features/chat/presentation/widgets/chat_input.dart';
 import 'package:tawreedat_go/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:tawreedat_go/features/chat/presentation/widgets/typing_indicator.dart';
-
 import '../config/chat_feature_config.dart';
 import '../manager/chat_cubit.dart';
 import '../manager/chat_state.dart';
 
-
-/// Full-screen 1:1 chat UI.
-///
-/// Requires [ChatCubit] to be provided above it in the tree.
-/// Call [ChatCubit.joinExistingChat] or [ChatCubit.openChat] before
-/// navigating here.
-///
-/// Parameters:
-///   [currentUserId]   — injected; identifies "me" for bubble alignment.
-///   [chatTitle]       — optional override for the AppBar title
-///                       (defaults to the other participant's name).
 class ChatScreen extends StatefulWidget {
   final int currentUserId;
   final String? chatTitle;
@@ -46,12 +34,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
-    // context.read<ChatCubit>().leaveChat();
     _scrollController.dispose();
     super.dispose();
   }
-
-  // ─── Pagination: load older messages when scrolling to the top ───────────
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
@@ -59,8 +44,6 @@ class _ChatScreenState extends State<ChatScreen> {
       context.read<ChatCubit>().loadMoreMessages();
     }
   }
-
-  // ─── Auto-scroll to bottom on new message ────────────────────────────────
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -78,7 +61,6 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return BlocConsumer<ChatCubit, ChatState>(
       listenWhen: (prev, curr) {
-        // Scroll down when a new message is added.
         if (prev is ChatLoaded && curr is ChatLoaded) {
           return curr.messages.length > prev.messages.length;
         }
@@ -90,18 +72,14 @@ class _ChatScreenState extends State<ChatScreen> {
           appBar: _buildAppBar(context, state),
           body: Column(
             children: [
-              // ── Chat closed banner ──────────────────────────────────────
-              if (state is ChatLoaded && state.isClosed)
-                _ChatClosedBanner(),
-
-              // ── Messages list ───────────────────────────────────────────
+              if (state is ChatLoaded && state.isClosed) _ChatClosedBanner(),
               Expanded(child: _buildBody(context, state)),
-
-              // ── Input ───────────────────────────────────────────────────
               ChatInput(
                 isEnabled: state is ChatLoaded && !state.isClosed,
                 onSendText: (text) =>
                     context.read<ChatCubit>().sendTextMessage(text),
+                onSendImage: (filePath) =>
+                    context.read<ChatCubit>().sendImageMessage(filePath),
                 onTyping: () => context.read<ChatCubit>().onUserTyping(),
               ),
             ],
@@ -110,8 +88,6 @@ class _ChatScreenState extends State<ChatScreen> {
       },
     );
   }
-
-  // ─── AppBar ───────────────────────────────────────────────────────────────
 
   PreferredSizeWidget _buildAppBar(BuildContext context, ChatState state) {
     String title = widget.chatTitle ?? 'Chat';
@@ -127,18 +103,16 @@ class _ChatScreenState extends State<ChatScreen> {
       titleSpacing: 0,
       title: Row(
         children: [
-          // Avatar
           CircleAvatar(
             radius: 18,
-            backgroundColor:
-                Theme.of(context).colorScheme.primaryContainer,
+            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
             backgroundImage:
-                avatarUrl != null ? NetworkImage(avatarUrl) : null,
+            avatarUrl != null ? NetworkImage(avatarUrl) : null,
             child: avatarUrl == null
                 ? Text(
-                    title.isNotEmpty ? title[0].toUpperCase() : '?',
-                    style: const TextStyle(fontSize: 14),
-                  )
+              title.isNotEmpty ? title[0].toUpperCase() : '?',
+              style: const TextStyle(fontSize: 14),
+            )
                 : null,
           ),
           const SizedBox(width: 10),
@@ -149,9 +123,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                      fontSize: 16, fontWeight: FontWeight.w600),
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (state is ChatLoaded && state.typingUserIds.isNotEmpty)
@@ -170,8 +142,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // ─── Body ─────────────────────────────────────────────────────────────────
-
   Widget _buildBody(BuildContext context, ChatState state) {
     if (state is ChatLoading || state is ChatInitial) {
       return const Center(child: CircularProgressIndicator());
@@ -186,11 +156,9 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               const Icon(Icons.wifi_off_rounded, size: 48, color: Colors.grey),
               const SizedBox(height: 12),
-              Text(
-                state.message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey),
-              ),
+              Text(state.message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey)),
             ],
           ),
         ),
@@ -205,24 +173,21 @@ class _ChatScreenState extends State<ChatScreen> {
       children: [
         ListView.builder(
           controller: _scrollController,
-          reverse: true, // Latest message at the bottom.
+          reverse: true,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           itemCount: loaded.messages.length +
               (loaded.typingUserIds.isNotEmpty ? 1 : 0) +
               (loaded.isLoadingMore ? 1 : 0),
           itemBuilder: (context, index) {
-            // ── Load-more spinner at top ──────────────────────────────────
             final totalCount = loaded.messages.length +
                 (loaded.typingUserIds.isNotEmpty ? 1 : 0);
             if (index == totalCount && loaded.isLoadingMore) {
               return const Padding(
                 padding: EdgeInsets.all(12),
-                child: Center(
-                    child: CircularProgressIndicator(strokeWidth: 2)),
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
               );
             }
 
-            // ── Typing indicator at the bottom ────────────────────────────
             if (index == 0 && loaded.typingUserIds.isNotEmpty) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 4),
@@ -230,7 +195,6 @@ class _ChatScreenState extends State<ChatScreen> {
               );
             }
 
-            // ── Message bubbles (reverse indexed) ─────────────────────────
             final msgIndex = loaded.typingUserIds.isNotEmpty
                 ? loaded.messages.length - (index - 1) - 1
                 : loaded.messages.length - index - 1;
@@ -240,7 +204,6 @@ class _ChatScreenState extends State<ChatScreen> {
             }
 
             final message = loaded.messages[msgIndex];
-
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: MessageBubble(
@@ -251,8 +214,6 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           },
         ),
-
-        // ── Send-failed snackbar-style overlay ────────────────────────────
         if (state is MessageSendFailed)
           Positioned(
             bottom: 0,
@@ -260,17 +221,14 @@ class _ChatScreenState extends State<ChatScreen> {
             right: 0,
             child: _ErrorBanner(
               message: state.error,
-              onRetry: () => context
-                  .read<ChatCubit>()
-                  .retryMessage(state.failedMessageLocalId),
+              onRetry: () =>
+                  context.read<ChatCubit>().retryMessage(state.failedMessageLocalId),
             ),
           ),
       ],
     );
   }
 }
-
-// ─── Sub-widgets ──────────────────────────────────────────────────────────────
 
 class _ChatClosedBanner extends StatelessWidget {
   @override
@@ -282,9 +240,8 @@ class _ChatClosedBanner extends StatelessWidget {
       child: Text(
         ChatFeatureConfig.chatClosedMessage,
         style: TextStyle(
-          fontSize: 13,
-          color: Theme.of(context).colorScheme.onTertiaryContainer,
-        ),
+            fontSize: 13,
+            color: Theme.of(context).colorScheme.onTertiaryContainer),
         textAlign: TextAlign.center,
       ),
     );
@@ -294,7 +251,6 @@ class _ChatClosedBanner extends StatelessWidget {
 class _ErrorBanner extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-
   const _ErrorBanner({required this.message, required this.onRetry});
 
   @override
@@ -306,17 +262,13 @@ class _ErrorBanner extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-              ),
+              child: Text(message,
+                  style: const TextStyle(color: Colors.white, fontSize: 13)),
             ),
             TextButton(
               onPressed: onRetry,
-              child: const Text(
-                'Retry',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text('Retry',
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

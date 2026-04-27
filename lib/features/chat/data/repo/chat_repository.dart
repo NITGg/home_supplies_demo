@@ -3,20 +3,11 @@ import '../../data/models/chat_model.dart';
 import '../../data/models/message_model.dart';
 
 /// Domain contract for the Chat feature.
-///
-/// All methods are defined generically — no courier/customer distinction.
-/// The repository is the single point of truth; the cubit never touches
-/// datasources directly.
 abstract class ChatRepository {
   // ─── HTTP ────────────────────────────────────────────────────────────────
 
   Future<List<ChatModel>> getMyChats();
 
-  /// Fetches the first page of messages for [chatId].
-  ///
-  /// Pass [knownChat] when the chat metadata is already available (e.g. from
-  /// [createOrGetChat]) so the datasource can use it when the server returns
-  /// a messages-only response shape with no chat metadata.
   Future<ChatWithMessagesModel> openChat(int chatId, {ChatModel? knownChat});
 
   Future<({ChatModel chat, bool created})> createOrGetChat(int userId);
@@ -29,13 +20,19 @@ abstract class ChatRepository {
 
   void leaveChat(int chatId);
 
-  // ─── Socket: Messaging ────────────────────────────────────────────────────
+  // ─── Messaging ────────────────────────────────────────────────────────────
 
-  /// Sends a message via HTTP and returns the server-persisted [MessageModel].
   Future<MessageModel> sendMessage({
     required int chatId,
     required String content,
     required String type,
+  });
+
+  /// Sends an image message using multipart form-data.
+  /// [filePath] is the absolute path to the image file on disk.
+  Future<MessageModel> sendImageMessage({
+    required int chatId,
+    required String filePath,
   });
 
   void markRead(int chatId);

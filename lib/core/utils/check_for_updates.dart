@@ -21,7 +21,7 @@ Future<bool> checkForUpdate(BuildContext context) async {
   String? latestVersion;
   String? updateUrl;
   if (Platform.isAndroid) {
-    latestVersion = AppSettings.android_version;
+    latestVersion = AppSettings.android_version?.trim();
     updateUrl = AppSettings.android_url;
   } else if (Platform.isIOS) {
     latestVersion = AppSettings.ios_version;

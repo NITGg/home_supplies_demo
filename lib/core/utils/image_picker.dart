@@ -1,0 +1,100 @@
+
+import 'dart:io';
+import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+
+class ImagePickerService {
+  static final _picker = ImagePicker();
+
+  /// Max allowed size (5MB)
+  static const int _maxBytes = 5 * 1024 * 1024;
+
+  /// Pick + crop single image
+  static Future<File?> pickSingle(
+      BuildContext context, {
+        String? cropTitle,
+        CropAspectRatio? aspectRatio,
+        bool lockAspectRatio = false,
+      }) async {
+    try {
+      final source = await _askSource(context);
+      if (source == null || !context.mounted) return null;
+
+      final picked = await _picker.pickImage(
+        source: source,
+        imageQuality: 80,
+      );
+      if (picked == null || !context.mounted) return null;
+
+      final cropped = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        aspectRatio: aspectRatio,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: cropTitle ?? 'Crop Image',
+            lockAspectRatio: lockAspectRatio,
+          ),
+          IOSUiSettings(
+            title: cropTitle ?? 'Crop Image',
+            aspectRatioLockEnabled: lockAspectRatio,
+          ),
+        ],
+      );
+      if (cropped == null) return null;
+
+      final dir = await getApplicationDocumentsDirectory();
+      final file = await File(cropped.path).copy(
+        '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+
+      final size = await file.length();
+      log('Image size: ${(size / (1024 * 1024)).toStringAsFixed(2)} MB');
+
+      if (size > _maxBytes) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Image too large (max 5MB)')),
+          );
+        }
+        return null;
+      }
+
+      return file;
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error picking image')),
+        );
+      }
+      return null;
+    }
+  }
+
+  /// Bottom sheet to choose source
+  static Future<ImageSource?> _askSource(BuildContext context) {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo),
+              title: const Text('Gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

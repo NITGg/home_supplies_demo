@@ -319,7 +319,7 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
                   width: double.infinity,
                   height: double.infinity,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(16),
                     color: Colors.grey.shade300,
                   ),
                 ),

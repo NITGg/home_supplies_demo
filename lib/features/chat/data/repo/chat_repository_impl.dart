@@ -16,8 +16,6 @@ class ChatRepositoryImpl implements ChatRepository {
   })  : _remote = remote,
         _socket = socket;
 
-  // ─── HTTP ────────────────────────────────────────────────────────────────
-
   @override
   Future<List<ChatModel>> getMyChats() => _remote.getMyChats();
 
@@ -30,21 +28,14 @@ class ChatRepositoryImpl implements ChatRepository {
       _remote.createOrGetChat(userId);
 
   @override
-  Future<List<MessageModel>> loadMoreMessages(
-      int chatId, {
-        required int page,
-      }) =>
+  Future<List<MessageModel>> loadMoreMessages(int chatId, {required int page}) =>
       _remote.getMoreMessages(chatId, page: page);
-
-  // ─── Socket: Rooms ────────────────────────────────────────────────────────
 
   @override
   void joinChat(int chatId) => _socket.joinChat(chatId);
 
   @override
   void leaveChat(int chatId) => _socket.leaveChat(chatId);
-
-  // ─── HTTP: Messaging ─────────────────────────────────────────────────────
 
   @override
   Future<MessageModel> sendMessage({
@@ -55,17 +46,20 @@ class ChatRepositoryImpl implements ChatRepository {
       _remote.sendMessage(chatId: chatId, content: content, type: type);
 
   @override
-  void markRead(int chatId) => _socket.markRead(chatId);
+  Future<MessageModel> sendImageMessage({
+    required int chatId,
+    required String filePath,
+  }) =>
+      _remote.sendImageMessage(chatId: chatId, filePath: filePath);
 
-  // ─── Socket: Typing ───────────────────────────────────────────────────────
+  @override
+  void markRead(int chatId) => _socket.markRead(chatId);
 
   @override
   void emitTyping(int chatId) => _socket.emitTyping(chatId);
 
   @override
   void emitStopTyping(int chatId) => _socket.emitStopTyping(chatId);
-
-  // ─── Socket: Streams ──────────────────────────────────────────────────────
 
   @override
   Stream<Map<String, dynamic>> get onNewMessage => _socket.onNewMessage;

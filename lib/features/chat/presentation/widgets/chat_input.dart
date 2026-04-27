@@ -1,34 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/utils/image_picker.dart';
 import '../../config/chat_feature_config.dart';
 
 /// Bottom input bar for the chat screen.
 ///
-/// Media action buttons (voice, image, file) are automatically shown/hidden
-/// based on [ChatFeatureConfig] flags. When all are disabled only the text
-/// field and send button remain visible.
-///
-/// Pass [isEnabled] = false to lock the entire input (chat closed state).
+/// Set [ChatFeatureConfig.enableImages] = true to show the image attach button.
+/// Pass [onSendImage] with the picked file path when that flag is on.
 class ChatInput extends StatefulWidget {
   final bool isEnabled;
   final void Function(String text) onSendText;
 
-  /// Called on every keystroke — used by the cubit to emit typing events.
-  final VoidCallback? onTyping;
+  /// Called with the absolute file path of the picked image.
+  final void Function(String filePath)? onSendImage;
 
-  // Media callbacks — only invoked when the corresponding feature is ON.
-  final VoidCallback? onAttachImage;
-  final VoidCallback? onAttachFile;
-  final VoidCallback? onRecordVoice;
+  /// Called on every keystroke — used to emit typing events.
+  final VoidCallback? onTyping;
 
   const ChatInput({
     super.key,
     required this.onSendText,
     this.isEnabled = true,
+    this.onSendImage,
     this.onTyping,
-    this.onAttachImage,
-    this.onAttachFile,
-    this.onRecordVoice,
   });
 
   @override
@@ -65,10 +60,16 @@ class _ChatInputState extends State<ChatInput> {
     setState(() => _hasText = false);
   }
 
+  Future<void> _pickImage() async {
+    final picked = await ImagePickerService.pickSingle(context);
+    if (picked == null) return;
+    widget.onSendImage?.call(picked.path);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final cs = theme.colorScheme;
 
     return Container(
       padding: EdgeInsets.only(
@@ -80,45 +81,27 @@ class _ChatInputState extends State<ChatInput> {
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(
-          top: BorderSide(
-            color: colorScheme.outline.withOpacity(0.15),
-          ),
+          top: BorderSide(color: cs.outline.withOpacity(0.15)),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // ── Optional media buttons ───────────────────────────────────────
+          // ── Image attach button ──────────────────────────────────────
           if (ChatFeatureConfig.enableImages && widget.isEnabled)
             _MediaButton(
               icon: Icons.image_outlined,
-              onTap: widget.onAttachImage,
-            ),
-          if (ChatFeatureConfig.enableFiles && widget.isEnabled)
-            _MediaButton(
-              icon: Icons.attach_file_rounded,
-              onTap: widget.onAttachFile,
-            ),
-          if (ChatFeatureConfig.enableVoiceNotes &&
-              widget.isEnabled &&
-              !_hasText)
-            _MediaButton(
-              icon: Icons.mic_none_rounded,
-              onTap: widget.onRecordVoice,
+              onTap: _pickImage,
             ),
 
-          // ── Text field ───────────────────────────────────────────────────
+          // ── Text field ───────────────────────────────────────────────
           Expanded(
             child: Container(
               constraints: const BoxConstraints(maxHeight: 120),
               decoration: BoxDecoration(
-                color: widget.isEnabled
-                    ? colorScheme.surface
-                    : colorScheme.surfaceVariant,
+                color: widget.isEnabled ? cs.surface : cs.surfaceVariant,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.2),
-                ),
+                border: Border.all(color: cs.outline.withOpacity(0.2)),
               ),
               child: TextField(
                 controller: _controller,
@@ -133,7 +116,7 @@ class _ChatInputState extends State<ChatInput> {
                       ? 'Type a message…'
                       : 'This chat is closed',
                   hintStyle: TextStyle(
-                    color: colorScheme.onSurface.withOpacity(0.4),
+                    color: cs.onSurface.withOpacity(0.4),
                     fontSize: 15,
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -149,7 +132,7 @@ class _ChatInputState extends State<ChatInput> {
 
           const SizedBox(width: 6),
 
-          // ── Send button ──────────────────────────────────────────────────
+          // ── Send button ──────────────────────────────────────────────
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             transitionBuilder: (child, anim) =>
@@ -164,12 +147,9 @@ class _ChatInputState extends State<ChatInput> {
   }
 }
 
-// ─── Sub-widgets ──────────────────────────────────────────────────────────────
-
 class _MediaButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
-
   const _MediaButton({required this.icon, this.onTap});
 
   @override
@@ -186,7 +166,6 @@ class _MediaButton extends StatelessWidget {
 
 class _SendButton extends StatelessWidget {
   final VoidCallback onTap;
-
   const _SendButton({super.key, required this.onTap});
 
   @override
