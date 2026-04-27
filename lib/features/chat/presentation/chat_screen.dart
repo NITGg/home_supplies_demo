@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/features/chat/presentation/widgets/chat_input.dart';
 import 'package:tawreedat_go/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:tawreedat_go/features/chat/presentation/widgets/typing_indicator.dart';
+import '../../../l10n/app_localizations.dart';
 import '../config/chat_feature_config.dart';
 import '../manager/chat_cubit.dart';
 import '../manager/chat_state.dart';
@@ -106,13 +107,12 @@ class _ChatScreenState extends State<ChatScreen> {
           CircleAvatar(
             radius: 18,
             backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            backgroundImage:
-            avatarUrl != null ? NetworkImage(avatarUrl) : null,
+            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
             child: avatarUrl == null
                 ? Text(
-              title.isNotEmpty ? title[0].toUpperCase() : '?',
-              style: const TextStyle(fontSize: 14),
-            )
+                    title.isNotEmpty ? title[0].toUpperCase() : '?',
+                    style: const TextStyle(fontSize: 14),
+                  )
                 : null,
           ),
           const SizedBox(width: 10),
@@ -123,12 +123,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w600),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (state is ChatLoaded && state.typingUserIds.isNotEmpty)
                   Text(
-                    'typing…',
+                    AppLocalizations.of(context)!.typing,
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.primary,
@@ -156,9 +158,11 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               const Icon(Icons.wifi_off_rounded, size: 48, color: Colors.grey),
               const SizedBox(height: 12),
-              Text(state.message,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey)),
+              Text(
+                state.message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.grey),
+              ),
             ],
           ),
         ),
@@ -175,11 +179,13 @@ class _ChatScreenState extends State<ChatScreen> {
           controller: _scrollController,
           reverse: true,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          itemCount: loaded.messages.length +
+          itemCount:
+              loaded.messages.length +
               (loaded.typingUserIds.isNotEmpty ? 1 : 0) +
               (loaded.isLoadingMore ? 1 : 0),
           itemBuilder: (context, index) {
-            final totalCount = loaded.messages.length +
+            final totalCount =
+                loaded.messages.length +
                 (loaded.typingUserIds.isNotEmpty ? 1 : 0);
             if (index == totalCount && loaded.isLoadingMore) {
               return const Padding(
@@ -221,8 +227,9 @@ class _ChatScreenState extends State<ChatScreen> {
             right: 0,
             child: _ErrorBanner(
               message: state.error,
-              onRetry: () =>
-                  context.read<ChatCubit>().retryMessage(state.failedMessageLocalId),
+              onRetry: () => context.read<ChatCubit>().retryMessage(
+                state.failedMessageLocalId,
+              ),
             ),
           ),
       ],
@@ -240,8 +247,9 @@ class _ChatClosedBanner extends StatelessWidget {
       child: Text(
         ChatFeatureConfig.chatClosedMessage,
         style: TextStyle(
-            fontSize: 13,
-            color: Theme.of(context).colorScheme.onTertiaryContainer),
+          fontSize: 13,
+          color: Theme.of(context).colorScheme.onTertiaryContainer,
+        ),
         textAlign: TextAlign.center,
       ),
     );
@@ -251,6 +259,7 @@ class _ChatClosedBanner extends StatelessWidget {
 class _ErrorBanner extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
+
   const _ErrorBanner({required this.message, required this.onRetry});
 
   @override
@@ -262,13 +271,17 @@ class _ErrorBanner extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(message,
-                  style: const TextStyle(color: Colors.white, fontSize: 13)),
+              child: Text(
+                message,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+              ),
             ),
             TextButton(
               onPressed: onRetry,
-              child: const Text('Retry',
-                  style: TextStyle(color: Colors.white)),
+              child: Text(
+                AppLocalizations.of(context)!.retry,
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),

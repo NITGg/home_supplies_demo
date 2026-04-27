@@ -15,6 +15,8 @@ class ChatCubit extends Cubit<ChatState> {
   StreamSubscription<Map<String, dynamic>>? _newMessageSub;
   StreamSubscription<Map<String, dynamic>>? _typingStartSub;
   StreamSubscription<Map<String, dynamic>>? _typingStopSub;
+  StreamSubscription<Map<String, dynamic>>? _messageReadSub;
+
 
   Timer? _typingDebounce;
   Timer? _typingTimeoutTimer;
@@ -451,6 +453,28 @@ class ChatCubit extends Cubit<ChatState> {
       if (userId == null) return;
       _removeTypingUser(userId);
     });
+
+
+    _messageReadSub = _repo.onMessageRead.listen((data) {
+      final incomingChatId = _intField(data, 'chat_id') ?? _intField(data, 'chatId');
+      if (incomingChatId != chatId) return;
+
+      final ChatLoaded current;
+      if (state is ChatLoaded) {
+        current = state as ChatLoaded;
+      } else if (state is MessageSendFailed) {
+        current = (state as MessageSendFailed).currentState;
+      } else return;
+
+      final updated = current.messages.map((m) {
+        if (m.isMe && m.status != MessageStatus.read) {
+          return m.copyWith(status: MessageStatus.read);
+        }
+        return m;
+      }).toList();
+
+      emit(current.copyWith(messages: updated));
+    });
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -514,6 +538,7 @@ class ChatCubit extends Cubit<ChatState> {
     await _newMessageSub?.cancel();
     await _typingStartSub?.cancel();
     await _typingStopSub?.cancel();
+    await _messageReadSub?.cancel();
     return super.close();
   }
 }

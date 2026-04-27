@@ -72,5 +72,8 @@ class ChatRepositoryImpl implements ChatRepository {
       _socket.onUserStoppedTyping;
 
   @override
+  Stream<Map<String, dynamic>> get onMessageRead => _socket.onMessageRead;
+
+  @override
   Stream<bool> get onConnectionStatus => _socket.onConnectionStatus;
 }

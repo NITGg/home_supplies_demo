@@ -662,5 +662,9 @@
 "differentSupplierTitle": "Different Store",
   "differentSupplierBody": "Your cart already has items from another store. You can clear your cart and start fresh with this item, or keep your existing cart.",
   "clearCartAndAdd": "Clear Cart & Add Item",
-  "keepMyCart": "Keep My Cart"
+  "keepMyCart": "Keep My Cart",
+  "typeMessage": "Type a message…",
+    "chatClosed": "..................",
+    "messages": "Messages",
+    "typing": "Typing…"
 }

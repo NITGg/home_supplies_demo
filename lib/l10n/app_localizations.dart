@@ -3070,6 +3070,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Keep My Cart'**
   String get keepMyCart;
+
+  /// No description provided for @typeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message…'**
+  String get typeMessage;
+
+  /// No description provided for @chatClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'..................'**
+  String get chatClosed;
+
+  /// No description provided for @messages.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get messages;
+
+  /// No description provided for @typing.
+  ///
+  /// In en, this message translates to:
+  /// **'Typing…'**
+  String get typing;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -50,12 +50,16 @@ class ChatSocketService {
   StreamController<Map<String, dynamic>>.broadcast();
   final _userStoppedTypingController =
   StreamController<Map<String, dynamic>>.broadcast();
+
+  final _messageReadController =
+  StreamController<Map<String, dynamic>>.broadcast();
   final _connectionStatusController = StreamController<bool>.broadcast();
 
   // ─── Active Chat Rooms ─────────────────────────────────────────────────────
   final Set<int> _activeChatRooms = {};
 
   // ─── Public Streams ────────────────────────────────────────────────────────
+  Stream<Map<String, dynamic>> get onMessageRead => _messageReadController.stream;
 
   Stream<Map<String, dynamic>> get onNewMessage => _newMessageController.stream;
   Stream<Map<String, dynamic>> get onUserTyping => _userTypingController.stream;
@@ -141,6 +145,7 @@ class ChatSocketService {
     _socket!.off('chat:new_message');
     _socket!.off('chat:user_typing');
     _socket!.off('chat:user_stopped_typing');
+    _socket!.off('chat:message_read');
 
     _socket = null;
     log('🔓 [ChatSocket] Detached from SocketService socket');
@@ -159,6 +164,13 @@ class ChatSocketService {
       log('✏️  [ChatSocket] chat:user_typing → $data');
       final map = _toMap(data);
       if (map != null) _userTypingController.add(map);
+    });
+
+
+    _socket!.on('chat:message_read', (data) {
+      log('✅ [ChatSocket] chat:message_read → $data');
+      final map = _toMap(data);
+      if (map != null) _messageReadController.add(map);
     });
 
     _socket!.on('chat:user_stopped_typing', (data) {

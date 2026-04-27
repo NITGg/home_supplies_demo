@@ -7,6 +7,8 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class ImagePickerService {
   static final _picker = ImagePicker();
 
@@ -35,11 +37,11 @@ class ImagePickerService {
         aspectRatio: aspectRatio,
         uiSettings: [
           AndroidUiSettings(
-            toolbarTitle: cropTitle ?? 'Crop Image',
+            toolbarTitle: cropTitle ?? AppLocalizations.of(context)!.cropImage,
             lockAspectRatio: lockAspectRatio,
           ),
           IOSUiSettings(
-            title: cropTitle ?? 'Crop Image',
+            title: cropTitle ?? AppLocalizations.of(context)!.cropImage,
             aspectRatioLockEnabled: lockAspectRatio,
           ),
         ],
@@ -57,7 +59,7 @@ class ImagePickerService {
       if (size > _maxBytes) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Image too large (max 5MB)')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.imageTooLarge)),
           );
         }
         return null;
@@ -67,7 +69,7 @@ class ImagePickerService {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error picking image')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.failedToChooseImage)),
         );
       }
       return null;
@@ -84,12 +86,12 @@ class ImagePickerService {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera'),
+              title: Text(AppLocalizations.of(context)!.camera),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo),
-              title: const Text('Gallery'),
+              title: Text(AppLocalizations.of(context)!.gallery),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],

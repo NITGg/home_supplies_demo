@@ -1530,4 +1530,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get keepMyCart => 'Keep My Cart';
+
+  @override
+  String get typeMessage => 'Type a message…';
+
+  @override
+  String get chatClosed => '..................';
+
+  @override
+  String get messages => 'Messages';
+
+  @override
+  String get typing => 'Typing…';
 }

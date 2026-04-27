@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/utils/image_picker.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../config/chat_feature_config.dart';
 
 /// Bottom input bar for the chat screen.
@@ -113,8 +114,8 @@ class _ChatInputState extends State<ChatInput> {
                 style: theme.textTheme.bodyMedium,
                 decoration: InputDecoration(
                   hintText: widget.isEnabled
-                      ? 'Type a message…'
-                      : 'This chat is closed',
+                      ? AppLocalizations.of(context)!.typeMessage
+                      : AppLocalizations.of(context)!.chatClosed,
                   hintStyle: TextStyle(
                     color: cs.onSurface.withOpacity(0.4),
                     fontSize: 15,

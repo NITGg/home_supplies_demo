@@ -50,6 +50,7 @@ abstract class ChatRepository {
   Stream<Map<String, dynamic>> get onUserTyping;
 
   Stream<Map<String, dynamic>> get onUserStoppedTyping;
+  Stream<Map<String, dynamic>> get onMessageRead;
 
   Stream<bool> get onConnectionStatus;
 }

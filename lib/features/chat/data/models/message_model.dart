@@ -1,3 +1,5 @@
+//courier
+
 import 'dart:developer';
 
 /// Supported message content types.
@@ -12,7 +14,7 @@ enum MessageType {
 
   static MessageType fromString(String? raw) {
     return MessageType.values.firstWhere(
-      (e) => e.name.toUpperCase() == (raw ?? 'TEXT').toUpperCase(),
+          (e) => e.name.toUpperCase() == (raw ?? 'TEXT').toUpperCase(),
       orElse: () => MessageType.text,
     );
   }
@@ -39,7 +41,7 @@ enum MessageStatus {
 
   static MessageStatus fromString(String? raw) {
     return MessageStatus.values.firstWhere(
-      (e) => e.name.toUpperCase() == (raw ?? 'SENT').toUpperCase(),
+          (e) => e.name.toUpperCase() == (raw ?? 'SENT').toUpperCase(),
       orElse: () => MessageStatus.sent,
     );
   }
@@ -78,9 +80,9 @@ class MessageModel {
 
   // ─── Factory: from server JSON ────────────────────────────────────────────
   factory MessageModel.fromJson(
-    Map<String, dynamic> json, {
-    required int currentUserId,
-  }) {
+      Map<String, dynamic> json, {
+        required int currentUserId,
+      }) {
     // ── Diagnostic: log every field and its runtime type ──────────────────
     log('🔍 [MessageModel.fromJson] raw json keys: ${json.keys.toList()}');
     log(
@@ -103,25 +105,25 @@ class MessageModel {
     final senderObj = json['sender'];
     final senderId =
         _toInt(json['sender_id']) ??
-        (senderObj is Map ? _toInt(senderObj['id']) : null);
+            (senderObj is Map ? _toInt(senderObj['id']) : null);
     final chatId = _toInt(json['chat_id']);
 
     if (senderId == null) {
       log(
         '🚨 [MessageModel.fromJson] sender_id is null or unparseable! '
-        'Full json: $json',
+            'Full json: $json',
       );
     }
     if (chatId == null) {
       log(
         '🚨 [MessageModel.fromJson] chat_id is null or unparseable! '
-        'Full json: $json',
+            'Full json: $json',
       );
     }
 
     return MessageModel(
       localId:
-          json['id']?.toString() ??
+      json['id']?.toString() ??
           'srv_${DateTime.now().millisecondsSinceEpoch}',
       serverId: _toInt(json['id']),
       chatId: chatId ?? 0,
@@ -129,12 +131,29 @@ class MessageModel {
       senderId: senderId ?? 0,
       content: json['content'] as String? ?? '',
       type: MessageType.fromString(json['type'] as String?),
-      status: MessageStatus.fromString(json['status'] as String?),
+      status: _statusFromJson(json, senderId: senderId ?? 0, currentUserId: currentUserId),
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
       isMe: (senderId ?? 0) == currentUserId,
     );
+  }
+
+  static MessageStatus _statusFromJson(
+      Map<String, dynamic> json, {
+        required int senderId,
+        required int currentUserId,
+      }) {
+    // Explicit status field takes priority (optimistic/retry flows)
+    final raw = json['status'] as String?;
+    if (raw != null) return MessageStatus.fromString(raw);
+
+    // Server uses is_read boolean
+    final isRead = json['is_read'] as bool? ?? false;
+    final isMe = senderId == currentUserId;
+
+    if (!isMe) return MessageStatus.delivered; // incoming — status irrelevant
+    return isRead ? MessageStatus.read : MessageStatus.sent;
   }
 
   // ─── Factory: optimistic (before server ack) ──────────────────────────────
@@ -190,9 +209,9 @@ class MessageModel {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is MessageModel &&
-          other.localId == localId &&
-          other.status == status;
+          other is MessageModel &&
+              other.localId == localId &&
+              other.status == status;
 
   @override
   int get hashCode => Object.hash(localId, status);
