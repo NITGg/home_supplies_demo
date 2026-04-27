@@ -126,7 +126,7 @@ class _ProductListState extends State<_ProductList> {
     final itemCount = widget.products.length + (widget.hasMore ? 1 : 0);
 
     return SizedBox(
-      height: 260,
+      height: 300,
       child: ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
