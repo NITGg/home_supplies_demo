@@ -41,8 +41,8 @@ android {
         applicationId = "com.nit.tawreedat.go"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = 53
-        versionName = "1.0.53"
+        versionCode = 55
+        versionName = "1.0.55"
         manifestPlaceholders["MAPS_API_KEY"] =
             localProperties.getProperty("MAPS_API_KEY") ?: ""
     }

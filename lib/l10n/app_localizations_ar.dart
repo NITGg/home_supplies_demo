@@ -1583,5 +1583,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get typeToSearchProducts => 'ابحث عن منتجات أو تصنيفات';
 
   @override
+  String get purchasedBefore => 'طلبت مسبقاً';
+
+  @override
   String get openAppSettings => 'فتح إعدادات التطبيق';
 }

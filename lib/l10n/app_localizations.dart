@@ -3173,6 +3173,12 @@ abstract class AppLocalizations {
   /// **'Type to search products & categories'**
   String get typeToSearchProducts;
 
+  /// No description provided for @purchasedBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchased Before'**
+  String get purchasedBefore;
+
   /// No description provided for @openAppSettings.
   ///
   /// In en, this message translates to:

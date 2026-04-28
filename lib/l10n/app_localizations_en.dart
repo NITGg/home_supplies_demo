@@ -1583,5 +1583,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get typeToSearchProducts => 'Type to search products & categories';
 
   @override
+  String get purchasedBefore => 'Purchased Before';
+
+  @override
   String get openAppSettings => 'Open App Settings';
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +7,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/customer_live_route_map.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/cancel_order_sheet.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/proposal_sheet.dart';
+import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/review_bottom_sheet.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/status_banner.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
@@ -47,8 +49,6 @@ class OrdersListScreen extends StatefulWidget {
 
 class _OrdersListScreenState extends State<OrdersListScreen> {
   final ScrollController _scrollController = ScrollController();
-
-  // _categoriesKey removed — CategoriesGridWidget moved to CategoriesScreen.
 
   ViewMode _viewMode = ViewMode.active;
   String _currentFilter = 'all';
@@ -102,10 +102,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     final nextExpiry = orders
         .where(
           (o) =>
-              o.status == 'PENDING' &&
-              o.expiresAt != null &&
-              o.expiresAt!.isAfter(now),
-        )
+      o.status == 'PENDING' &&
+          o.expiresAt != null &&
+          o.expiresAt!.isAfter(now),
+    )
         .map((o) => o.expiresAt!)
         .minOrNull;
 
@@ -146,8 +146,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       }
     });
     _courierLocationSubscription = socketService.onCourierLocation.listen((
-      data,
-    ) {
+        data,
+        ) {
       if (mounted) _handleCourierLocation(data);
     });
   }
@@ -160,12 +160,41 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     _courierLocationSubscription?.cancel();
   }
 
+  /// Called when the courier marks the order as collected/delivered on their end.
+  ///
+  /// Two things happen:
+  ///   1. Reload active orders so the list reflects the new status.
+  ///   2. Show the review sheet so the customer can rate the courier — this
+  ///      mirrors the behaviour that already exists in [QRScannerScreen] for
+  ///      the customer-initiated QR confirmation flow.
   void _handleOrderCollected(Map<String, dynamic> data) {
-    if (_viewMode == ViewMode.active) {
-      context.read<OrderCubit>().loadActiveOrders(loadMore: false);
-    }
-  }
+    log('[OrderCollected] Event received: $data');
 
+    final orderId = data['orderId'] as int?;
+    final courierId = data['courierId'] as int?;
+
+    if (orderId == null || courierId == null) {
+      log('[OrderCollected] ❌ Aborting — null ids');
+      return;
+    }
+
+    if (_viewMode != ViewMode.active) return;
+
+    context.read<OrderCubit>().loadActiveOrders(loadMore: false).then((_) {
+      if (!mounted) return;
+
+      final freshState = context.read<OrderCubit>().state;
+      if (freshState is! OrdersLoaded) return;
+
+      final orderStillActive = freshState.orders.any((o) => o.id == orderId);
+      log('[OrderCollected] orderStillActive=$orderStillActive');
+
+      if (!orderStillActive) {
+        log('[OrderCollected] ✅ Order gone — showing review sheet');
+        _showReviewSheet(orderId, courierId);
+      }
+    });
+  }
   void _handleCourierLocation(Map<String, dynamic> data) {
     final orderId = data['orderId'] as int?;
     final lat = (data['lat'] as num?)?.toDouble();
@@ -255,7 +284,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         _scheduleExpirationReload(state.orders);
         final activeIds = state.orders.map((o) => o.id).toSet();
         setState(
-          () =>
+              () =>
               _ordersWithNewOffers.removeWhere((id) => !activeIds.contains(id)),
         );
       }
@@ -266,7 +295,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       final freshState = cubit.state;
       if (freshState is OrdersLoaded) {
         final order = freshState.orders.firstWhereOrNull(
-          (o) => o.id == orderId,
+              (o) => o.id == orderId,
         );
         if (order != null) _showProposals(order);
       }
@@ -350,6 +379,21 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     );
   }
 
+  /// Shows the post-delivery review sheet.
+  ///
+  /// Shared by two flows:
+  ///   - Customer-initiated: triggered by [QRScannerScreen] via [DeliveryConfirmed].
+  ///   - Courier-initiated: triggered here via the [SocketService.onOrderCollected]
+  ///     socket event when the courier confirms delivery on their end.
+  void _showReviewSheet(int orderId, int courierId) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ReviewBottomSheet(orderId: orderId, courierId: courierId),
+    );
+  }
+
   void _navigateToQRScanner() {
     Navigator.push(
       context,
@@ -366,8 +410,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     if (_courierFix == null) return null;
 
     return orders.firstWhereOrNull(
-      (o) =>
-          o.id == _courierFix!.orderId &&
+          (o) =>
+      o.id == _courierFix!.orderId &&
           o.status?.toUpperCase() == 'IN_PROGRESS' &&
           o.collectedAt != null,
     );
@@ -386,19 +430,17 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             onRefresh: () async {
               setState(() => _isLoadingMore = false);
               final cubit = context.read<OrderCubit>();
-              // Only refreshes orders — categories refresh is handled by
-              // CategoriesScreen's own RefreshIndicator.
               await (_viewMode == ViewMode.active
                   ? cubit.loadActiveOrders(loadMore: false)
                   : cubit.loadHistoryOrders(
-                      loadMore: false,
-                      filter: _currentFilter,
-                    ));
+                loadMore: false,
+                filter: _currentFilter,
+              ));
             },
             color: AppColors.kPrimaryColor,
             child: BlocConsumer<OrderCubit, OrderState>(
               listenWhen: (_, current) =>
-                  current is OrdersLoaded ||
+              current is OrdersLoaded ||
                   current is OrderCancelled ||
                   current is OrderCancelError ||
                   current is DeliveryConfirmed ||
@@ -416,22 +458,24 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                   }
                 }
 
-                if (state is OrderCancelled) {
-                  showInfoBanner(
-                    context,
-                    AppLocalizations.of(context)!.orderCancelled,
-                  );
-                } else if (state is DeliveryConfirmed) {
+                if (state is DeliveryConfirmed) {
+                  // Show review sheet AND success banner
+                  _showReviewSheet(state.orderId, state.courierId);
                   showSuccessBanner(
                     context,
                     AppLocalizations.of(context)!.delivered,
+                  );
+                } else if (state is OrderCancelled) {
+                  showInfoBanner(
+                    context,
+                    AppLocalizations.of(context)!.orderCancelled,
                   );
                 } else if (state is OrderError) {
                   showErrorBanner(context, state.message);
                 }
               },
               buildWhen: (_, current) =>
-                  current is OrderLoading ||
+              current is OrderLoading ||
                   current is OrdersLoaded ||
                   current is OrderError,
               builder: (context, orderState) {
@@ -459,13 +503,13 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                             const Spacer(),
                             BlocBuilder<OrderCubit, OrderState>(
                               buildWhen: (_, current) =>
-                                  current is OrdersLoaded ||
+                              current is OrdersLoaded ||
                                   current is OrderLoading,
                               builder: (context, state) {
                                 final hasActiveOrders =
                                     state is OrdersLoaded &&
-                                    state.viewMode == OrderViewMode.active &&
-                                    state.orders.any((o) => o.isInProgress);
+                                        state.viewMode == OrderViewMode.active &&
+                                        state.orders.any((o) => o.isInProgress);
                                 if (!hasActiveOrders)
                                   return const SizedBox.shrink();
                                 return CircleAvatar(
@@ -511,8 +555,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       final isCorrectMode =
           (_viewMode == ViewMode.active &&
               state.viewMode == OrderViewMode.active) ||
-          (_viewMode == ViewMode.history &&
-              state.viewMode == OrderViewMode.history);
+              (_viewMode == ViewMode.history &&
+                  state.viewMode == OrderViewMode.history);
 
       if (!isCorrectMode) {
         return [SliverFillRemaining(child: _buildShimmerView())];
@@ -573,7 +617,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           ),
           sliver: SliverList.builder(
             itemCount:
-                orders.length + (_shouldShowPaginationSpinner(state) ? 1 : 0),
+            orders.length + (_shouldShowPaginationSpinner(state) ? 1 : 0),
             itemBuilder: (context, index) {
               // Pagination spinner
               if (index == orders.length) {

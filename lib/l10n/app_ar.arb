@@ -653,6 +653,7 @@
 "navigatingToCheckout": "الانتقال إلى إتمام الطلب...",
 "cartIsEmpty": "السلة فارغة",
 "products": "المنتجات",
+"purchasedBefore": "طلبت مسبقاً",
     "typeToSearchProducts": "ابحث عن منتجات أو تصنيفات",
 
 "startAddingProducts": "أضف بعض المنتجات للبدء",

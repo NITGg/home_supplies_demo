@@ -10,6 +10,7 @@ import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../products/presentation/featured_section.dart';
+import '../../products/presentation/last_purchase_section.dart';
 import '../../search/presentation/search_dialog.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_cubit.dart';
@@ -208,6 +209,8 @@ class _CategoriesSection extends StatelessWidget {
 
         // ── Featured products ─────────────────────────────────────────
         const FeaturedProductsSection(),
+        const LastPurchasedSection(),
+
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: Row(
