@@ -160,7 +160,7 @@ class CartSummaryBar extends StatelessWidget {
 
           if (finalTotal != originalTotal)
             CartSummaryRow(
-              label: l10n.subtotal,
+              label: l10n.cartTotal,
               value: '${fmtPrice(finalTotal)} ${l10n.egp}',
             ),
 

@@ -454,7 +454,7 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 // ── Pill ───────────────────────────────────────────────
                 _CheckoutPill(
-                  total: displayTotal,
+                  total: summary.subtotal,
                   expanded: _summaryExpanded,
                   onTap: _toggleSummary,
                 ),

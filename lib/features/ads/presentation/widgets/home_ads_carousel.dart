@@ -93,7 +93,7 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
           CarouselSlider(
             carouselController: _carouselController,
             options: CarouselOptions(
-              height: 130.0,
+              height: 160.0,
               autoPlay: false, // Disabled – we control it manually
               viewportFraction: 1.0,
               enableInfiniteScroll: true,
@@ -133,7 +133,7 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
                         imageUrl: ad.imageUrl,
                         width: double.infinity,
                         height: 130,
-                        fit: BoxFit.cover,
+                        fit: BoxFit.contain,
                         iconSize: 40,
                       ),
                     ),

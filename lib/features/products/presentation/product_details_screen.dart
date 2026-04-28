@@ -72,67 +72,71 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildLoaded(ProductModel product) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // ── Image gallery app bar ────────────────────────────────────────
-          _ImageGalleryAppBar(
-            images: product.images,
-            selectedIndex: _selectedImageIndex,
-            onImageSelected: (i) => setState(() => _selectedImageIndex = i),
-          ),
+    return SafeArea(
+      bottom: false,
+      child: Scaffold(
+        body: CustomScrollView(
+          slivers: [
+            // ── Image gallery app bar ────────────────────────────────────────
+            _ImageGalleryAppBar(
+              images: product.images,
+              selectedIndex: _selectedImageIndex,
+              onImageSelected: (i) => setState(() => _selectedImageIndex = i),
+            ),
 
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _NameRow(product: product),
-                  const SizedBox(height: 12),
-                  _PriceSection(product: product),
-                  const SizedBox(height: 12),
-                  _StockChip(product: product),
-                  const SizedBox(height: 20),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _NameRow(product: product),
+                    const SizedBox(height: 12),
+                    _PriceSection(product: product),
+                    const SizedBox(height: 12),
+                    if(product.stock <10)
+                    _StockChip(product: product),
+                    const SizedBox(height: 20),
 
-                  if (product.displayDescription.isNotEmpty) ...[
-                    _SectionTitle(title: l10n.description),
-                    const SizedBox(height: 8),
-                    Text(
-                      product.displayDescription,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        height: 1.7,
-                        color: Colors.grey.shade700,
+                    if (product.displayDescription.isNotEmpty) ...[
+                      _SectionTitle(title: l10n.description),
+                      const SizedBox(height: 8),
+                      Text(
+                        product.displayDescription,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          height: 1.7,
+                          color: Colors.grey.shade700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                      const SizedBox(height: 20),
+                    ],
 
-                  if (product.attributes.isNotEmpty) ...[
-                    _SectionTitle(title: l10n.specifications),
-                    const SizedBox(height: 8),
-                    _AttributesTable(attributes: product.attributes),
-                    const SizedBox(height: 20),
-                  ],
+                    if (product.attributes.isNotEmpty) ...[
+                      _SectionTitle(title: l10n.specifications),
+                      const SizedBox(height: 8),
+                      _AttributesTable(attributes: product.attributes),
+                      const SizedBox(height: 20),
+                    ],
 
-                  if (product.units.isNotEmpty) ...[
-                    _SectionTitle(title: l10n.purchaseUnits),
-                    const SizedBox(height: 8),
-                    _UnitsRow(units: product.units),
-                    const SizedBox(height: 20),
-                  ],
+                    if (product.units.isNotEmpty) ...[
+                      _SectionTitle(title: l10n.purchaseUnits),
+                      const SizedBox(height: 8),
+                      _UnitsRow(units: product.units),
+                      const SizedBox(height: 20),
+                    ],
 
-                  _MetaInfo(product: product),
-                  const SizedBox(height: 120),
-                ],
+                    _MetaInfo(product: product),
+                    const SizedBox(height: 120),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
 
-      // ── Smart bottom bar — driven entirely by CartCubit state ────────────
-      bottomNavigationBar: _AddToCartBar(product: product),
+        // ── Smart bottom bar — driven entirely by CartCubit state ────────────
+        bottomNavigationBar: _AddToCartBar(product: product),
+      ),
     );
   }
 }
@@ -592,7 +596,7 @@ class _ImageGalleryAppBar extends StatelessWidget {
                 imageUrl: images[selectedIndex],
                 width: double.infinity,
                 height: double.infinity,
-                fit: BoxFit.cover,
+                fit: BoxFit.fitHeight,
                 iconSize: 64,
               ),
             ),
@@ -946,8 +950,6 @@ class _MetaInfo extends StatelessWidget {
         spacing: 16,
         runSpacing: 4,
         children: [
-          Text('SKU: ${product.sku}'),
-          if (product.barcode != null) Text('Barcode: ${product.barcode}'),
           if (product.weight != null)
             Text('${product.weight} ${AppLocalizations.of(context)!.weight}'),
         ],

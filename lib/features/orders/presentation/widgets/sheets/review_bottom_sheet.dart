@@ -63,8 +63,13 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
         '/customer-reviews',
         data: payload,
       );
+      final response2 = await ApiClient.instance.dio.post(
+        '/customer/points/give-points-to-courier',
+        data: payload,
+      );
 
       log('✅ Response: ${response.statusCode} — ${response.data}');
+      log('✅ Response: ${response2.statusCode} — ${response2.data}');
 
       if (response.statusCode == 201 && mounted) {
         navigatedAway = true; // ← set BEFORE popping
