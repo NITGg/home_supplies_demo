@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/presentation/product_card.dart';
 import '../manager/category_detail_states.dart';
@@ -56,7 +57,7 @@ class SubCategorySectionWidget extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              'لا توجد منتجات في هذه الفئة',
+              AppLocalizations.of(context)!.noProductsInSection,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: Colors.grey.shade500,
               ),

@@ -9,6 +9,7 @@ abstract class ProductRepository {
     int skip = 0,
     int limit = 20,
     int? categoryId,
+    bool? isFeatured,
   });
 
   Future<ProductModel> getProductById(int id);
@@ -27,11 +28,13 @@ class ProductRepositoryImpl implements ProductRepository {
     int skip = 0,
     int limit = 20,
     int? categoryId,
+    bool? isFeatured,
   }) async {
     return await _dataSource.getProducts(
       skip: skip,
       limit: limit,
       categoryId: categoryId,
+      isFeatured: isFeatured,
     );
   }
 

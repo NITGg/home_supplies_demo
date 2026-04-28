@@ -18,7 +18,7 @@ class CategoryDetailScreen extends StatefulWidget {
   final int? categoryId;
 
   const CategoryDetailScreen({super.key, this.category, this.categoryId})
-    : assert(category != null || categoryId != null);
+      : assert(category != null || categoryId != null);
 
   @override
   State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
@@ -51,7 +51,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           builder: (context, state) {
             return switch (state) {
               CategoryDetailInitial() || CategoryDetailLoading() =>
-                _LoadingView(category: widget.category),
+                  _LoadingView(category: widget.category),
               CategoryDetailError(:final message) => _ErrorView(
                 message: message,
                 category: widget.category,
@@ -104,6 +104,11 @@ class _LoadedViewState extends State<_LoadedView> {
   late List<GlobalKey> _sectionKeys;
   int _activePillIndex = 0;
 
+  /// Absolute scroll offset of each section's top edge, updated continuously
+  /// as the user scrolls. Used as a fallback when a section hasn't been
+  /// rendered yet (SliverList lazy-builds items off-screen).
+  final Map<int, double> _sectionScrollOffsets = {};
+
   @override
   void initState() {
     super.initState();
@@ -111,8 +116,11 @@ class _LoadedViewState extends State<_LoadedView> {
     _scrollController.addListener(_onScroll);
   }
 
-  // ── Scroll listener — updates the active pill as user scrolls ─────────────
+  // ── Scroll listener — updates the active pill and offset cache ────────────
   void _onScroll() {
+    // ── cache absolute offsets for all currently-rendered sections ────────
+    _updateSectionOffsetCache();
+
     // ── update active pill ─────────────────────────────────────────────
     if (_sectionKeys.isNotEmpty) {
       const threshold = 180.0;
@@ -131,6 +139,24 @@ class _LoadedViewState extends State<_LoadedView> {
 
     _checkAutoLoad();
     _checkAutoLoadDirect();
+  }
+
+  /// Records the absolute scroll offset of every currently-rendered section
+  /// so we can jump to them later even when they scroll off-screen.
+  void _updateSectionOffsetCache() {
+    const double stickyHeaders =
+        kToolbarHeight + _PillsHeaderDelegate._height;
+
+    for (int i = 0; i < _sectionKeys.length; i++) {
+      final ctx = _sectionKeys[i].currentContext;
+      if (ctx == null) continue;
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null) continue;
+      final screenDy = box.localToGlobal(Offset.zero).dy;
+      _sectionScrollOffsets[i] =
+          (_scrollController.offset + screenDy - stickyHeaders)
+              .clamp(0.0, double.maxFinite);
+    }
   }
 
   void _checkAutoLoadDirect() {
@@ -186,21 +212,108 @@ class _LoadedViewState extends State<_LoadedView> {
   void _rebuildKeys() {
     _sectionKeys = List.generate(
       widget.state.sections.length,
-      (_) => GlobalKey(),
+          (_) => GlobalKey(),
     );
+    // Stale offsets are invalid after a rebuild — clear them so we never
+    // jump to a wrong position.
+    _sectionScrollOffsets.clear();
   }
 
   // ── Scroll to section when a pill is tapped ───────────────────────────────
-  void _scrollToSection(int index) {
-    final ctx = _sectionKeys[index].currentContext;
-    if (ctx == null) return;
+
+  /// Scroll the list so [index] lands just below the sticky headers.
+  ///
+  /// SliverList only builds items when they enter the viewport, so the target
+  /// section may not have a RenderObject yet.  We handle this with two passes:
+  ///
+  /// Pass 1 – jump to a known/estimated offset so Flutter builds the item.
+  /// Pass 2 – in the very next frame the RenderObject is available; we read
+  ///           its exact position and animate to it.
+  void _scrollToSection(int index) async {
     setState(() => _activePillIndex = index);
-    Scrollable.ensureVisible(
-      ctx,
-      alignment: 0,
-      duration: const Duration(milliseconds: 420),
-      curve: Curves.easeInOutCubic,
+
+    const double stickyHeaders =
+        kToolbarHeight + _PillsHeaderDelegate._height;
+
+    // ── Pass 1 (direct): item already rendered ────────────────────────────
+    final ctx = _sectionKeys[index].currentContext;
+    if (ctx != null) {
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null) return;
+      final screenDy = box.localToGlobal(Offset.zero).dy;
+      final target =
+      (_scrollController.offset + screenDy - stickyHeaders)
+          .clamp(0.0, _scrollController.position.maxScrollExtent);
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeInOutCubic,
+      );
+      return;
+    }
+
+    // ── Pass 1 (lazy): item is off-screen ─────────────────────────────────
+    // Scroll to the best estimate so Flutter builds the SliverList item.
+    final double estimatedOffset = _estimatedOffset(index);
+    await _scrollController.animateTo(
+      estimatedOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeIn,
     );
+
+    // ── Pass 2: item is now rendered — animate to exact position ──────────
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx2 = _sectionKeys[index].currentContext;
+      if (ctx2 == null) return;
+      final box = ctx2.findRenderObject() as RenderBox?;
+      if (box == null) return;
+      final screenDy = box.localToGlobal(Offset.zero).dy;
+      final target =
+      (_scrollController.offset + screenDy - stickyHeaders)
+          .clamp(0.0, _scrollController.position.maxScrollExtent);
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  /// Returns the best absolute scroll-offset estimate for [index] when the
+  /// section hasn't been rendered yet.
+  ///
+  /// Priority:
+  ///   1. A directly cached offset for [index].
+  ///   2. Linear interpolation between the two nearest cached neighbours.
+  ///   3. The single nearest cached neighbour (before or after).
+  ///   4. `maxScrollExtent` as a last resort (forces all items to render).
+  double _estimatedOffset(int index) {
+    // 1. Direct cache hit.
+    if (_sectionScrollOffsets.containsKey(index)) {
+      return _sectionScrollOffsets[index]!;
+    }
+
+    // 2. Find the nearest cached neighbours on each side.
+    int? before, after;
+    for (final key in _sectionScrollOffsets.keys) {
+      if (key < index && (before == null || key > before)) before = key;
+      if (key > index && (after == null || key < after)) after = key;
+    }
+
+    if (before != null && after != null) {
+      // Linear interpolation between the two neighbours.
+      final t = (index - before) / (after - before);
+      return _sectionScrollOffsets[before]! +
+          t *
+              (_sectionScrollOffsets[after]! -
+                  _sectionScrollOffsets[before]!);
+    }
+    if (before != null) return _sectionScrollOffsets[before]!;
+    if (after != null) return _sectionScrollOffsets[after]!;
+
+    // 4. No cached data at all — scroll to the bottom to force rendering.
+    return _scrollController.position.maxScrollExtent;
   }
 
   @override
@@ -212,9 +325,8 @@ class _LoadedViewState extends State<_LoadedView> {
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       notificationPredicate: (notification) => notification.depth == 0,
-      // add this
       child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(), // add this
+        physics: const AlwaysScrollableScrollPhysics(),
         controller: _scrollController,
         slivers: [
           // ── Hero app bar ──────────────────────────────────────────────────
@@ -237,7 +349,7 @@ class _LoadedViewState extends State<_LoadedView> {
             SliverList.separated(
               itemCount: state.sections.length,
               separatorBuilder: (_, __) =>
-                  const Divider(height: 1, indent: 16, endIndent: 16),
+              const Divider(height: 1, indent: 16, endIndent: 16),
               itemBuilder: (_, i) {
                 final section = state.sections[i];
                 return KeyedSubtree(
@@ -255,18 +367,18 @@ class _LoadedViewState extends State<_LoadedView> {
             SliverToBoxAdapter(
               child: state.directProductsLoading && state.directProducts.isEmpty
                   ? const Padding(
-                      padding: EdgeInsets.all(48),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
+                padding: EdgeInsets.all(48),
+                child: Center(child: CircularProgressIndicator()),
+              )
                   : state.directProducts.isEmpty
                   ? const _EmptyProducts()
                   : DirectProductsGrid(
-                      products: state.directProducts,
-                      isLoadingMore: state.directProductsLoading,
-                      hasMore: state.directProductsHasMore,
-                      onProductTap: widget.onProductTap,
-                      onLoadMore: widget.onLoadMoreDirect,
-                    ),
+                products: state.directProducts,
+                isLoadingMore: state.directProductsLoading,
+                hasMore: state.directProductsHasMore,
+                onProductTap: widget.onProductTap,
+                onLoadMore: widget.onLoadMoreDirect,
+              ),
             ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
@@ -305,11 +417,10 @@ class _PillsHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    // Subtle elevation shadow when the pills row is overlapping content below.
+      BuildContext context,
+      double shrinkOffset,
+      bool overlapsContent,
+      ) {
     final elevated = overlapsContent || shrinkOffset > 0;
 
     return Material(
@@ -368,9 +479,9 @@ class _PillChip extends StatelessWidget {
         border: isActive
             ? null
             : Border.all(
-                color: theme.colorScheme.outline.withOpacity(0.35),
-                width: 0.8,
-              ),
+          color: theme.colorScheme.outline.withOpacity(0.35),
+          width: 0.8,
+        ),
       ),
       child: InkWell(
         onTap: onTap,
@@ -553,7 +664,7 @@ class _HeaderBackground extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   category.displayDescription,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.68),
@@ -593,11 +704,11 @@ class _GradientMesh extends StatelessWidget {
               colors: [
                 HSLColor.fromColor(primary)
                     .withLightness(
-                      (HSLColor.fromColor(primary).lightness - 0.12).clamp(
-                        0.0,
-                        1.0,
-                      ),
-                    )
+                  (HSLColor.fromColor(primary).lightness - 0.12).clamp(
+                    0.0,
+                    1.0,
+                  ),
+                )
                     .toColor(),
                 primary,
                 HSLColor.fromColor(secondary).withSaturation(0.9).toColor(),
@@ -742,7 +853,7 @@ class _LoadingViewState extends State<_LoadingView>
                 childAspectRatio: 0.72,
                 children: List.generate(
                   6,
-                  (_) => _SkeletonProductCard(shimmer: shimmer),
+                      (_) => _SkeletonProductCard(shimmer: shimmer),
                 ),
               ),
             ),
@@ -804,11 +915,11 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
                   colors: [
                     HSLColor.fromColor(primary)
                         .withLightness(
-                          (HSLColor.fromColor(primary).lightness - 0.12).clamp(
-                            0.0,
-                            1.0,
-                          ),
-                        )
+                      (HSLColor.fromColor(primary).lightness - 0.12).clamp(
+                        0.0,
+                        1.0,
+                      ),
+                    )
                         .toColor(),
                     primary,
                     HSLColor.fromColor(secondary).withSaturation(0.9).toColor(),

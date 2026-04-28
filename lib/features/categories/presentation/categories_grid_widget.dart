@@ -9,6 +9,7 @@ import '../../addresses/presentation/default_address_chip.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
+import '../../products/presentation/featured_section.dart';
 import '../../search/presentation/search_dialog.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_cubit.dart';
@@ -75,7 +76,7 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
                   context,
                 )!.tawreedatIsYourBestChoice,
                 lottieAsset:
-                    'assets/animation_json/Shopping_cart_animation.json',
+                'assets/animation_json/Shopping_cart_animation.json',
               ),
             ),
             CategoriesLoaded() => _CategoriesSection(
@@ -124,122 +125,147 @@ class _CategoriesSection extends StatelessWidget {
 
     return state.totalCount == 0
         ? Center(
-            child: CategoriesFallbackWidget(
-              title: AppLocalizations.of(context)!.welcome,
-              subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice,
-              lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',
-            ),
-          )
+      child: CategoriesFallbackWidget(
+        title: AppLocalizations.of(context)!.welcome,
+        subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice,
+        lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',
+      ),
+    )
         : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // ── Header ───────────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
+          child: Row(
             children: [
-              // ── Header ───────────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
-                child: Row(
-                  children: [
-                    // Title accent bar
-                    Container(
-                      width: 4,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: AppColors.kPrimaryColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Text(
-                    //   AppLocalizations.of(context)!.categories,
-                    //   style: theme.textTheme.titleMedium?.copyWith(
-                    //     fontWeight: FontWeight.bold,
-                    //   ),
-                    // ),
-                    // const Spacer(),
+              // Title accent bar
+              Container(
+                width: 4,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: AppColors.kPrimaryColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Text(
+              //   AppLocalizations.of(context)!.categories,
+              //   style: theme.textTheme.titleMedium?.copyWith(
+              //     fontWeight: FontWeight.bold,
+              //   ),
+              // ),
+              // const Spacer(),
 
-                    // ── Default address chip ──────────────────────────────
-                    const DefaultAddressChip(),
-                    const SizedBox(width: 8),
-                    const Spacer(),
+              // ── Default address chip ──────────────────────────────
+              const DefaultAddressChip(),
+              const SizedBox(width: 8),
+              const Spacer(),
 
-                    // ── Search button ─────────────────────────────────────
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.grey.shade200,
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.search_rounded,
-                          color: Colors.grey.shade700,
-                        ),
-                        onPressed: () {showSearchDialog(context);},
-                        padding: EdgeInsets.zero,
-                      ),
-                    ),
-
-                    if (state.isLoadingMore)
-                      SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-
-                    // ── Cart icon ─────────────────────────────────────────
-                    BlocSelector<CartCubit, CartState, int>(
-                      selector: (state) {
-                        if (state is CartLoaded) {
-                          final total = state.data.summary.totalItems;
-                          return total < 0 ? 0 : total;
-                        }
-                        return 0;
-                      },
-                      builder: (context, count) {
-                        return AnimatedCartIcon(
-                          onTap: () => context.push('/cart'),
-                        );
-                      },
-                    ),
-                  ],
+              // ── Search button ─────────────────────────────────────
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.grey.shade200,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.search_rounded,
+                    color: Colors.grey.shade700,
+                  ),
+                  onPressed: () {showSearchDialog(context);},
+                  padding: EdgeInsets.zero,
                 ),
               ),
 
-              // ── Always a grid ─────────────────────────────────────────────
-              NotificationListener<ScrollNotification>(
-                onNotification: (n) {
-                  if (n is ScrollEndNotification &&
-                      n.metrics.pixels >= n.metrics.maxScrollExtent - 40 &&
-                      state.hasMore) {
-                    onLoadMore();
+              if (state.isLoadingMore)
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+
+              // ── Cart icon ─────────────────────────────────────────
+              BlocSelector<CartCubit, CartState, int>(
+                selector: (state) {
+                  if (state is CartLoaded) {
+                    final total = state.data.summary.totalItems;
+                    return total < 0 ? 0 : total;
                   }
-                  return false;
+                  return 0;
                 },
-                child: GridView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _crossAxisCount,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: _childAspectRatio,
-                  ),
-                  itemCount: _parents.length,
-                  itemBuilder: (_, i) => CategoryCard(
-                    category: _parents[i],
-                    onTap: () => onCategoryTap(_parents[i]),
-                    style: _useCompact
-                        ? CategoryCardStyle.compact
-                        : CategoryCardStyle.regular,
-                  ),
+                builder: (context, count) {
+                  return AnimatedCartIcon(
+                    onTap: () => context.push('/cart'),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+
+        // ── Featured products ─────────────────────────────────────────
+        const FeaturedProductsSection(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: AppColors.kPrimaryColor,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-
-              const SizedBox(height: 4),
-              Divider(color: Colors.grey.shade200, height: 1),
+              const SizedBox(width: 8),
+              Text(
+                AppLocalizations.of(context)!.categories,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
-          );
+          ),
+        ),
+
+        // ── Always a grid ─────────────────────────────────────────────
+        NotificationListener<ScrollNotification>(
+          onNotification: (n) {
+            if (n is ScrollEndNotification &&
+                n.metrics.pixels >= n.metrics.maxScrollExtent - 40 &&
+                state.hasMore) {
+              onLoadMore();
+            }
+            return false;
+          },
+          child: GridView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: _crossAxisCount,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: _childAspectRatio,
+            ),
+            itemCount: _parents.length,
+            itemBuilder: (_, i) => CategoryCard(
+              category: _parents[i],
+              onTap: () => onCategoryTap(_parents[i]),
+              style: _useCompact
+                  ? CategoryCardStyle.compact
+                  : CategoryCardStyle.regular,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 4),
+        Divider(color: Colors.grey.shade200, height: 1),
+      ],
+    );
   }
 }
 

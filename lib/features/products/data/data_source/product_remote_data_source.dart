@@ -11,6 +11,7 @@ abstract class ProductRemoteDataSource {
     int skip = 0,
     int limit = 20,
     int? categoryId,
+    bool? isFeatured,
   });
 
   Future<ProductModel> getProductById(int id);
@@ -26,12 +27,14 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     int skip = 0,
     int limit = 20,
     int? categoryId,
+    bool? isFeatured,
   }) async {
     final queryParams = <String, dynamic>{
       'skip': skip,
       'limit': limit,
       'supplier_id': 9, // tawreedat go = 9
       if (categoryId != null) 'category_id': categoryId,
+      if (isFeatured != null) 'is_featured': isFeatured,
     };
 
     final response = await _dio.get(
