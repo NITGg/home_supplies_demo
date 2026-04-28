@@ -1490,7 +1490,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emptyCart => 'Empty';
 
   @override
-  String get proceedToCheckout => 'Proceed to Checkout';
+  String get proceedToCheckout => 'Confirm Order';
+
+  @override
+  String get checkout => 'Checkout';
 
   @override
   String get navigatingToCheckout => 'Navigating to checkout...';

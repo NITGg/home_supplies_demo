@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -7,6 +9,7 @@ import 'package:tawreedat_go/features/cart/presentation/widgets/cart_item_tile.d
 import 'package:tawreedat_go/features/cart/presentation/widgets/cart_price_helpers.dart';
 import 'package:tawreedat_go/features/home/layout/manager/home_cubit.dart';
 
+import '../../../core/style/app_colors.dart';
 import '../../../core/widgets/circel_back_cutton.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../addresses/manager/address_cubit.dart';
@@ -45,10 +48,23 @@ class _CartScreenState extends State<CartScreen> {
   final _couponController = TextEditingController();
   final FocusNode _couponFocus = FocusNode();
 
+  // false = pill only visible; true = full summary visible
+  bool _summaryExpanded = false;
+  bool _pillVisible = true;
+  late final ScrollController _scrollController = ScrollController();
+  double _lastScrollOffset = 0;
+  void _toggleSummary() {
+    _couponFocus.unfocus();
+    setState(() => _summaryExpanded = !_summaryExpanded);
+  }
+
+  // ── Price helpers ─────────────────────────────────────────────────────────
+
   double _computeRequiredAmount(CartLoaded state) {
     final summary = state.data.summary;
     final originalTotal = toDouble(summary.originalTotal);
-    final totalDiscount = toBool(summary.hasDiscount) ? toDouble(summary.totalDiscount) : 0.0;
+    final totalDiscount =
+    toBool(summary.hasDiscount) ? toDouble(summary.totalDiscount) : 0.0;
     final priceBeforeCoupon = originalTotal - totalDiscount;
     final couponDiscount = _appliedCoupon != null
         ? computeCouponCartDiscount(_appliedCoupon!, priceBeforeCoupon)
@@ -56,13 +72,53 @@ class _CartScreenState extends State<CartScreen> {
     final finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
     final preview = state.preview;
     return preview != null
-        ? finalTotal + preview.deliveryFee.ceilToDouble() + preview.vatAmount.ceilToDouble()
+        ? finalTotal +
+        preview.deliveryFee.ceilToDouble() +
+        preview.vatAmount.ceilToDouble()
         : finalTotal;
   }
 
+  double _computeDisplayTotal(CartLoaded state) {
+    final summary = state.data.summary;
+    final originalTotal = toDouble(summary.originalTotal);
+    final totalDiscount =
+    toBool(summary.hasDiscount) ? toDouble(summary.totalDiscount) : 0.0;
+    final priceBeforeCoupon = originalTotal - totalDiscount;
+    final couponDiscount = _appliedCoupon != null
+        ? computeCouponCartDiscount(_appliedCoupon!, priceBeforeCoupon)
+        : null;
+    final subtotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
+    final preview = state.preview;
+    return preview != null
+        ? subtotal +
+        preview.deliveryFee.ceilToDouble() +
+        preview.vatAmount.ceilToDouble()
+        : subtotal;
+  }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+  void _onScroll() {
+    final offset = _scrollController.offset;
+    final delta  = offset - _lastScrollOffset;
+    _lastScrollOffset = offset;
+
+    // Scrolling down → hide pill (and collapse summary)
+    if (delta > 4 && _pillVisible) {
+      setState(() {
+        _pillVisible      = false;
+        _summaryExpanded  = false;
+      });
+    }
+    // Scrolling up or near top → show pill
+    else if (delta < -4 && !_pillVisible) {
+      setState(() => _pillVisible = true);
+    }
+  }
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       context.read<CartCubit>().fetchCart();
@@ -71,7 +127,8 @@ class _CartScreenState extends State<CartScreen> {
       if (_couponController.text.isNotEmpty) return;
 
       final profileState = context.read<ProfileCubit>().state;
-      if (profileState is ProfileLoaded && profileState.profile.roleId == 4) return;
+      if (profileState is ProfileLoaded &&
+          profileState.profile.roleId == 4) return;
 
       final code = await _couponCubit.getOrFetchFirstOrderCoupon();
       if (!mounted || code == null || code.isEmpty) return;
@@ -82,6 +139,7 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _couponCubit.close();
     _couponController.dispose();
     _couponFocus.dispose();
@@ -94,7 +152,10 @@ class _CartScreenState extends State<CartScreen> {
     context.read<CartCubit>().fetchCart();
     context.read<WalletCubit>().fetchWalletData();
     await Future.any([
-      context.read<CartCubit>().stream.firstWhere((s) => s is CartLoaded || s is CartError),
+      context
+          .read<CartCubit>()
+          .stream
+          .firstWhere((s) => s is CartLoaded || s is CartError),
       Future.delayed(const Duration(seconds: 4)),
     ]);
   }
@@ -122,7 +183,8 @@ class _CartScreenState extends State<CartScreen> {
       if (cartState is CartLoaded) {
         final required = _computeRequiredAmount(cartState);
         if (_walletBalance < required) {
-          _showInsufficientBalanceDialog(required: required, balance: _walletBalance);
+          _showInsufficientBalanceDialog(
+              required: required, balance: _walletBalance);
           return;
         }
       }
@@ -133,7 +195,8 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  void _showInsufficientBalanceDialog({required double required, required double balance}) {
+  void _showInsufficientBalanceDialog(
+      {required double required, required double balance}) {
     final l10n = AppLocalizations.of(context)!;
     final shortfall = (required - balance).ceilToDouble();
     showModalBottomSheet(
@@ -154,6 +217,8 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -164,7 +229,8 @@ class _CartScreenState extends State<CartScreen> {
         listenWhen: (_, curr) => curr is AddressesLoaded,
         listener: (context, state) {
           if (state is AddressesLoaded) {
-            final newDefaultId = state.addresses.where((a) => a.isDefault).firstOrNull?.id;
+            final newDefaultId =
+                state.addresses.where((a) => a.isDefault).firstOrNull?.id;
             if (newDefaultId != _currentDefaultAddressId) {
               _currentDefaultAddressId = newDefaultId;
               if (newDefaultId != null) _cubit.fetchCart();
@@ -175,11 +241,13 @@ class _CartScreenState extends State<CartScreen> {
           listenWhen: (_, curr) => curr is WalletLoaded,
           listener: (context, state) {
             if (state is WalletLoaded) {
-              setState(() => _walletBalance = state.walletData.wallet.balance);
+              setState(
+                      () => _walletBalance = state.walletData.wallet.balance);
             }
           },
           child: BlocListener<OrderCubit, OrderState>(
-            listener: (context, state) => _handleOrderState(context, state, l10n),
+            listener: (context, state) =>
+                _handleOrderState(context, state, l10n),
             child: BlocConsumer<CartCubit, CartState>(
               listenWhen: (_, curr) => curr is CartError,
               listener: (context, state) {
@@ -191,7 +259,8 @@ class _CartScreenState extends State<CartScreen> {
                   body: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
                     child: switch (state) {
-                      CartInitial() || CartLoading() =>
+                      CartInitial() ||
+                      CartLoading() =>
                       const CartLoadingView(key: ValueKey('loading')),
                       CartError(:final message) => CartErrorView(
                         key: const ValueKey('error'),
@@ -199,8 +268,10 @@ class _CartScreenState extends State<CartScreen> {
                         onRetry: _cubit.fetchCart,
                       ),
                       CartLoaded(:final data) when data.cartItems.isEmpty =>
-                          _buildEmptyWithRefresh(key: const ValueKey('empty')),
-                      CartLoaded() => _buildLoaded(context, state as CartLoaded),
+                          _buildEmptyWithRefresh(
+                              key: const ValueKey('empty')),
+                      CartLoaded() =>
+                          _buildLoaded(context, state as CartLoaded),
                     },
                   ),
                 );
@@ -212,7 +283,8 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  void _handleOrderState(BuildContext context, OrderState state, AppLocalizations l10n) {
+  void _handleOrderState(
+      BuildContext context, OrderState state, AppLocalizations l10n) {
     if (state is CouponValidating) {
       if (!_couponValidating) setState(() => _couponValidating = true);
     } else if (state is CouponRedeemed) {
@@ -250,7 +322,8 @@ class _CartScreenState extends State<CartScreen> {
         context.go('/mainHome', extra: GoToTab(HomeCubit.ordersTabIndex));
       }
       context.read<CartCubit>().fetchCart();
-      showSuccessBanner(context, '${l10n.created}: ${state.order.orderNumber}');
+      showSuccessBanner(
+          context, '${l10n.created}: ${state.order.orderNumber}');
     } else if (state is OrderError) {
       Fluttertoast.showToast(
         msg: state.message,
@@ -286,7 +359,8 @@ class _CartScreenState extends State<CartScreen> {
               radius: 20,
               backgroundColor: Colors.grey.shade200,
               child: IconButton(
-                icon: Icon(Icons.delete_sweep_outlined, color: Colors.grey.shade700),
+                icon: Icon(Icons.delete_sweep_outlined,
+                    color: Colors.grey.shade700),
                 tooltip: l10n.clearCart,
                 onPressed: () => _confirmClear(context),
               ),
@@ -318,6 +392,7 @@ class _CartScreenState extends State<CartScreen> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final screenWidth = MediaQuery.of(context).size.width;
     final hPad = screenWidth < 360 ? 14.0 : 20.0;
+    final displayTotal = _computeDisplayTotal(state);
 
     return Column(
       key: ValueKey('loaded_${items.length}'),
@@ -329,10 +404,13 @@ class _CartScreenState extends State<CartScreen> {
             child: DefaultAddressChip(),
           ),
         ),
+
+        // ── Items list ────────────────────────────────────────────────
         Expanded(
           child: RefreshIndicator(
             onRefresh: _onRefresh,
             child: ListView.builder(
+              controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.only(top: 12, bottom: 8),
               itemCount: items.length,
@@ -350,22 +428,55 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ),
         ),
-        CartSummaryBar(
-          summary: summary,
-          preview: state.preview,
-          hPad: hPad,
-          bottomPadding: bottomPadding,
-          theme: theme,
-          l10n: l10n,
-          paymentMethod: _paymentMethod,
-          onPaymentMethodChanged: (m) => setState(() => _paymentMethod = m),
-          couponController: _couponController,
-          couponFocus: _couponFocus,
-          appliedCoupon: _appliedCoupon,
-          couponValidating: _couponValidating,
-          onValidateCoupon: _validateCoupon,
-          onRemoveCoupon: _removeCoupon,
-          onCheckout: _checkout,
+
+        // ── Animated bottom section ───────────────────────────────────────
+        AnimatedSlide(
+          offset: _pillVisible ? Offset.zero : const Offset(0, 1),
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeInOut,
+          child: AnimatedOpacity(
+            opacity: _pillVisible ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Pill ───────────────────────────────────────────────
+                _CheckoutPill(
+                  total: displayTotal,
+                  expanded: _summaryExpanded,
+                  onTap: _toggleSummary,
+                ),
+
+                // ── Full summary panel ─────────────────────────────────
+                ClipRect(
+                  child: AnimatedAlign(
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.bottomCenter,
+                    heightFactor: _summaryExpanded ? 1.0 : 0.0,
+                    child: CartSummaryBar(
+                      summary: summary,
+                      preview: state.preview,
+                      hPad: hPad,
+                      bottomPadding: bottomPadding,
+                      theme: theme,
+                      l10n: l10n,
+                      paymentMethod: _paymentMethod,
+                      onPaymentMethodChanged: (m) =>
+                          setState(() => _paymentMethod = m),
+                      couponController: _couponController,
+                      couponFocus: _couponFocus,
+                      appliedCoupon: _appliedCoupon,
+                      couponValidating: _couponValidating,
+                      onValidateCoupon: _validateCoupon,
+                      onRemoveCoupon: _removeCoupon,
+                      onCheckout: _checkout,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -375,7 +486,10 @@ class _CartScreenState extends State<CartScreen> {
     try {
       await _cubit.incrementItem(spId);
     } catch (_) {
-      if (context.mounted) showErrorBanner(context, AppLocalizations.of(context)!.updateQuantityFailed);
+      if (context.mounted) {
+        showErrorBanner(
+            context, AppLocalizations.of(context)!.updateQuantityFailed);
+      }
     }
   }
 
@@ -383,7 +497,10 @@ class _CartScreenState extends State<CartScreen> {
     try {
       await _cubit.decrementItem(spId);
     } catch (_) {
-      if (context.mounted) showErrorBanner(context, AppLocalizations.of(context)!.updateQuantityFailed);
+      if (context.mounted) {
+        showErrorBanner(
+            context, AppLocalizations.of(context)!.updateQuantityFailed);
+      }
     }
   }
 
@@ -407,5 +524,85 @@ class _CartScreenState extends State<CartScreen> {
       ),
     );
     if (confirmed == true) await _cubit.clearCart();
+  }
+}
+
+// ── Checkout pill ─────────────────────────────────────────────────────────────
+
+/// A slim persistent bar that shows the running total and a chevron.
+/// Tapping it expands / collapses the full [CartSummaryBar].
+class _CheckoutPill extends StatelessWidget {
+  final double total;
+  final bool expanded;
+  final VoidCallback onTap;
+
+  const _CheckoutPill({
+    required this.total,
+    required this.expanded,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final safePad = MediaQuery.of(context).padding.bottom;
+
+    return Material(
+      // Remove the resting shadow when the panel is open so the two
+      // surfaces read as one continuous sheet.
+      elevation: expanded ? 0 : 6,
+      shadowColor: Colors.black12,
+      color: Colors.white,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(20, 12, 20, 12 + (expanded ? 0 : safePad)),
+          child: Row(
+            children: [
+              // ── Total badge ──────────────────────────────────────────
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.kPrimaryColor.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Text(
+                  '${total.toStringAsFixed(2)} ${l10n.egp}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AppColors.kPrimaryColor,
+                  ),
+                ),
+              ),
+
+              const Spacer(),
+
+              // ── Label ────────────────────────────────────────────────
+              Text(
+                l10n.proceedToCheckout,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+              const SizedBox(width: 4),
+
+              // ── Chevron — rotates 180° when panel is open ────────────
+              AnimatedRotation(
+                turns: expanded ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: const Icon(
+                  Icons.keyboard_arrow_up_rounded,
+                  size: 24,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

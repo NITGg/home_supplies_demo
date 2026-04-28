@@ -2990,8 +2990,14 @@ abstract class AppLocalizations {
   /// No description provided for @proceedToCheckout.
   ///
   /// In en, this message translates to:
-  /// **'Proceed to Checkout'**
+  /// **'Confirm Order'**
   String get proceedToCheckout;
+
+  /// No description provided for @checkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout'**
+  String get checkout;
 
   /// No description provided for @navigatingToCheckout.
   ///

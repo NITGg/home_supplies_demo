@@ -1493,6 +1493,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get proceedToCheckout => 'إتمام الطلب';
 
   @override
+  String get checkout => 'متابعة الطلب';
+
+  @override
   String get navigatingToCheckout => 'الانتقال إلى إتمام الطلب...';
 
   @override

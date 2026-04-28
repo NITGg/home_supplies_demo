@@ -649,6 +649,7 @@
 "clearCartConfirmation": "هل أنت متأكد من حذف جميع المنتجات من السلة؟",
 "emptyCart": "تفريغ",
 "proceedToCheckout": "إتمام الطلب",
+"checkout": "متابعة الطلب",
 "navigatingToCheckout": "الانتقال إلى إتمام الطلب...",
 "cartIsEmpty": "السلة فارغة",
 "startAddingProducts": "أضف بعض المنتجات للبدء",
