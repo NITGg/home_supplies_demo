@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:tawreedat_go/features/orders/presentation/widgets/customer_live_route_map.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/cancel_order_sheet.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/proposal_sheet.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/status_banner.dart';
@@ -24,6 +25,18 @@ import 'widgets/order_toggle_button.dart';
 // Categories-related imports removed — the grid now lives in CategoriesScreen.
 
 enum ViewMode { active, history }
+
+class _CourierFix {
+  final int orderId;
+  final double lat;
+  final double lng;
+
+  const _CourierFix({
+    required this.orderId,
+    required this.lat,
+    required this.lng,
+  });
+}
 
 class OrdersListScreen extends StatefulWidget {
   const OrdersListScreen({super.key});
@@ -50,6 +63,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   StreamSubscription? _newPriceSubscription;
   StreamSubscription? _orderCancelledSubscription;
   StreamSubscription? _orderCollectedSubscription;
+  StreamSubscription? _courierLocationSubscription;
+  _CourierFix? _courierFix;
+  bool _mapInteracting = false;
 
   @override
   void initState() {
@@ -129,6 +145,11 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         _handleOrderCancelled(data, reason);
       }
     });
+    _courierLocationSubscription = socketService.onCourierLocation.listen((
+      data,
+    ) {
+      if (mounted) _handleCourierLocation(data);
+    });
   }
 
   void _cleanupSocketListeners() {
@@ -136,12 +157,25 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     _newPriceSubscription?.cancel();
     _orderCancelledSubscription?.cancel();
     _orderCollectedSubscription?.cancel();
+    _courierLocationSubscription?.cancel();
   }
 
   void _handleOrderCollected(Map<String, dynamic> data) {
     if (_viewMode == ViewMode.active) {
       context.read<OrderCubit>().loadActiveOrders(loadMore: false);
     }
+  }
+
+  void _handleCourierLocation(Map<String, dynamic> data) {
+    final orderId = data['orderId'] as int?;
+    final lat = (data['lat'] as num?)?.toDouble();
+    final lng = (data['lng'] as num?)?.toDouble();
+
+    if (orderId == null || lat == null || lng == null) return;
+
+    setState(() {
+      _courierFix = _CourierFix(orderId: orderId, lat: lat, lng: lng);
+    });
   }
 
   void _handleNewPrice(Map<String, dynamic> data) {
@@ -267,6 +301,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       _viewMode = newMode;
       _currentFilter = 'all';
       _isLoadingMore = false;
+      if (newMode != ViewMode.active) _courierFix = null;
     });
 
     if (newMode != ViewMode.active) {
@@ -324,6 +359,17 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           child: const QRScannerScreen(),
         ),
       ),
+    );
+  }
+
+  Order? _resolveOutForDeliveryOrder(List<Order> orders) {
+    if (_courierFix == null) return null;
+
+    return orders.firstWhereOrNull(
+      (o) =>
+          o.id == _courierFix!.orderId &&
+          o.status?.toUpperCase() == 'IN_PROGRESS' &&
+          o.collectedAt != null,
     );
   }
 
@@ -391,7 +437,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
               builder: (context, orderState) {
                 return CustomScrollView(
                   controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: _mapInteracting
+                      ? const NeverScrollableScrollPhysics()
+                      : const AlwaysScrollableScrollPhysics(),
                   slivers: [
                     // ── Toggle + QR row ─────────────────────────────────
                     SliverToBoxAdapter(
@@ -480,6 +528,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         ];
       }
 
+      final outForDeliveryOrder = _viewMode == ViewMode.active
+          ? _resolveOutForDeliveryOrder(orders)
+          : null;
+
       return [
         // Filter chips (history only)
         if (_viewMode == ViewMode.history)
@@ -491,6 +543,23 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: OrderStatusBanner(orders: orders),
+            ),
+          ),
+
+        if (outForDeliveryOrder != null && _courierFix != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: CustomerLiveRouteMapWidget(
+                key: ValueKey('courier_map_${outForDeliveryOrder.id}'),
+                courierLat: _courierFix!.lat,
+                courierLng: _courierFix!.lng,
+                deliveryLat: double.parse(outForDeliveryOrder.deliveryLat!),
+                deliveryLng: double.parse(outForDeliveryOrder.deliveryLong!),
+                onInteractionStart: () =>
+                    setState(() => _mapInteracting = true),
+                onInteractionEnd: () => setState(() => _mapInteracting = false),
+              ),
             ),
           ),
 
@@ -530,7 +599,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                   _showProposals(order);
                 },
                 onCancel: () => _showCancelSheet(order),
-                onRetrySuccess: () => _onTabChanged(ViewMode.active), currentUserId: context.read<ProfileCubit>().currentProfile!.id,
+                onRetrySuccess: () => _onTabChanged(ViewMode.active),
+                currentUserId: context.read<ProfileCubit>().currentProfile!.id,
               );
             },
           ),

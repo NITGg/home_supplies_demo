@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/highlighter_widget.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -62,7 +63,12 @@ class CartItemTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Product image ──────────────────────────────────────────────
-              _ProductThumb(imageUrl: product.primaryImage),
+              InkWell(
+                onTap: () {
+                  context.push('/products/${product.id}', extra: product);
+                },
+                child: _ProductThumb(imageUrl: product.primaryImage),
+              ),
               const SizedBox(width: 12),
 
               // ── Info column ────────────────────────────────────────────────
@@ -92,20 +98,20 @@ class CartItemTile extends StatelessWidget {
                           duration: const Duration(milliseconds: 250),
                           child: isBusy
                               ? _BusySpinner(
-                            key: const ValueKey('spinner'),
-                            color: theme.colorScheme.primary,
-                          )
+                                  key: const ValueKey('spinner'),
+                                  color: theme.colorScheme.primary,
+                                )
                               : QuantitySelector(
-                            key: const ValueKey('selector'),
-                            quantity: item.quantity,
-                            onIncrement: onIncrement,
-                            onDecrement: onDecrement,
-                            // 0 lets decrementItem fire at qty=1 and remove the item
-                            minQuantity: 0,
-                            maxQuantity: product.maxAmountForOneOrder,
-                            size: 32,
-                            compact: true,
-                          ),
+                                  key: const ValueKey('selector'),
+                                  quantity: item.quantity,
+                                  onIncrement: onIncrement,
+                                  onDecrement: onDecrement,
+                                  // 0 lets decrementItem fire at qty=1 and remove the item
+                                  minQuantity: 0,
+                                  maxQuantity: product.maxAmountForOneOrder,
+                                  size: 32,
+                                  compact: true,
+                                ),
                         ),
                       ],
                     ),
@@ -176,8 +182,9 @@ class _PriceBlock extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             l10n.perUnit,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: Colors.grey.shade500),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: Colors.grey.shade500,
+            ),
           ),
         ],
       );
@@ -186,9 +193,7 @@ class _PriceBlock extends StatelessWidget {
     // No discount — simple muted unit price label.
     return Text(
       '${_fmt(item.unitPrice)} ${l10n.egp} ${l10n.perUnit}',
-      style: theme.textTheme.bodySmall?.copyWith(
-        color: Colors.grey.shade500,
-      ),
+      style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade500),
     );
   }
 }
@@ -218,12 +223,13 @@ class _LineTotalBlock extends StatelessWidget {
           transitionBuilder: (child, animation) => FadeTransition(
             opacity: animation,
             child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.3),
-                end: Offset.zero,
-              ).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOut),
-              ),
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(0, 0.3),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                  ),
               child: child,
             ),
           ),
@@ -260,6 +266,7 @@ class _LineTotalBlock extends StatelessWidget {
 
 class _BusySpinner extends StatelessWidget {
   final Color color;
+
   const _BusySpinner({super.key, required this.color});
 
   @override
@@ -282,6 +289,7 @@ class _BusySpinner extends StatelessWidget {
 
 class _ProductThumb extends StatelessWidget {
   final String? imageUrl;
+
   const _ProductThumb({this.imageUrl});
 
   @override
@@ -293,10 +301,10 @@ class _ProductThumb extends StatelessWidget {
         height: 76,
         child: imageUrl != null && imageUrl!.isNotEmpty
             ? Image.network(
-          imageUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _placeholder(),
-        )
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _placeholder(),
+              )
             : _placeholder(),
       ),
     );
@@ -322,10 +330,7 @@ class _SwipeDeleteBackground extends StatelessWidget {
   final ThemeData theme;
   final double hMargin;
 
-  const _SwipeDeleteBackground({
-    required this.theme,
-    required this.hMargin,
-  });
+  const _SwipeDeleteBackground({required this.theme, required this.hMargin});
 
   @override
   Widget build(BuildContext context) {

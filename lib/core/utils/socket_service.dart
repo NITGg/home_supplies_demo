@@ -13,25 +13,34 @@ class SocketService {
 
   // Stream controllers for order/offer events
   final _newOfferController =
-  StreamController<Map<String, dynamic>>.broadcast();
+      StreamController<Map<String, dynamic>>.broadcast();
   final _priceReportController =
-  StreamController<Map<String, dynamic>>.broadcast();
+      StreamController<Map<String, dynamic>>.broadcast();
   final _orderCancelledController =
-  StreamController<Map<String, dynamic>>.broadcast();
+      StreamController<Map<String, dynamic>>.broadcast();
   final _orderCollectedController =
-  StreamController<Map<String, dynamic>>.broadcast();
+      StreamController<Map<String, dynamic>>.broadcast();
+
+  final _courierLocationController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   // Track which orders we're currently in rooms for
   final Set<int> _activeOrderRooms = {};
 
   // Public streams
   Stream<Map<String, dynamic>> get onNewOffer => _newOfferController.stream;
+
   Stream<Map<String, dynamic>> get onPriceReport =>
       _priceReportController.stream;
+
   Stream<Map<String, dynamic>> get onOrderCancelled =>
       _orderCancelledController.stream;
+
   Stream<Map<String, dynamic>> get onOrderCollected =>
       _orderCollectedController.stream;
+
+  Stream<Map<String, dynamic>> get onCourierLocation =>
+      _courierLocationController.stream;
 
   bool get isConnected => _socket?.connected ?? false;
 
@@ -115,6 +124,13 @@ class SocketService {
         _orderCancelledController.add({...data, 'reason': 'other'});
       }
     });
+
+    _socket!.on('order:courier_location', (data) {
+      log('🗺️ COURIER LOCATION: $data');
+      if (data is Map<String, dynamic>) {
+        _courierLocationController.add(data);
+      }
+    });
   }
 
   // ================= JOIN ORDER =================
@@ -170,5 +186,6 @@ class SocketService {
     _priceReportController.close();
     _orderCancelledController.close();
     _orderCollectedController.close();
+    _courierLocationController.close();
   }
 }

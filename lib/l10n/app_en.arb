@@ -666,5 +666,18 @@
   "typeMessage": "Type a message…",
     "chatClosed": "..................",
     "messages": "Messages",
-    "typing": "Typing…"
+    "typing": "Typing…",
+    "locationUnavailable": "Location Unavailable",
+    "locationAlwaysMessage": "To receive orders in the background, please set location to 'Always' in settings",
+    "locationAlwaysTitle": "Enable Location Always",
+
+    "locationServicesDisabledTitle": "Location Services Off",
+    "locationServicesDisabledMessage": "Please enable location services to continue.",
+    "openSettings": "Open Settings",
+    "locationPermissionDeniedTitle": "Permission Denied",
+    "locationPermissionDeniedMessage": "Location permission is required to submit an offer.",
+    "tryAgain": "Try Again",
+    "locationPermissionPermanentlyDeniedTitle": "Permission Permanently Denied",
+    "locationPermissionPermanentlyDeniedMessage": "Location permission is permanently denied. Please enable it from app settings.",
+    "openAppSettings": "Open App Settings"
 }

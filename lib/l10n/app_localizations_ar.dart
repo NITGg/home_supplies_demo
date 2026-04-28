@@ -1016,7 +1016,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get locationRequired => 'الموقع مطلوب';
 
   @override
-  String get openSettings => 'افتح الإعدادات';
+  String get openSettings => 'فتح الإعدادات';
 
   @override
   String get setAsDefault => 'تعيين كافتراضي';
@@ -1542,4 +1542,37 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get typing => 'يكتب…';
+
+  @override
+  String get locationUnavailable => 'Location Unavailable';
+
+  @override
+  String get locationAlwaysMessage => 'لاستقبال الطلبات في الخلفية، يرجى تفعيل الموقع على \'دائماً\' من الإعدادات';
+
+  @override
+  String get locationAlwaysTitle => 'تفعيل الموقع دائماً';
+
+  @override
+  String get locationServicesDisabledTitle => 'خدمة الموقع معطلة';
+
+  @override
+  String get locationServicesDisabledMessage => 'يرجى تفعيل خدمة الموقع للمتابعة.';
+
+  @override
+  String get locationPermissionDeniedTitle => 'تم رفض الإذن';
+
+  @override
+  String get locationPermissionDeniedMessage => 'إذن الموقع مطلوب لتقديم العرض.';
+
+  @override
+  String get tryAgain => 'حاول مجدداً';
+
+  @override
+  String get locationPermissionPermanentlyDeniedTitle => 'تم رفض الإذن نهائياً';
+
+  @override
+  String get locationPermissionPermanentlyDeniedMessage => 'تم رفض إذن الموقع بشكل دائم. يرجى تفعيله من إعدادات التطبيق.';
+
+  @override
+  String get openAppSettings => 'فتح إعدادات التطبيق';
 }

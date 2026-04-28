@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
+import 'package:tawreedat_go/features/ads/ad_manager/ad_cubit.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../addresses/presentation/default_address_chip.dart';
@@ -39,7 +40,10 @@ class CategoriesGridWidget extends StatefulWidget {
 class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
   late final CategoriesCubit _cubit;
 
-  Future<void> refresh() => _cubit.loadCategories(refresh: true);
+  Future<void> refresh() async {
+    _cubit.loadCategories(refresh: true);
+    context.read<AdsCubit>().getHomeAds();
+  }
 
   @override
   void initState() {

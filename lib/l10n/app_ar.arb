@@ -667,5 +667,16 @@
   "typeMessage": "اكتب رسالة…",
     "chatClosed": "..................",
     "messages": "الرسائل",
-    "typing": "يكتب…"
+    "typing": "يكتب…",
+    "locationServicesDisabledTitle": "خدمة الموقع معطلة",
+    "locationServicesDisabledMessage": "يرجى تفعيل خدمة الموقع للمتابعة.",
+    "openSettings": "فتح الإعدادات",
+    "locationAlwaysMessage": "لاستقبال الطلبات في الخلفية، يرجى تفعيل الموقع على 'دائماً' من الإعدادات",
+    "locationAlwaysTitle": "تفعيل الموقع دائماً",
+    "locationPermissionDeniedTitle": "تم رفض الإذن",
+    "locationPermissionDeniedMessage": "إذن الموقع مطلوب لتقديم العرض.",
+    "tryAgain": "حاول مجدداً",
+    "locationPermissionPermanentlyDeniedTitle": "تم رفض الإذن نهائياً",
+    "locationPermissionPermanentlyDeniedMessage": "تم رفض إذن الموقع بشكل دائم. يرجى تفعيله من إعدادات التطبيق.",
+    "openAppSettings": "فتح إعدادات التطبيق"
 }

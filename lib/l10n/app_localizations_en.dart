@@ -1016,7 +1016,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationRequired => 'Location is required';
 
   @override
-  String get openSettings => 'Open settings';
+  String get openSettings => 'Open Settings';
 
   @override
   String get setAsDefault => 'Set as default';
@@ -1542,4 +1542,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get typing => 'Typing…';
+
+  @override
+  String get locationUnavailable => 'Location Unavailable';
+
+  @override
+  String get locationAlwaysMessage => 'To receive orders in the background, please set location to \'Always\' in settings';
+
+  @override
+  String get locationAlwaysTitle => 'Enable Location Always';
+
+  @override
+  String get locationServicesDisabledTitle => 'Location Services Off';
+
+  @override
+  String get locationServicesDisabledMessage => 'Please enable location services to continue.';
+
+  @override
+  String get locationPermissionDeniedTitle => 'Permission Denied';
+
+  @override
+  String get locationPermissionDeniedMessage => 'Location permission is required to submit an offer.';
+
+  @override
+  String get tryAgain => 'Try Again';
+
+  @override
+  String get locationPermissionPermanentlyDeniedTitle => 'Permission Permanently Denied';
+
+  @override
+  String get locationPermissionPermanentlyDeniedMessage => 'Location permission is permanently denied. Please enable it from app settings.';
+
+  @override
+  String get openAppSettings => 'Open App Settings';
 }

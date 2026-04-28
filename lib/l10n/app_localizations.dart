@@ -2078,7 +2078,7 @@ abstract class AppLocalizations {
   /// No description provided for @openSettings.
   ///
   /// In en, this message translates to:
-  /// **'Open settings'**
+  /// **'Open Settings'**
   String get openSettings;
 
   /// No description provided for @setAsDefault.
@@ -3094,6 +3094,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Typing…'**
   String get typing;
+
+  /// No description provided for @locationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Location Unavailable'**
+  String get locationUnavailable;
+
+  /// No description provided for @locationAlwaysMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'To receive orders in the background, please set location to \'Always\' in settings'**
+  String get locationAlwaysMessage;
+
+  /// No description provided for @locationAlwaysTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Location Always'**
+  String get locationAlwaysTitle;
+
+  /// No description provided for @locationServicesDisabledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location Services Off'**
+  String get locationServicesDisabledTitle;
+
+  /// No description provided for @locationServicesDisabledMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enable location services to continue.'**
+  String get locationServicesDisabledMessage;
+
+  /// No description provided for @locationPermissionDeniedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission Denied'**
+  String get locationPermissionDeniedTitle;
+
+  /// No description provided for @locationPermissionDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is required to submit an offer.'**
+  String get locationPermissionDeniedMessage;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
+  String get tryAgain;
+
+  /// No description provided for @locationPermissionPermanentlyDeniedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission Permanently Denied'**
+  String get locationPermissionPermanentlyDeniedTitle;
+
+  /// No description provided for @locationPermissionPermanentlyDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is permanently denied. Please enable it from app settings.'**
+  String get locationPermissionPermanentlyDeniedMessage;
+
+  /// No description provided for @openAppSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open App Settings'**
+  String get openAppSettings;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
