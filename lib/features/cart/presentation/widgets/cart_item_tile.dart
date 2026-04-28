@@ -11,7 +11,7 @@ import '../../data/models/cart_item_model.dart';
 // so the user always sees "850.00 EGP" instead of "850 EGP".
 String _fmt(double v) => v.toStringAsFixed(2);
 
-class CartItemTile extends StatelessWidget {
+class CartItemTile extends StatefulWidget {
   final CartItemModel item;
   final bool isBusy;
   final VoidCallback onIncrement;
@@ -28,21 +28,50 @@ class CartItemTile extends StatelessWidget {
   });
 
   @override
+  State<CartItemTile> createState() => _CartItemTileState();
+}
+
+class _CartItemTileState extends State<CartItemTile> {
+  // Locked the instant the user taps; released when the cubit finishes.
+  bool _localBusy = false;
+
+  @override
+  void didUpdateWidget(CartItemTile old) {
+    super.didUpdateWidget(old);
+    // Cubit finished → unlock local guard.
+    if (old.isBusy && !widget.isBusy) {
+      setState(() => _localBusy = false);
+    }
+  }
+
+  bool get _busy => _localBusy || widget.isBusy;
+
+  void _handleIncrement() {
+    if (_busy) return;
+    setState(() => _localBusy = true);
+    widget.onIncrement();
+  }
+
+  void _handleDecrement() {
+    if (_busy) return;
+    setState(() => _localBusy = true);
+    widget.onDecrement();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final product = item.product;
+    final product = widget.item.product;   // ← widget. prefix now needed
     final l10n = AppLocalizations.of(context)!;
-
-    // Responsive horizontal margin – tighter on narrow screens.
     final hMargin = MediaQuery.of(context).size.width < 360 ? 10.0 : 16.0;
 
     return Dismissible(
-      key: ValueKey(item.id),
+      key: ValueKey(widget.item.id),
       direction: DismissDirection.endToStart,
       background: _SwipeDeleteBackground(theme: theme, hMargin: hMargin),
       confirmDismiss: (_) async {
-        onRemove();
-        return false; // cubit handles the actual removal
+        widget.onRemove();
+        return false;
       },
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: hMargin, vertical: 6),
@@ -62,21 +91,15 @@ class CartItemTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Product image ──────────────────────────────────────────────
               InkWell(
-                onTap: () {
-                  context.push('/products/${product.id}', extra: product);
-                },
+                onTap: () => context.push('/products/${product.id}', extra: product),
                 child: _ProductThumb(imageUrl: product.primaryImage),
               ),
               const SizedBox(width: 12),
-
-              // ── Info column ────────────────────────────────────────────────
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── ROW 1: Product name  +  quantity selector (top-end) ──
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -92,38 +115,30 @@ class CartItemTile extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-
-                        // Quantity selector pinned to top-end; spinner while busy.
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 250),
-                          child: isBusy
+                          child: _busy
                               ? _BusySpinner(
-                                  key: const ValueKey('spinner'),
-                                  color: theme.colorScheme.primary,
-                                )
+                            key: const ValueKey('spinner'),
+                            color: theme.colorScheme.primary,
+                          )
                               : QuantitySelector(
-                                  key: const ValueKey('selector'),
-                                  quantity: item.quantity,
-                                  onIncrement: onIncrement,
-                                  onDecrement: onDecrement,
-                                  // 0 lets decrementItem fire at qty=1 and remove the item
-                                  minQuantity: 0,
-                                  maxQuantity: product.maxAmountForOneOrder,
-                                  size: 32,
-                                  compact: true,
-                                ),
+                            key: const ValueKey('selector'),
+                            quantity: widget.item.quantity,
+                            onIncrement: _handleIncrement,  // ← local
+                            onDecrement: _handleDecrement,  // ← local
+                            minQuantity: 0,
+                            maxQuantity: product.maxAmountForOneOrder,
+                            size: 32,
+                            compact: true,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 7),
-
-                    // ── ROW 2: Unit price (underline-highlighted when discounted)
-                    _PriceBlock(item: item, l10n: l10n, theme: theme),
-
+                    _PriceBlock(item: widget.item, l10n: l10n, theme: theme),
                     const SizedBox(height: 9),
-
-                    // ── ROW 3: Line total + save ───────────────────────────────
-                    _LineTotalBlock(item: item, theme: theme, l10n: l10n),
+                    _LineTotalBlock(item: widget.item, theme: theme, l10n: l10n),
                   ],
                 ),
               ),
