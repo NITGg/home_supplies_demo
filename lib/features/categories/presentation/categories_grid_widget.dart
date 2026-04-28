@@ -9,6 +9,7 @@ import '../../addresses/presentation/default_address_chip.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
+import '../../search/presentation/search_dialog.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_cubit.dart';
 import '../manager/category_states.dart';
@@ -170,7 +171,7 @@ class _CategoriesSection extends StatelessWidget {
                           Icons.search_rounded,
                           color: Colors.grey.shade700,
                         ),
-                        onPressed: () {},
+                        onPressed: () {showSearchDialog(context);},
                         padding: EdgeInsets.zero,
                       ),
                     ),

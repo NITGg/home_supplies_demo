@@ -21,6 +21,7 @@ import '../../coupons/manager/coupons_cubit.dart';
 import '../../orders/manager/order_cubit.dart';
 import '../../orders/manager/order_states.dart';
 import '../../orders/presentation/widgets/sheets/create_order_sheet/insufficient_balance_sheet.dart';
+import '../../search/presentation/search_dialog.dart';
 import '../../wallet/manager/wallet_cubit.dart';
 import '../../wallet/manager/wallet_state.dart';
 import '../manager/cart_cubit.dart';
@@ -352,6 +353,17 @@ class _CartScreenState extends State<CartScreen> {
         ],
       ),
       actions: [
+        CircleAvatar(
+          radius: 20,
+          backgroundColor: Colors.grey.shade200,
+          child: IconButton(
+            icon: Icon(Icons.search_rounded, color: Colors.grey.shade700),
+            onPressed: () {
+              showSearchDialog(context);
+            },
+            padding: EdgeInsets.zero,
+          ),
+        ),
         if (state is CartLoaded && state.data.cartItems.isNotEmpty)
           Padding(
             padding: const EdgeInsets.all(8.0),

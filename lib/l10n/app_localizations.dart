@@ -3161,6 +3161,18 @@ abstract class AppLocalizations {
   /// **'Location permission is permanently denied. Please enable it from app settings.'**
   String get locationPermissionPermanentlyDeniedMessage;
 
+  /// No description provided for @products.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get products;
+
+  /// No description provided for @typeToSearchProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Type to search products & categories'**
+  String get typeToSearchProducts;
+
   /// No description provided for @openAppSettings.
   ///
   /// In en, this message translates to:

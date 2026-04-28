@@ -652,6 +652,9 @@
 "checkout": "متابعة الطلب",
 "navigatingToCheckout": "الانتقال إلى إتمام الطلب...",
 "cartIsEmpty": "السلة فارغة",
+"products": "المنتجات",
+    "typeToSearchProducts": "ابحث عن منتجات أو تصنيفات",
+
 "startAddingProducts": "أضف بعض المنتجات للبدء",
 "numberOfItems": "عدد الأصناف",
 "totalQuantity": "إجمالي الكميات",

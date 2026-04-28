@@ -1577,5 +1577,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationPermissionPermanentlyDeniedMessage => 'Location permission is permanently denied. Please enable it from app settings.';
 
   @override
+  String get products => 'Products';
+
+  @override
+  String get typeToSearchProducts => 'Type to search products & categories';
+
+  @override
   String get openAppSettings => 'Open App Settings';
 }

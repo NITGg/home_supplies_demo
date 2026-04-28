@@ -8,6 +8,7 @@ import '../../../core/widgets/image_with_fallback.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../products/data/models/product_model.dart';
+import '../../search/presentation/search_dialog.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_detail_cubit.dart';
 import '../manager/category_detail_states.dart';
@@ -34,7 +35,6 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     _cubit = CategoryDetailCubit();
     _cubit.load(_id);
   }
-
 
   @override
   void dispose() {
@@ -144,6 +144,7 @@ class _LoadedViewState extends State<_LoadedView> {
       widget.onLoadMoreDirect();
     }
   }
+
   void _checkAutoLoad() {
     final screenHeight = MediaQuery.of(context).size.height;
     const loadBuffer = 300.0;
@@ -157,8 +158,9 @@ class _LoadedViewState extends State<_LoadedView> {
       final box = ctx.findRenderObject() as RenderBox?;
       if (box == null) continue;
 
-      final sectionBottomOnScreen =
-          box.localToGlobal(Offset(0, box.size.height)).dy;
+      final sectionBottomOnScreen = box
+          .localToGlobal(Offset(0, box.size.height))
+          .dy;
 
       if (sectionBottomOnScreen < screenHeight + loadBuffer) {
         widget.onLoadMoreSection(section.subCategory.id);
@@ -188,7 +190,6 @@ class _LoadedViewState extends State<_LoadedView> {
     );
   }
 
-
   // ── Scroll to section when a pill is tapped ───────────────────────────────
   void _scrollToSection(int index) {
     final ctx = _sectionKeys[index].currentContext;
@@ -210,7 +211,8 @@ class _LoadedViewState extends State<_LoadedView> {
 
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
-      notificationPredicate: (notification) => notification.depth == 0, // add this
+      notificationPredicate: (notification) => notification.depth == 0,
+      // add this
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(), // add this
         controller: _scrollController,
@@ -243,7 +245,8 @@ class _LoadedViewState extends State<_LoadedView> {
                   child: SubCategorySectionWidget(
                     section: section,
                     onProductTap: widget.onProductTap,
-                    onLoadMore: () => widget.onLoadMoreSection(section.subCategory.id),
+                    onLoadMore: () =>
+                        widget.onLoadMoreSection(section.subCategory.id),
                   ),
                 );
               },
@@ -413,7 +416,20 @@ class _CategorySliverAppBar extends StatelessWidget {
       scrolledUnderElevation: 2,
       elevation: 0,
       leading: CircleBackButton(),
-      actions: [AnimatedCartIcon(onTap: () => context.push('/cart'))],
+      actions: [
+        CircleAvatar(
+          radius: 20,
+          backgroundColor: Colors.grey.shade200,
+          child: IconButton(
+            icon: Icon(Icons.search_rounded, color: Colors.grey.shade700),
+            onPressed: () {
+              showSearchDialog(context);
+            },
+            padding: EdgeInsets.zero,
+          ),
+        ),
+        AnimatedCartIcon(onTap: () => context.push('/cart')),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: EdgeInsets.zero,
         stretchModes: const [

@@ -1577,5 +1577,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get locationPermissionPermanentlyDeniedMessage => 'تم رفض إذن الموقع بشكل دائم. يرجى تفعيله من إعدادات التطبيق.';
 
   @override
+  String get products => 'المنتجات';
+
+  @override
+  String get typeToSearchProducts => 'ابحث عن منتجات أو تصنيفات';
+
+  @override
   String get openAppSettings => 'فتح إعدادات التطبيق';
 }
