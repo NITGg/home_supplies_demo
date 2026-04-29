@@ -128,23 +128,28 @@ class _PenaltiesViewState extends State<PenaltiesView> {
           isArabic
               ? 'سيتم خصم النقاط اللازمة لسداد ${_selectedIds.length} غرامة. هل تريد المتابعة؟'
               : 'Points will be deducted to pay ${_selectedIds.length} '
-              '${_selectedIds.length == 1 ? 'penalty' : 'penalties'}. Continue?',
+                    '${_selectedIds.length == 1 ? 'penalty' : 'penalties'}. Continue?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(isArabic ? 'إلغاء' : 'Cancel',
-                style: TextStyle(color: Colors.grey.shade600)),
+            child: Text(
+              isArabic ? 'إلغاء' : 'Cancel',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.kPrimaryColor,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(isArabic ? 'تأكيد' : 'Confirm',
-                style: const TextStyle(color: Colors.white)),
+            child: Text(
+              isArabic ? 'تأكيد' : 'Confirm',
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -154,7 +159,6 @@ class _PenaltiesViewState extends State<PenaltiesView> {
 
     context.read<PointsCubit>().payFinesWithPoints(
       penaltyIds: _selectedIds.toList(),
-      isArabic: isArabic,
     );
   }
 
@@ -163,22 +167,28 @@ class _PenaltiesViewState extends State<PenaltiesView> {
     return BlocListener<PointsCubit, PointsState>(
       listener: (context, state) {
         if (state is FinesPaidWithPoints) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(isArabic
-                ? '✅ تم سداد الغرامات بنجاح!'
-                : '✅ Penalties paid successfully!'),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isArabic
+                    ? '✅ تم سداد الغرامات بنجاح!'
+                    : '✅ Penalties paid successfully!',
+              ),
+              backgroundColor: Colors.green.shade600,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
           _exitSelectionMode();
           _currentPage = 1;
           context.read<WalletCubit>().fetchPenalties();
         } else if (state is PayFinesError) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(state.message),
-            backgroundColor: Colors.red.shade600,
-            behavior: SnackBarBehavior.floating,
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red.shade600,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
       },
       child: Scaffold(
@@ -193,13 +203,10 @@ class _PenaltiesViewState extends State<PenaltiesView> {
           centerTitle: true,
           leading: _selectionMode
               ? IconButton(
-            icon: const Icon(Icons.close, color: Colors.black),
-            onPressed: _exitSelectionMode,
-          )
-              : BackButton(
-            color: Colors.black,
-            onPressed: () => context.pop(),
-          ),
+                  icon: const Icon(Icons.close, color: Colors.black),
+                  onPressed: _exitSelectionMode,
+                )
+              : BackButton(color: Colors.black, onPressed: () => context.pop()),
           actions: [
             // ── Select-all when in selection mode ──────────────────────
             if (_selectionMode)
@@ -227,13 +234,17 @@ class _PenaltiesViewState extends State<PenaltiesView> {
               BlocBuilder<WalletCubit, WalletState>(
                 builder: (context, state) {
                   if (state is! PenaltiesLoaded) return const SizedBox.shrink();
-                  final hasUnpaid =
-                  state.penalties.any((p) => !p.isPaid && !p.isWaived);
+                  final hasUnpaid = state.penalties.any(
+                    (p) => !p.isPaid && !p.isWaived,
+                  );
                   if (!hasUnpaid) return const SizedBox.shrink();
                   return TextButton.icon(
                     onPressed: _enterSelectionMode,
-                    icon: Icon(Icons.stars_rounded,
-                        size: 18, color: AppColors.kPrimaryColor),
+                    icon: Icon(
+                      Icons.stars_rounded,
+                      size: 18,
+                      color: AppColors.kPrimaryColor,
+                    ),
                     label: Text(
                       isArabic ? 'دفع بالنقاط' : 'Pay with Points',
                       style: TextStyle(color: AppColors.kPrimaryColor),
@@ -254,18 +265,27 @@ class _PenaltiesViewState extends State<PenaltiesView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline,
-                        size: 64, color: Colors.red.shade300),
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red.shade300,
+                    ),
                     const SizedBox(height: 16),
-                    Text(AppLocalizations.of(context)!.errorOccurred,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(
+                      AppLocalizations.of(context)!.errorOccurred,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Text(state.message,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey.shade600)),
+                      child: Text(
+                        state.message,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(
@@ -286,18 +306,28 @@ class _PenaltiesViewState extends State<PenaltiesView> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.verified_outlined,
-                          size: 80, color: Colors.green.shade300),
+                      Icon(
+                        Icons.verified_outlined,
+                        size: 80,
+                        color: Colors.green.shade300,
+                      ),
                       const SizedBox(height: 16),
-                      Text(AppLocalizations.of(context)!.noPenalties,
-                          style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.w500)),
+                      Text(
+                        AppLocalizations.of(context)!.noPenalties,
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                       const SizedBox(height: 8),
-                      Text(AppLocalizations.of(context)!.youreInGoodStanding,
-                          style: TextStyle(
-                              fontSize: 14, color: Colors.grey.shade500)),
+                      Text(
+                        AppLocalizations.of(context)!.youreInGoodStanding,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -316,8 +346,13 @@ class _PenaltiesViewState extends State<PenaltiesView> {
                       controller: _scrollController,
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(
-                          16, 16, 16, _selectionMode ? 120 : 16),
-                      itemCount: state.penalties.length +
+                        16,
+                        16,
+                        16,
+                        _selectionMode ? 120 : 16,
+                      ),
+                      itemCount:
+                          state.penalties.length +
                           (state.isLoadingMore ? 1 : 0),
                       itemBuilder: (context, index) {
                         if (index == state.penalties.length) {
@@ -325,7 +360,8 @@ class _PenaltiesViewState extends State<PenaltiesView> {
                             padding: EdgeInsets.all(16),
                             child: Center(
                               child: CircularProgressIndicator(
-                                  color: Color(0xFFE17055)),
+                                color: Color(0xFFE17055),
+                              ),
                             ),
                           );
                         }
@@ -348,15 +384,18 @@ class _PenaltiesViewState extends State<PenaltiesView> {
                   ),
 
                   // ── Sticky pay bar (visible only in selection mode) ────
+                  // Replace _PayWithPointsBar widget with:
                   if (_selectionMode)
                     Positioned(
                       bottom: 0,
                       left: 0,
                       right: 0,
-                      child: _PayWithPointsBar(
+                      child: _PayBar(
                         selectedCount: _selectedIds.length,
                         isArabic: isArabic,
                         onPay: _confirmPayment,
+                        itemLabel: isArabic ? 'غرامة' : 'penalty',
+                        itemLabelPlural: isArabic ? 'غرامات' : 'penalties',
                       ),
                     ),
                 ],
@@ -367,6 +406,123 @@ class _PenaltiesViewState extends State<PenaltiesView> {
           },
         ),
       ),
+    );
+  }
+}
+
+// ─── Pay Bar (shared) ─────────────────────────────────────────────────────────
+
+class _PayBar extends StatelessWidget {
+  final int selectedCount;
+  final bool isArabic;
+  final VoidCallback onPay;
+  final String itemLabel;
+  final String itemLabelPlural;
+
+  const _PayBar({
+    required this.selectedCount,
+    required this.isArabic,
+    required this.onPay,
+    required this.itemLabel,
+    required this.itemLabelPlural,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<PointsCubit, PointsState>(
+      builder: (context, state) {
+        final isLoading = state is PayingFinesWithPoints;
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (selectedCount > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 14,
+                        color: Colors.grey.shade500,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        isArabic
+                            ? 'تم اختيار $selectedCount $itemLabel'
+                            : '$selectedCount ${selectedCount == 1 ? itemLabel : itemLabelPlural} selected',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: (selectedCount == 0 || isLoading) ? null : onPay,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.kPrimaryColor,
+                    disabledBackgroundColor: Colors.grey.shade300,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.stars_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                  label: Text(
+                    isLoading
+                        ? (isArabic ? 'جاري الدفع...' : 'Paying...')
+                        : selectedCount == 0
+                        ? (isArabic
+                              ? 'اختر عنصرًا للسداد'
+                              : 'Select an item to pay')
+                        : (isArabic
+                              ? 'سداد $selectedCount $itemLabel بالنقاط'
+                              : 'Pay $selectedCount ${selectedCount == 1 ? itemLabel : itemLabelPlural} with Points'),
+                    style: TextStyle(
+                      color: selectedCount == 0
+                          ? Colors.grey.shade500
+                          : Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -447,8 +603,7 @@ class _PenaltyCard extends StatelessWidget {
                       ),
                     ),
                     child: isSelected
-                        ? const Icon(Icons.check,
-                        size: 14, color: Colors.white)
+                        ? const Icon(Icons.check, size: 14, color: Colors.white)
                         : null,
                   ),
                 ],
@@ -458,8 +613,11 @@ class _PenaltyCard extends StatelessWidget {
                     color: _getStatusColor().withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(_getStatusIcon(),
-                      color: _getStatusColor(), size: 24),
+                  child: Icon(
+                    _getStatusIcon(),
+                    color: _getStatusColor(),
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -467,10 +625,11 @@ class _PenaltyCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        penalty.reason ??
-                            AppLocalizations.of(context)!.penalty,
+                        penalty.reason ?? AppLocalizations.of(context)!.penalty,
                         style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -479,7 +638,9 @@ class _PenaltyCard extends StatelessWidget {
                         Text(
                           '${AppLocalizations.of(context)!.order} #${penalty.orderId}',
                           style: TextStyle(
-                              fontSize: 13, color: Colors.grey.shade600),
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
                     ],
                   ),
@@ -491,13 +652,13 @@ class _PenaltyCard extends StatelessWidget {
                     Text(
                       '- ${currencyFormatter.format(penalty.amount)}',
                       style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: _getStatusColor()),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: _getStatusColor(),
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    _StatusChip(
-                        status: penalty.statusText, isArabic: isArabic),
+                    _StatusChip(status: penalty.statusText, isArabic: isArabic),
                   ],
                 ),
               ],
@@ -507,14 +668,16 @@ class _PenaltyCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.calendar_today,
-                    size: 14, color: Colors.grey.shade500),
+                Icon(
+                  Icons.calendar_today,
+                  size: 14,
+                  color: Colors.grey.shade500,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   dateFormatter.format(penalty.createdAt),
                   textDirection: ui.TextDirection.ltr,
-                  style:
-                  TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                 ),
               ],
             ),
@@ -522,13 +685,18 @@ class _PenaltyCard extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Icon(Icons.check_circle,
-                      size: 14, color: Colors.green.shade600),
+                  Icon(
+                    Icons.check_circle,
+                    size: 14,
+                    color: Colors.green.shade600,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '${AppLocalizations.of(context)!.paidDate} ${dateFormatter.format(penalty.paidAt!)}',
                     style: TextStyle(
-                        fontSize: 12, color: Colors.green.shade600),
+                      fontSize: 12,
+                      color: Colors.green.shade600,
+                    ),
                   ),
                 ],
               ),
@@ -541,8 +709,7 @@ class _PenaltyCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     '${AppLocalizations.of(context)!.waivedDate} ${dateFormatter.format(penalty.waivedAt!)}',
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.blue.shade600),
+                    style: TextStyle(fontSize: 12, color: Colors.blue.shade600),
                   ),
                 ],
               ),
@@ -563,110 +730,6 @@ class _PenaltyCard extends StatelessWidget {
     if (penalty.isWaived) return Icons.cancel_outlined;
     if (penalty.isPaid) return Icons.check_circle_outline;
     return Icons.warning_amber_outlined;
-  }
-}
-
-// ─── Pay-with-Points sticky bottom bar ───────────────────────────────────────
-
-class _PayWithPointsBar extends StatelessWidget {
-  final int selectedCount;
-  final bool isArabic;
-  final VoidCallback onPay;
-
-  const _PayWithPointsBar({
-    required this.selectedCount,
-    required this.isArabic,
-    required this.onPay,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<PointsCubit, PointsState>(
-      builder: (context, state) {
-        final isLoading = state is PayingFinesWithPoints;
-        return Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (selectedCount > 0)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.info_outline,
-                          size: 14, color: Colors.grey.shade500),
-                      const SizedBox(width: 6),
-                      Text(
-                        isArabic
-                            ? 'تم اختيار $selectedCount غرامة'
-                            : '$selectedCount ${selectedCount == 1 ? 'penalty' : 'penalties'} selected',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: (selectedCount == 0 || isLoading) ? null : onPay,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.kPrimaryColor,
-                    disabledBackgroundColor: Colors.grey.shade300,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
-                  ),
-                  icon: isLoading
-                      ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2),
-                  )
-                      : const Icon(Icons.stars_rounded,
-                      color: Colors.white, size: 20),
-                  label: Text(
-                    isLoading
-                        ? (isArabic ? 'جاري الدفع...' : 'Paying...')
-                        : selectedCount == 0
-                        ? (isArabic
-                        ? 'اختر غرامة للسداد'
-                        : 'Select a penalty to pay')
-                        : (isArabic
-                        ? 'سداد $selectedCount غرامة بالنقاط'
-                        : 'Pay $selectedCount ${selectedCount == 1 ? 'penalty' : 'penalties'} with Points'),
-                    style: TextStyle(
-                      color: selectedCount == 0
-                          ? Colors.grey.shade500
-                          : Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 }
 
@@ -715,7 +778,10 @@ class _StatusChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-            fontSize: 11, fontWeight: FontWeight.w600, color: textColor),
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+        ),
       ),
     );
   }

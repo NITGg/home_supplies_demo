@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
+import '../../../l10n/manager/locale_cubit.dart';
 import '../data/repo/points_repo.dart';
 import 'points_states.dart';
 
@@ -59,20 +60,16 @@ class PointsCubit extends Cubit<PointsState> {
 
   Future<void> payFinesWithPoints({
     required List<int> penaltyIds,
-    required bool isArabic,
   }) async {
     emit(PayingFinesWithPoints());
     try {
       await _repository.payFinesUsingPoints(penaltyIds: penaltyIds);
       if (!isClosed) {
         emit(FinesPaidWithPoints(paidPenaltyIds: penaltyIds));
-        // Refresh balance after payment
-        await loadPoints(isArabic: isArabic);
+        await loadPoints(isArabic: LocaleManager.currentLocale == 'ar');
       }
     } catch (e) {
-      if (!isClosed) {
-        emit(PayFinesError(message: extractErrorMessage(e)));
-      }
+      if (!isClosed) emit(PayFinesError(message: extractErrorMessage(e)));
     }
   }
 }
