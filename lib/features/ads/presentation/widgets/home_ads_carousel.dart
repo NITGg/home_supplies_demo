@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -21,7 +22,7 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
   int _currentIndex = 0;
   Timer? _timer;
   final CarouselSliderController _carouselController =
-  CarouselSliderController();
+      CarouselSliderController();
 
   @override
   void dispose() {
@@ -35,8 +36,7 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
     _timer?.cancel();
     if (ads.isEmpty) return;
 
-    final duration =
-    Duration(seconds: ads[_currentIndex].durationSeconds ?? 3);
+    final duration = Duration(seconds: ads[_currentIndex].durationSeconds ?? 3);
     _timer = Timer(duration, () {
       if (mounted) {
         final nextIndex = (_currentIndex + 1) % ads.length;
@@ -61,7 +61,7 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
         if (state is AdsSuccess) {
           final List<AdModel> sortedAds = List.from(state.homeAds);
           sortedAds.sort(
-                (a, b) => (a.priority ?? 999).compareTo(b.priority ?? 999),
+            (a, b) => (a.priority ?? 999).compareTo(b.priority ?? 999),
           );
 
           if (sortedAds.isEmpty) return const SizedBox.shrink();
@@ -82,6 +82,30 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
     );
   }
 
+  void navigateFromDeepLink(BuildContext context, String link) {
+    // Accepts "/category/8", "/product/19", or full URL with same path
+    final uri = Uri.parse(link);
+    final segments = uri.pathSegments; // ['category', '8']
+
+    if (segments.length < 2) return;
+
+    final type = segments[0];
+    final id = int.tryParse(segments[1]);
+
+    if (id == null) return;
+
+    switch (type) {
+      case 'category':
+        context.push(
+          '/categories/$id',
+        ); // matches GoRoute path '/categories/:id'
+        break;
+      case 'product':
+        context.push('/products/$id'); // matches GoRoute path '/products/:id'
+        break;
+    }
+  }
+
   Widget _buildCarousel(BuildContext context, List<AdModel> sortedAds) {
     return Container(
       color: AppColors.kBackgroundColor,
@@ -93,8 +117,9 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
           CarouselSlider(
             carouselController: _carouselController,
             options: CarouselOptions(
-              aspectRatio: 3/1,
-              autoPlay: false, // Disabled – we control it manually
+              aspectRatio: 3 / 1,
+              autoPlay: false,
+              // Disabled – we control it manually
               viewportFraction: 1.0,
               enableInfiniteScroll: true,
               scrollPhysics: const BouncingScrollPhysics(),
@@ -105,41 +130,44 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
               },
             ),
             items: sortedAds.map((ad) {
-              return Builder(builder: (context) {
-                return GestureDetector(
-                  onTap: () {
-                    // if (ad.mobileScreen != null &&
-                    //     ad.mobileScreen!.isNotEmpty &&
-                    //     ad.mobileScreen != 'null') {
-                    //   launchUrl(Uri.parse(ad.mobileScreen ?? ''));
-                    // } else
-                      if (ad.targetUrl.isNotEmpty) {
-                      launchUrl(Uri.parse(ad.targetUrl));
-                    }
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
+              return Builder(
+                builder: (context) {
+                  return GestureDetector(
+                    onTap: () {
+                      if (ad.mobileScreen != null &&
+                          ad.mobileScreen!.isNotEmpty &&
+                          ad.mobileScreen != 'null') {
+                        if (context.mounted) {
+                          navigateFromDeepLink(context, ad.mobileScreen!);
+                        }
+                      } else if (ad.targetUrl.isNotEmpty) {
+                        launchUrl(Uri.parse(ad.targetUrl));
+                      }
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: ImageWithIconFallback(
+                          imageUrl: ad.imageUrl,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          iconSize: 40,
                         ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: ImageWithIconFallback(
-                        imageUrl: ad.imageUrl,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        iconSize: 40,
                       ),
                     ),
-                  ),
-                );
-              });
+                  );
+                },
+              );
             }).toList(),
           ),
 
@@ -180,7 +208,7 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
           mainAxisSize: MainAxisSize.min,
           children: [
             AspectRatio(
-              aspectRatio: 3/1,
+              aspectRatio: 3 / 1,
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
