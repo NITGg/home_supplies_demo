@@ -1,4 +1,3 @@
-
 // ==================== Points Rules Model ====================
 class PointsRulesModel {
   final PointsRules rules;
@@ -66,7 +65,10 @@ class PointsBalance {
   final int availablePoints;
   final double monetaryValueEgp;
 
-  PointsBalance({required this.availablePoints, required this.monetaryValueEgp});
+  PointsBalance({
+    required this.availablePoints,
+    required this.monetaryValueEgp,
+  });
 
   factory PointsBalance.fromJson(Map<String, dynamic> json) {
     return PointsBalance(
@@ -84,8 +86,8 @@ class UpcomingExpiration {
 
   factory UpcomingExpiration.fromJson(Map<String, dynamic> json) {
     return UpcomingExpiration(
-      points: (json['points'] as num).toInt(),
-      expiresAt: DateTime.parse(json['expires_at'] as String),
+      points: (json['points_expiring'] as num).toInt(), // was 'points'
+      expiresAt: DateTime.parse(json['date'] as String), // was 'expires_at'
     );
   }
 }
@@ -121,8 +123,10 @@ class OrdersBatch {
     );
   }
 
-  double get progressPercentage =>
-      requiredOrders > 0 ? (currentOrder / requiredOrders).clamp(0.0, 1.0) : 0.0;
+  double get progressPercentage => requiredOrders > 0
+      ? (currentOrder / requiredOrders).clamp(0.0, 1.0)
+      : 0.0;
 
-  int get remainingOrders => (requiredOrders - currentOrder).clamp(0, requiredOrders);
+  int get remainingOrders =>
+      (requiredOrders - currentOrder).clamp(0, requiredOrders);
 }

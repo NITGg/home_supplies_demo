@@ -43,7 +43,7 @@ class _PointsView extends StatelessWidget {
         leading: BackButton(
           color: Colors.black,
           onPressed: () =>
-          context.canPop() ? context.pop() : context.go('/mainHome'),
+              context.canPop() ? context.pop() : context.go('/mainHome'),
         ),
       ),
       body: BlocConsumer<PointsCubit, PointsState>(
@@ -80,8 +80,11 @@ class _PointsView extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline,
-                      size: 48, color: Colors.red.shade300),
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: Colors.red.shade300,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     state.message,
@@ -90,9 +93,9 @@ class _PointsView extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => context
-                        .read<PointsCubit>()
-                        .loadPoints(isArabic: isArabic),
+                    onPressed: () => context.read<PointsCubit>().loadPoints(
+                      isArabic: isArabic,
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.kPrimaryColor,
                     ),
@@ -162,8 +165,9 @@ class _PointsView extends StatelessWidget {
                                       ? 'سداد الغرامات'
                                       : 'Pay Penalties',
                                   color: const Color(0xFFE17055),
-                                  onTap: () => context
-                                      .push('/wallet/points/pay-penalties'),
+                                  onTap: () => context.push(
+                                    '/wallet/points/pay-penalties',
+                                  ),
                                 ),
                               ),
                             ],
@@ -182,8 +186,7 @@ class _PointsView extends StatelessWidget {
                         if (innerState.progress.upcomingExpiration != null) ...[
                           const SizedBox(height: 16),
                           _ExpirationBanner(
-                            expiration:
-                            innerState.progress.upcomingExpiration!,
+                            expiration: innerState.progress.upcomingExpiration!,
                             isArabic: isArabic,
                           ),
                         ],
@@ -192,12 +195,9 @@ class _PointsView extends StatelessWidget {
 
                         // ── Rules Section ──
                         Padding(
-                          padding:
-                          const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Text(
-                            isArabic
-                                ? 'كيف تعمل النقاط؟'
-                                : 'How Points Work',
+                            isArabic ? 'كيف تعمل النقاط؟' : 'How Points Work',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -209,38 +209,26 @@ class _PointsView extends StatelessWidget {
                         _RuleCard(
                           icon: Icons.local_shipping_rounded,
                           color: Colors.blue.shade600,
-                          title: isArabic
-                              ? 'كيف تكسب النقاط'
-                              : 'How to Earn',
-                          description:
-                          innerState.localizedRules.ordersReward,
+                          title: isArabic ? 'كيف تكسب النقاط' : 'How to Earn',
+                          description: innerState.localizedRules.ordersReward,
                         ),
                         _RuleCard(
                           icon: Icons.monetization_on_rounded,
                           color: Colors.green.shade600,
-                          title: isArabic
-                              ? 'قيمة النقاط'
-                              : 'Points Value',
-                          description:
-                          innerState.localizedRules.pointsValue,
+                          title: isArabic ? 'قيمة النقاط' : 'Points Value',
+                          description: innerState.localizedRules.pointsValue,
                         ),
                         _RuleCard(
                           icon: Icons.timer_rounded,
                           color: Colors.orange.shade600,
-                          title: isArabic
-                              ? 'انتهاء الصلاحية'
-                              : 'Expiration',
-                          description:
-                          innerState.localizedRules.expiration,
+                          title: isArabic ? 'انتهاء الصلاحية' : 'Expiration',
+                          description: innerState.localizedRules.expiration,
                         ),
                         _RuleCard(
                           icon: Icons.redeem_rounded,
                           color: AppColors.kPrimaryColor,
-                          title: isArabic
-                              ? 'استخدام النقاط'
-                              : 'Redeem Points',
-                          description:
-                          innerState.localizedRules.redemption,
+                          title: isArabic ? 'استخدام النقاط' : 'Redeem Points',
+                          description: innerState.localizedRules.redemption,
                         ),
                         const SizedBox(height: 24),
                       ],
@@ -258,10 +246,10 @@ class _PointsView extends StatelessWidget {
   }
 
   void _showConvertBottomSheet(
-      BuildContext context,
-      PointsBalance balance,
-      bool isArabic,
-      ) {
+    BuildContext context,
+    PointsBalance balance,
+    bool isArabic,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -369,7 +357,9 @@ class _ConvertBottomSheetState extends State<_ConvertBottomSheet> {
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                labelText: isArabic ? 'عدد النقاط للتحويل' : 'Points to convert',
+                labelText: isArabic
+                    ? 'عدد النقاط للتحويل'
+                    : 'Points to convert',
                 hintText: isArabic
                     ? 'الحد الأقصى: ${widget.availablePoints}'
                     : 'Max: ${widget.availablePoints}',
@@ -379,8 +369,10 @@ class _ConvertBottomSheetState extends State<_ConvertBottomSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                  BorderSide(color: AppColors.kPrimaryColor, width: 2),
+                  borderSide: BorderSide(
+                    color: AppColors.kPrimaryColor,
+                    width: 2,
+                  ),
                 ),
               ),
               validator: (val) {
@@ -402,7 +394,8 @@ class _ConvertBottomSheetState extends State<_ConvertBottomSheet> {
             const SizedBox(height: 16),
 
             // Live preview
-            if (_controller.text.isNotEmpty && (int.tryParse(_controller.text) ?? 0) > 0)
+            if (_controller.text.isNotEmpty &&
+                (int.tryParse(_controller.text) ?? 0) > 0)
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.all(14),
@@ -413,8 +406,11 @@ class _ConvertBottomSheetState extends State<_ConvertBottomSheet> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.account_balance_wallet,
-                        color: Colors.green.shade700, size: 20),
+                    Icon(
+                      Icons.account_balance_wallet,
+                      color: Colors.green.shade700,
+                      size: 20,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -444,16 +440,20 @@ class _ConvertBottomSheetState extends State<_ConvertBottomSheet> {
                     onPressed: isLoading
                         ? null
                         : () {
-                      if (_formKey.currentState!.validate()) {
-                        context
-                            .read<PointsCubit>()
-                            .convertPointsToMoney(
-                          points: int.parse(_controller.text),
-                          isArabic: isArabic, userId: context.read<ProfileCubit>().currentProfile?.id??1,
-                        );
-                        Navigator.pop(context);
-                      }
-                    },
+                            if (_formKey.currentState!.validate()) {
+                              context.read<PointsCubit>().convertPointsToMoney(
+                                points: int.parse(_controller.text),
+                                isArabic: isArabic,
+                                userId:
+                                    context
+                                        .read<ProfileCubit>()
+                                        .currentProfile
+                                        ?.id ??
+                                    1,
+                              );
+                              Navigator.pop(context);
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green.shade600,
                       disabledBackgroundColor: Colors.grey.shade300,
@@ -464,21 +464,21 @@ class _ConvertBottomSheetState extends State<_ConvertBottomSheet> {
                     ),
                     child: isLoading
                         ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
                         : Text(
-                      isArabic ? 'تحويل الآن' : 'Convert Now',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                            isArabic ? 'تحويل الآن' : 'Convert Now',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                   ),
                 );
               },
@@ -593,8 +593,11 @@ class _PointsBalanceCard extends StatelessWidget {
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.stars_rounded,
-                    color: Colors.white, size: 28),
+                child: const Icon(
+                  Icons.stars_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 12),
               Text(
@@ -688,8 +691,10 @@ class _ProgressSection extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.kPrimaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -712,8 +717,9 @@ class _ProgressSection extends StatelessWidget {
               value: batch.progressPercentage,
               minHeight: 12,
               backgroundColor: Colors.grey.shade100,
-              valueColor:
-              AlwaysStoppedAnimation<Color>(AppColors.kPrimaryColor),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                AppColors.kPrimaryColor,
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -741,8 +747,8 @@ class _ProgressSection extends StatelessWidget {
           Text(
             batch.remainingOrders == 0
                 ? (isArabic
-                ? '🎉 لقد حققت المكافأة!'
-                : '🎉 You\'ve earned the reward!')
+                      ? '🎉 لقد حققت المكافأة!'
+                      : '🎉 You\'ve earned the reward!')
                 : isArabic
                 ? 'متبقي ${batch.remainingOrders} طلبات للحصول على 50 نقطة'
                 : '${batch.remainingOrders} more orders to earn 50 points',
@@ -766,55 +772,60 @@ class _ExpirationBanner extends StatelessWidget {
   final UpcomingExpiration expiration;
   final bool isArabic;
 
-  const _ExpirationBanner(
-      {required this.expiration, required this.isArabic});
+  const _ExpirationBanner({required this.expiration, required this.isArabic});
 
   @override
   Widget build(BuildContext context) {
-    final daysLeft =
-        expiration.expiresAt.difference(DateTime.now()).inDays;
+    final daysLeft = expiration.expiresAt.difference(DateTime.now()).inDays;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade200),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.warning_amber_rounded,
-              color: Colors.orange.shade700, size: 24),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return daysLeft >= 2
+        ? SizedBox.shrink()
+        : Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.orange.shade200),
+            ),
+            child: Row(
               children: [
-                Text(
-                  isArabic
-                      ? 'نقاط على وشك الانتهاء'
-                      : 'Points Expiring Soon',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange.shade800,
-                    fontSize: 14,
-                  ),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange.shade700,
+                  size: 24,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  isArabic
-                      ? '${expiration.points} نقطة ستنتهي خلال $daysLeft يوم'
-                      : '${expiration.points} points expire in $daysLeft days',
-                  style:
-                  TextStyle(color: Colors.orange.shade700, fontSize: 13),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isArabic
+                            ? 'نقاط على وشك الانتهاء'
+                            : 'Points Expiring Soon',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange.shade800,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isArabic
+                            ? '${expiration.points} نقطة ستنتهي خلال $daysLeft يوم'
+                            : '${expiration.points} points expire in $daysLeft days',
+                        style: TextStyle(
+                          color: Colors.orange.shade700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
   }
 }
 
@@ -921,8 +932,7 @@ class _PointsShimmerState extends State<_PointsShimmer>
     super.dispose();
   }
 
-  Widget _shimmerBox(
-      {double height = 16, double? width, double radius = 8}) {
+  Widget _shimmerBox({double height = 16, double? width, double radius = 8}) {
     return AnimatedBuilder(
       animation: _animation,
       builder: (_, __) => Container(
@@ -1009,7 +1019,7 @@ class _PointsShimmerState extends State<_PointsShimmer>
           const SizedBox(height: 24),
           ...List.generate(
             4,
-                (i) => Container(
+            (i) => Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
