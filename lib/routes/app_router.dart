@@ -24,7 +24,6 @@ import '../features/home/layout/presentation/home_layout.dart';
 import '../features/know_us_more/know_us_more.dart';
 import '../features/onboarding/onboarding.dart';
 import '../core/utils/secure_storage_service.dart';
-import '../features/points/presentation/pay_penalties_with_points.dart';
 import '../features/points/presentation/points_screen.dart';
 import '../features/products/data/models/product_model.dart';
 import '../features/products/presentation/product_details_screen.dart';
@@ -210,10 +209,6 @@ Future<GoRouter> createAppRouter({
       GoRoute(
         path: '/wallet/penalties',
         builder: (context, state) => const PenaltiesScreen(),
-      ),
-      GoRoute(
-        path: '/wallet/points/pay-penalties',
-        builder: (context, state) => const PayPenaltiesWithPointsScreen(),
       ),
       GoRoute(
         path: '/wallet/transactions',
