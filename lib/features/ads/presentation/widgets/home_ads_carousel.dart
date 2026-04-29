@@ -160,7 +160,7 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
                         child: ImageWithIconFallback(
                           imageUrl: ad.imageUrl,
                           width: double.infinity,
-                          fit: BoxFit.cover,
+                          fit: BoxFit.contain,
                           iconSize: 40,
                         ),
                       ),
