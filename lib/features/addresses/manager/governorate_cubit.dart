@@ -7,21 +7,28 @@ import 'governorate_states.dart';
 class GovernorateCubit extends Cubit<GovernorateState> {
   final GovernorateRepository _repository;
 
-  GovernorateCubit({
-    GovernorateRepository? repository,
-  })  : _repository = repository ?? GovernorateRepository(),
-        super(GovernorateInitial());
+  GovernorateCubit({GovernorateRepository? repository})
+    : _repository = repository ?? GovernorateRepository(),
+      super(GovernorateInitial());
 
   Future<void> loadGovernorates() async {
-    emit(GovernorateLoading());
+    if (!isClosed) {
+      emit(GovernorateLoading());
+    }
     try {
       log('GovernorateCubit: Loading governorates with areas');
       final response = await _repository.getGovernoratesWithAreas();
-      log('GovernorateCubit: Loaded ${response.governorates.length} governorates');
-      emit(GovernoratesLoaded(response));
+      log(
+        'GovernorateCubit: Loaded ${response.governorates.length} governorates',
+      );
+      if (!isClosed) {
+        emit(GovernoratesLoaded(response));
+      }
     } catch (e) {
       log('GovernorateCubit: Error loading governorates: $e');
-      emit(GovernorateError(extractErrorMessage(e)));
+      if (!isClosed) {
+        emit(GovernorateError(extractErrorMessage(e)));
+      }
     }
   }
 }

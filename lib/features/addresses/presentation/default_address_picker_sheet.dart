@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -10,11 +12,12 @@ import '../manager/address_cubit.dart';
 import '../manager/address_states.dart';
 import 'address_form_sheet.dart';
 
-/// A bottom sheet shown on app launch that lets the user:
+/// A bottom sheet that lets the user:
 ///   • Pick an existing address and mark it as default (via update).
 ///   • Add a brand-new address (delegates to [AddressFormBottomSheet]).
+///   • Edit or delete existing addresses.
 ///
-/// Dismiss by tapping the close button or dragging down — no forced action.
+/// If there are no saved addresses the add-address flow opens automatically.
 class DefaultAddressPickerSheet extends StatefulWidget {
   const DefaultAddressPickerSheet({super.key});
 
@@ -27,6 +30,7 @@ class _DefaultAddressPickerSheetState
     extends State<DefaultAddressPickerSheet> {
   int? _pendingDefaultId;
   bool _saving = false;
+  bool _addSheetAutoOpened = false;
 
   @override
   void initState() {
@@ -38,7 +42,7 @@ class _DefaultAddressPickerSheetState
   bool _canDismiss(List<Address> addresses) =>
       addresses.isNotEmpty && _pendingDefaultId != null;
 
-  Future<void> _openAddSheet() async {
+  Future<void> _openAddSheet({bool autoDetect = false}) async {
     final addressCubit = context.read<AddressCubit>();
 
     await showModalBottomSheet<Address>(
@@ -48,11 +52,93 @@ class _DefaultAddressPickerSheetState
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider.value(
         value: addressCubit,
-        child: const AddressFormBottomSheet(),
+        child: AddressFormBottomSheet(autoDetect: autoDetect,),
       ),
     );
 
     if (mounted) addressCubit.loadAddresses();
+  }
+
+  Future<void> _openEditSheet(Address address) async {
+    final addressCubit = context.read<AddressCubit>();
+
+    await showModalBottomSheet<Address>(
+      isDismissible: true,
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => BlocProvider.value(
+        value: addressCubit,
+        child: AddressFormBottomSheet(address: address),
+      ),
+    );
+
+    if (mounted) addressCubit.loadAddresses();
+  }
+
+  void _confirmDelete(Address address) {
+    final addressCubit = context.read<AddressCubit>();
+    final l10n = AppLocalizations.of(context)!;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.delete_outline, color: Colors.red, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '${l10n.delete} ${l10n.address}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          l10n.areYouSureDelete,
+          style: TextStyle(fontSize: 15, color: Colors.grey.shade700, height: 1.4),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.grey.shade700,
+              side: BorderSide(color: Colors.grey.shade300),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text(l10n.cancel),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              // Clear pending selection if we're deleting the selected address
+              if (_pendingDefaultId == address.id) {
+                setState(() => _pendingDefaultId = null);
+              }
+              addressCubit.deleteAddress(address.id!);
+            },
+            icon: const Icon(Icons.delete_outline, size: 18),
+            label: Text(l10n.delete),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _confirmDefault(List<Address> addresses) async {
@@ -83,6 +169,17 @@ class _DefaultAddressPickerSheetState
         if (state is AddressError || state is AddressesLoaded) {
           if (_saving && mounted) setState(() => _saving = false);
         }
+
+        // Auto-open add sheet the first time we confirm there are no addresses
+        if (state is AddressesLoaded &&
+            state.addresses.isEmpty &&
+            !_addSheetAutoOpened) {
+          _addSheetAutoOpened = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            log('Auto Opening add sheet...');
+            if (mounted) _openAddSheet(autoDetect: true);
+          });
+        }
       },
       builder: (context, state) {
         final addresses =
@@ -98,7 +195,6 @@ class _DefaultAddressPickerSheetState
         final canDismiss = _canDismiss(addresses);
 
         return PopScope(
-          // Block the Android back gesture/button until condition is met.
           canPop: canDismiss,
           child: Container(
             height: MediaQuery.sizeOf(context).height * 0.65,
@@ -231,8 +327,7 @@ class _DefaultAddressPickerSheetState
                                 const SizedBox(height: 12),
                                 Text(
                                   l10n.addAddress,
-                                  style:
-                                  TextStyle(color: Colors.grey.shade500),
+                                  style: TextStyle(color: Colors.grey.shade500),
                                 ),
                               ],
                             ),
@@ -253,8 +348,10 @@ class _DefaultAddressPickerSheetState
                             address: address,
                             isSelected: isSelected,
                             isCurrentDefault: isCurrentDefault,
-                            onTap: () => setState(
-                                    () => _pendingDefaultId = address.id),
+                            onTap: () =>
+                                setState(() => _pendingDefaultId = address.id),
+                            onEdit: () => _openEditSheet(address),
+                            onDelete: () => _confirmDelete(address),
                           );
                         },
                       );
@@ -299,12 +396,16 @@ class _AddressTile extends StatelessWidget {
   final bool isSelected;
   final bool isCurrentDefault;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _AddressTile({
     required this.address,
     required this.isSelected,
     required this.isCurrentDefault,
     required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -325,7 +426,7 @@ class _AddressTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.fromLTRB(14, 10, 4, 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -341,8 +442,7 @@ class _AddressTile extends StatelessWidget {
                     color: isSelected ? primaryColor : Colors.grey.shade400,
                     width: 2,
                   ),
-                  color:
-                  isSelected ? primaryColor : Colors.transparent,
+                  color: isSelected ? primaryColor : Colors.transparent,
                 ),
                 child: isSelected
                     ? const Icon(Icons.check, size: 13, color: Colors.white)
@@ -402,16 +502,37 @@ class _AddressTile extends StatelessWidget {
                 ),
               ),
 
-              // ── Location pin icon ─────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Icon(
-                  isCurrentDefault ? Icons.home : Icons.location_on_outlined,
-                  size: 20,
-                  color: isCurrentDefault
-                      ? Colors.green.shade600
-                      : Colors.grey.shade400,
-                ),
+              // ── Edit / Delete popup ───────────────────────────────────
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'edit') onEdit();
+                  if (value == 'delete') onDelete();
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.edit, size: 18),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.of(context)!.edit),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.delete, size: 18, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Text(
+                          AppLocalizations.of(context)!.delete,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

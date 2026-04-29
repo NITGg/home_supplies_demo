@@ -5,8 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../core/utils/check_for_updates.dart';
 import '../core/widgets/loading_screen.dart';
-import '../features/addresses/manager/address_cubit.dart';
-import '../features/addresses/presentation/address_management_screen.dart';
 import '../features/addresses/presentation/default_address_chip.dart';
 import '../features/auth/presentation/pages/auth_otp_screen.dart';
 import '../features/auth/presentation/pages/forgot_password_screen.dart';
@@ -141,14 +139,14 @@ Future<GoRouter> createAppRouter({
               return NewPasswordScreen(otp: extra['otp'] as String);
             },
           ),
-          GoRoute(
-            path: '/addressesManagement',
-            name: 'addressesManagement',
-            builder: (context, state) => BlocProvider(
-              create: (_) => AddressCubit(),
-              child: const AddressManagementScreen(),
-            ),
-          ),
+          // GoRoute(
+          //   path: '/addressesManagement',
+          //   name: 'addressesManagement',
+          //   builder: (context, state) => BlocProvider(
+          //     create: (_) => AddressCubit(),
+          //     child: const AddressManagementScreen(),
+          //   ),
+          // ),
         ],
       ),
       GoRoute(

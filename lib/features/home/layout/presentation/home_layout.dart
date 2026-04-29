@@ -309,25 +309,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
                       if (!mounted) return;
 
-                      // 3. Default address picker (regular customers only)
-                      if (profileState.profile.roleId != 4) {
-                        if (!context.mounted) return;
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          isDismissible: false,
-                          enableDrag: false,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => BlocProvider.value(
-                            value: context.read<AddressCubit>(),
-                            child: const DefaultAddressPickerSheet(),
-                          ),
-                        );
-                      }
-
-                      if (!mounted) return;
-
-                      // 4. First-order coupon dialog
+                      // 3. First-order coupon dialog
                       if (profileState.profile.roleId == 4) return;
 
                       final coupon =
@@ -617,8 +599,22 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           ),
                                           const Divider(),
                                           ListTile(
-                                            onTap: () => context
-                                                .push('/addressesManagement'),
+                                            onTap: () {
+                                              context.pop();
+                                              showModalBottomSheet(
+                                                context: context,
+                                                isScrollControlled: true,
+                                                // Only block dismissal when there are truly no addresses — the sheet
+                                                // itself enforces this via PopScope once it knows its own state.
+                                                isDismissible: true,
+                                                enableDrag: true,
+                                                backgroundColor: Colors.transparent,
+                                                builder: (_) => BlocProvider.value(
+                                                  value: context.read<AddressCubit>(),
+                                                  child: const DefaultAddressPickerSheet(),
+                                                ),
+                                              );
+                                            },
                                             leading: const Icon(
                                               Icons.location_pin,
                                             ),

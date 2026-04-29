@@ -18,9 +18,11 @@ RouteObserver<ModalRoute<void>>();
 
 /// A compact chip that shows the default address name.
 ///
-/// Auto-refreshes via [RouteAware] every time its parent route becomes the
-/// top-most route again (e.g. after dismissing [DefaultAddressPickerSheet],
-/// returning from an address-edit screen, or any other navigation pop).
+/// • When the user taps it the [DefaultAddressPickerSheet] opens.
+/// • If there are no addresses the sheet auto-opens the add-address flow,
+///   so the user is guided to create one without any extra taps.
+/// • Auto-refreshes via [RouteAware] every time its parent route becomes the
+///   top-most route again (e.g. after dismissing a sheet or navigating back).
 class DefaultAddressChip extends StatefulWidget {
   const DefaultAddressChip({super.key});
 
@@ -30,6 +32,16 @@ class DefaultAddressChip extends StatefulWidget {
 
 class _DefaultAddressChipState extends State<DefaultAddressChip>
     with RouteAware {
+  /// Prevents the sheet from auto-popping more than once per app session.
+  /// Reset when the user navigates back to this route so a fresh reload
+  /// can trigger it again only if addresses are still missing.
+  bool _sheetAutoShown = false;
+
+  /// True while [DefaultAddressPickerSheet] is currently mounted.
+  /// Prevents a second sheet being pushed on top when addresses are deleted
+  /// from within the already-open sheet.
+  bool _sheetIsOpen = false;
+
   // ── Lifecycle ───────────────────────────────────────────────────────────────
 
   @override
@@ -41,7 +53,6 @@ class _DefaultAddressChipState extends State<DefaultAddressChip>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Subscribe/re-subscribe whenever the widget's route context changes.
     final route = ModalRoute.of(context);
     if (route != null) {
       addressChipRouteObserver.subscribe(this, route);
@@ -56,14 +67,14 @@ class _DefaultAddressChipState extends State<DefaultAddressChip>
 
   // ── RouteAware callbacks ────────────────────────────────────────────────────
 
-  /// Called when this route is pushed onto the navigator (initial appearance).
   @override
   void didPush() => _reload();
 
-  /// Called when a route above this one is popped — i.e. this chip is visible
-  /// again after any navigation (sheet closed, back button pressed, etc.).
   @override
-  void didPopNext() => _reload();
+  void didPopNext() {
+    _sheetAutoShown = false; // allow re-trigger if addresses are still missing
+    _reload();
+  }
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -76,15 +87,21 @@ class _DefaultAddressChipState extends State<DefaultAddressChip>
   }
 
   void _showAddressSheet(BuildContext context) {
+    if (_sheetIsOpen) return;
+    _sheetIsOpen = true;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider.value(
         value: context.read<AddressCubit>(),
         child: const DefaultAddressPickerSheet(),
       ),
-    );
+    ).whenComplete(() {
+      _sheetIsOpen = false;
+    });
     // No manual reload needed here — didPopNext fires when the sheet closes.
   }
 
@@ -92,12 +109,66 @@ class _DefaultAddressChipState extends State<DefaultAddressChip>
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AddressCubit, AddressState>(
+    return BlocConsumer<AddressCubit, AddressState>(
+      listener: (context, state) {
+        if (state is AddressesLoaded &&
+            state.addresses.isEmpty &&
+            !_sheetAutoShown &&
+            !_sheetIsOpen) {
+          _sheetAutoShown = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _showAddressSheet(context);
+          });
+        }
+        // Once addresses exist, reset so a future empty state re-triggers.
+        if (state is AddressesLoaded && state.addresses.isNotEmpty) {
+          _sheetAutoShown = false;
+        }
+      },
       builder: (context, state) {
         if (state is AddressLoading || state is AddressInitial) {
           return const _SkeletonChip();
         }
 
+        // ── No addresses: show a prompt chip that opens the add flow ────────
+        if (state is AddressesLoaded && state.addresses.isEmpty) {
+          return GestureDetector(
+            onTap: () => _showAddressSheet(context),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.orange.shade300, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.add_location_alt_outlined,
+                    size: 13,
+                    color: Colors.orange.shade700,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    AppLocalizations.of(context)!.addAddress,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.orange.shade800,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // ── Has addresses: show the default/first address ────────────────────
         if (state is! AddressesLoaded || state.addresses.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -116,7 +187,8 @@ class _DefaultAddressChipState extends State<DefaultAddressChip>
           onTap: () => _showAddressSheet(context),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 1000),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
               borderRadius: BorderRadius.circular(20),
