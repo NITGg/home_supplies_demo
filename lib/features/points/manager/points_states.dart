@@ -24,3 +24,31 @@ class PointsError extends PointsState {
   final String message;
   PointsError({required this.message});
 }
+
+// ── Convert Points to Money ──────────────────────────────────────────────────
+
+class ConvertingPoints extends PointsState {}
+
+class PointsConverted extends PointsState {
+  final int pointsConverted;
+  PointsConverted({required this.pointsConverted});
+}
+
+class ConvertPointsError extends PointsState {
+  final String message;
+  ConvertPointsError({required this.message});
+}
+
+// ── Pay Fines with Points ────────────────────────────────────────────────────
+
+class PayingFinesWithPoints extends PointsState {}
+
+class FinesPaidWithPoints extends PointsState {
+  final List<int> paidPenaltyIds;
+  FinesPaidWithPoints({required this.paidPenaltyIds});
+}
+
+class PayFinesError extends PointsState {
+  final String message;
+  PayFinesError({required this.message});
+}

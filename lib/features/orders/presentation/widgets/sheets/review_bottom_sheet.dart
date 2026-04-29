@@ -63,9 +63,15 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
         '/customer-reviews',
         data: payload,
       );
+
+      final payload2 = {
+        "orderId": widget.orderId.toString(),
+        "courierId": widget.courierId.toString(),
+        "rating": _selectedRating,
+      };
       final response2 = await ApiClient.instance.dio.post(
         '/customer/points/give-points-to-courier',
-        data: payload,
+        data: payload2,
       );
 
       log('✅ Response: ${response.statusCode} — ${response.data}');

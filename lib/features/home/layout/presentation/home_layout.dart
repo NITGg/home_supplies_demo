@@ -606,8 +606,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                 isScrollControlled: true,
                                                 // Only block dismissal when there are truly no addresses — the sheet
                                                 // itself enforces this via PopScope once it knows its own state.
-                                                isDismissible: true,
-                                                enableDrag: true,
+                                                isDismissible: false,
+                                                enableDrag: false,
                                                 backgroundColor: Colors.transparent,
                                                 builder: (_) => BlocProvider.value(
                                                   value: context.read<AddressCubit>(),

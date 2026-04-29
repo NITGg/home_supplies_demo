@@ -26,4 +26,38 @@ class PointsDataSource {
     }
     throw Exception('Failed to fetch points progress');
   }
+
+  // ==================== Convert Points to Money ====================
+  Future<void> convertPointsToMoney({
+    required String userId,
+    required int pointsToMoney,
+  }) async {
+    final response = await _apiClient.dio.post(
+      '/customer/points/convert-points-to-money',
+      data: {
+        'userId': userId,
+        'piontsToMoney': pointsToMoney, // keep server spelling
+      },
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        response.data?['message'] ?? 'Failed to convert points to money',
+      );
+    }
+  }
+
+  // ==================== Pay Fines Using Points ====================
+  Future<void> payFinesUsingPoints({
+    required List<int> penaltyIds,
+  }) async {
+    final response = await _apiClient.dio.post(
+      '/customer/points/pay-fines-using-points',
+      data: {'penalty_ids': penaltyIds},
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        response.data?['message'] ?? 'Failed to pay fines using points',
+      );
+    }
+  }
 }

@@ -29,4 +29,50 @@ class PointsCubit extends Cubit<PointsState> {
       }
     }
   }
+
+  // ── Convert Points to Money ───────────────────────────────────────────────
+
+  Future<void> convertPointsToMoney({
+    required int points,
+    required int userId,
+    required bool isArabic,
+  }) async {
+    emit(ConvertingPoints());
+    try {
+      await _repository.convertPointsToMoney(
+        userId: userId.toString(),
+        pointsToMoney: points,
+      );
+      if (!isClosed) {
+        emit(PointsConverted(pointsConverted: points));
+        // Refresh balance after conversion
+        await loadPoints(isArabic: isArabic);
+      }
+    } catch (e) {
+      if (!isClosed) {
+        emit(ConvertPointsError(message: extractErrorMessage(e)));
+      }
+    }
+  }
+
+  // ── Pay Fines with Points ─────────────────────────────────────────────────
+
+  Future<void> payFinesWithPoints({
+    required List<int> penaltyIds,
+    required bool isArabic,
+  }) async {
+    emit(PayingFinesWithPoints());
+    try {
+      await _repository.payFinesUsingPoints(penaltyIds: penaltyIds);
+      if (!isClosed) {
+        emit(FinesPaidWithPoints(paidPenaltyIds: penaltyIds));
+        // Refresh balance after payment
+        await loadPoints(isArabic: isArabic);
+      }
+    } catch (e) {
+      if (!isClosed) {
+        emit(PayFinesError(message: extractErrorMessage(e)));
+      }
+    }
+  }
 }

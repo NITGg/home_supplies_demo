@@ -88,61 +88,61 @@ class _CartItemTileState extends State<CartItemTile> {
         ),
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              InkWell(
-                onTap: () => context.push('/products/${product.id}', extra: product),
-                child: _ProductThumb(imageUrl: product.primaryImage),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            product.displayName,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              height: 1.3,
+          child: InkWell(
+            onTap: () => context.push('/products/${product.id}', extra: product),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ProductThumb(imageUrl: product.primaryImage),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              product.displayName,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                height: 1.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 250),
-                          child: _busy
-                              ? _BusySpinner(
-                            key: const ValueKey('spinner'),
-                            color: theme.colorScheme.primary,
-                          )
-                              : QuantitySelector(
-                            key: const ValueKey('selector'),
-                            quantity: widget.item.quantity,
-                            onIncrement: _handleIncrement,  // ← local
-                            onDecrement: _handleDecrement,  // ← local
-                            minQuantity: 0,
-                            maxQuantity: product.maxAmountForOneOrder,
-                            size: 32,
-                            compact: true,
+                          const SizedBox(width: 8),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            child: _busy
+                                ? _BusySpinner(
+                              key: const ValueKey('spinner'),
+                              color: theme.colorScheme.primary,
+                            )
+                                : QuantitySelector(
+                              key: const ValueKey('selector'),
+                              quantity: widget.item.quantity,
+                              onIncrement: _handleIncrement,  // ← local
+                              onDecrement: _handleDecrement,  // ← local
+                              minQuantity: 0,
+                              maxQuantity: product.maxAmountForOneOrder,
+                              size: 32,
+                              compact: true,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 7),
-                    _PriceBlock(item: widget.item, l10n: l10n, theme: theme),
-                    const SizedBox(height: 9),
-                    _LineTotalBlock(item: widget.item, theme: theme, l10n: l10n),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 7),
+                      _PriceBlock(item: widget.item, l10n: l10n, theme: theme),
+                      const SizedBox(height: 9),
+                      _LineTotalBlock(item: widget.item, theme: theme, l10n: l10n),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

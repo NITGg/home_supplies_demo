@@ -92,8 +92,8 @@ class _DefaultAddressChipState extends State<DefaultAddressChip>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      isDismissible: true,
-      enableDrag: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider.value(
         value: context.read<AddressCubit>(),

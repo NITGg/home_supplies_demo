@@ -24,6 +24,7 @@ import '../features/home/layout/presentation/home_layout.dart';
 import '../features/know_us_more/know_us_more.dart';
 import '../features/onboarding/onboarding.dart';
 import '../core/utils/secure_storage_service.dart';
+import '../features/points/presentation/pay_penalties_with_points.dart';
 import '../features/points/presentation/points_screen.dart';
 import '../features/products/data/models/product_model.dart';
 import '../features/products/presentation/product_details_screen.dart';
@@ -211,6 +212,10 @@ Future<GoRouter> createAppRouter({
         builder: (context, state) => const PenaltiesScreen(),
       ),
       GoRoute(
+        path: '/wallet/points/pay-penalties',
+        builder: (context, state) => const PayPenaltiesWithPointsScreen(),
+      ),
+      GoRoute(
         path: '/wallet/transactions',
         builder: (context, state) => const TransactionHistoryScreen(),
       ),
@@ -221,7 +226,8 @@ Future<GoRouter> createAppRouter({
       GoRoute(
         path: '/mainHome',
         name: 'mainHome',
-        builder: (context, state) => ChatInboxProvider(child: const HomeLayout()),
+        builder: (context, state) =>
+            ChatInboxProvider(child: const HomeLayout()),
       ),
       GoRoute(
         path: '/categories/:id',
@@ -237,10 +243,7 @@ Future<GoRouter> createAppRouter({
           product: state.extra as ProductModel?,
         ),
       ),
-      GoRoute(
-        path: '/cart',
-        builder: (context, state) => const CartScreen(),
-      ),
+      GoRoute(path: '/cart', builder: (context, state) => const CartScreen()),
     ],
     errorBuilder: (context, state) {
       log('❌ 404 Error - Location: ${state.uri}');

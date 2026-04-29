@@ -11,4 +11,18 @@ class PointsRepository {
   Future<PointsProgressModel> getPointsProgress() async {
     return await _dataSource.getPointsProgress();
   }
+
+  Future<void> convertPointsToMoney({
+    required String userId,
+    required int pointsToMoney,
+  }) async {
+    return await _dataSource.convertPointsToMoney(
+      userId: userId,
+      pointsToMoney: pointsToMoney,
+    );
+  }
+
+  Future<void> payFinesUsingPoints({required List<int> penaltyIds}) async {
+    return await _dataSource.payFinesUsingPoints(penaltyIds: penaltyIds);
+  }
 }
