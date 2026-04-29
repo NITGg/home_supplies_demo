@@ -266,7 +266,7 @@ class _DefaultAddressPickerSheetState
                       if (canDismiss)
                         IconButton(
                           icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () => _confirmDefault(addresses),
                         ),
                     ],
                   ),

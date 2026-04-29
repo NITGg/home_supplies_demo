@@ -65,7 +65,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.address?.name);
+    _nameController = TextEditingController(text: widget.address?.name ?? 'المنزل');
     _detailedAddressController = TextEditingController(
       text: widget.address?.detailedAddress,
     );
@@ -796,6 +796,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                           builder: (context, state) {
                             final isLoading = state is AddressLoading;
                             return AppCustomButton(
+                              shake: _hasLocation && _selectedAreaId != null,
                               onPressed: isLoading ? () {} : _submit,
                               text: widget.address != null
                                   ? l10n.updateAddress
