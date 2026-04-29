@@ -353,15 +353,18 @@ class _CartScreenState extends State<CartScreen> {
         ],
       ),
       actions: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey.shade200,
-          child: IconButton(
-            icon: Icon(Icons.search_rounded, color: Colors.grey.shade700),
-            onPressed: () {
-              showSearchDialog(context);
-            },
-            padding: EdgeInsets.zero,
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.grey.shade200,
+            child: IconButton(
+              icon: Icon(Icons.search_rounded, color: Colors.grey.shade700),
+              onPressed: () {
+                showSearchDialog(context);
+              },
+              padding: EdgeInsets.zero,
+            ),
           ),
         ),
         if (state is CartLoaded && state.data.cartItems.isNotEmpty)
