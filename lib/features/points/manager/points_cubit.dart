@@ -60,10 +60,11 @@ class PointsCubit extends Cubit<PointsState> {
 
   Future<void> payFinesWithPoints({
     required List<int> penaltyIds,
+    required String userId,
   }) async {
     emit(PayingFinesWithPoints());
     try {
-      await _repository.payFinesUsingPoints(penaltyIds: penaltyIds);
+      await _repository.payFinesUsingPoints(penaltyIds: penaltyIds, userId: userId);
       if (!isClosed) {
         emit(FinesPaidWithPoints(paidPenaltyIds: penaltyIds));
         await loadPoints(isArabic: LocaleManager.currentLocale == 'ar');

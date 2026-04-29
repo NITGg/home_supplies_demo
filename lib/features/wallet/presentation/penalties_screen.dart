@@ -11,6 +11,7 @@ import '../../../core/style/app_colors.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/manager/locale_cubit.dart';
+import '../../auth/manager/profile_cubit.dart';
 import '../../points/data/models/points_models.dart';
 import '../../points/manager/points_cubit.dart';
 import '../../points/manager/points_states.dart';
@@ -159,6 +160,7 @@ class _PenaltiesViewState extends State<PenaltiesView> {
 
     context.read<PointsCubit>().payFinesWithPoints(
       penaltyIds: _selectedIds.toList(),
+      userId: context.read<ProfileCubit>().currentProfile?.id.toString()??'',
     );
   }
 

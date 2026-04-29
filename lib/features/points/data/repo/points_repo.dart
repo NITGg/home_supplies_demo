@@ -22,7 +22,7 @@ class PointsRepository {
     );
   }
 
-  Future<void> payFinesUsingPoints({required List<int> penaltyIds}) async {
-    return await _dataSource.payFinesUsingPoints(penaltyIds: penaltyIds);
+  Future<void> payFinesUsingPoints({required List<int> penaltyIds, required String userId}) async {
+    return await _dataSource.payFinesUsingPoints(penaltyIds: penaltyIds, userId:userId);
   }
 }

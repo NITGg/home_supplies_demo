@@ -130,12 +130,6 @@ class _PointsView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Balance Header Card ──
-                        _PointsBalanceCard(
-                          balance: innerState.progress.balance,
-                          isArabic: isArabic,
-                        ),
-
                         const SizedBox(height: 16),
 
                         // ── Quick Actions ──────────────────────────────────
@@ -550,106 +544,6 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-// ─── Balance Card ─────────────────────────────────────────────────────────────
-
-class _PointsBalanceCard extends StatelessWidget {
-  final PointsBalance balance;
-  final bool isArabic;
-
-  const _PointsBalanceCard({required this.balance, required this.isArabic});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.kPrimaryColor,
-            AppColors.kPrimaryColor.withOpacity(0.75),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.kPrimaryColor.withOpacity(0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.stars_rounded,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                isArabic ? 'رصيد النقاط' : 'Points Balance',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            '${balance.availablePoints}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 52,
-              fontWeight: FontWeight.bold,
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            isArabic ? 'نقطة' : 'points',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              isArabic
-                  ? '≈ ${balance.monetaryValueEgp.toStringAsFixed(2)} جنيه'
-                  : '≈ ${balance.monetaryValueEgp.toStringAsFixed(2)} EGP',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ─── Progress Section ─────────────────────────────────────────────────────────
 

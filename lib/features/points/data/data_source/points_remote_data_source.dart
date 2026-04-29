@@ -49,10 +49,11 @@ class PointsDataSource {
   // ==================== Pay Fines Using Points ====================
   Future<void> payFinesUsingPoints({
     required List<int> penaltyIds,
+    required String userId,
   }) async {
     final response = await _apiClient.dio.post(
       '/customer/points/pay-fines-using-points',
-      data: {'penalty_ids': penaltyIds},
+      data: {'penalty_ids': penaltyIds, 'user_id': userId},
     );
     if (response.statusCode != 200) {
       throw Exception(
