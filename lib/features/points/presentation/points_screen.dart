@@ -43,7 +43,7 @@ class _PointsView extends StatelessWidget {
         leading: BackButton(
           color: Colors.black,
           onPressed: () =>
-          context.canPop() ? context.pop() : context.go('/mainHome'),
+              context.canPop() ? context.pop() : context.go('/mainHome'),
         ),
       ),
       body: BlocConsumer<PointsCubit, PointsState>(
@@ -165,9 +165,8 @@ class _PointsView extends StatelessWidget {
                                       ? 'سداد الغرامات'
                                       : 'Pay Penalties',
                                   color: const Color(0xFFE17055),
-                                  onTap: () => context.push(
-                                    '/wallet/penalties',
-                                  ),
+                                  onTap: () =>
+                                      context.push('/wallet/penalties'),
                                 ),
                               ),
                             ],
@@ -246,10 +245,10 @@ class _PointsView extends StatelessWidget {
   }
 
   void _showConvertBottomSheet(
-      BuildContext context,
-      PointsBalance balance,
-      bool isArabic,
-      ) {
+    BuildContext context,
+    PointsBalance balance,
+    bool isArabic,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -440,20 +439,20 @@ class _ConvertBottomSheetState extends State<_ConvertBottomSheet> {
                     onPressed: isLoading
                         ? null
                         : () {
-                      if (_formKey.currentState!.validate()) {
-                        context.read<PointsCubit>().convertPointsToMoney(
-                          points: int.parse(_controller.text),
-                          isArabic: isArabic,
-                          userId:
-                          context
-                              .read<ProfileCubit>()
-                              .currentProfile
-                              ?.id ??
-                              1,
-                        );
-                        Navigator.pop(context);
-                      }
-                    },
+                            if (_formKey.currentState!.validate()) {
+                              context.read<PointsCubit>().convertPointsToMoney(
+                                points: int.parse(_controller.text),
+                                isArabic: isArabic,
+                                userId:
+                                    context
+                                        .read<ProfileCubit>()
+                                        .currentProfile
+                                        ?.id ??
+                                    1,
+                              );
+                              Navigator.pop(context);
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green.shade600,
                       disabledBackgroundColor: Colors.grey.shade300,
@@ -464,21 +463,21 @@ class _ConvertBottomSheetState extends State<_ConvertBottomSheet> {
                     ),
                     child: isLoading
                         ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
                         : Text(
-                      isArabic ? 'تحويل الآن' : 'Convert Now',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                            isArabic ? 'تحويل الآن' : 'Convert Now',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                   ),
                 );
               },
@@ -747,8 +746,8 @@ class _ProgressSection extends StatelessWidget {
           Text(
             batch.remainingOrders == 0
                 ? (isArabic
-                ? '🎉 لقد حققت المكافأة!'
-                : '🎉 You\'ve earned the reward!')
+                      ? '🎉 لقد حققت المكافأة!'
+                      : '🎉 You\'ve earned the reward!')
                 : isArabic
                 ? 'متبقي ${batch.remainingOrders} طلبات للحصول على 50 نقطة'
                 : '${batch.remainingOrders} more orders to earn 50 points',
@@ -781,51 +780,51 @@ class _ExpirationBanner extends StatelessWidget {
     return daysLeft >= 2
         ? SizedBox.shrink()
         : Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade200),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.warning_amber_rounded,
-            color: Colors.orange.shade700,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.orange.shade200),
+            ),
+            child: Row(
               children: [
-                Text(
-                  isArabic
-                      ? 'نقاط على وشك الانتهاء'
-                      : 'Points Expiring Soon',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange.shade800,
-                    fontSize: 14,
-                  ),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange.shade700,
+                  size: 24,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  isArabic
-                      ? '${expiration.points} نقطة ستنتهي خلال $daysLeft يوم'
-                      : '${expiration.points} points expire in $daysLeft days',
-                  style: TextStyle(
-                    color: Colors.orange.shade700,
-                    fontSize: 13,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isArabic
+                            ? 'نقاط على وشك الانتهاء'
+                            : 'Points Expiring Soon',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange.shade800,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isArabic
+                            ? '${expiration.points} نقطة ستنتهي خلال $daysLeft يوم'
+                            : '${expiration.points} points expire in $daysLeft days',
+                        style: TextStyle(
+                          color: Colors.orange.shade700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
   }
 }
 
@@ -953,6 +952,7 @@ class _PointsShimmerState extends State<_PointsShimmer>
       child: Column(
         children: [
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: Colors.grey.shade200,
@@ -1019,7 +1019,7 @@ class _PointsShimmerState extends State<_PointsShimmer>
           const SizedBox(height: 24),
           ...List.generate(
             4,
-                (i) => Container(
+            (i) => Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
