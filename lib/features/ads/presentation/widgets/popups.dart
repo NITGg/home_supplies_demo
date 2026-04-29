@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/utils/secure_storage_service.dart';
 import '../../../../core/widgets/image_with_fallback.dart';
@@ -49,6 +50,31 @@ class _PopupAdsHandlerState extends State<PopupAdsHandler> {
     // then write the correct value to storage.
     await _storage.writeValue(_storageKey, _shownAdIds.join(','));
   }
+
+  void navigateFromDeepLink(BuildContext context, String link) {
+    // Accepts "/category/8", "/product/19", or full URL with same path
+    final uri = Uri.parse(link);
+    final segments = uri.pathSegments; // ['category', '8']
+
+    if (segments.length < 2) return;
+
+    final type = segments[0];
+    final id = int.tryParse(segments[1]);
+
+    if (id == null) return;
+
+    switch (type) {
+      case 'category':
+        context.push(
+          '/categories/$id',
+        ); // matches GoRoute path '/categories/:id'
+        break;
+      case 'product':
+        context.push('/products/$id'); // matches GoRoute path '/products/:id'
+        break;
+    }
+  }
+
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -144,7 +170,7 @@ class _PopupAdsHandlerState extends State<PopupAdsHandler> {
                             if (ad.mobileScreen != null &&
                                 ad.mobileScreen!.isNotEmpty &&
                                 ad.mobileScreen != 'null') {
-                              launchUrl(Uri.parse(ad.mobileScreen ?? ''));
+                              navigateFromDeepLink(context, ad.mobileScreen!);
                             } else if (ad.targetUrl.isNotEmpty) {
                               launchUrl(Uri.parse(ad.targetUrl));
                             }
