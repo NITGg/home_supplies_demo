@@ -26,6 +26,7 @@ import '../features/home/layout/presentation/home_layout.dart';
 import '../features/know_us_more/know_us_more.dart';
 import '../features/onboarding/onboarding.dart';
 import '../core/utils/secure_storage_service.dart';
+import '../features/points/presentation/points_screen.dart';
 import '../features/products/data/models/product_model.dart';
 import '../features/products/presentation/product_details_screen.dart';
 import '../features/referral/referral_screen.dart';
@@ -214,6 +215,10 @@ Future<GoRouter> createAppRouter({
       GoRoute(
         path: '/wallet/transactions',
         builder: (context, state) => const TransactionHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/wallet/points',
+        builder: (context, state) => const PointsScreen(),
       ),
       GoRoute(
         path: '/mainHome',

@@ -147,6 +147,14 @@ class _WalletScreenState extends State<WalletScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
+                    Expanded(
+                      child: _QuickActionButton(
+                        icon: Icons.stars_rounded,
+                        label: isArabic ? 'النقاط' : 'Points',
+                        color: Colors.amber.shade700,
+                        onTap: () => context.push('/wallet/points'),
+                      ),
+                    ),
                   ],
                 ),
               ),
