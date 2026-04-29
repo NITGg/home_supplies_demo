@@ -160,7 +160,7 @@ class _PointsView extends StatelessWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: _ActionButton(
-                                  icon: Icons.receipt_long_rounded,
+                                  icon: Icons.warning_amber_outlined,
                                   label: isArabic
                                       ? 'سداد الغرامات'
                                       : 'Pay Penalties',
