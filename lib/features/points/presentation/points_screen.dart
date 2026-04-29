@@ -742,23 +742,6 @@ class _ProgressSection extends StatelessWidget {
               );
             }),
           ),
-          const SizedBox(height: 14),
-          Text(
-            batch.remainingOrders == 0
-                ? (isArabic
-                      ? '🎉 لقد حققت المكافأة!'
-                      : '🎉 You\'ve earned the reward!')
-                : isArabic
-                ? 'متبقي ${batch.remainingOrders} طلبات للحصول على 50 نقطة'
-                : '${batch.remainingOrders} more orders to earn 50 points',
-            style: TextStyle(
-              color: batch.remainingOrders == 0
-                  ? Colors.green.shade600
-                  : Colors.grey.shade600,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
         ],
       ),
     );
