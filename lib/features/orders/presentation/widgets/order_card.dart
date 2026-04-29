@@ -2,7 +2,10 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/core/widgets/banners.dart';
+import 'package:tawreedat_go/core/widgets/text_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
@@ -142,6 +145,17 @@ class OrderCard extends StatelessWidget {
                       "${l10n.confirmDeliveryCode}: ${order.confirmationOtp}",
                       textAlign: TextAlign.center,
                     ),
+                    Spacer(),
+                    IconButton(
+                      onPressed: () async {
+                        await Clipboard.setData(
+                          ClipboardData(text: order.confirmationOtp ?? ''),
+                        );
+                        if (!context.mounted) return;
+                        showInfoBanner(context, l10n.copiedToClipboard);
+                      },
+                      icon: Icon(Icons.copy,color: Color(0xFF1E87E3),),
+                    ),
                   ],
                 ),
               ),
@@ -268,21 +282,21 @@ class OrderCard extends StatelessWidget {
                               final productPrice =
                                   double.tryParse(
                                     (order.actualPrice == '0' ||
-                                        order.actualPrice == null)
+                                            order.actualPrice == null)
                                         ? (order.budget ?? '0')
                                         : (order.actualPrice ?? '0'),
                                   ) ??
-                                      0.0;
+                                  0.0;
 
                               final fee =
                                   (double.tryParse(order.totalFee ?? '') ?? 0) /
-                                      100;
+                                  100;
                               final discount =
                                   (double.tryParse(
-                                    order.discountAmount ?? '',
-                                  ) ??
+                                        order.discountAmount ?? '',
+                                      ) ??
                                       0) /
-                                      100;
+                                  100;
 
                               String budgetText;
 
@@ -292,23 +306,23 @@ class OrderCard extends StatelessWidget {
                                   double.infinity,
                                 );
                                 budgetText =
-                                '${productPrice.toStringAsFixed(2)} + ${discountedFee.toStringAsFixed(2)}';
+                                    '${productPrice.toStringAsFixed(2)} + ${discountedFee.toStringAsFixed(2)}';
                               } else if (order.couponType == 'PRODUCTS_ONLY' &&
                                   discount > 0) {
                                 final discountedProduct =
-                                (productPrice - discount).clamp(
-                                  0,
-                                  double.infinity,
-                                );
+                                    (productPrice - discount).clamp(
+                                      0,
+                                      double.infinity,
+                                    );
                                 budgetText =
-                                '${discountedProduct.toStringAsFixed(2)} + ${fee.toStringAsFixed(2)}';
+                                    '${discountedProduct.toStringAsFixed(2)} + ${fee.toStringAsFixed(2)}';
                               } else if (order.couponType == 'ORDER_TOTAL' &&
                                   discount > 0) {
                                 budgetText =
-                                '${productPrice.toStringAsFixed(2)} + ${fee.toStringAsFixed(2)} - ${discount.toStringAsFixed(2)}';
+                                    '${productPrice.toStringAsFixed(2)} + ${fee.toStringAsFixed(2)} - ${discount.toStringAsFixed(2)}';
                               } else {
                                 budgetText =
-                                '${productPrice.toStringAsFixed(2)} + ${fee.toStringAsFixed(2)}';
+                                    '${productPrice.toStringAsFixed(2)} + ${fee.toStringAsFixed(2)}';
                               }
 
                               return OrderBudgetChip(budget: budgetText);
@@ -443,18 +457,20 @@ class OrderCard extends StatelessWidget {
           CircleAvatar(
             radius: 20,
             backgroundColor: Colors.blue.shade100,
-            backgroundImage: hasPhoto ? NetworkImage(order.courierPhoto!) : null,
+            backgroundImage: hasPhoto
+                ? NetworkImage(order.courierPhoto!)
+                : null,
             onBackgroundImageError: hasPhoto ? (_, __) {} : null,
             child: hasPhoto
                 ? null
                 : Text(
-              _initials(order.courierName ?? ''),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue.shade700,
-              ),
-            ),
+                    _initials(order.courierName ?? ''),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue.shade700,
+                    ),
+                  ),
           ),
           const SizedBox(width: 10),
 
@@ -496,7 +512,7 @@ class OrderCard extends StatelessWidget {
                     onTap: () {
                       ChatNavigator.openChatWithUser(
                         context,
-                        targetUserId: order.courierUserId??0,
+                        targetUserId: order.courierUserId ?? 0,
                         chatTitle: order.courierName,
                         chatAvatarUrl: order.courierPhoto,
                       );
@@ -540,7 +556,7 @@ class OrderCard extends StatelessWidget {
 
     return BlocConsumer<OrderCubit, OrderState>(
       listenWhen: (_, current) =>
-      current is DeliveryConfirmed || current is OrderError,
+          current is DeliveryConfirmed || current is OrderError,
       listener: (context, state) {
         if (state is DeliveryConfirmed) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -556,7 +572,7 @@ class OrderCard extends StatelessWidget {
         }
       },
       buildWhen: (_, current) =>
-      current is DeliveryConfirming ||
+          current is DeliveryConfirming ||
           current is DeliveryConfirmed ||
           current is OrderError ||
           current is OrdersLoaded,
@@ -570,34 +586,34 @@ class OrderCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
               child: isLoading
                   ? const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 6),
-                  child: CircularProgressIndicator(
-                    color: AppColors.kSecondaryColor,
-                    strokeWidth: 2.5,
-                  ),
-                ),
-              )
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 6),
+                        child: CircularProgressIndicator(
+                          color: AppColors.kSecondaryColor,
+                          strokeWidth: 2.5,
+                        ),
+                      ),
+                    )
                   : SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _showConfirmDialog(context, l10n),
-                  icon: const Icon(Icons.check_circle_outline, size: 18),
-                  label: Text(
-                    l10n.confirmDelivery,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade600,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showConfirmDialog(context, l10n),
+                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        label: Text(
+                          l10n.confirmDelivery,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.shade600,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
                     ),
-                    elevation: 0,
-                  ),
-                ),
-              ),
             ),
           ],
         );
@@ -722,7 +738,7 @@ class OrderCard extends StatelessWidget {
 
     return BlocConsumer<OrderCubit, OrderState>(
       listenWhen: (_, current) =>
-      current is OrderRetried || current is OrderRetryError,
+          current is OrderRetried || current is OrderRetryError,
       listener: (context, state) {
         if (state is OrderRetried) {
           onRetrySuccess?.call();
@@ -733,7 +749,7 @@ class OrderCard extends StatelessWidget {
         }
       },
       buildWhen: (_, current) =>
-      current is RetryingOrder ||
+          current is RetryingOrder ||
           current is OrderRetried ||
           current is OrderRetryError ||
           current is OrdersLoaded,
@@ -747,26 +763,26 @@ class OrderCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
               child: isLoading
                   ? const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 6),
-                  child: CircularProgressIndicator(
-                    color: AppColors.kSecondaryColor,
-                    strokeWidth: 2.5,
-                  ),
-                ),
-              )
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 6),
+                        child: CircularProgressIndicator(
+                          color: AppColors.kSecondaryColor,
+                          strokeWidth: 2.5,
+                        ),
+                      ),
+                    )
                   : SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () =>
-                      context.read<OrderCubit>().retryOrder(orderId),
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: Text(
-                    l10n.retry,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () =>
+                            context.read<OrderCubit>().retryOrder(orderId),
+                        icon: const Icon(Icons.refresh, size: 18),
+                        label: Text(
+                          l10n.retry,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
             ),
           ],
         );
@@ -843,10 +859,10 @@ class _PriceAdjustmentFooter extends StatelessWidget {
 
     return BlocConsumer<OrderCubit, OrderState>(
       listenWhen: (_, current) =>
-      current is PriceAdjustmentResponded || current is OrderError,
+          current is PriceAdjustmentResponded || current is OrderError,
       listener: (context, state) {},
       buildWhen: (_, current) =>
-      current is PriceAdjustmentResponding ||
+          current is PriceAdjustmentResponding ||
           current is PriceAdjustmentResponded ||
           current is OrderError ||
           current is OrdersLoaded,
@@ -963,73 +979,73 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                 child: isLoading
                     ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 6),
-                    child: CircularProgressIndicator(
-                      color: AppColors.kPrimaryColor,
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-                )
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 6),
+                          child: CircularProgressIndicator(
+                            color: AppColors.kPrimaryColor,
+                            strokeWidth: 2.5,
+                          ),
+                        ),
+                      )
                     : Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _respond(context, 'REJECTED'),
-                        icon: Icon(
-                          Icons.close,
-                          size: 16,
-                          color: Colors.red.shade600,
-                        ),
-                        label: Text(
-                          l10n.reject,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.red.shade600,
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _respond(context, 'REJECTED'),
+                              icon: Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Colors.red.shade600,
+                              ),
+                              label: Text(
+                                l10n.reject,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.red.shade600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
+                                side: BorderSide(
+                                  color: Colors.red.shade300,
+                                  width: 1.5,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _respond(context, 'ACCEPTED'),
+                              icon: const Icon(Icons.check, size: 16),
+                              label: Text(
+                                l10n.accept,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.kPrimaryColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
                           ),
-                          side: BorderSide(
-                            color: Colors.red.shade300,
-                            width: 1.5,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _respond(context, 'ACCEPTED'),
-                        icon: const Icon(Icons.check, size: 16),
-                        label: Text(
-                          l10n.accept,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.kPrimaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                          ),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),

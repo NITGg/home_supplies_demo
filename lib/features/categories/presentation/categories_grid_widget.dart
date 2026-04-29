@@ -6,6 +6,7 @@ import 'package:tawreedat_go/features/ads/ad_manager/ad_cubit.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../addresses/presentation/default_address_chip.dart';
+import '../../ads/presentation/widgets/home_ads_carousel.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
@@ -29,11 +30,15 @@ class CategoriesGridWidget extends StatefulWidget {
 
   /// How many items to request per page.
   final int pageSize;
+  final bool showHeader;
+
 
   const CategoriesGridWidget({
     super.key,
     required this.onCategoryTap,
     this.pageSize = 30,
+    this.showHeader = true,
+
   });
 
   @override
@@ -84,6 +89,7 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
               state: state,
               onCategoryTap: widget.onCategoryTap,
               onLoadMore: _cubit.loadMore,
+              showHeader: false,
             ),
           };
         },
@@ -100,11 +106,13 @@ class _CategoriesSection extends StatelessWidget {
   final CategoriesLoaded state;
   final void Function(CategoryModel) onCategoryTap;
   final VoidCallback onLoadMore;
+  final bool showHeader;
 
   const _CategoriesSection({
     required this.state,
     required this.onCategoryTap,
     required this.onLoadMore,
+    this.showHeader = true,
   });
 
   List<CategoryModel> get _parents =>
@@ -124,93 +132,85 @@ class _CategoriesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return state.totalCount == 0
-        ? Center(
-      child: CategoriesFallbackWidget(
-        title: AppLocalizations.of(context)!.welcome,
-        subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice,
-        lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',
-      ),
-    )
-        : Column(
+    if (state.totalCount == 0) {
+      return Center(
+        child: CategoriesFallbackWidget(
+          title: AppLocalizations.of(context)!.welcome,
+          subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice,
+          lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',
+        ),
+      );
+    }
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Header ───────────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
-          child: Row(
-            children: [
-              // Title accent bar
-              Container(
-                width: 4,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: AppColors.kPrimaryColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Text(
-              //   AppLocalizations.of(context)!.categories,
-              //   style: theme.textTheme.titleMedium?.copyWith(
-              //     fontWeight: FontWeight.bold,
-              //   ),
-              // ),
-              // const Spacer(),
-
-              // ── Default address chip ──────────────────────────────
-              const DefaultAddressChip(),
-              const SizedBox(width: 8),
-              const Spacer(),
-
-              // ── Search button ─────────────────────────────────────
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.grey.shade200,
-                child: IconButton(
-                  icon: Icon(
-                    Icons.search_rounded,
-                    color: Colors.grey.shade700,
-                  ),
-                  onPressed: () {showSearchDialog(context);},
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-
-              if (state.isLoadingMore)
-                SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: theme.colorScheme.primary,
+        // ── Sticky Header Row (search, address, cart) ─────────────────
+        // Wrapped in a Material so it paints over content below when sticky
+        if (showHeader)
+        Material(
+          elevation: 0,
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: AppColors.kPrimaryColor,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-
-              // ── Cart icon ─────────────────────────────────────────
-              BlocSelector<CartCubit, CartState, int>(
-                selector: (state) {
-                  if (state is CartLoaded) {
-                    final total = state.data.summary.totalItems;
-                    return total < 0 ? 0 : total;
-                  }
-                  return 0;
-                },
-                builder: (context, count) {
-                  return AnimatedCartIcon(
+                const SizedBox(width: 8),
+                const DefaultAddressChip(),
+                const SizedBox(width: 8),
+                const Spacer(),
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.grey.shade200,
+                  child: IconButton(
+                    icon: Icon(Icons.search_rounded, color: Colors.grey.shade700),
+                    onPressed: () => showSearchDialog(context),
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+                if (state.isLoadingMore)
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                BlocSelector<CartCubit, CartState, int>(
+                  selector: (state) {
+                    if (state is CartLoaded) {
+                      final total = state.data.summary.totalItems;
+                      return total < 0 ? 0 : total;
+                    }
+                    return 0;
+                  },
+                  builder: (context, count) => AnimatedCartIcon(
                     onTap: () => context.push('/cart'),
-                  );
-                },
-              ),
-            ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
 
-        // ── Featured products ─────────────────────────────────────────
+        // ── Ads Carousel (scrolls away) ───────────────────────────────
+        const HomeAdsCarousel(),
+
+        // ── Featured & Last Purchased ─────────────────────────────────
         const FeaturedProductsSection(),
         const LastPurchasedSection(),
 
+        // ── Categories label ──────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: Row(
@@ -234,7 +234,7 @@ class _CategoriesSection extends StatelessWidget {
           ),
         ),
 
-        // ── Always a grid ─────────────────────────────────────────────
+        // ── Grid ──────────────────────────────────────────────────────
         NotificationListener<ScrollNotification>(
           onNotification: (n) {
             if (n is ScrollEndNotification &&

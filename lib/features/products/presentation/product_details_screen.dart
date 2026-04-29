@@ -94,7 +94,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     const SizedBox(height: 12),
                     _PriceSection(product: product),
                     const SizedBox(height: 12),
-                    if(product.stock <10)
                     _StockChip(product: product),
                     const SizedBox(height: 20),
 
@@ -191,6 +190,7 @@ class _AddToCartBarState extends State<_AddToCartBar>
   /// True only during the [addItem] call, before the cubit emits a state
   /// that carries a busyItemId. Prevents double-tapping the add button.
   bool _isAdding = false;
+  bool _tapLocked = false;
 
   @override
   void initState() {
@@ -234,10 +234,14 @@ class _AddToCartBarState extends State<_AddToCartBar>
   // ── Handlers ────────────────────────────────────────────────────────────
 
   Future<void> _handleAdd(BuildContext ctx) async {
-    if (_isAdding) return; // guard against rapid double-tap
+    if (_tapLocked) return; // HARD GUARD (instant)
+    _tapLocked = true;
+
+    setState(() => _isAdding = true);
+
     HapticFeedback.lightImpact();
     _bounceCtrl.forward(from: 0);
-    setState(() => _isAdding = true);
+
     try {
       await ctx.read<CartCubit>().addItem(
         spId: widget.product.spId ?? widget.product.id,
@@ -250,23 +254,32 @@ class _AddToCartBarState extends State<_AddToCartBar>
     } catch (_) {
       if (ctx.mounted) _showError(ctx);
     } finally {
+      _tapLocked = false; // release immediately
       if (mounted) setState(() => _isAdding = false);
     }
   }
 
   Future<void> _handleIncrement(BuildContext ctx) async {
+    if (_tapLocked) return;
+    _tapLocked = true;
+
     HapticFeedback.selectionClick();
     _bounceCtrl.forward(from: 0);
+
     try {
       await ctx.read<CartCubit>().incrementItem(
         widget.product.spId ?? widget.product.id,
       );
     } catch (_) {
       if (ctx.mounted) _showError(ctx);
+    } finally {
+      _tapLocked = false;
     }
   }
 
   Future<void> _handleDecrement(BuildContext ctx) async {
+    if (_tapLocked) return;
+    _tapLocked = true;
     HapticFeedback.selectionClick();
     try {
       await ctx.read<CartCubit>().decrementItem(
@@ -274,6 +287,9 @@ class _AddToCartBarState extends State<_AddToCartBar>
       );
     } catch (_) {
       if (ctx.mounted) _showError(ctx);
+    }
+    finally {
+      _tapLocked = false;
     }
   }
 
@@ -832,11 +848,11 @@ class _StockChip extends StatelessWidget {
     }
     if (product.isLowStock) {
       return _Chip(
-        label: l10n.lowStockRemaining(product.stock),
+        label: l10n.lowStockRemaining(product.stock.clamp(0, product.maxAmountForOneOrder??10)),
         color: Colors.orange,
       );
     }
-    return _Chip(label: l10n.inStockCount(product.stock), color: Colors.green);
+    return _Chip(label: l10n.inStockCount(product.stock.clamp(0, product.maxAmountForOneOrder??10)), color: Colors.green);
   }
 }
 

@@ -257,16 +257,18 @@ class DirectProductsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final crossAxisCount = MediaQuery.sizeOf(context).width > 600 ? 3 : 2;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(), // outer CustomScrollView handles scrolling
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
-          childAspectRatio: 0.72,
+          // childAspectRatio: 0.72,
+          mainAxisExtent:crossAxisCount == 3 ? 400: 300
         ),
         itemCount: products.length + (isLoadingMore ? 2 : 0), // 2 skeleton placeholders at end
         itemBuilder: (_, i) {
@@ -279,9 +281,11 @@ class DirectProductsGrid extends StatelessWidget {
             );
           }
           final product = products[i];
-          return ProductCard(
-            product: product,
-            onTap: () => onProductTap(product),
+          return SizedBox(
+            child: ProductCard(
+              product: product,
+              onTap: () => onProductTap(product),
+            ),
           );
         },
       ),

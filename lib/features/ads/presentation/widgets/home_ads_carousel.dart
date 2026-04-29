@@ -93,7 +93,7 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
           CarouselSlider(
             carouselController: _carouselController,
             options: CarouselOptions(
-              height: 160.0,
+              aspectRatio: 3/1,
               autoPlay: false, // Disabled – we control it manually
               viewportFraction: 1.0,
               enableInfiniteScroll: true,
@@ -112,9 +112,10 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
                     //     ad.mobileScreen!.isNotEmpty &&
                     //     ad.mobileScreen != 'null') {
                     //   launchUrl(Uri.parse(ad.mobileScreen ?? ''));
-                    // } else if (ad.targetUrl.isNotEmpty) {
-                    //   launchUrl(Uri.parse(ad.targetUrl));
-                    // }
+                    // } else
+                      if (ad.targetUrl.isNotEmpty) {
+                      launchUrl(Uri.parse(ad.targetUrl));
+                    }
                   },
                   child: Container(
                     decoration: BoxDecoration(
@@ -132,8 +133,7 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
                       child: ImageWithIconFallback(
                         imageUrl: ad.imageUrl,
                         width: double.infinity,
-                        height: 130,
-                        fit: BoxFit.contain,
+                        fit: BoxFit.cover,
                         iconSize: 40,
                       ),
                     ),
@@ -179,12 +179,14 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              height: 130.0,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(14),
+            AspectRatio(
+              aspectRatio: 3/1,
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
             const SizedBox(height: 10),

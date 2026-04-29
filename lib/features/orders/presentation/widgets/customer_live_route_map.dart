@@ -287,7 +287,7 @@ class _CustomerLiveRouteMapWidgetState
                             Polyline(
                               points: _routePoints!,
                               strokeWidth: 4.0,
-                              color: AppColors.kPrimaryColor.withOpacity(0.80),
+                              color: Colors.blueAccent.withOpacity(0.80),
                               strokeCap: StrokeCap.round,
                               strokeJoin: StrokeJoin.round,
                             ),

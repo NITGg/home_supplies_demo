@@ -4,21 +4,26 @@ import 'package:tawreedat_go/features/products/manager/product_details_states.da
 import '../../../core/utils/extract_error_message.dart';
 import '../data/repo/product_repo.dart';
 
-
 class ProductDetailCubit extends Cubit<ProductDetailState> {
   final ProductRepository _repository;
 
   ProductDetailCubit({ProductRepository? repository})
-      : _repository = repository ?? ProductRepositoryImpl(),
-        super(const ProductDetailInitial());
+    : _repository = repository ?? ProductRepositoryImpl(),
+      super(const ProductDetailInitial());
 
   Future<void> load(int productId) async {
-    emit(const ProductDetailLoading());
+    if (!isClosed) {
+      emit(const ProductDetailLoading());
+    }
     try {
       final product = await _repository.getProductById(productId);
-      emit(ProductDetailLoaded(product));
+      if (!isClosed) {
+        emit(ProductDetailLoaded(product));
+      }
     } catch (e) {
-      emit(ProductDetailError(extractErrorMessage(e)));
+      if (!isClosed) {
+        emit(ProductDetailError(extractErrorMessage(e)));
+      }
     }
   }
 }
