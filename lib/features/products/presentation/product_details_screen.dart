@@ -22,7 +22,7 @@ class ProductDetailScreen extends StatefulWidget {
   final int? productId;
 
   const ProductDetailScreen({super.key, this.product, this.productId})
-    : assert(product != null || productId != null);
+      : assert(product != null || productId != null);
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -64,14 +64,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               product: widget.product,
               onRetry: () => _cubit.load(_id, supplierId: _supplierId),
             ),
-            ProductDetailLoaded(:final product) => _buildLoaded(product),
+            ProductDetailLoaded(:final product, :final isSupplierOpen) =>
+                _buildLoaded(product, isSupplierOpen: isSupplierOpen),
           };
         },
       ),
     );
   }
 
-  Widget _buildLoaded(ProductModel product) {
+  Widget _buildLoaded(ProductModel product, {bool isSupplierOpen = true}) {
     final l10n = AppLocalizations.of(context)!;
 
     return SafeArea(
@@ -145,7 +146,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
 
         // ── Smart bottom bar — driven entirely by CartCubit state ────────────
-        bottomNavigationBar: _AddToCartBar(product: product),
+        bottomNavigationBar: _AddToCartBar(product: product, isSupplierOpen: isSupplierOpen),
       ),
     );
   }
@@ -175,8 +176,8 @@ class _BarCartState {
   @override
   bool operator ==(Object other) =>
       other is _BarCartState &&
-      other.inCartQty == inCartQty &&
-      other.isBusy == isBusy;
+          other.inCartQty == inCartQty &&
+          other.isBusy == isBusy;
 
   @override
   int get hashCode => Object.hash(inCartQty, isBusy);
@@ -186,8 +187,9 @@ class _BarCartState {
 
 class _AddToCartBar extends StatefulWidget {
   final ProductModel product;
+  final bool isSupplierOpen;
 
-  const _AddToCartBar({required this.product});
+  const _AddToCartBar({required this.product, this.isSupplierOpen = true});
 
   @override
   State<_AddToCartBar> createState() => _AddToCartBarState();
@@ -346,6 +348,9 @@ class _AddToCartBarState extends State<_AddToCartBar>
 
           if (product.isOutOfStock) {
             content = _OutOfStockButton(key: const ValueKey('oos'), l10n: l10n);
+          } else if (!widget.isSupplierOpen) {
+            content = _SupplierClosedButton(
+                key: const ValueKey('closed'), l10n: l10n);
           } else if (isBusy) {
             content = _BusyBar(
               key: const ValueKey('busy'),
@@ -413,6 +418,32 @@ class _OutOfStockButton extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
       ),
       style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+    );
+  }
+}
+
+// ── Supplier closed button ────────────────────────────────────────────────────
+
+class _SupplierClosedButton extends StatelessWidget {
+  final AppLocalizations l10n;
+
+  const _SupplierClosedButton({super.key, required this.l10n});
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: null,
+      icon: const Icon(Icons.storefront_outlined),
+      label: Text(
+        l10n.closed,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+      style: FilledButton.styleFrom(
+        minimumSize: const Size.fromHeight(56),
+        disabledBackgroundColor:
+        Theme.of(context).colorScheme.errorContainer.withOpacity(0.55),
+        disabledForegroundColor: Theme.of(context).colorScheme.error,
+      ),
     );
   }
 }
@@ -521,15 +552,15 @@ class _QuantityBar extends StatelessWidget {
                 opacity: animation,
                 child: SlideTransition(
                   position:
-                      Tween<Offset>(
-                        begin: const Offset(0, 0.35),
-                        end: Offset.zero,
-                      ).animate(
-                        CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOut,
-                        ),
-                      ),
+                  Tween<Offset>(
+                    begin: const Offset(0, 0.35),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOut,
+                    ),
+                  ),
                   child: child,
                 ),
               ),
@@ -615,30 +646,30 @@ class _ImageGalleryAppBar extends StatelessWidget {
         background: images.isEmpty
             ? _placeholder(theme)
             : Stack(
-                children: [
-                  Container(
-                    color: theme.colorScheme.surfaceContainerLow,
-                    child: ImageWithIconFallback(
-                      imageUrl: images[selectedIndex],
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.fitHeight,
-                      iconSize: 64,
-                    ),
-                  ),
-                  if (images.length > 1)
-                    Positioned(
-                      bottom: 12,
-                      left: 0,
-                      right: 0,
-                      child: _ThumbnailRow(
-                        images: images,
-                        selected: selectedIndex,
-                        onSelect: onImageSelected,
-                      ),
-                    ),
-                ],
+          children: [
+            Container(
+              color: theme.colorScheme.surfaceContainerLow,
+              child: ImageWithIconFallback(
+                imageUrl: images[selectedIndex],
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.fitHeight,
+                iconSize: 64,
               ),
+            ),
+            if (images.length > 1)
+              Positioned(
+                bottom: 12,
+                left: 0,
+                right: 0,
+                child: _ThumbnailRow(
+                  images: images,
+                  selected: selectedIndex,
+                  onSelect: onImageSelected,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -746,7 +777,7 @@ class _NameRow extends StatelessWidget {
             children: [
               ...List.generate(
                 5,
-                (i) => Icon(
+                    (i) => Icon(
                   i < product.rating.round()
                       ? Icons.star_rounded
                       : Icons.star_outline_rounded,
@@ -1130,7 +1161,7 @@ class _LoadingViewState extends State<_LoadingView>
 
                       // ── Description lines ──────────────────────────────────
                       ...[1.0, 1.0, 1.0, 0.6].map(
-                        (fraction) => Padding(
+                            (fraction) => Padding(
                           padding: const EdgeInsets.only(bottom: 9),
                           child: _Skel(
                             color: shimmer,

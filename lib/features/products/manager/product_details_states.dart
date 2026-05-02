@@ -19,10 +19,14 @@ class ProductDetailLoading extends ProductDetailState {
 class ProductDetailLoaded extends ProductDetailState {
   final ProductModel product;
 
-  const ProductDetailLoaded(this.product);
+  /// Whether the supplier that owns this product is currently open.
+  /// Defaults to true so that screens without supplier context are unaffected.
+  final bool isSupplierOpen;
+
+  const ProductDetailLoaded(this.product, {this.isSupplierOpen = true});
 
   @override
-  List<Object?> get props => [product];
+  List<Object?> get props => [product, isSupplierOpen];
 }
 
 class ProductDetailError extends ProductDetailState {

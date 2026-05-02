@@ -112,8 +112,10 @@ class MainSupplierWorkingHoursBanner extends StatelessWidget {
           ),
 
           // ── "Order delivers tomorrow" nudge ──────────────────────────────
-          if (status.orderDeliveredTomorrow)
-            _TomorrowNudge(status: status, theme: theme, l10n: l10n),
+          // Commented out: orders placed outside opening hours are now blocked
+          // rather than scheduled, so this notice is no longer shown.
+          // if (status.orderDeliveredTomorrow)
+          //   _TomorrowNudge(status: status, theme: theme, l10n: l10n),
 
           Divider(color: Colors.grey.shade200, height: 1),
         ],
@@ -122,11 +124,11 @@ class MainSupplierWorkingHoursBanner extends StatelessWidget {
   }
 
   void _showAllHoursSheet(
-    BuildContext context,
-    SupplierWorkingHours wh,
-    ThemeData theme,
-    AppLocalizations l10n,
-  ) {
+      BuildContext context,
+      SupplierWorkingHours wh,
+      ThemeData theme,
+      AppLocalizations l10n,
+      ) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -449,25 +451,25 @@ class _DayRow extends StatelessWidget {
           Expanded(
             child: isClosed || slots.isEmpty
                 ? Text(
-                    l10n.closed,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.error,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  )
+              l10n.closed,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+                fontWeight: FontWeight.w500,
+              ),
+            )
                 : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: slots
-                        .map(
-                          (s) => Text(
-                            _slotRange(s, l10n),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        )
-                        .toList(),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: slots
+                  .map(
+                    (s) => Text(
+                  _slotRange(s, l10n),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
+                ),
+              )
+                  .toList(),
+            ),
           ),
         ],
       ),

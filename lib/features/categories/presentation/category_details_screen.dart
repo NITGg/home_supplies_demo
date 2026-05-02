@@ -361,10 +361,15 @@ class _LoadedViewState extends State<_LoadedView> {
               const Divider(height: 1, indent: 16, endIndent: 16),
               itemBuilder: (_, i) {
                 final section = state.sections[i];
+                // Inherit the main supplier's open/closed status so product
+                // cards block the cart when the supplier is closed.
+                final isOpen =
+                    state.mainSupplier?.currentStatus?.isOpen ?? true;
                 return KeyedSubtree(
                   key: _sectionKeys[i],
                   child: SubCategorySectionWidget(
                     section: section,
+                    isSupplierOpen: isOpen,
                     onProductTap: widget.onProductTap,
                     onLoadMore: () =>
                         widget.onLoadMoreSection(section.subCategory.id),

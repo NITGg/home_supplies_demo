@@ -9,12 +9,14 @@ class SubCategorySectionWidget extends StatelessWidget {
   final SubCategorySection section;
   final void Function(ProductModel product) onProductTap;
   final VoidCallback? onLoadMore; // restored
+  final bool isSupplierOpen;
 
   const SubCategorySectionWidget({
     super.key,
     required this.section,
     required this.onProductTap,
     this.onLoadMore,
+    this.isSupplierOpen = true,
   });
 
   @override
@@ -68,6 +70,7 @@ class SubCategorySectionWidget extends StatelessWidget {
             products: section.products,
             isLoadingMore: section.isLoading,
             hasMore: section.hasMore,
+            isSupplierOpen: isSupplierOpen,
             onProductTap: onProductTap,
             onLoadMore: onLoadMore,
           ),
@@ -82,6 +85,7 @@ class _ProductList extends StatefulWidget {
   final List<ProductModel> products;
   final bool isLoadingMore;
   final bool hasMore;
+  final bool isSupplierOpen;
   final void Function(ProductModel) onProductTap;
   final VoidCallback? onLoadMore;
 
@@ -89,6 +93,7 @@ class _ProductList extends StatefulWidget {
     required this.products,
     required this.isLoadingMore,
     required this.hasMore,
+    this.isSupplierOpen = true,
     required this.onProductTap,
     this.onLoadMore,
   });
@@ -158,6 +163,7 @@ class _ProductListState extends State<_ProductList> {
               padding: const EdgeInsets.only(right: 10,bottom: 20),
               child: ProductCard(
                 product: product,
+                isSupplierOpen: widget.isSupplierOpen,
                 onTap: () => widget.onProductTap(product),
               ),
             ),
@@ -264,11 +270,11 @@ class DirectProductsGrid extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(), // outer CustomScrollView handles scrolling
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          // childAspectRatio: 0.72,
-          mainAxisExtent:crossAxisCount == 3 ? 400: 300
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            // childAspectRatio: 0.72,
+            mainAxisExtent:crossAxisCount == 3 ? 400: 300
         ),
         itemCount: products.length + (isLoadingMore ? 2 : 0), // 2 skeleton placeholders at end
         itemBuilder: (_, i) {

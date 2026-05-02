@@ -312,10 +312,15 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
               const Divider(height: 1, indent: 16, endIndent: 16),
               itemBuilder: (_, i) {
                 final section = state.sections[i];
+                // Compute supplier open status once — null status means the
+                // supplier has no working-hours configured, so default to open.
+                final isOpen =
+                    state.supplier.currentStatus?.isOpen ?? true;
                 return KeyedSubtree(
                   key: _sectionKeys[i],
                   child: _SupplierCategorySectionWidget(
                     section: section,
+                    isSupplierOpen: isOpen,
                     onProductTap: widget.onProductTap,
                     onLoadMore: () =>
                         widget.onLoadMoreSection(section.category.id),
@@ -337,11 +342,13 @@ class _SupplierCategorySectionWidget extends StatelessWidget {
   final SupplierCategorySection section;
   final void Function(ProductModel) onProductTap;
   final VoidCallback? onLoadMore;
+  final bool isSupplierOpen;
 
   const _SupplierCategorySectionWidget({
     required this.section,
     required this.onProductTap,
     this.onLoadMore,
+    this.isSupplierOpen = true,
   });
 
   @override
@@ -392,6 +399,7 @@ class _SupplierCategorySectionWidget extends StatelessWidget {
             products: section.products.cast<ProductModel>(),
             isLoadingMore: section.isLoading,
             hasMore: section.hasMore,
+            isSupplierOpen: isSupplierOpen,
             onProductTap: onProductTap,
             onLoadMore: onLoadMore,
           ),
@@ -404,6 +412,7 @@ class _SupplierProductList extends StatefulWidget {
   final List<ProductModel> products;
   final bool isLoadingMore;
   final bool hasMore;
+  final bool isSupplierOpen;
   final void Function(ProductModel) onProductTap;
   final VoidCallback? onLoadMore;
 
@@ -411,6 +420,7 @@ class _SupplierProductList extends StatefulWidget {
     required this.products,
     required this.isLoadingMore,
     required this.hasMore,
+    this.isSupplierOpen = true,
     required this.onProductTap,
     this.onLoadMore,
   });
@@ -476,6 +486,7 @@ class _SupplierProductListState extends State<_SupplierProductList> {
               padding: const EdgeInsets.only(right: 10, bottom: 20),
               child: ProductCard(
                 product: product,
+                isSupplierOpen: widget.isSupplierOpen,
                 onTap: () => widget.onProductTap(product),
               ),
             ),
@@ -1166,8 +1177,10 @@ class _WorkingHoursBanner extends StatelessWidget {
           ),
 
           // ── "Order delivers tomorrow" nudge ─────────────────────────────
-          if (status.orderDeliveredTomorrow)
-            _TomorrowNudge(status: status, theme: theme, l10n: l10n),
+          // Commented out: orders placed outside opening hours are now blocked
+          // rather than scheduled, so this notice is no longer shown.
+          // if (status.orderDeliveredTomorrow)
+          //   _TomorrowNudge(status: status, theme: theme, l10n: l10n),
 
           Divider(color: Colors.grey.shade200, height: 1),
         ],

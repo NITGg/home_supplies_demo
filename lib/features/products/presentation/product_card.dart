@@ -38,8 +38,8 @@ class _CardCartState {
   @override
   bool operator ==(Object other) =>
       other is _CardCartState &&
-      other.quantity == quantity &&
-      other.isBusy == isBusy;
+          other.quantity == quantity &&
+          other.isBusy == isBusy;
 
   @override
   int get hashCode => Object.hash(quantity, isBusy);
@@ -52,11 +52,16 @@ class ProductCard extends StatefulWidget {
   final VoidCallback? onTap;
   final void Function(int quantity)? onQuantityChanged;
 
+  /// When false (supplier is currently closed) the add-to-cart controls are
+  /// disabled so the user cannot place an order outside opening hours.
+  final bool isSupplierOpen;
+
   const ProductCard({
     super.key,
     required this.product,
     this.onTap,
     this.onQuantityChanged,
+    this.isSupplierOpen = true,
   });
 
   @override
@@ -111,7 +116,7 @@ class _ProductCardState extends State<ProductCard>
   void _triggerBounce() => _bounceCtrl.forward(from: 0);
 
   Future<void> _handleAdd(BuildContext ctx) async {
-    if (widget.product.isOutOfStock) return;
+    if (widget.product.isOutOfStock || !widget.isSupplierOpen) return;
     HapticFeedback.lightImpact();
     _triggerBounce();
     try {
@@ -245,17 +250,17 @@ class _ProductCardState extends State<ProductCard>
                           left: 8,
                           child: product.discountPercent != null
                               ? _Badge(
-                                  label: l10n.percentOff(
-                                    product.discountPercent!,
-                                  ),
-                                  color: AppColors.kDiscountColor,
-                                  icon: Icons.card_giftcard,
-                                )
+                            label: l10n.percentOff(
+                              product.discountPercent!,
+                            ),
+                            color: AppColors.kDiscountColor,
+                            icon: Icons.card_giftcard,
+                          )
                               : _Badge(
-                                  label: l10n.offer,
-                                  color: AppColors.kDiscountColor,
-                                  icon: Icons.card_giftcard,
-                                ),
+                            label: l10n.offer,
+                            color: AppColors.kDiscountColor,
+                            icon: Icons.card_giftcard,
+                          ),
                         ),
 
                       if (product.isOutOfStock)
@@ -293,6 +298,7 @@ class _ProductCardState extends State<ProductCard>
                           product: product,
                           bounceScale: _bounceScale,
                           primaryColor: primaryColor,
+                          isSupplierOpen: widget.isSupplierOpen,
                           onAdd: () => _handleAdd(ctx),
                           onIncrement: () =>
                               _handleIncrement(ctx, cartState.quantity),
@@ -371,6 +377,7 @@ class _CartControl extends StatelessWidget {
   final ProductModel product;
   final Animation<double> bounceScale;
   final Color primaryColor;
+  final bool isSupplierOpen;
   final VoidCallback onAdd;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
@@ -380,6 +387,7 @@ class _CartControl extends StatelessWidget {
     required this.product,
     required this.bounceScale,
     required this.primaryColor,
+    this.isSupplierOpen = true,
     required this.onAdd,
     required this.onIncrement,
     required this.onDecrement,
@@ -387,6 +395,12 @@ class _CartControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // When the supplier is closed, always show a disabled add button —
+    // regardless of what's already in the cart.
+    if (!isSupplierOpen && !product.isOutOfStock) {
+      return _AddButton(onTap: null, color: primaryColor);
+    }
+
     final Widget child;
     if (cartState.isBusy) {
       child = _BusyIndicator(key: const ValueKey('busy'), color: primaryColor);
@@ -447,12 +461,12 @@ class _AddButton extends StatelessWidget {
           boxShadow: disabled
               ? const []
               : [
-                  BoxShadow(
-                    color: color.withOpacity(0.38),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+            BoxShadow(
+              color: color.withOpacity(0.38),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Icon(
           Icons.add_rounded,
@@ -520,15 +534,15 @@ class _QuantityPill extends StatelessWidget {
                 opacity: animation,
                 child: SlideTransition(
                   position:
-                      Tween<Offset>(
-                        begin: const Offset(0, 0.4),
-                        end: Offset.zero,
-                      ).animate(
-                        CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOut,
-                        ),
-                      ),
+                  Tween<Offset>(
+                    begin: const Offset(0, 0.4),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOut,
+                    ),
+                  ),
                   child: child,
                 ),
               ),
