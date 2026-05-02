@@ -789,7 +789,7 @@ class _PriceSection extends StatelessWidget {
               // ── Highlighted discounted price ─────────────────────────────
               HighlighterWidget(
                 child: Text(
-                  '${product.offer!.toStringAsFixed(0)} ${l10n.egp}',
+                  '${product.offer!.toStringAsFixed(2)} ${l10n.egp}',
                   style: theme.textTheme.headlineMedium?.copyWith(
                     color: Colors.black87,
                     fontWeight: FontWeight.bold,
