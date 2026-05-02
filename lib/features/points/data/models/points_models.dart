@@ -99,7 +99,9 @@ class PointsProgress {
 
   factory PointsProgress.fromJson(Map<String, dynamic> json) {
     return PointsProgress(
-      ordersBatch: OrdersBatch.fromJson(json['ordersBatch']),
+      ordersBatch: json['ordersBatch'] != null
+          ? OrdersBatch.fromJson(json['ordersBatch'])
+          : OrdersBatch.empty(), // 👈 fallback
     );
   }
 }
@@ -114,6 +116,14 @@ class OrdersBatch {
     required this.requiredOrders,
     required this.batches,
   });
+
+  factory OrdersBatch.empty() {
+    return OrdersBatch(
+      currentOrder: 0,
+      requiredOrders: 1, // 👈 avoid division by zero
+      batches: const [],
+    );
+  }
 
   factory OrdersBatch.fromJson(Map<String, dynamic> json) {
     return OrdersBatch(

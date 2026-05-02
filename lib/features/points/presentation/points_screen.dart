@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tawreedat_go/core/widgets/circel_back_button.dart';
 import 'package:tawreedat_go/features/auth/manager/profile_cubit.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../l10n/manager/locale_cubit.dart';
@@ -43,8 +44,7 @@ class _PointsView extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: BackButton(
-          color: Colors.black,
+        leading: CircleBackButton(
           onPressed: () =>
               context.canPop() ? context.pop() : context.go('/mainHome'),
         ),
@@ -98,9 +98,6 @@ class _PointsView extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () => context.read<PointsCubit>().loadPoints(
                       isArabic: isArabic,
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.kPrimaryColor,
                     ),
                     child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
                   ),
