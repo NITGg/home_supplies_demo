@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 
 import '../../../core/utils/extract_error_message.dart';
 import '../data/models/supplier_models.dart';
@@ -15,6 +16,9 @@ import 'supplier_states.dart';
 /// parallel and deduplicates the merged result by supplier id.
 ///
 /// Leave [categoryIds] empty (or omit it) to fetch all suppliers.
+///
+/// The main supplier ([AppConfig.kMainSupplierId]) is always excluded from the
+/// strip because their products already fill the entire catalogue.
 class SuppliersCubit extends Cubit<SuppliersState> {
   final SupplierRepository _repository;
 
@@ -40,37 +44,40 @@ class SuppliersCubit extends Cubit<SuppliersState> {
     }
   }
 
-  /// Fetches suppliers for every id in [categoryIds] in parallel and returns
-  /// a deduplicated list ordered by first occurrence.
-  ///
-  /// When [categoryIds] is empty a single unfiltered request is made.
+  /// Fetches suppliers for every id in [categoryIds] in parallel, merges,
+  /// deduplicates, and strips out the main supplier.
   Future<List<SupplierModel>> _fetchAndMerge() async {
+    List<SupplierModel> raw;
+
     if (categoryIds.isEmpty) {
       final response = await _repository.getSuppliers();
-      return response.suppliers;
-    }
-
-    if (categoryIds.length == 1) {
+      raw = response.suppliers;
+    } else if (categoryIds.length == 1) {
       final response =
       await _repository.getSuppliers(categoryId: categoryIds.first);
-      return response.suppliers;
-    }
+      raw = response.suppliers;
+    } else {
+      // Fan out — one request per category id, all in parallel.
+      final responses = await Future.wait(
+        categoryIds.map((id) => _repository.getSuppliers(categoryId: id)),
+      );
 
-    // Fan out — one request per category id, all in parallel.
-    final responses = await Future.wait(
-      categoryIds.map((id) => _repository.getSuppliers(categoryId: id)),
-    );
-
-    // Merge and deduplicate, preserving first-seen order.
-    final seen = <int>{};
-    final merged = <SupplierModel>[];
-    for (final response in responses) {
-      for (final supplier in response.suppliers) {
-        if (seen.add(supplier.id)) {
-          merged.add(supplier);
+      // Merge and deduplicate, preserving first-seen order.
+      final seen = <int>{};
+      raw = <SupplierModel>[];
+      for (final response in responses) {
+        for (final supplier in response.suppliers) {
+          if (seen.add(supplier.id)) {
+            raw.add(supplier);
+          }
         }
       }
     }
-    return merged;
+
+    // Always exclude the main supplier — their products already fill the
+    // catalogue so showing them again in the strip is redundant.
+    return raw
+        .where((s) => s.id != AppSettings.kMainSupplierId)
+        .toList();
   }
 }

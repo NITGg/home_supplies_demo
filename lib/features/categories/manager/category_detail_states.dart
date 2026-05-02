@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../products/data/models/product_model.dart';
+import '../../suppliers/data/models/supplier_models.dart';
 import '../data/models/category_models.dart';
 
 // ── Sub-category section data ─────────────────────────────────────────────────
@@ -62,6 +63,11 @@ class CategoryDetailLoaded extends CategoryDetailState {
   final CategoryModel category;
   final List<SubCategorySection> sections;
 
+  /// The main supplier fetched alongside the category.  When non-null and the
+  /// supplier has working-hours configured, a banner is shown at the top of
+  /// the category detail screen.
+  final SupplierModel? mainSupplier;
+
   /// Used when the category has no sub-categories – products belong directly.
   final List<ProductModel> directProducts;
   final bool directProductsLoading;
@@ -71,6 +77,7 @@ class CategoryDetailLoaded extends CategoryDetailState {
   const CategoryDetailLoaded({
     required this.category,
     required this.sections,
+    this.mainSupplier,
     this.directProducts = const [],
     this.directProductsLoading = false,
     this.directProductsHasMore = true,
@@ -82,6 +89,8 @@ class CategoryDetailLoaded extends CategoryDetailState {
   CategoryDetailLoaded copyWith({
     CategoryModel? category,
     List<SubCategorySection>? sections,
+    SupplierModel? mainSupplier,
+    bool clearMainSupplier = false,
     List<ProductModel>? directProducts,
     bool? directProductsLoading,
     bool? directProductsHasMore,
@@ -90,6 +99,8 @@ class CategoryDetailLoaded extends CategoryDetailState {
     return CategoryDetailLoaded(
       category: category ?? this.category,
       sections: sections ?? this.sections,
+      mainSupplier:
+      clearMainSupplier ? null : (mainSupplier ?? this.mainSupplier),
       directProducts: directProducts ?? this.directProducts,
       directProductsLoading:
       directProductsLoading ?? this.directProductsLoading,
@@ -103,6 +114,7 @@ class CategoryDetailLoaded extends CategoryDetailState {
   List<Object?> get props => [
     category,
     sections,
+    mainSupplier,
     directProducts,
     directProductsLoading,
     directProductsHasMore,

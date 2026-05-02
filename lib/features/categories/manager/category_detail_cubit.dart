@@ -1,23 +1,28 @@
 import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import 'package:tawreedat_go/core/utils/extract_error_message.dart';
-
 import '../../products/data/repo/product_repo.dart';
+import '../../suppliers/data/models/supplier_models.dart';
+import '../../suppliers/data/repo/supplier_repo.dart';
 import '../data/repo/category_repo.dart';
 import 'category_detail_states.dart';
 
 class CategoryDetailCubit extends Cubit<CategoryDetailState> {
   final CategoryRepository _categoryRepository;
   final ProductRepository _productRepository;
+  final SupplierRepository _supplierRepository;
 
   static const int _pageSize = 5;
 
   CategoryDetailCubit({
     CategoryRepository? categoryRepository,
     ProductRepository? productRepository,
+    SupplierRepository? supplierRepository,
   })  : _categoryRepository = categoryRepository ?? CategoryRepositoryImpl(),
         _productRepository = productRepository ?? ProductRepositoryImpl(),
+        _supplierRepository = supplierRepository ?? SupplierRepositoryImpl(),
         super(const CategoryDetailInitial());
 
   // ── Load full category detail ──────────────────────────────────────────────
@@ -25,46 +30,59 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
   Future<void> load(int categoryId) async {
     if (!isClosed) emit(const CategoryDetailLoading());
 
-    var step = 'getCategoryById';
+    var step = 'parallel fetch';
     try {
-      final category = await _categoryRepository.getCategoryById(categoryId);
-
-      step = 'getCategories (sub-categories)';
-      final subCatResponse = await _categoryRepository.getCategories(
-        parentId: categoryId,
-        skip: 0,
-        limit: 50,
-      );
-
-      step = 'getProducts (direct products)';
-      final directProductsResponse = await _productRepository.getProducts(
-        categoryId: categoryId,
-        skip: 0,
-        limit: _pageSize,
-      );
+      // Run category detail, sub-categories, first page of products, and the
+      // main supplier all in parallel so there is only one network round-trip.
+      final results = await Future.wait([
+        _categoryRepository.getCategoryById(categoryId),           // [0]
+        _categoryRepository.getCategories(                         // [1]
+          parentId: categoryId,
+          skip: 0,
+          limit: 50,
+        ),
+        _productRepository.getProducts(                            // [2]
+          categoryId: categoryId,
+          skip: 0,
+          limit: _pageSize,
+        ),
+        _supplierRepository                                        // [3]
+            .getSupplierById(AppSettings.kMainSupplierId)
+            .then<SupplierModel?>((s) => s)
+            .catchError((e) {
+          log('CategoryDetailCubit: Could not fetch main supplier → $e');
+          return null;
+        }),
+      ]);
 
       if (isClosed) return;
 
       step = 'parsing response';
+      final category = results[0] as dynamic; // CategoryModel
+      final subCatResponse = results[1] as dynamic; // CategoriesResponseModel
+      final directProductsResponse = results[2] as dynamic; // ProductsResponseModel
+      final mainSupplier = results[3] as SupplierModel?;
+
       final subCategories = subCatResponse.categories as List;
-      final sections = subCategories.map((sc) {
-        return SubCategorySection(subCategory: sc);
-      }).toList();
+      final sections = subCategories
+          .map((sc) => SubCategorySection(subCategory: sc))
+          .toList();
 
       final loaded = CategoryDetailLoaded(
         category: category,
         sections: sections,
+        mainSupplier: mainSupplier,
         directProducts: directProductsResponse.products,
-        directProductsHasMore:
-        directProductsResponse.products.length
-        < directProductsResponse.totalProducts,
+        directProductsHasMore: directProductsResponse.products.length <
+            directProductsResponse.totalProducts,
         directProductsSkip: directProductsResponse.products.length,
       );
 
       if (!isClosed) emit(loaded);
 
       if (sections.isNotEmpty) {
-        _loadAllSectionProducts(sections.map((s) => s.subCategory.id).toList());
+        _loadAllSectionProducts(
+            sections.map((s) => s.subCategory.id).toList());
       }
     } catch (e) {
       log('CategoryDetailCubit: ❌ Failed at step "$step" for category $categoryId');
@@ -72,6 +90,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
       if (!isClosed) emit(CategoryDetailError(extractErrorMessage(e)));
     }
   }
+
   // ── Load products for all sub-category sections ───────────────────────────
 
   Future<void> _loadAllSectionProducts(List<int> subCategoryIds) async {
@@ -185,8 +204,8 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
           directProductsSkip:
           freshState.directProductsSkip + response.products.length,
           directProductsHasMore:
-          freshState.directProductsSkip + response.products.length
-              < response.totalProducts,
+          freshState.directProductsSkip + response.products.length <
+              response.totalProducts,
         ));
       }
     } catch (e) {

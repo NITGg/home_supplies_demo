@@ -1420,16 +1420,6 @@ class _AllHoursSheet extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                l10n.timezone(wh.timezone),
-                style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant),
-              ),
-            ),
-
             const SizedBox(height: 14),
             Divider(height: 1, color: Colors.grey.shade200),
 

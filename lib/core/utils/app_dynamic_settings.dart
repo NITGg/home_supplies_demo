@@ -12,7 +12,7 @@ class AppSettings {
   AppSettings._internal();
 
   static String? android_version;
-
+  static const int kMainSupplierId = 9;
   static String? ios_url;
   static bool? chat_enable_send_images;
 

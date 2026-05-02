@@ -33,10 +33,10 @@
 // product_remote_data_source.dart
 import 'dart:developer';
 import 'package:dio/dio.dart';
+import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import '../../../../core/utils/api_client.dart';
 import '../models/product_model.dart';
 import '../models/product_response_model.dart';
-
 abstract class ProductRemoteDataSource {
   Future<ProductsResponseModel> getProducts({
     int skip = 0,
@@ -67,7 +67,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     final queryParams = <String, dynamic>{
       'skip': skip,
       'limit': limit,
-      'supplier_id': supplierId ?? 9, // default to Tawreedat Go
+      'supplier_id': supplierId ?? AppSettings.kMainSupplierId, // default to Tawreedat Go
       if (categoryId != null) 'product[category_id]': categoryId,
       if (isFeatured != null) 'is_featured': isFeatured,
       if (isLastPurchased != null) 'last_bought': isLastPurchased,
@@ -89,7 +89,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   @override
   Future<ProductModel> getProductById(int id) async {
     final response = await _dio.get(
-      '/products/$id?supplier_id=9&include=attributes',
+      '/products/$id?supplier_id=${AppSettings.kMainSupplierId}&include=attributes',
     );
 
     final data = response.data as Map<String, dynamic>;

@@ -9,6 +9,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../products/data/models/product_model.dart';
 import '../../search/presentation/search_dialog.dart';
+import '../../suppliers/presentation/main_supplier_hours_banner.dart';
 import '../../suppliers/presentation/suppliers_strip_widget.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_detail_cubit.dart';
@@ -328,6 +329,11 @@ class _LoadedViewState extends State<_LoadedView> {
         slivers: [
           // ── Hero app bar ──────────────────────────────────────────────────
           _CategorySliverAppBar(category: state.category),
+          SliverToBoxAdapter(
+            child: state.mainSupplier != null
+                ? MainSupplierWorkingHoursBanner(supplier: state.mainSupplier!)
+                : const SizedBox.shrink(),
+          ),
           SliverToBoxAdapter(
             child: SuppliersStripWidget(
               categoryIds: state.hasSections
