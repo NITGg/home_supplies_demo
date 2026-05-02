@@ -683,5 +683,7 @@
     "tryAgain": "حاول مجدداً",
     "locationPermissionPermanentlyDeniedTitle": "تم رفض الإذن نهائياً",
     "locationPermissionPermanentlyDeniedMessage": "تم رفض إذن الموقع بشكل دائم. يرجى تفعيله من إعدادات التطبيق.",
-    "openAppSettings": "فتح إعدادات التطبيق"
+    "openAppSettings": "فتح إعدادات التطبيق",
+    "suppliers": "المتاجر"
+
 }

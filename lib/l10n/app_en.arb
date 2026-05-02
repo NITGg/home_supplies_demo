@@ -684,5 +684,6 @@
     "typeToSearchProducts": "Type to search products & categories",
 "purchasedBefore": "Purchased Before",
 
-    "openAppSettings": "Open App Settings"
+    "openAppSettings": "Open App Settings",
+    "suppliers": "Stores"
 }

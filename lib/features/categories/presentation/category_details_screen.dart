@@ -9,6 +9,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../products/data/models/product_model.dart';
 import '../../search/presentation/search_dialog.dart';
+import '../../suppliers/presentation/suppliers_strip_widget.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_detail_cubit.dart';
 import '../manager/category_detail_states.dart';
@@ -144,8 +145,7 @@ class _LoadedViewState extends State<_LoadedView> {
   /// Records the absolute scroll offset of every currently-rendered section
   /// so we can jump to them later even when they scroll off-screen.
   void _updateSectionOffsetCache() {
-    const double stickyHeaders =
-        kToolbarHeight + _PillsHeaderDelegate._height;
+    const double stickyHeaders = kToolbarHeight + _PillsHeaderDelegate._height;
 
     for (int i = 0; i < _sectionKeys.length; i++) {
       final ctx = _sectionKeys[i].currentContext;
@@ -154,8 +154,10 @@ class _LoadedViewState extends State<_LoadedView> {
       if (box == null) continue;
       final screenDy = box.localToGlobal(Offset.zero).dy;
       _sectionScrollOffsets[i] =
-          (_scrollController.offset + screenDy - stickyHeaders)
-              .clamp(0.0, double.maxFinite);
+          (_scrollController.offset + screenDy - stickyHeaders).clamp(
+            0.0,
+            double.maxFinite,
+          );
     }
   }
 
@@ -232,8 +234,7 @@ class _LoadedViewState extends State<_LoadedView> {
   void _scrollToSection(int index) async {
     setState(() => _activePillIndex = index);
 
-    const double stickyHeaders =
-        kToolbarHeight + _PillsHeaderDelegate._height;
+    const double stickyHeaders = kToolbarHeight + _PillsHeaderDelegate._height;
 
     // ── Pass 1 (direct): item already rendered ────────────────────────────
     final ctx = _sectionKeys[index].currentContext;
@@ -241,8 +242,7 @@ class _LoadedViewState extends State<_LoadedView> {
       final box = ctx.findRenderObject() as RenderBox?;
       if (box == null) return;
       final screenDy = box.localToGlobal(Offset.zero).dy;
-      final target =
-      (_scrollController.offset + screenDy - stickyHeaders)
+      final target = (_scrollController.offset + screenDy - stickyHeaders)
           .clamp(0.0, _scrollController.position.maxScrollExtent);
       _scrollController.animateTo(
         target,
@@ -269,8 +269,7 @@ class _LoadedViewState extends State<_LoadedView> {
       final box = ctx2.findRenderObject() as RenderBox?;
       if (box == null) return;
       final screenDy = box.localToGlobal(Offset.zero).dy;
-      final target =
-      (_scrollController.offset + screenDy - stickyHeaders)
+      final target = (_scrollController.offset + screenDy - stickyHeaders)
           .clamp(0.0, _scrollController.position.maxScrollExtent);
       _scrollController.animateTo(
         target,
@@ -305,9 +304,7 @@ class _LoadedViewState extends State<_LoadedView> {
       // Linear interpolation between the two neighbours.
       final t = (index - before) / (after - before);
       return _sectionScrollOffsets[before]! +
-          t *
-              (_sectionScrollOffsets[after]! -
-                  _sectionScrollOffsets[before]!);
+          t * (_sectionScrollOffsets[after]! - _sectionScrollOffsets[before]!);
     }
     if (before != null) return _sectionScrollOffsets[before]!;
     if (after != null) return _sectionScrollOffsets[after]!;
@@ -331,7 +328,13 @@ class _LoadedViewState extends State<_LoadedView> {
         slivers: [
           // ── Hero app bar ──────────────────────────────────────────────────
           _CategorySliverAppBar(category: state.category),
-
+          SliverToBoxAdapter(
+            child: SuppliersStripWidget(
+              categoryIds: state.hasSections
+                  ? state.sections.map((s) => s.subCategory.id).toList()
+                  : [state.category.id],
+            ),
+          ),
           // ── Sticky pills row (only when there are multiple sections) ──────
           if (hasPills)
             SliverPersistentHeader(

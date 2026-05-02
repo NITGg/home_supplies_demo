@@ -13,6 +13,7 @@ import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../products/presentation/featured_section.dart';
 import '../../products/presentation/last_purchase_section.dart';
 import '../../search/presentation/search_dialog.dart';
+import '../../suppliers/presentation/suppliers_strip_widget.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_cubit.dart';
 import '../manager/category_states.dart';
@@ -20,25 +21,16 @@ import 'categories_fallback.dart';
 import 'category_card.dart';
 
 /// A self-contained, embeddable categories section.
-///
-/// Owns its own [CategoriesCubit] — just drop it anywhere and it loads itself.
-/// Never scrolls independently: compact style uses a [SingleChildScrollView]
-/// row, regular style uses a [GridView] with [shrinkWrap] so the parent
-/// scroll view stays in control.
 class CategoriesGridWidget extends StatefulWidget {
   final void Function(CategoryModel category) onCategoryTap;
-
-  /// How many items to request per page.
   final int pageSize;
   final bool showHeader;
-
 
   const CategoriesGridWidget({
     super.key,
     required this.onCategoryTap,
     this.pageSize = 30,
     this.showHeader = true,
-
   });
 
   @override
@@ -74,13 +66,13 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
         builder: (context, state) {
           return switch (state) {
             CategoriesInitial() ||
-            CategoriesLoading() => const _CategoriesSkeletonRow(),
+            CategoriesLoading() =>
+            const _CategoriesSkeletonRow(),
             CategoriesError() => Center(
               child: CategoriesFallbackWidget(
                 title: AppLocalizations.of(context)!.welcome,
-                subtitle: AppLocalizations.of(
-                  context,
-                )!.tawreedatIsYourBestChoice,
+                subtitle: AppLocalizations.of(context)!
+                    .tawreedatIsYourBestChoice,
                 lottieAsset:
                 'assets/animation_json/Shopping_cart_animation.json',
               ),
@@ -99,7 +91,7 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Section wrapper (title + adaptive grid)
+// Section wrapper
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CategoriesSection extends StatelessWidget {
@@ -137,7 +129,8 @@ class _CategoriesSection extends StatelessWidget {
         child: CategoriesFallbackWidget(
           title: AppLocalizations.of(context)!.welcome,
           subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice,
-          lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',
+          lottieAsset:
+          'assets/animation_json/Shopping_cart_animation.json',
         ),
       );
     }
@@ -146,71 +139,71 @@ class _CategoriesSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Sticky Header Row (search, address, cart) ─────────────────
-        // Wrapped in a Material so it paints over content below when sticky
+        // ── Sticky Header Row ─────────────────────────────────────────────
         if (showHeader)
-        Material(
-          elevation: 0,
-          color: Theme.of(context).scaffoldBackgroundColor,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: AppColors.kPrimaryColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const DefaultAddressChip(),
-                const SizedBox(width: 8),
-                const Spacer(),
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.grey.shade200,
-                  child: IconButton(
-                    icon: Icon(Icons.search_rounded, color: Colors.grey.shade700),
-                    onPressed: () => showSearchDialog(context),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-                if (state.isLoadingMore)
-                  SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: theme.colorScheme.primary,
+          Material(
+            elevation: 0,
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: AppColors.kPrimaryColor,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                BlocSelector<CartCubit, CartState, int>(
-                  selector: (state) {
-                    if (state is CartLoaded) {
-                      final total = state.data.summary.totalItems;
-                      return total < 0 ? 0 : total;
-                    }
-                    return 0;
-                  },
-                  builder: (context, count) => AnimatedCartIcon(
-                    onTap: () => context.push('/cart'),
+                  const SizedBox(width: 8),
+                  const DefaultAddressChip(),
+                  const SizedBox(width: 8),
+                  const Spacer(),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.grey.shade200,
+                    child: IconButton(
+                      icon: Icon(Icons.search_rounded,
+                          color: Colors.grey.shade700),
+                      onPressed: () => showSearchDialog(context),
+                      padding: EdgeInsets.zero,
+                    ),
                   ),
-                ),
-              ],
+                  if (state.isLoadingMore)
+                    SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  BlocSelector<CartCubit, CartState, int>(
+                    selector: (state) {
+                      if (state is CartLoaded) {
+                        final total = state.data.summary.totalItems;
+                        return total < 0 ? 0 : total;
+                      }
+                      return 0;
+                    },
+                    builder: (context, count) => AnimatedCartIcon(
+                      onTap: () => context.push('/cart'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
 
-        // ── Ads Carousel (scrolls away) ───────────────────────────────
+        // ── Ads Carousel ──────────────────────────────────────────────────
         const HomeAdsCarousel(),
 
-        // ── Featured & Last Purchased ─────────────────────────────────
+        // ── Featured & Last Purchased ─────────────────────────────────────
         const FeaturedProductsSection(),
         const LastPurchasedSection(),
 
-        // ── Categories label ──────────────────────────────────────────
+        // ── Categories label ──────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: Row(
@@ -234,7 +227,7 @@ class _CategoriesSection extends StatelessWidget {
           ),
         ),
 
-        // ── Grid ──────────────────────────────────────────────────────
+        // ── Grid ──────────────────────────────────────────────────────────
         NotificationListener<ScrollNotification>(
           onNotification: (n) {
             if (n is ScrollEndNotification &&
@@ -267,6 +260,10 @@ class _CategoriesSection extends StatelessWidget {
 
         const SizedBox(height: 4),
         Divider(color: Colors.grey.shade200, height: 1),
+
+        // ── Suppliers Strip ───────────────────────────────────────────────
+        // Shows ALL suppliers (no category filter on the home page)
+        const SuppliersStripWidget(),
       ],
     );
   }
@@ -280,7 +277,8 @@ class _CategoriesSkeletonRow extends StatefulWidget {
   const _CategoriesSkeletonRow();
 
   @override
-  State<_CategoriesSkeletonRow> createState() => _CategoriesSkeletonRowState();
+  State<_CategoriesSkeletonRow> createState() =>
+      _CategoriesSkeletonRowState();
 }
 
 class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
@@ -295,10 +293,8 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _anim = Tween<double>(
-      begin: 0.3,
-      end: 0.85,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _anim = Tween<double>(begin: 0.3, end: 0.85)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -313,7 +309,6 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Skeleton header ───────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: AnimatedBuilder(
@@ -331,8 +326,6 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
             ),
           ),
         ),
-
-        // ── Skeleton grid ─────────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: GridView.builder(
@@ -361,7 +354,6 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
             ),
           ),
         ),
-
         const SizedBox(height: 12),
         Divider(color: Colors.grey.shade200, height: 1),
       ],

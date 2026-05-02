@@ -3184,6 +3184,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open App Settings'**
   String get openAppSettings;
+
+  /// No description provided for @suppliers.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppliers'**
+  String get suppliers;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

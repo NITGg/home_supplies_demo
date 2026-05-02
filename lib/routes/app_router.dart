@@ -32,6 +32,8 @@ import '../features/reviews/data/data_source/reviews_remote_data_source.dart';
 import '../features/reviews/data/repositories/reviews_repo.dart';
 import '../features/reviews/manager/reviews_cubit.dart';
 import '../features/reviews/presentation/reviews_screen.dart';
+import '../features/suppliers/data/models/supplier_models.dart';
+import '../features/suppliers/presentation/supllier_details_screen.dart';
 import '../features/wallet/presentation/manual_topup_screen.dart';
 import '../features/wallet/presentation/payment_success_screen.dart';
 import '../features/wallet/presentation/paymob_webview.dart';
@@ -129,6 +131,22 @@ Future<GoRouter> createAppRouter({
               return OtpVerificationScreen(
                 destination: extra['destination'] as String,
                 isPasswordReset: (extra['isPasswordReset'] as bool?) ?? false,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/suppliers/:id',
+            builder: (context, state) {
+              // extra is always a Map passed from SuppliersStripWidget
+              final extra = state.extra as Map<String, dynamic>? ?? {};
+              final supplier = extra['supplier'] as SupplierModel?;
+              final filterCategoryId = extra['filterCategoryId'] as int?;
+              final id = int.parse(state.pathParameters['id']!);
+              return SupplierDetailScreen(
+                supplier: supplier,
+                supplierId: id,
+                filterCategoryId:
+                    filterCategoryId, // null = home (all), non-null = category filtered
               );
             },
           ),

@@ -1,0 +1,1081 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:tawreedat_go/core/widgets/image_with_fallback.dart';
+
+import '../../../core/widgets/circel_back_cutton.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../cart/presentation/widgets/cart_icon.dart';
+import '../../products/data/models/product_model.dart';
+import '../../products/presentation/product_card.dart';
+import '../../search/presentation/search_dialog.dart';
+import '../data/models/supplier_models.dart';
+import '../manager/supplier_details_cubit.dart';
+import '../manager/supplier_states.dart';
+
+class SupplierDetailScreen extends StatefulWidget {
+  final SupplierModel? supplier;
+  final int? supplierId;
+
+  /// When non-null, only this category's section is shown (opened from a
+  /// category page). Null means show all categories (opened from home).
+  final int? filterCategoryId;
+
+  const SupplierDetailScreen({
+    super.key,
+    this.supplier,
+    this.supplierId,
+    this.filterCategoryId,
+  }) : assert(supplier != null || supplierId != null);
+
+  @override
+  State<SupplierDetailScreen> createState() => _SupplierDetailScreenState();
+}
+
+class _SupplierDetailScreenState extends State<SupplierDetailScreen> {
+  late final SupplierDetailCubit _cubit;
+
+  int get _id => widget.supplier?.id ?? widget.supplierId!;
+
+  @override
+  void initState() {
+    super.initState();
+    _cubit = SupplierDetailCubit();
+    _cubit.load(_id, filterCategoryId: widget.filterCategoryId);
+  }
+
+  @override
+  void dispose() {
+    _cubit.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: _cubit,
+      child: Scaffold(
+        body: BlocBuilder<SupplierDetailCubit, SupplierDetailState>(
+          builder: (context, state) {
+            return switch (state) {
+              SupplierDetailInitial() || SupplierDetailLoading() =>
+                _SupplierLoadingView(supplier: widget.supplier),
+              SupplierDetailError(:final message) => _SupplierErrorView(
+                message: message,
+                supplier: widget.supplier,
+                onRetry: () =>
+                    _cubit.load(_id, filterCategoryId: widget.filterCategoryId),
+              ),
+              SupplierDetailLoaded() => _SupplierLoadedView(
+                state: state,
+                onProductTap: _navigateToProduct,
+                onLoadMoreSection: (catId) =>
+                    _cubit.loadMoreSectionProducts(_id, catId),
+                onRefresh: () => _cubit.refresh(
+                  _id,
+                  filterCategoryId: widget.filterCategoryId,
+                ),
+              ),
+            };
+          },
+        ),
+      ),
+    );
+  }
+
+  void _navigateToProduct(ProductModel product) {
+    context.push('/products/${product.id}', extra: product);
+  }
+}
+
+// ── Loaded View ───────────────────────────────────────────────────────────────
+
+class _SupplierLoadedView extends StatefulWidget {
+  final SupplierDetailLoaded state;
+  final void Function(ProductModel) onProductTap;
+  final void Function(int catId) onLoadMoreSection;
+  final Future<void> Function() onRefresh;
+
+  const _SupplierLoadedView({
+    required this.state,
+    required this.onProductTap,
+    required this.onLoadMoreSection,
+    required this.onRefresh,
+  });
+
+  @override
+  State<_SupplierLoadedView> createState() => _SupplierLoadedViewState();
+}
+
+class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
+  final ScrollController _scrollController = ScrollController();
+  late List<GlobalKey> _sectionKeys;
+  int _activePillIndex = 0;
+  final Map<int, double> _sectionScrollOffsets = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _rebuildKeys();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    _updateSectionOffsetCache();
+
+    if (_sectionKeys.isNotEmpty) {
+      const threshold = 180.0;
+      for (int i = _sectionKeys.length - 1; i >= 0; i--) {
+        final ctx = _sectionKeys[i].currentContext;
+        if (ctx == null) continue;
+        final box = ctx.findRenderObject() as RenderBox?;
+        if (box == null) continue;
+        final dy = box.localToGlobal(Offset.zero).dy;
+        if (dy <= threshold) {
+          if (_activePillIndex != i) setState(() => _activePillIndex = i);
+          break;
+        }
+      }
+    }
+
+    _checkAutoLoad();
+  }
+
+  void _updateSectionOffsetCache() {
+    const double stickyHeaders =
+        kToolbarHeight + _SupplierPillsHeaderDelegate._height;
+
+    for (int i = 0; i < _sectionKeys.length; i++) {
+      final ctx = _sectionKeys[i].currentContext;
+      if (ctx == null) continue;
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null) continue;
+      final screenDy = box.localToGlobal(Offset.zero).dy;
+      _sectionScrollOffsets[i] =
+          (_scrollController.offset + screenDy - stickyHeaders).clamp(
+            0.0,
+            double.maxFinite,
+          );
+    }
+  }
+
+  void _checkAutoLoad() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    const loadBuffer = 300.0;
+
+    for (int i = 0; i < _sectionKeys.length; i++) {
+      final section = widget.state.sections[i];
+      if (!section.hasMore || section.isLoading) continue;
+
+      final ctx = _sectionKeys[i].currentContext;
+      if (ctx == null) continue;
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null) continue;
+
+      final sectionBottomOnScreen = box
+          .localToGlobal(Offset(0, box.size.height))
+          .dy;
+
+      if (sectionBottomOnScreen < screenHeight + loadBuffer) {
+        widget.onLoadMoreSection(section.category.id);
+      }
+    }
+  }
+
+  @override
+  void didUpdateWidget(_SupplierLoadedView old) {
+    super.didUpdateWidget(old);
+    if (old.state.sections.length != widget.state.sections.length) {
+      _rebuildKeys();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _rebuildKeys() {
+    _sectionKeys = List.generate(
+      widget.state.sections.length,
+      (_) => GlobalKey(),
+    );
+    _sectionScrollOffsets.clear();
+  }
+
+  void _scrollToSection(int index) async {
+    setState(() => _activePillIndex = index);
+    const double stickyHeaders =
+        kToolbarHeight + _SupplierPillsHeaderDelegate._height;
+
+    final ctx = _sectionKeys[index].currentContext;
+    if (ctx != null) {
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null) return;
+      final screenDy = box.localToGlobal(Offset.zero).dy;
+      final target = (_scrollController.offset + screenDy - stickyHeaders)
+          .clamp(0.0, _scrollController.position.maxScrollExtent);
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeInOutCubic,
+      );
+      return;
+    }
+
+    final double estimatedOffset = _estimatedOffset(index);
+    await _scrollController.animateTo(
+      estimatedOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeIn,
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx2 = _sectionKeys[index].currentContext;
+      if (ctx2 == null) return;
+      final box = ctx2.findRenderObject() as RenderBox?;
+      if (box == null) return;
+      final screenDy = box.localToGlobal(Offset.zero).dy;
+      final target = (_scrollController.offset + screenDy - stickyHeaders)
+          .clamp(0.0, _scrollController.position.maxScrollExtent);
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  double _estimatedOffset(int index) {
+    if (_sectionScrollOffsets.containsKey(index)) {
+      return _sectionScrollOffsets[index]!;
+    }
+    int? before, after;
+    for (final key in _sectionScrollOffsets.keys) {
+      if (key < index && (before == null || key > before)) before = key;
+      if (key > index && (after == null || key < after)) after = key;
+    }
+    if (before != null && after != null) {
+      final t = (index - before) / (after - before);
+      return _sectionScrollOffsets[before]! +
+          t * (_sectionScrollOffsets[after]! - _sectionScrollOffsets[before]!);
+    }
+    if (before != null) return _sectionScrollOffsets[before]!;
+    if (after != null) return _sectionScrollOffsets[after]!;
+    return _scrollController.position.maxScrollExtent;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
+    final theme = Theme.of(context);
+    final hasPills = state.sections.length > 1;
+
+    return RefreshIndicator(
+      onRefresh: widget.onRefresh,
+      notificationPredicate: (n) => n.depth == 0,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        controller: _scrollController,
+        slivers: [
+          // ── Hero app bar ──────────────────────────────────────────────────
+          _SupplierSliverAppBar(supplier: state.supplier),
+
+          // ── Sticky category pills ─────────────────────────────────────────
+          if (hasPills)
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _SupplierPillsHeaderDelegate(
+                sections: state.sections,
+                activeIndex: _activePillIndex,
+                onPillTap: _scrollToSection,
+                theme: theme,
+              ),
+            ),
+
+          // ── Category sections ─────────────────────────────────────────────
+          if (state.sections.isEmpty)
+            const SliverFillRemaining(child: _EmptySupplierProducts())
+          else
+            SliverList.separated(
+              itemCount: state.sections.length,
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+              itemBuilder: (_, i) {
+                final section = state.sections[i];
+                return KeyedSubtree(
+                  key: _sectionKeys[i],
+                  child: _SupplierCategorySectionWidget(
+                    section: section,
+                    onProductTap: widget.onProductTap,
+                    onLoadMore: () =>
+                        widget.onLoadMoreSection(section.category.id),
+                  ),
+                );
+              },
+            ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 40)),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Category section inside supplier detail ───────────────────────────────────
+
+class _SupplierCategorySectionWidget extends StatelessWidget {
+  final SupplierCategorySection section;
+  final void Function(ProductModel) onProductTap;
+  final VoidCallback? onLoadMore;
+
+  const _SupplierCategorySectionWidget({
+    required this.section,
+    required this.onProductTap,
+    this.onLoadMore,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  section.category.displayName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (section.isLoading && section.products.isEmpty)
+          _ProductListSkeleton()
+        else if (section.products.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              AppLocalizations.of(context)!.noProductsInSection,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.grey.shade500,
+              ),
+            ),
+          )
+        else
+          _SupplierProductList(
+            products: section.products.cast<ProductModel>(),
+            isLoadingMore: section.isLoading,
+            hasMore: section.hasMore,
+            onProductTap: onProductTap,
+            onLoadMore: onLoadMore,
+          ),
+      ],
+    );
+  }
+}
+
+class _SupplierProductList extends StatefulWidget {
+  final List<ProductModel> products;
+  final bool isLoadingMore;
+  final bool hasMore;
+  final void Function(ProductModel) onProductTap;
+  final VoidCallback? onLoadMore;
+
+  const _SupplierProductList({
+    required this.products,
+    required this.isLoadingMore,
+    required this.hasMore,
+    required this.onProductTap,
+    this.onLoadMore,
+  });
+
+  @override
+  State<_SupplierProductList> createState() => _SupplierProductListState();
+}
+
+class _SupplierProductListState extends State<_SupplierProductList> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!widget.hasMore || widget.isLoadingMore) return;
+    final pos = _scrollController.position;
+    if (pos.pixels >= pos.maxScrollExtent - 200) {
+      widget.onLoadMore?.call();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final itemCount = widget.products.length + (widget.hasMore ? 1 : 0);
+
+    return SizedBox(
+      height: 300,
+      child: ListView.builder(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: itemCount,
+        itemBuilder: (_, i) {
+          if (i == widget.products.length) {
+            return const Padding(
+              padding: EdgeInsets.only(right: 10),
+              child: SizedBox(
+                width: 48,
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+            );
+          }
+          final product = widget.products[i];
+          return SizedBox(
+            width: 160,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 10, bottom: 20),
+              child: ProductCard(
+                product: product,
+                onTap: () => widget.onProductTap(product),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ProductListSkeleton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 260,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: 4,
+        itemBuilder: (_, __) => Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: Container(
+            width: 160,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Sticky pills ──────────────────────────────────────────────────────────────
+
+class _SupplierPillsHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final List<SupplierCategorySection> sections;
+  final int activeIndex;
+  final void Function(int) onPillTap;
+  final ThemeData theme;
+
+  const _SupplierPillsHeaderDelegate({
+    required this.sections,
+    required this.activeIndex,
+    required this.onPillTap,
+    required this.theme,
+  });
+
+  static const double _height = 52.0;
+
+  @override
+  double get minExtent => _height;
+
+  @override
+  double get maxExtent => _height;
+
+  @override
+  bool shouldRebuild(_SupplierPillsHeaderDelegate old) =>
+      old.activeIndex != activeIndex || old.sections.length != sections.length;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final elevated = overlapsContent || shrinkOffset > 0;
+    return Material(
+      color: theme.colorScheme.surface,
+      elevation: elevated ? 2 : 0,
+      shadowColor: Colors.black.withOpacity(0.10),
+      child: SizedBox(
+        height: _height,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          itemCount: sections.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (_, i) {
+            final isActive = i == activeIndex;
+            final label = sections[i].category.displayName;
+            return _PillChip(
+              label: label,
+              isActive: isActive,
+              theme: theme,
+              onTap: () => onPillTap(i),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _PillChip extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final ThemeData theme;
+  final VoidCallback onTap;
+
+  const _PillChip({
+    required this.label,
+    required this.isActive,
+    required this.theme,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        color: isActive
+            ? theme.colorScheme.primary
+            : theme.colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(20),
+        border: isActive
+            ? null
+            : Border.all(
+                color: theme.colorScheme.outline.withOpacity(0.35),
+                width: 0.8,
+              ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+          child: Center(
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 220),
+              style: theme.textTheme.labelMedium!.copyWith(
+                color: isActive
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.onSurfaceVariant,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+              ),
+              child: Text(label),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Sliver app bar ────────────────────────────────────────────────────────────
+
+class _SupplierSliverAppBar extends StatelessWidget {
+  final SupplierModel supplier;
+
+  const _SupplierSliverAppBar({required this.supplier});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final photoUrl = supplier.photoUrl;
+    final hasPhoto = photoUrl != null && photoUrl.isNotEmpty;
+
+    return SliverAppBar(
+      expandedHeight: 240,
+      pinned: true,
+      stretch: true,
+      backgroundColor: theme.colorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 2,
+      elevation: 0,
+      leading: CircleBackButton(onPressed: context.pop),
+      actions: [
+        CircleAvatar(
+          radius: 20,
+          backgroundColor: Colors.grey.shade200,
+          child: IconButton(
+            icon: Icon(Icons.search_rounded, color: Colors.grey.shade700),
+            onPressed: () => showSearchDialog(context),
+            padding: EdgeInsets.zero,
+          ),
+        ),
+        AnimatedCartIcon(onTap: () => context.push('/cart')),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: EdgeInsets.zero,
+        stretchModes: const [
+          StretchMode.zoomBackground,
+          StretchMode.blurBackground,
+        ],
+        background: _SupplierHeaderBackground(
+          supplier: supplier,
+          hasPhoto: hasPhoto,
+          theme: theme,
+        ),
+      ),
+    );
+  }
+}
+
+class _SupplierHeaderBackground extends StatelessWidget {
+  final SupplierModel supplier;
+  final bool hasPhoto;
+  final ThemeData theme;
+
+  const _SupplierHeaderBackground({
+    required this.supplier,
+    required this.hasPhoto,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = theme.colorScheme.primary;
+    final secondary = theme.colorScheme.secondary;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Background gradient
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                HSLColor.fromColor(primary)
+                    .withLightness(
+                      (HSLColor.fromColor(primary).lightness - 0.12).clamp(
+                        0.0,
+                        1.0,
+                      ),
+                    )
+                    .toColor(),
+                primary,
+                HSLColor.fromColor(secondary).withSaturation(0.9).toColor(),
+              ],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              stops: const [0.0, 0.45, 1.0],
+            ),
+          ),
+        ),
+
+        // Decorative circle
+        Positioned(
+          top: -60,
+          right: -40,
+          child: Container(
+            width: 220,
+            height: 220,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [Colors.white.withOpacity(0.12), Colors.transparent],
+              ),
+            ),
+          ),
+        ),
+
+        // Overlay gradient
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.35, 0.70, 1.0],
+                colors: [
+                  Colors.black.withOpacity(0.10),
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.45),
+                  Colors.black.withOpacity(0.75),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Supplier avatar centered
+        Center(
+          child: Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withOpacity(0.6),
+                width: 2.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.25),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: hasPhoto
+                ? ImageWithIconFallback(
+                    imageUrl: supplier.photoUrl!,
+                    fit: BoxFit.cover,
+                  )
+                : _avatarFallback(primary),
+          ),
+        ),
+
+        // Name & subtitle at bottom
+        Positioned(
+          left: 20,
+          right: 20,
+          bottom: 22,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                supplier.displayName,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1,
+                  letterSpacing: -0.5,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 16,
+                      color: Colors.black54,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+              ),
+              if (supplier.user.phone.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  textDirection: TextDirection.ltr,
+                  supplier.user.phone,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.70),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _avatarFallback(Color primary) {
+    return Container(
+      color: HSLColor.fromColor(primary)
+          .withLightness(
+            (HSLColor.fromColor(primary).lightness - 0.10).clamp(0.0, 1.0),
+          )
+          .toColor(),
+      child: Center(
+        child: Text(
+          supplier.displayName.isNotEmpty
+              ? supplier.displayName[0].toUpperCase()
+              : '?',
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+class _EmptySupplierProducts extends StatelessWidget {
+  const _EmptySupplierProducts();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(48),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.store_outlined, size: 64, color: Colors.grey.shade400),
+          const SizedBox(height: 16),
+          Text(
+            AppLocalizations.of(context)!.noProductsInSection,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Loading view ──────────────────────────────────────────────────────────────
+
+class _SupplierLoadingView extends StatefulWidget {
+  final SupplierModel? supplier;
+
+  const _SupplierLoadingView({this.supplier});
+
+  @override
+  State<_SupplierLoadingView> createState() => _SupplierLoadingViewState();
+}
+
+class _SupplierLoadingViewState extends State<_SupplierLoadingView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 950),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(
+      begin: 0.06,
+      end: 0.15,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final secondary = theme.colorScheme.secondary;
+
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (context, _) {
+        final shimmer = Colors.black.withOpacity(_pulse.value);
+        return CustomScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 240,
+              pinned: true,
+              stretch: true,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: Padding(
+                padding: const EdgeInsets.all(8),
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.grey.shade200,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 16,
+                      color: Colors.grey.shade700,
+                    ),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+              actions: [AnimatedCartIcon(onTap: () => context.push('/cart'))],
+              flexibleSpace: FlexibleSpaceBar(
+                titlePadding: EdgeInsets.zero,
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            HSLColor.fromColor(primary)
+                                .withLightness(
+                                  (HSLColor.fromColor(primary).lightness - 0.12)
+                                      .clamp(0.0, 1.0),
+                                )
+                                .toColor(),
+                            primary,
+                            HSLColor.fromColor(
+                              secondary,
+                            ).withSaturation(0.9).toColor(),
+                          ],
+                          begin: Alignment.topRight,
+                          end: Alignment.bottomLeft,
+                          stops: const [0.0, 0.45, 1.0],
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: shimmer.withOpacity(0.3),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
+                            width: 2.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 20,
+                      right: 20,
+                      bottom: 22,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            height: 24,
+                            width: 160,
+                            decoration: BoxDecoration(
+                              color: shimmer.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+              sliver: SliverGrid.count(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.72,
+                children: List.generate(
+                  6,
+                  (_) => Container(
+                    decoration: BoxDecoration(
+                      color: shimmer,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ── Error view ────────────────────────────────────────────────────────────────
+
+class _SupplierErrorView extends StatelessWidget {
+  final String message;
+  final SupplierModel? supplier;
+  final VoidCallback onRetry;
+
+  const _SupplierErrorView({
+    required this.message,
+    this.supplier,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          title: supplier != null ? Text(supplier!.displayName) : null,
+          pinned: true,
+        ),
+        SliverFillRemaining(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(message, textAlign: TextAlign.center),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: onRetry,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(AppLocalizations.of(context)!.refresh),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

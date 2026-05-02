@@ -1587,4 +1587,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get openAppSettings => 'فتح إعدادات التطبيق';
+
+  @override
+  String get suppliers => 'الموردون';
 }

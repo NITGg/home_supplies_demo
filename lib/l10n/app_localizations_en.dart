@@ -1587,4 +1587,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openAppSettings => 'Open App Settings';
+
+  @override
+  String get suppliers => 'Suppliers';
 }
