@@ -638,7 +638,7 @@ class _SupplierSliverAppBar extends StatelessWidget {
     final hasPhoto = photoUrl != null && photoUrl.isNotEmpty;
 
     return SliverAppBar(
-      expandedHeight: 240,
+      expandedHeight: 230,
       pinned: true,
       stretch: true,
       backgroundColor: theme.colorScheme.surface,
@@ -754,8 +754,8 @@ class _SupplierHeaderBackground extends StatelessWidget {
         // Supplier avatar centered
         Center(
           child: Container(
-            width: 90,
-            height: 90,
+            width: 100,
+            height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
@@ -784,7 +784,7 @@ class _SupplierHeaderBackground extends StatelessWidget {
         Positioned(
           left: 20,
           right: 20,
-          bottom: 22,
+          bottom: 50,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
