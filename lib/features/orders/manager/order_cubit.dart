@@ -467,6 +467,7 @@ class OrderCubit extends Cubit<OrderState> {
   Future<void> confirmDelivery({
     required int orderId,
     required int courierId,
+    required int courierUserId,
   }) async {
     safeEmit(DeliveryConfirming());
     try {
@@ -474,7 +475,7 @@ class OrderCubit extends Cubit<OrderState> {
       await _repository.confirmDelivery(orderId: orderId, courierId: courierId);
       log('OrderCubit: Delivery confirmed');
 
-      safeEmit(DeliveryConfirmed(orderId: orderId, courierId: courierId));
+      safeEmit(DeliveryConfirmed(orderId: orderId, courierId: courierId, courierUserId: courierUserId));
 
       // Reload both lists (order moved from active to history)
       await loadActiveOrders(loadMore: false);

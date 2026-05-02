@@ -52,9 +52,11 @@ class _WalletScreenState extends State<WalletScreen> {
           isArabic ? 'المحفظة' : 'Wallet',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        leading: CircleBackButton(onPressed: (){
-          context.canPop() ? context.pop() : context.go('/mainHome');
-        },),
+        leading: CircleBackButton(
+          onPressed: () {
+            context.canPop() ? context.pop() : context.go('/mainHome');
+          },
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -152,7 +154,10 @@ class _WalletScreenState extends State<WalletScreen> {
                         icon: Icons.stars_rounded,
                         label: isArabic ? 'النقاط' : 'Points',
                         color: Colors.amber.shade700,
-                        onTap: () => context.push('/wallet/points'),
+                        onTap: () => context.push(
+                          '/wallet/points',
+                          extra: context.read<WalletCubit>().cachedWalletData?.wallet.points,
+                        ),
                       ),
                     ),
                   ],

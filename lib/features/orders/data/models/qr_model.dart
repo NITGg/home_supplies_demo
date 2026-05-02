@@ -1,6 +1,7 @@
 class DeliveryQRCode {
   final int orderId;
   final int courierId;
+  final int courierUserId;
   final String action;
   final int actualPrice;
   final DateTime timestamp;
@@ -8,6 +9,7 @@ class DeliveryQRCode {
   DeliveryQRCode({
     required this.orderId,
     required this.courierId,
+    required this.courierUserId,
     required this.actualPrice,
     required this.action,
     required this.timestamp,
@@ -18,6 +20,7 @@ class DeliveryQRCode {
       orderId: json['orderId'] as int,
       actualPrice: json['actual_price'] as int,
       courierId: json['courierId'] as int,
+      courierUserId: json['userId'] as int,
       action: json['action'] as String,
       timestamp: DateTime.parse(json['timestamp']),
     );

@@ -4,27 +4,30 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/features/auth/manager/profile_cubit.dart';
 import '../../../core/style/app_colors.dart';
-import '../../../l10n/app_localizations.dart';
 import '../../../l10n/manager/locale_cubit.dart';
 import '../manager/points_cubit.dart';
 import '../manager/points_states.dart';
 import '../data/models/points_models.dart';
 
 class PointsScreen extends StatelessWidget {
-  const PointsScreen({super.key});
+  final double balance;
+
+  const PointsScreen({super.key, required this.balance});
 
   @override
   Widget build(BuildContext context) {
     final isArabic = LocaleManager.currentLocale == 'ar';
     return BlocProvider(
       create: (context) => PointsCubit()..loadPoints(isArabic: isArabic),
-      child: const _PointsView(),
+      child: _PointsView(balance: balance,),
     );
   }
 }
 
 class _PointsView extends StatelessWidget {
-  const _PointsView();
+  final double balance;
+
+  const _PointsView({required this.balance});
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +149,7 @@ class _PointsView extends StatelessWidget {
                                   color: Colors.green.shade600,
                                   onTap: () => _showConvertBottomSheet(
                                     context,
-                                    innerState.progress.balance,
+                                    balance,
                                     isArabic,
                                   ),
                                 ),
@@ -240,7 +243,7 @@ class _PointsView extends StatelessWidget {
 
   void _showConvertBottomSheet(
     BuildContext context,
-    PointsBalance balance,
+    double balance,
     bool isArabic,
   ) {
     showModalBottomSheet(
@@ -250,8 +253,8 @@ class _PointsView extends StatelessWidget {
       builder: (_) => BlocProvider.value(
         value: context.read<PointsCubit>(),
         child: _ConvertBottomSheet(
-          availablePoints: balance.availablePoints,
-          monetaryValueEgp: balance.monetaryValueEgp,
+          availablePoints: balance.toInt(),
+          monetaryValueEgp: balance.toInt() / 10,
           isArabic: isArabic,
         ),
       ),

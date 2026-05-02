@@ -24,6 +24,7 @@ import '../features/home/layout/presentation/home_layout.dart';
 import '../features/know_us_more/know_us_more.dart';
 import '../features/onboarding/onboarding.dart';
 import '../core/utils/secure_storage_service.dart';
+import '../features/points/data/models/points_models.dart';
 import '../features/points/presentation/points_screen.dart';
 import '../features/products/data/models/product_model.dart';
 import '../features/products/presentation/product_details_screen.dart';
@@ -234,7 +235,10 @@ Future<GoRouter> createAppRouter({
       ),
       GoRoute(
         path: '/wallet/points',
-        builder: (context, state) => const PointsScreen(),
+        builder: (context, state) {
+          final balance = state.extra as double;
+          return PointsScreen(balance: balance);
+        },
       ),
       GoRoute(
         path: '/mainHome',

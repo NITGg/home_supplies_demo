@@ -172,8 +172,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
     final orderId = data['orderId'] as int?;
     final courierId = data['courierId'] as int?;
+    // todo check with ziad
+    final courierUserId = data['userId'] as int?;
 
-    if (orderId == null || courierId == null) {
+    if (orderId == null || courierId == null || courierUserId == null) {
       log('[OrderCollected] ❌ Aborting — null ids');
       return;
     }
@@ -191,7 +193,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
       if (!orderStillActive) {
         log('[OrderCollected] ✅ Order gone — showing review sheet');
-        _showReviewSheet(orderId, courierId);
+        _showReviewSheet(orderId, courierId, courierUserId);
       }
     });
   }
@@ -385,12 +387,12 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   ///   - Customer-initiated: triggered by [QRScannerScreen] via [DeliveryConfirmed].
   ///   - Courier-initiated: triggered here via the [SocketService.onOrderCollected]
   ///     socket event when the courier confirms delivery on their end.
-  void _showReviewSheet(int orderId, int courierId) {
+  void _showReviewSheet(int orderId, int courierId,int courierUserId, ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ReviewBottomSheet(orderId: orderId, courierId: courierId),
+      builder: (_) => ReviewBottomSheet(orderId: orderId, courierId: courierId, courierUserId: courierUserId),
     );
   }
 
@@ -460,7 +462,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
                 if (state is DeliveryConfirmed) {
                   // Show review sheet AND success banner
-                  _showReviewSheet(state.orderId, state.courierId);
+                  _showReviewSheet(state.orderId, state.courierId, state.courierUserId);
                   showSuccessBanner(
                     context,
                     AppLocalizations.of(context)!.delivered,

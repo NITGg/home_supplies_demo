@@ -645,7 +645,7 @@ class OrderCard extends StatelessWidget {
               Navigator.pop(dialogCtx);
               context.read<OrderCubit>().confirmDelivery(
                 orderId: order.id!,
-                courierId: order.courierId!,
+                courierId: order.courierId!, courierUserId: order.courierUserId!,
               );
             },
             child: Text(l10n.confirm),

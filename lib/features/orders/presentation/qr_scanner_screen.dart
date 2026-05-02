@@ -70,6 +70,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
               await context.read<OrderCubit>().confirmDelivery(
                 orderId: deliveryQR.orderId,
                 courierId: deliveryQR.courierId,
+                courierUserId: deliveryQR.courierUserId,
               );
             }
           },
@@ -86,12 +87,12 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     }
   }
 
-  void _showReviewSheet(BuildContext context, int orderId, int courierId) {
+  void _showReviewSheet(BuildContext context, int orderId, int courierId , int courierUserId) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ReviewBottomSheet(orderId: orderId, courierId: courierId),
+      builder: (_) => ReviewBottomSheet(orderId: orderId, courierId: courierId, courierUserId: courierUserId),
     );
   }
 
@@ -117,7 +118,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       body: BlocListener<OrderCubit, OrderState>(
         listener: (context, state) {
           if (state is DeliveryConfirmed) {
-            _showReviewSheet(context, state.orderId, state.courierId);
+            _showReviewSheet(context, state.orderId, state.courierId, state.courierUserId);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(AppLocalizations.of(context)!.deliveryConfirmed),

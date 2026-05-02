@@ -13,11 +13,13 @@ import '../../../../../l10n/app_localizations.dart';
 class ReviewBottomSheet extends StatefulWidget {
   final int orderId;
   final int courierId;
+  final int courierUserId;
 
   const ReviewBottomSheet({
     super.key,
     required this.orderId,
     required this.courierId,
+    required this.courierUserId,
   });
 
   @override
@@ -64,14 +66,8 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
         data: payload,
       );
 
-      final payload2 = {
-        "orderId": widget.orderId.toString(),
-        "courierId": widget.courierId.toString(),
-        "rating": _selectedRating,
-      };
       final response2 = await ApiClient.instance.dio.post(
-        '/customer/points/give-points-to-courier',
-        data: payload2,
+        '/customer/points/give-points-to-courier/${widget.courierUserId}',
       );
 
       log('✅ Response: ${response.statusCode} — ${response.data}');
