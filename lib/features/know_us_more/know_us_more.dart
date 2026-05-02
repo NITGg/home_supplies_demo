@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/widgets/circel_back_cutton.dart';
+import '../../core/widgets/circel_back_button.dart';
 import '../../l10n/app_localizations.dart';
 import '../static_text/app_dynamic_info.dart';
 

@@ -5,7 +5,7 @@ import 'package:tawreedat_go/features/wallet/presentation/widgets/penalty_card.d
 import 'package:tawreedat_go/features/wallet/presentation/widgets/section_header.dart';
 import 'package:tawreedat_go/features/wallet/presentation/widgets/transaction_card.dart';
 import 'package:tawreedat_go/features/wallet/presentation/widgets/wallet_shimmer.dart';
-import '../../../core/widgets/circel_back_cutton.dart';
+import '../../../core/widgets/circel_back_button.dart';
 import '../manager/wallet_cubit.dart';
 import '../manager/wallet_state.dart';
 import 'widgets/balance_card.dart';

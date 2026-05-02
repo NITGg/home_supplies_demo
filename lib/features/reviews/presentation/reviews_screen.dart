@@ -5,7 +5,7 @@ import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../core/widgets/loading_screen.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../core/widgets/circel_back_cutton.dart';
+import '../../../core/widgets/circel_back_button.dart';
 import '../manager/reviews_cubit.dart';
 import '../manager/reviews_states.dart';
 
