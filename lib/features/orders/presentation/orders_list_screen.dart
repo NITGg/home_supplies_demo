@@ -172,7 +172,6 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
     final orderId = data['orderId'] as int?;
     final courierId = data['courierId'] as int?;
-    // todo check with ziad
     final courierUserId = data['userId'] as int?;
 
     if (orderId == null || courierId == null || courierUserId == null) {
