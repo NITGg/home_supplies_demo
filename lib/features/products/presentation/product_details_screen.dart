@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/utils/formatDate.dart';
 import '../../../core/widgets/circel_back_cutton.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
@@ -21,7 +22,7 @@ class ProductDetailScreen extends StatefulWidget {
   final int? productId;
 
   const ProductDetailScreen({super.key, this.product, this.productId})
-      : assert(product != null || productId != null);
+    : assert(product != null || productId != null);
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -94,7 +95,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     const SizedBox(height: 12),
                     _PriceSection(product: product),
                     const SizedBox(height: 12),
-                    _StockChip(product: product),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _StockChip(product: product),
+                        if (product.pickupReadyDuration != null)
+                          Text(
+                            '${l10n.readyIn} : ${formatDuration(product.pickupReadyDuration ?? 0, l10n)}',
+                          ),
+                      ],
+                    ),
                     const SizedBox(height: 20),
 
                     if (product.displayDescription.isNotEmpty) ...[
@@ -164,8 +174,8 @@ class _BarCartState {
   @override
   bool operator ==(Object other) =>
       other is _BarCartState &&
-          other.inCartQty == inCartQty &&
-          other.isBusy == isBusy;
+      other.inCartQty == inCartQty &&
+      other.isBusy == isBusy;
 
   @override
   int get hashCode => Object.hash(inCartQty, isBusy);
@@ -287,8 +297,7 @@ class _AddToCartBarState extends State<_AddToCartBar>
       );
     } catch (_) {
       if (ctx.mounted) _showError(ctx);
-    }
-    finally {
+    } finally {
       _tapLocked = false;
     }
   }
@@ -511,15 +520,15 @@ class _QuantityBar extends StatelessWidget {
                 opacity: animation,
                 child: SlideTransition(
                   position:
-                  Tween<Offset>(
-                    begin: const Offset(0, 0.35),
-                    end: Offset.zero,
-                  ).animate(
-                    CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOut,
-                    ),
-                  ),
+                      Tween<Offset>(
+                        begin: const Offset(0, 0.35),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOut,
+                        ),
+                      ),
                   child: child,
                 ),
               ),
@@ -605,30 +614,30 @@ class _ImageGalleryAppBar extends StatelessWidget {
         background: images.isEmpty
             ? _placeholder(theme)
             : Stack(
-          children: [
-            Container(
-              color: theme.colorScheme.surfaceContainerLow,
-              child: ImageWithIconFallback(
-                imageUrl: images[selectedIndex],
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.fitHeight,
-                iconSize: 64,
+                children: [
+                  Container(
+                    color: theme.colorScheme.surfaceContainerLow,
+                    child: ImageWithIconFallback(
+                      imageUrl: images[selectedIndex],
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.fitHeight,
+                      iconSize: 64,
+                    ),
+                  ),
+                  if (images.length > 1)
+                    Positioned(
+                      bottom: 12,
+                      left: 0,
+                      right: 0,
+                      child: _ThumbnailRow(
+                        images: images,
+                        selected: selectedIndex,
+                        onSelect: onImageSelected,
+                      ),
+                    ),
+                ],
               ),
-            ),
-            if (images.length > 1)
-              Positioned(
-                bottom: 12,
-                left: 0,
-                right: 0,
-                child: _ThumbnailRow(
-                  images: images,
-                  selected: selectedIndex,
-                  onSelect: onImageSelected,
-                ),
-              ),
-          ],
-        ),
       ),
     );
   }
@@ -736,7 +745,7 @@ class _NameRow extends StatelessWidget {
             children: [
               ...List.generate(
                 5,
-                    (i) => Icon(
+                (i) => Icon(
                   i < product.rating.round()
                       ? Icons.star_rounded
                       : Icons.star_outline_rounded,
@@ -848,11 +857,18 @@ class _StockChip extends StatelessWidget {
     }
     if (product.isLowStock) {
       return _Chip(
-        label: l10n.lowStockRemaining(product.stock.clamp(0, product.maxAmountForOneOrder??10)),
+        label: l10n.lowStockRemaining(
+          product.stock.clamp(0, product.maxAmountForOneOrder ?? 10),
+        ),
         color: Colors.orange,
       );
     }
-    return _Chip(label: l10n.inStockCount(product.stock.clamp(0, product.maxAmountForOneOrder??10)), color: Colors.green);
+    return _Chip(
+      label: l10n.inStockCount(
+        product.stock.clamp(0, product.maxAmountForOneOrder ?? 10),
+      ),
+      color: Colors.green,
+    );
   }
 }
 
@@ -1048,9 +1064,10 @@ class _LoadingViewState extends State<_LoadingView>
       vsync: this,
       duration: const Duration(milliseconds: 950),
     )..repeat(reverse: true);
-    _pulse = Tween<double>(begin: 0.07, end: 0.16).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _pulse = Tween<double>(
+      begin: 0.07,
+      end: 0.16,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -1112,7 +1129,7 @@ class _LoadingViewState extends State<_LoadingView>
 
                       // ── Description lines ──────────────────────────────────
                       ...[1.0, 1.0, 1.0, 0.6].map(
-                            (fraction) => Padding(
+                        (fraction) => Padding(
                           padding: const EdgeInsets.only(bottom: 9),
                           child: _Skel(
                             color: shimmer,

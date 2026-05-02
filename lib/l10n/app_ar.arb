@@ -684,6 +684,76 @@
     "locationPermissionPermanentlyDeniedTitle": "تم رفض الإذن نهائياً",
     "locationPermissionPermanentlyDeniedMessage": "تم رفض إذن الموقع بشكل دائم. يرجى تفعيله من إعدادات التطبيق.",
     "openAppSettings": "فتح إعدادات التطبيق",
-    "suppliers": "المتاجر"
+    "suppliers": "المتاجر",
+        "readyIn": "جاهز خلال",
+     "workingHours": "ساعات العمل",
+      "@workingHours": { "description": "Section title for the supplier's opening schedule" },
+
+      "openNow": "مفتوح الآن",
+      "@openNow": { "description": "Status pill shown when the supplier is currently open" },
+
+      "closed": "مغلق",
+      "@closed": { "description": "Status pill shown when the supplier is currently closed, and day-row label for a fully-closed day" },
+
+      "closesAt": "يغلق الساعة {time}",
+      "@closesAt": {
+        "description": "Shown next to the open pill",
+        "placeholders": { "time": { "type": "String" } }
+      },
+
+      "opensAt": "يفتح الساعة {time}",
+      "@opensAt": {
+        "description": "Shown when the supplier is closed but reopens later today",
+        "placeholders": { "time": { "type": "String" } }
+      },
+
+      "opensTomorrowAt": "يفتح غداً الساعة {time}",
+      "@opensTomorrowAt": {
+        "description": "Shown when the supplier reopens the following day",
+        "placeholders": { "time": { "type": "String" } }
+      },
+
+      "opensDayAt": "يفتح {day} الساعة {time}",
+      "@opensDayAt": {
+        "description": "Shown when the supplier reopens on a future day that is neither today nor tomorrow",
+        "placeholders": {
+          "day": { "type": "String" },
+          "time": { "type": "String" }
+        }
+      },
+
+      "orderDeliveredTomorrowNotice": "اطلب الآن — سيتم جدولة توصيلك في {whenLabel} عند إعادة فتح المتجر.",
+      "@orderDeliveredTomorrowNotice": {
+        "description": "Nudge banner shown when the supplier is closed and reopens tomorrow or later",
+        "placeholders": { "whenLabel": { "type": "String" } }
+      },
+
+      "timezone": "المنطقة الزمنية: {tz}",
+      "@timezone": {
+        "description": "Subtitle in the weekly hours sheet showing the IANA timezone",
+        "placeholders": { "tz": { "type": "String" } }
+      },
+
+      "daySunday": "الأحد",
+      "@daySunday": { "description": "Full name of Sunday" },
+
+      "dayMonday": "الاثنين",
+      "@dayMonday": { "description": "Full name of Monday" },
+
+      "dayTuesday": "الثلاثاء",
+      "@dayTuesday": { "description": "Full name of Tuesday" },
+
+      "dayWednesday": "الأربعاء",
+      "@dayWednesday": { "description": "Full name of Wednesday" },
+
+      "dayThursday": "الخميس",
+      "@dayThursday": { "description": "Full name of Thursday" },
+
+      "dayFriday": "الجمعة",
+      "@dayFriday": { "description": "Full name of Friday" },
+
+      "daySaturday": "السبت",
+      "@daySaturday": { "description": "Full name of Saturday" }
+
 
 }

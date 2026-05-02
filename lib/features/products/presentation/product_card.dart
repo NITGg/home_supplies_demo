@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/style/app_colors.dart';
+import '../../../core/utils/formatDate.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
 import '../../../l10n/app_localizations.dart';
@@ -27,8 +28,7 @@ class _CardCartState {
     if (state is! CartLoaded || spId == null) {
       return const _CardCartState(quantity: 0, isBusy: false);
     }
-    final item =
-        state.data.cartItems.where((i) => i.spId == spId).firstOrNull;
+    final item = state.data.cartItems.where((i) => i.spId == spId).firstOrNull;
     return _CardCartState(
       quantity: item?.quantity ?? 0,
       isBusy: state.isItemBusy(spId),
@@ -38,8 +38,8 @@ class _CardCartState {
   @override
   bool operator ==(Object other) =>
       other is _CardCartState &&
-          other.quantity == quantity &&
-          other.isBusy == isBusy;
+      other.quantity == quantity &&
+      other.isBusy == isBusy;
 
   @override
   int get hashCode => Object.hash(quantity, isBusy);
@@ -77,18 +77,24 @@ class _ProductCardState extends State<ProductCard>
     );
     _bounceScale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 1.30)
-            .chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween(
+          begin: 1.0,
+          end: 1.30,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.30, end: 0.88)
-            .chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween(
+          begin: 1.30,
+          end: 0.88,
+        ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 25,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 0.88, end: 1.0)
-            .chain(CurveTween(curve: Curves.elasticOut)),
+        tween: Tween(
+          begin: 0.88,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.elasticOut)),
         weight: 45,
       ),
     ]).animate(_bounceCtrl);
@@ -127,9 +133,9 @@ class _ProductCardState extends State<ProductCard>
     HapticFeedback.selectionClick();
     _triggerBounce();
     try {
-      await ctx
-          .read<CartCubit>()
-          .incrementItem(widget.product.spId ?? widget.product.id);
+      await ctx.read<CartCubit>().incrementItem(
+        widget.product.spId ?? widget.product.id,
+      );
       widget.onQuantityChanged?.call(currentQty + 1);
     } catch (_) {
       if (ctx.mounted) _showError(ctx);
@@ -139,9 +145,9 @@ class _ProductCardState extends State<ProductCard>
   Future<void> _handleDecrement(BuildContext ctx, int currentQty) async {
     HapticFeedback.selectionClick();
     try {
-      await ctx
-          .read<CartCubit>()
-          .decrementItem(widget.product.spId ?? widget.product.id);
+      await ctx.read<CartCubit>().decrementItem(
+        widget.product.spId ?? widget.product.id,
+      );
       widget.onQuantityChanged?.call(currentQty - 1);
     } catch (_) {
       if (ctx.mounted) _showError(ctx);
@@ -195,7 +201,14 @@ class _ProductCardState extends State<ProductCard>
                     fit: StackFit.expand,
                     children: [
                       _ProductImage(imageUrl: product.primaryImage),
-
+                      if (product.pickupReadyDuration != null)
+                        Positioned(
+                          bottom: 8,
+                          left: 8,
+                          child: _ReadyTimePill(
+                            minutes: product.pickupReadyDuration!,
+                          ),
+                        ),
                       Positioned(
                         bottom: 0,
                         left: 0,
@@ -232,16 +245,17 @@ class _ProductCardState extends State<ProductCard>
                           left: 8,
                           child: product.discountPercent != null
                               ? _Badge(
-                            label: l10n.percentOff(
-                                product.discountPercent!),
-                            color: AppColors.kDiscountColor,
-                            icon: Icons.card_giftcard,
-                          )
+                                  label: l10n.percentOff(
+                                    product.discountPercent!,
+                                  ),
+                                  color: AppColors.kDiscountColor,
+                                  icon: Icons.card_giftcard,
+                                )
                               : _Badge(
-                            label: l10n.offer,
-                            color: AppColors.kDiscountColor,
-                            icon: Icons.card_giftcard,
-                          ),
+                                  label: l10n.offer,
+                                  color: AppColors.kDiscountColor,
+                                  icon: Icons.card_giftcard,
+                                ),
                         ),
 
                       if (product.isOutOfStock)
@@ -433,12 +447,12 @@ class _AddButton extends StatelessWidget {
           boxShadow: disabled
               ? const []
               : [
-            BoxShadow(
-              color: color.withOpacity(0.38),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
+                  BoxShadow(
+                    color: color.withOpacity(0.38),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
         ),
         child: Icon(
           Icons.add_rounded,
@@ -505,12 +519,16 @@ class _QuantityPill extends StatelessWidget {
               transitionBuilder: (child, animation) => FadeTransition(
                 opacity: animation,
                 child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, 0.4),
-                    end: Offset.zero,
-                  ).animate(
-                    CurvedAnimation(parent: animation, curve: Curves.easeOut),
-                  ),
+                  position:
+                      Tween<Offset>(
+                        begin: const Offset(0, 0.4),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOut,
+                        ),
+                      ),
                   child: child,
                 ),
               ),
@@ -623,6 +641,7 @@ class _RatingPill extends StatelessWidget {
 
 class _ProductImage extends StatelessWidget {
   final String? imageUrl;
+
   const _ProductImage({this.imageUrl});
 
   @override
@@ -733,6 +752,42 @@ class _PriceRow extends StatelessWidget {
         color: primaryColor,
         fontWeight: FontWeight.bold,
         fontSize: 13,
+      ),
+    );
+  }
+}
+
+class _ReadyTimePill extends StatelessWidget {
+  final int minutes;
+
+  const _ReadyTimePill({required this.minutes});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final text = formatDuration(minutes, l10n);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.55),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.access_time_rounded, size: 10, color: Colors.white),
+          const SizedBox(width: 3),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+        ],
       ),
     );
   }

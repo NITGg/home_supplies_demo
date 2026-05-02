@@ -1589,5 +1589,68 @@ class AppLocalizationsAr extends AppLocalizations {
   String get openAppSettings => 'فتح إعدادات التطبيق';
 
   @override
-  String get suppliers => 'الموردون';
+  String get suppliers => 'المتاجر';
+
+  @override
+  String get readyIn => 'جاهز خلال';
+
+  @override
+  String get workingHours => 'ساعات العمل';
+
+  @override
+  String get openNow => 'مفتوح الآن';
+
+  @override
+  String get closed => 'مغلق';
+
+  @override
+  String closesAt(String time) {
+    return 'يغلق الساعة $time';
+  }
+
+  @override
+  String opensAt(String time) {
+    return 'يفتح الساعة $time';
+  }
+
+  @override
+  String opensTomorrowAt(String time) {
+    return 'يفتح غداً الساعة $time';
+  }
+
+  @override
+  String opensDayAt(String day, String time) {
+    return 'يفتح $day الساعة $time';
+  }
+
+  @override
+  String orderDeliveredTomorrowNotice(String whenLabel) {
+    return 'اطلب الآن — سيتم جدولة توصيلك في $whenLabel عند إعادة فتح المتجر.';
+  }
+
+  @override
+  String timezone(String tz) {
+    return 'المنطقة الزمنية: $tz';
+  }
+
+  @override
+  String get daySunday => 'الأحد';
+
+  @override
+  String get dayMonday => 'الاثنين';
+
+  @override
+  String get dayTuesday => 'الثلاثاء';
+
+  @override
+  String get dayWednesday => 'الأربعاء';
+
+  @override
+  String get dayThursday => 'الخميس';
+
+  @override
+  String get dayFriday => 'الجمعة';
+
+  @override
+  String get daySaturday => 'السبت';
 }

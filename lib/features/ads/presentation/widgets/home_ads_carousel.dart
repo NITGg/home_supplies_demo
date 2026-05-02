@@ -103,6 +103,9 @@ class _HomeAdsCarouselState extends State<HomeAdsCarousel> {
       case 'product':
         context.push('/products/$id'); // matches GoRoute path '/products/:id'
         break;
+      case 'supplier':
+        context.push('/suppliers/$id');
+        break;
     }
   }
 

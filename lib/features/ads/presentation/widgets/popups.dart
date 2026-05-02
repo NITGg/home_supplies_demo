@@ -72,6 +72,9 @@ class _PopupAdsHandlerState extends State<PopupAdsHandler> {
       case 'product':
         context.push('/products/$id'); // matches GoRoute path '/products/:id'
         break;
+      case 'supplier':
+        context.push('/suppliers/$id');
+        break;
     }
   }
 

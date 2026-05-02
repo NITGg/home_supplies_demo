@@ -3188,8 +3188,110 @@ abstract class AppLocalizations {
   /// No description provided for @suppliers.
   ///
   /// In en, this message translates to:
-  /// **'Suppliers'**
+  /// **'Stores'**
   String get suppliers;
+
+  /// No description provided for @readyIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready In'**
+  String get readyIn;
+
+  /// Section title for the supplier's opening schedule
+  ///
+  /// In en, this message translates to:
+  /// **'Working Hours'**
+  String get workingHours;
+
+  /// Status pill shown when the supplier is currently open
+  ///
+  /// In en, this message translates to:
+  /// **'Open now'**
+  String get openNow;
+
+  /// Status pill shown when the supplier is currently closed, and day-row label for a fully-closed day
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get closed;
+
+  /// Shown next to the open pill — e.g. 'Closes at 1:00 PM'
+  ///
+  /// In en, this message translates to:
+  /// **'Closes at {time}'**
+  String closesAt(String time);
+
+  /// Shown when the supplier is closed but reopens later today
+  ///
+  /// In en, this message translates to:
+  /// **'Opens at {time}'**
+  String opensAt(String time);
+
+  /// Shown when the supplier reopens the following day
+  ///
+  /// In en, this message translates to:
+  /// **'Opens tomorrow at {time}'**
+  String opensTomorrowAt(String time);
+
+  /// Shown when the supplier reopens on a future day that is neither today nor tomorrow
+  ///
+  /// In en, this message translates to:
+  /// **'Opens {day} at {time}'**
+  String opensDayAt(String day, String time);
+
+  /// Nudge banner shown when the supplier is closed and reopens tomorrow or later. {whenLabel} is already localised, e.g. 'tomorrow at 9:00 AM' or 'Monday at 9:00 صباحاً'
+  ///
+  /// In en, this message translates to:
+  /// **'Order now — your delivery will be scheduled for {whenLabel} when the store reopens.'**
+  String orderDeliveredTomorrowNotice(String whenLabel);
+
+  /// Subtitle in the weekly hours sheet showing the IANA timezone
+  ///
+  /// In en, this message translates to:
+  /// **'Timezone: {tz}'**
+  String timezone(String tz);
+
+  /// Full name of Sunday
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get daySunday;
+
+  /// Full name of Monday
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get dayMonday;
+
+  /// Full name of Tuesday
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get dayTuesday;
+
+  /// Full name of Wednesday
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get dayWednesday;
+
+  /// Full name of Thursday
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get dayThursday;
+
+  /// Full name of Friday
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get dayFriday;
+
+  /// Full name of Saturday
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get daySaturday;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

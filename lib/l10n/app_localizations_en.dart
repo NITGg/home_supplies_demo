@@ -1589,5 +1589,68 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openAppSettings => 'Open App Settings';
 
   @override
-  String get suppliers => 'Suppliers';
+  String get suppliers => 'Stores';
+
+  @override
+  String get readyIn => 'Ready In';
+
+  @override
+  String get workingHours => 'Working Hours';
+
+  @override
+  String get openNow => 'Open now';
+
+  @override
+  String get closed => 'Closed';
+
+  @override
+  String closesAt(String time) {
+    return 'Closes at $time';
+  }
+
+  @override
+  String opensAt(String time) {
+    return 'Opens at $time';
+  }
+
+  @override
+  String opensTomorrowAt(String time) {
+    return 'Opens tomorrow at $time';
+  }
+
+  @override
+  String opensDayAt(String day, String time) {
+    return 'Opens $day at $time';
+  }
+
+  @override
+  String orderDeliveredTomorrowNotice(String whenLabel) {
+    return 'Order now — your delivery will be scheduled for $whenLabel when the store reopens.';
+  }
+
+  @override
+  String timezone(String tz) {
+    return 'Timezone: $tz';
+  }
+
+  @override
+  String get daySunday => 'Sunday';
+
+  @override
+  String get dayMonday => 'Monday';
+
+  @override
+  String get dayTuesday => 'Tuesday';
+
+  @override
+  String get dayWednesday => 'Wednesday';
+
+  @override
+  String get dayThursday => 'Thursday';
+
+  @override
+  String get dayFriday => 'Friday';
+
+  @override
+  String get daySaturday => 'Saturday';
 }
