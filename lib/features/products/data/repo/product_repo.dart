@@ -14,7 +14,7 @@ abstract class ProductRepository {
     int? supplierId,
   });
 
-  Future<ProductModel> getProductById(int id);
+  Future<ProductModel> getProductById(int id, {int? supplierId});
 }
 
 // ── Implementation ────────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<ProductModel> getProductById(int id) async {
-    return await _dataSource.getProductById(id);
+  Future<ProductModel> getProductById(int id, {int? supplierId}) async {
+    return await _dataSource.getProductById(id, supplierId: supplierId);
   }
 }

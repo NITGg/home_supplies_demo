@@ -35,12 +35,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _selectedImageIndex = 0;
 
   int get _id => widget.product?.id ?? widget.productId!;
+  int? get _supplierId => widget.product?.supplierId;
 
   @override
   void initState() {
     super.initState();
     _cubit = ProductDetailCubit();
-    _cubit.load(_id);
+    _cubit.load(_id, supplierId: _supplierId);
   }
 
   @override
@@ -61,7 +62,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ProductDetailError(:final message) => _ErrorView(
               message: message,
               product: widget.product,
-              onRetry: () => _cubit.load(_id),
+              onRetry: () => _cubit.load(_id, supplierId: _supplierId),
             ),
             ProductDetailLoaded(:final product) => _buildLoaded(product),
           };

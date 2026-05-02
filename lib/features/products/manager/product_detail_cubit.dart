@@ -8,15 +8,18 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
   final ProductRepository _repository;
 
   ProductDetailCubit({ProductRepository? repository})
-    : _repository = repository ?? ProductRepositoryImpl(),
-      super(const ProductDetailInitial());
+      : _repository = repository ?? ProductRepositoryImpl(),
+        super(const ProductDetailInitial());
 
-  Future<void> load(int productId) async {
+  Future<void> load(int productId, {int? supplierId}) async {
     if (!isClosed) {
       emit(const ProductDetailLoading());
     }
     try {
-      final product = await _repository.getProductById(productId);
+      final product = await _repository.getProductById(
+        productId,
+        supplierId: supplierId,
+      );
       if (!isClosed) {
         emit(ProductDetailLoaded(product));
       }
