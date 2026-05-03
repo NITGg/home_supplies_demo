@@ -319,7 +319,7 @@ class OrderCard extends StatelessWidget {
                                     ((productPrice + fee)- discount).toStringAsFixed(2);
                               }
 
-                              return OrderBudgetChip(budget: budgetText);
+                              return order.status != 'PENDING'  ? OrderBudgetChip(budget: budgetText): SizedBox.shrink();
                             },
                           ),
                         ],
