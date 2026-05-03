@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/formatDate.dart';
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../core/widgets/highlighter_widget.dart';
@@ -264,8 +265,8 @@ class _AddToCartBarState extends State<_AddToCartBar>
       if (ctx.mounted) {
         await MultipleSupplierDialog.show(ctx, exception: e);
       }
-    } catch (_) {
-      if (ctx.mounted) _showError(ctx);
+    } catch (e) {
+      if (ctx.mounted) _showError(ctx, extractErrorMessage(e));
     } finally {
       _tapLocked = false; // release immediately
       if (mounted) setState(() => _isAdding = false);
@@ -283,8 +284,8 @@ class _AddToCartBarState extends State<_AddToCartBar>
       await ctx.read<CartCubit>().incrementItem(
         widget.product.spId ?? widget.product.id,
       );
-    } catch (_) {
-      if (ctx.mounted) _showError(ctx);
+    } catch (e) {
+      if (ctx.mounted) _showError(ctx, extractErrorMessage(e));
     } finally {
       _tapLocked = false;
     }
@@ -298,17 +299,17 @@ class _AddToCartBarState extends State<_AddToCartBar>
       await ctx.read<CartCubit>().decrementItem(
         widget.product.spId ?? widget.product.id,
       );
-    } catch (_) {
-      if (ctx.mounted) _showError(ctx);
+    } catch (e) {
+      if (ctx.mounted) _showError(ctx, extractErrorMessage(e));
     } finally {
       _tapLocked = false;
     }
   }
 
-  void _showError(BuildContext ctx) {
+  void _showError(BuildContext ctx , [String? message]) {
     ScaffoldMessenger.of(ctx).showSnackBar(
       SnackBar(
-        content: Text(AppLocalizations.of(ctx)!.cartUpdateFailed),
+        content: Text(message ?? AppLocalizations.of(ctx)!.cartUpdateFailed),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Theme.of(ctx).colorScheme.error,
       ),

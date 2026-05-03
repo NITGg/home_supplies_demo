@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/style/app_colors.dart';
+import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/formatDate.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
@@ -129,8 +130,8 @@ class _ProductCardState extends State<ProductCard>
       if (ctx.mounted) {
         await MultipleSupplierDialog.show(ctx, exception: e);
       }
-    } catch (_) {
-      if (ctx.mounted) _showError(ctx);
+    } catch (e) {
+      if (ctx.mounted) _showError(ctx, extractErrorMessage(e));
     }
   }
 
@@ -142,8 +143,8 @@ class _ProductCardState extends State<ProductCard>
         widget.product.spId ?? widget.product.id,
       );
       widget.onQuantityChanged?.call(currentQty + 1);
-    } catch (_) {
-      if (ctx.mounted) _showError(ctx);
+    } catch (e) {
+      if (ctx.mounted) _showError(ctx, extractErrorMessage(e));
     }
   }
 
@@ -154,15 +155,15 @@ class _ProductCardState extends State<ProductCard>
         widget.product.spId ?? widget.product.id,
       );
       widget.onQuantityChanged?.call(currentQty - 1);
-    } catch (_) {
-      if (ctx.mounted) _showError(ctx);
+    } catch (e) {
+      if (ctx.mounted) _showError(ctx, extractErrorMessage(e));
     }
   }
 
-  void _showError(BuildContext ctx) {
+  void _showError(BuildContext ctx , [String? message]) {
     ScaffoldMessenger.of(ctx).showSnackBar(
       SnackBar(
-        content: Text(AppLocalizations.of(ctx)!.cartUpdateFailed),
+        content: Text(message ?? AppLocalizations.of(ctx)!.cartUpdateFailed),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Theme.of(ctx).colorScheme.error,
       ),
