@@ -210,10 +210,10 @@ class OrderRemoteDataSource {
   }
 
   // Validate coupon
-  Future<Map<String, dynamic>> validateCoupon(String code) async {
+  Future<Map<String, dynamic>> validateCoupon(String code,bool customOrder) async {
     final response = await _dio.post(
       '/customer-coupons/validate?lang=${LocaleManager.currentLocale}',
-      data: {'code': code},
+      data: {'code': code,'orderType' : customOrder ? 'CUSTOM_PICKUP' : 'CATALOG_PURCHASE'},
     );
     if (response.statusCode == 200) {
       return response.data;

@@ -92,8 +92,8 @@ class OrderRepository {
     );
   }
 
-  Future<Map<String, dynamic>> validateCoupon(String code) async {
-    return await _remoteDataSource.validateCoupon(code);
+  Future<Map<String, dynamic>> validateCoupon(String code, bool customOrder) async {
+    return await _remoteDataSource.validateCoupon(code , customOrder);
   }
 
   Future<Map<String, dynamic>> redeemCoupon(String code) async {

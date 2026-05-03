@@ -161,7 +161,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             label: isArabic ? 'النقاط' : 'Points',
                             color: isReady ? Colors.amber.shade700 : Colors.grey.shade400,
                             onTap: isReady
-                                ? () => context.push('/wallet/points', extra: points.toDouble())
+                                ? () => context.push('/wallet/points')
                                 : () {}, // no-op while loading
                           );
                         },

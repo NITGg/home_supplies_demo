@@ -424,11 +424,11 @@ class OrderCubit extends Cubit<OrderState> {
 
   // ── Coupon ─────────────────────────────────────────────────────────────────────
 
-  Future<void> validateCoupon(String code) async {
+  Future<void> validateCoupon(String code, {bool customOrder = false}) async {
     safeEmit(CouponValidating());
     try {
       log('OrderCubit: Validating coupon $code');
-      final data = await _repository.validateCoupon(code);
+      final data = await _repository.validateCoupon(code,customOrder);
       final coupon = data['coupon'] as Map<String, dynamic>;
       final isValid = data['valid'] == true;
 

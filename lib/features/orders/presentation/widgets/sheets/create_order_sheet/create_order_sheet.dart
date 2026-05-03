@@ -302,7 +302,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       _appliedCoupon = null;
     });
 
-    context.read<OrderCubit>().validateCoupon(code);
+    context.read<OrderCubit>().validateCoupon(code,customOrder: true);
   }
 
   void _removeCoupon() {

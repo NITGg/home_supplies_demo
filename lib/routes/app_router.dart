@@ -235,8 +235,7 @@ Future<GoRouter> createAppRouter({
       GoRoute(
         path: '/wallet/points',
         builder: (context, state) {
-          final balance = state.extra as double;
-          return PointsScreen(balance: balance);
+          return PointsScreen();
         },
       ),
       GoRoute(

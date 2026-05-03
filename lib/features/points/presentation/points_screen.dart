@@ -6,34 +6,32 @@ import 'package:tawreedat_go/core/widgets/circel_back_button.dart';
 import 'package:tawreedat_go/features/auth/manager/profile_cubit.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../l10n/manager/locale_cubit.dart';
+import '../../wallet/manager/wallet_cubit.dart';
 import '../manager/points_cubit.dart';
 import '../manager/points_states.dart';
 import '../data/models/points_models.dart';
 
 class PointsScreen extends StatelessWidget {
-  final double balance;
-
-  const PointsScreen({super.key, required this.balance});
+  const PointsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final isArabic = LocaleManager.currentLocale == 'ar';
     return BlocProvider(
       create: (context) => PointsCubit()..loadPoints(isArabic: isArabic),
-      child: _PointsView(balance: balance,),
+      child: _PointsView(),
     );
   }
 }
 
 class _PointsView extends StatelessWidget {
-  final double balance;
-
-  const _PointsView({required this.balance});
+  const _PointsView();
 
   @override
   Widget build(BuildContext context) {
     final isArabic = LocaleManager.currentLocale == 'ar';
-
+    final balance =
+        context.watch<WalletCubit>().cachedWalletData?.wallet.points.toDouble() ?? 0.0;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
@@ -52,6 +50,7 @@ class _PointsView extends StatelessWidget {
       body: BlocConsumer<PointsCubit, PointsState>(
         listener: (context, state) {
           if (state is PointsConverted) {
+            context.read<WalletCubit>().refreshWalletData();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -63,7 +62,10 @@ class _PointsView extends StatelessWidget {
                 behavior: SnackBarBehavior.floating,
               ),
             );
-          } else if (state is ConvertPointsError) {
+          } else if (state is FinesPaidWithPoints) {
+            // Also refresh after paying fines
+            context.read<WalletCubit>().refreshWalletData(); }
+          else if (state is ConvertPointsError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -117,8 +119,12 @@ class _PointsView extends StatelessWidget {
                 : null; // fallback handled below
 
             return RefreshIndicator(
-              onRefresh: () =>
+              onRefresh: () async {
+                await Future.wait([
                   context.read<PointsCubit>().loadPoints(isArabic: isArabic),
+                  context.read<WalletCubit>().refreshWalletData(),  // ← add this
+                ]);
+              },
               color: AppColors.kPrimaryColor,
               child: BlocBuilder<PointsCubit, PointsState>(
                 builder: (context, innerState) {
