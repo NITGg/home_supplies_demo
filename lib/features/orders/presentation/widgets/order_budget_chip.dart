@@ -36,7 +36,7 @@ class OrderBudgetChip extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            '${l10n?.price ?? 'Budget'}: $budget ${l10n?.egp ?? 'EGP'}',
+            '${l10n?.price ?? 'Budget'} $budget ${l10n?.egp ?? 'EGP'}',
             style: AppTextStyles.bold14.copyWith(
               fontSize: 10,
               color: AppColors.kSecondaryColor,

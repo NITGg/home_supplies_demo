@@ -758,82 +758,82 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
     final bool hasFeeDiscount = discountedFee != null;
 
-    final feeChip = Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: hasFeeDiscount
-            ? Colors.green.shade50
-            : AppColors.kSecondaryColor.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: hasFeeDiscount
-              ? Colors.green.shade300
-              : AppColors.kSecondaryColor.withOpacity(0.25),
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            l10n.estimatedShippingFee,
-            style: TextStyle(
-              fontSize: 10,
-              color: hasFeeDiscount
-                  ? Colors.green.shade700
-                  : AppColors.kSecondaryColor.withOpacity(0.8),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 3),
-          if (hasFeeDiscount)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${fee.toInt()} ${l10n.egp}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.red.shade400,
-                    decoration: TextDecoration.lineThrough,
-                    decorationColor: Colors.red.shade400,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '${discountedFee.toInt()} ${l10n.egp}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade700,
-                  ),
-                ),
-              ],
-            )
-          else
-            Text(
-              textAlign: TextAlign.center,
-              '${fee.toInt()} ${l10n.egp}',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: AppColors.kSecondaryColor,
-              ),
-            ),
-        ],
-      ),
-    );
+    // final feeChip = Container(
+    //   height: 56,
+    //   padding: const EdgeInsets.symmetric(horizontal: 12),
+    //   decoration: BoxDecoration(
+    //     color: hasFeeDiscount
+    //         ? Colors.green.shade50
+    //         : AppColors.kSecondaryColor.withOpacity(0.08),
+    //     borderRadius: BorderRadius.circular(14),
+    //     border: Border.all(
+    //       color: hasFeeDiscount
+    //           ? Colors.green.shade300
+    //           : AppColors.kSecondaryColor.withOpacity(0.25),
+    //     ),
+    //   ),
+    //   child: Column(
+    //     mainAxisAlignment: MainAxisAlignment.center,
+    //     crossAxisAlignment: CrossAxisAlignment.center,
+    //     children: [
+    //       Text(
+    //         l10n.estimatedShippingFee,
+    //         style: TextStyle(
+    //           fontSize: 10,
+    //           color: hasFeeDiscount
+    //               ? Colors.green.shade700
+    //               : AppColors.kSecondaryColor.withOpacity(0.8),
+    //           fontWeight: FontWeight.w500,
+    //         ),
+    //       ),
+    //       const SizedBox(height: 3),
+    //       if (hasFeeDiscount)
+    //         Row(
+    //           mainAxisAlignment: MainAxisAlignment.center,
+    //           mainAxisSize: MainAxisSize.min,
+    //           children: [
+    //             Text(
+    //               '${fee.toInt()} ${l10n.egp}',
+    //               style: TextStyle(
+    //                 fontSize: 11,
+    //                 fontWeight: FontWeight.w500,
+    //                 color: Colors.red.shade400,
+    //                 decoration: TextDecoration.lineThrough,
+    //                 decorationColor: Colors.red.shade400,
+    //               ),
+    //             ),
+    //             const SizedBox(width: 6),
+    //             Text(
+    //               '${discountedFee.toInt()} ${l10n.egp}',
+    //               style: TextStyle(
+    //                 fontSize: 13,
+    //                 fontWeight: FontWeight.bold,
+    //                 color: Colors.green.shade700,
+    //               ),
+    //             ),
+    //           ],
+    //         )
+    //       else
+    //         Text(
+    //           textAlign: TextAlign.center,
+    //           '${fee.toInt()} ${l10n.egp}',
+    //           style: TextStyle(
+    //             fontSize: 13,
+    //             fontWeight: FontWeight.bold,
+    //             color: AppColors.kSecondaryColor,
+    //           ),
+    //         ),
+    //     ],
+    //   ),
+    // );
 
-    if (!_isShopping || isOverBudget) return feeChip;
+    if (!_isShopping || isOverBudget) return SizedBox.shrink();
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        feeChip,
-        const SizedBox(width: 10),
+        // feeChip,
+        // const SizedBox(width: 10),
         Expanded(child: _buildPaymentToggle()),
       ],
     );
@@ -1308,7 +1308,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               isOverBudget,
                             ),
                             const SizedBox(height: 24),
-                          ] else if (_isShopping && !isOverBudget) ...[
+                          ] else
+                            if (_isShopping && !isOverBudget) ...[
                             _buildPaymentToggle(),
                             const SizedBox(height: 24),
                           ],
