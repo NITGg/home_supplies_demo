@@ -207,7 +207,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
 
                           if (!hasDiscount) {
                             return Text(
-                              '${proposal.totalFee} ${l10n.egp}',
+                              '${proposal.courierFee} ${l10n.egp}',
                               style: AppTextStyles.bold16.copyWith(
                                 color: Colors.green,
                                 fontSize: 17,
