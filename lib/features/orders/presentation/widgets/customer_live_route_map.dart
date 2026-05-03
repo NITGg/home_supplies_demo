@@ -19,6 +19,19 @@ class CustomerLiveRouteMapWidget extends StatefulWidget {
   final double deliveryLng;
   final double routeRefetchThresholdMeters;
 
+  /// Fine-tunes the courier asset's facing direction on screen, in degrees
+  /// clockwise-positive.
+  ///
+  /// The camera is already rotated so the delivery is to the right, but if
+  /// the Lottie animation's default facing direction isn't exactly east you
+  /// can compensate here without touching any other logic.
+  ///
+  /// • Positive value  → rotates the asset clockwise  (asset was pointing too far left)
+  /// • Negative value  → rotates the asset CCW         (asset was pointing too far right)
+  ///
+  /// Tune this once for your specific Lottie file and leave it fixed.
+  final double assetFacingOffsetDeg;
+
   /// Called when the first finger touches the map — parent should freeze its scroll.
   final VoidCallback? onInteractionStart;
 
@@ -32,6 +45,7 @@ class CustomerLiveRouteMapWidget extends StatefulWidget {
     required this.deliveryLat,
     required this.deliveryLng,
     this.routeRefetchThresholdMeters = 80,
+    this.assetFacingOffsetDeg = 0,
     this.onInteractionStart,
     this.onInteractionEnd,
   });
@@ -51,6 +65,11 @@ class _CustomerLiveRouteMapWidgetState
 
   // Tracks how many pointers are currently on this widget.
   int _pointerCount = 0;
+
+  // Camera rotation in degrees (clockwise from north).
+  // Kept as a field so initState, didUpdateWidget, and build all share
+  // the same value without recomputing it multiple times.
+  double _mapRotationDeg = 0;
 
   // ── Convenience ──────────────────────────────────────────────────────────
 
@@ -80,7 +99,6 @@ class _CustomerLiveRouteMapWidgetState
   }
 
   /// Bearing from [from] to [to] in radians, clockwise from north.
-  /// 0 = north, π/2 = east, π = south, −π/2 = west.
   double _bearingRad(LatLng from, LatLng to) {
     final lat1 = _toRad(from.latitude);
     final lat2 = _toRad(to.latitude);
@@ -91,11 +109,29 @@ class _CustomerLiveRouteMapWidgetState
     return math.atan2(y, x);
   }
 
+  /// Converts the courier→delivery bearing into a map camera rotation so
+  /// the delivery point is always rendered to the right of the courier.
+  ///
+  /// flutter_map uses **clockwise-positive** degrees (0 = north up).
+  /// When the map rotates clockwise by R°, bearing B° appears at screen
+  /// angle (R + B) from the top.  We want delivery (bearing B) at
+  /// screen-right (90°):
+  ///
+  ///   R + B = 90  →  R = 90 − B
+  ///
+  /// Examples:
+  ///   B =   0° (north) → R = +90° → north moves to right  ✓
+  ///   B =  90° (east)  → R =   0° → east stays at right   ✓
+  ///   B = 180° (south) → R = −90° → south moves to right  ✓
+  double _computeMapRotationDeg() =>
+      90 - _bearingRad(_courier, _delivery) * 180 / math.pi;
+
   // ── Lifecycle ────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
+    _mapRotationDeg = _computeMapRotationDeg();
     _fetchRoute();
   }
 
@@ -107,6 +143,10 @@ class _CustomerLiveRouteMapWidgetState
         old.courierLng != widget.courierLng;
     if (!courierMoved) return;
 
+    // Recompute rotation whenever the courier moves so the delivery
+    // stays pinned to the right of the screen.
+    _mapRotationDeg = _computeMapRotationDeg();
+
     if (!_isFirstRender) {
       _mapController.fitCamera(
         CameraFit.bounds(
@@ -115,6 +155,8 @@ class _CustomerLiveRouteMapWidgetState
           maxZoom: 18,
         ),
       );
+      // fitCamera only updates zoom + center; rotation must be set explicitly.
+      _mapController.rotate(_mapRotationDeg);
     }
 
     final shouldRefetch = _lastFetchedAt == null ||
@@ -138,8 +180,6 @@ class _CustomerLiveRouteMapWidgetState
 
   void _onPointerDown(PointerDownEvent _) {
     _pointerCount++;
-    // First finger landed — freeze the parent scroll immediately so
-    // neither drag nor pinch is stolen by the CustomScrollView.
     if (_pointerCount == 1) widget.onInteractionStart?.call();
   }
 
@@ -230,8 +270,6 @@ class _CustomerLiveRouteMapWidgetState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    final courierBearing = _bearingRad(_courier, _delivery);
-
     return RepaintBoundary(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -239,9 +277,6 @@ class _CustomerLiveRouteMapWidgetState
           borderRadius: BorderRadius.circular(16),
           child: SizedBox(
             height: 220,
-            // Listener sits outside FlutterMap so it sees raw pointer events
-            // before the map's gesture arena resolves them.  This is what lets
-            // us count fingers reliably and freeze the scroll view in time.
             child: Listener(
               onPointerDown: _onPointerDown,
               onPointerUp: _onPointerUp,
@@ -251,13 +286,18 @@ class _CustomerLiveRouteMapWidgetState
                   FlutterMap(
                     mapController: _mapController,
                     options: MapOptions(
+                      // Rotate the camera so the courier→delivery axis is
+                      // horizontal and delivery is always on the right.
+                      // flutter_map markers do NOT rotate with the map, so
+                      // the Lottie asset's default east-facing direction
+                      // naturally points at the delivery — no Transform needed.
+                      initialRotation: _mapRotationDeg,
                       initialCameraFit: CameraFit.bounds(
                         bounds: _bounds,
                         padding: const EdgeInsets.all(56),
                         maxZoom: 18,
                       ),
                       interactionOptions: const InteractionOptions(
-                        // FIX: drag was missing — single-finger pan now works.
                         flags: InteractiveFlag.drag |
                         InteractiveFlag.pinchZoom |
                         InteractiveFlag.doubleTapZoom |
@@ -294,7 +334,9 @@ class _CustomerLiveRouteMapWidgetState
                         ),
                       MarkerLayer(
                         markers: [
-                          _buildCourierMarker(_courier, courierBearing),
+                          // No bearing argument — the camera rotation
+                          // already aligns the asset with the delivery.
+                          _buildCourierMarker(_courier),
                           _buildIconMarker(
                             point: _delivery,
                             icon: Icons.location_on,
@@ -363,40 +405,30 @@ class _CustomerLiveRouteMapWidgetState
 
   // ── Marker builders ──────────────────────────────────────────────────────
 
-  /// Builds the courier marker, always upright regardless of direction.
+  /// Builds the courier marker.
   ///
-  /// The Lottie asset faces right (east) by default.
-  /// • Destination in the RIGHT half (sin(bearing) ≥ 0): rotate the asset
-  ///   by [bearing − π/2] — keeps tilt within ±90° so it never flips.
-  /// • Destination in the LEFT half (sin(bearing) < 0): mirror horizontally
-  ///   first (asset now faces left), then rotate by −(bearing + π/2) which
-  ///   again stays within ±90° — no upside-down frames ever.
-  Marker _buildCourierMarker(LatLng point, double bearing) {
-    final facingLeft = math.sin(bearing) < 0;
-    // Unflipped forward = (1,0).  After rotate(θ): direction = (cosθ, sinθ).
-    // Need (cosθ, sinθ) = (sin b, −cos b)  →  θ = b − π/2
-    //
-    // Flipped forward = (−1,0).  After rotate(θ): direction = (−cosθ, −sinθ).
-    // Need (−cosθ, −sinθ) = (sin b, −cos b)  →  θ = b + π/2
-    final rotation =
-    facingLeft ? bearing + math.pi / 2 : bearing - math.pi / 2;
-
+  /// The camera is already rotated so the delivery is always to the right on
+  /// screen.  flutter_map markers stay screen-aligned (they don't rotate with
+  /// the map), so the Lottie's default east-facing direction points at the
+  /// delivery automatically.
+  ///
+  /// [widget.assetFacingOffsetDeg] compensates for any difference between the
+  /// animation's actual default facing direction and true east.
+  Marker _buildCourierMarker(LatLng point) {
+    final offsetRad = widget.assetFacingOffsetDeg * math.pi / 180;
     return Marker(
       point: point,
       width: 100,
       height: 100,
       child: Transform.rotate(
-        angle: rotation,
-        child: Transform.scale(
-          scaleX: facingLeft ? -1.0 : 1.0,
-          child: Lottie.asset(
-            'assets/animation_json/courier_on_the_way.json',
-            width: 100,
-            height: 100,
-            repeat: true,
-            frameRate: FrameRate(30),
-            fit: BoxFit.contain,
-          ),
+        angle: offsetRad,
+        child: Lottie.asset(
+          'assets/animation_json/courier_on_the_way.json',
+          width: 100,
+          height: 100,
+          repeat: true,
+          frameRate: FrameRate(30),
+          fit: BoxFit.contain,
         ),
       ),
     );

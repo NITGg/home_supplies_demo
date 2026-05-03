@@ -228,7 +228,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                '${(finalFee + proposal.platformFee).toStringAsFixed(2)} ${l10n.egp}',
+                                '${(finalFee).toStringAsFixed(2)} ${l10n.egp}',
                                 style: AppTextStyles.bold16.copyWith(
                                   color: Colors.green,
                                   fontSize: 17,

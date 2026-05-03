@@ -597,6 +597,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             child: Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: CustomerLiveRouteMapWidget(
+                assetFacingOffsetDeg: 70, // ← tweak this until the asset points correctly
                 key: ValueKey('courier_map_${outForDeliveryOrder.id}'),
                 courierLat: _courierFix!.lat,
                 courierLng: _courierFix!.lng,
