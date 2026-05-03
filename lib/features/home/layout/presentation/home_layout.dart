@@ -120,8 +120,9 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
   void _showPendingNotificationDialog() {
     if (!mounted) return;
-    if (pendingNotificationData == null && !shouldShowNotificationDialog)
+    if (pendingNotificationData == null && !shouldShowNotificationDialog) {
       return;
+    }
 
     shouldShowNotificationDialog = false;
     pendingNotificationData = null;

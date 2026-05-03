@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
@@ -512,8 +511,9 @@ String _labelFor(Coupon coupon, bool isAr) {
   if (isAr) {
     if (coupon.isWalletCredit) {
       final parts = <String>[];
-      if (coupon.walletAmountCents > 0)
+      if (coupon.walletAmountCents > 0) {
         parts.add('${coupon.walletAmount.toStringAsFixed(0)} جنيه');
+      }
       if (coupon.walletPoints > 0) parts.add('${coupon.walletPoints} نقطة');
       base = parts.join(' + ');
     } else if (coupon.discountValue != null) {
@@ -527,13 +527,15 @@ String _labelFor(Coupon coupon, bool isAr) {
             : 'خصم ${coupon.discountValue!.toStringAsFixed(0)} جنيه على طلبك';
       }
     }
-    if (base.isNotEmpty && coupon.minOrdersCount > 0)
+    if (base.isNotEmpty && coupon.minOrdersCount > 0) {
       base += ' · ${coupon.minOrdersCount}+ طلب';
+    }
   } else {
     if (coupon.isWalletCredit) {
       final parts = <String>[];
-      if (coupon.walletAmountCents > 0)
+      if (coupon.walletAmountCents > 0) {
         parts.add('${coupon.walletAmount.toStringAsFixed(0)} EGP credit');
+      }
       if (coupon.walletPoints > 0) parts.add('${coupon.walletPoints} pts');
       base = parts.join(' + ');
     } else if (coupon.discountValue != null) {
@@ -547,8 +549,9 @@ String _labelFor(Coupon coupon, bool isAr) {
             : '${coupon.discountValue!.toStringAsFixed(0)} EGP off your order';
       }
     }
-    if (base.isNotEmpty && coupon.minOrdersCount > 0)
+    if (base.isNotEmpty && coupon.minOrdersCount > 0) {
       base += ' · ${coupon.minOrdersCount}+ orders';
+    }
   }
 
   return base;
@@ -560,7 +563,7 @@ String _labelFor(Coupon coupon, bool isAr) {
 class CouponsDialog extends StatelessWidget {
   final bool isAr;
 
-  const CouponsDialog({required this.isAr});
+  const CouponsDialog({super.key, required this.isAr});
 
   @override
   Widget build(BuildContext context) {

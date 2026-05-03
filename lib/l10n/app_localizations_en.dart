@@ -1634,6 +1634,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get serviceFee => 'Service Fee';
+
+  @override
   String get daySunday => 'Sunday';
 
   @override

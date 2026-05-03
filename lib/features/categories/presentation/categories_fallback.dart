@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:tawreedat_go/core/style/app_colors.dart';
 
 class CategoriesFallbackWidget extends StatelessWidget {
   final String title;

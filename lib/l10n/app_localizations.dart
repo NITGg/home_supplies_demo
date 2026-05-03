@@ -3251,6 +3251,12 @@ abstract class AppLocalizations {
   /// **'Timezone: {tz}'**
   String timezone(String tz);
 
+  /// No description provided for @serviceFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Fee'**
+  String get serviceFee;
+
   /// Full name of Sunday
   ///
   /// In en, this message translates to:

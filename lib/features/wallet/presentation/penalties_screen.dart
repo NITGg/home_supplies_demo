@@ -12,7 +12,6 @@ import '../../../core/widgets/loading_screen.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/manager/locale_cubit.dart';
 import '../../auth/manager/profile_cubit.dart';
-import '../../points/data/models/points_models.dart';
 import '../../points/manager/points_cubit.dart';
 import '../../points/manager/points_states.dart';
 import '../data/models/transaction_penality_models.dart';

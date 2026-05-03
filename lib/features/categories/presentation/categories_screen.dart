@@ -86,6 +86,7 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
         child: Row(
           children: [
+            const SizedBox(width: 8),
             // Accent bar
             Container(
               width: 4,

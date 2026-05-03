@@ -71,22 +71,28 @@ class Proposal {
   final int id;
   final int orderId;
   final int courierId;
-  final String totalFee;
   final double discountFee;
+  final double totalFee;
+  final double platformFee;
+  final double courierFee;
+
   final String status;
   final double distanceToPickupM; // always in meters
   final int timeToPickup; // always in seconds
   final DateTime createdAt;
   final DateTime? confirmedAt;
+
   final CourierInfo courier;
   final VehicleInfo vehicle;
 
   Proposal({
     required this.id,
     required this.orderId,
+    required this.platformFee,
     required this.courierId,
-    required this.totalFee,
+    required this.courierFee,
     required this.discountFee,
+    required this.totalFee,
     required this.status,
     required this.distanceToPickupM,
     required this.timeToPickup,
@@ -101,12 +107,16 @@ class Proposal {
       id: json['id'] as int,
       orderId: json['order_id'] as int,
       courierId: json['courier_id'] as int,
-      totalFee:
-          ((num.tryParse(json['total_fee']?.toString() ?? '0') ?? 0) / 100)
-              .toStringAsFixed(2),
       discountFee:
-          (num.tryParse(json['discount_amount']?.toString() ?? '0') ?? 0) / 100,
-
+      (num.tryParse(json['discount_amount']?.toString() ?? '0') ?? 0) / 100,
+      platformFee:
+      (num.tryParse(json['platform_fee']?.toString() ?? '0') ?? 0) / 100,
+      // ← double now
+      courierFee:
+      (num.tryParse(json['courier_fee']?.toString() ?? '0') ?? 0) / 100,
+      // ← double now
+      totalFee:
+      (num.tryParse(json['total_fee']?.toString() ?? '0') ?? 0) / 100,
       // ← double now
       status: json['status'] as String,
       distanceToPickupM:

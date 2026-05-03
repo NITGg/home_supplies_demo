@@ -511,8 +511,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                                     state is OrdersLoaded &&
                                         state.viewMode == OrderViewMode.active &&
                                         state.orders.any((o) => o.isInProgress);
-                                if (!hasActiveOrders)
+                                if (!hasActiveOrders) {
                                   return const SizedBox.shrink();
+                                }
                                 return CircleAvatar(
                                   radius: 20,
                                   backgroundColor: Colors.grey.shade200,

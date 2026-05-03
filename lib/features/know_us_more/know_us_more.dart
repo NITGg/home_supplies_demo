@@ -12,7 +12,9 @@ class KnowUsMoreScreen extends StatelessWidget {
   bool _isValidUrl(String raw) {
     if (raw
         .trim()
-        .isEmpty) return false;
+        .isEmpty) {
+      return false;
+    }
     final uri = Uri.tryParse(raw.trim());
     return uri != null &&
         (uri.scheme == 'http' || uri.scheme == 'https') &&

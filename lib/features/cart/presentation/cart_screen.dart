@@ -74,7 +74,7 @@ class _CartScreenState extends State<CartScreen> {
     final preview = state.preview;
     return preview != null
         ? finalTotal +
-        preview.deliveryFee.ceilToDouble() +
+        preview.totalFee.ceilToDouble() +
         preview.vatAmount.ceilToDouble()
         : finalTotal;
   }
@@ -92,7 +92,7 @@ class _CartScreenState extends State<CartScreen> {
     final preview = state.preview;
     return preview != null
         ? subtotal +
-        preview.deliveryFee.ceilToDouble() +
+        preview.totalFee.ceilToDouble() +
         preview.vatAmount.ceilToDouble()
         : subtotal;
   }
@@ -129,7 +129,9 @@ class _CartScreenState extends State<CartScreen> {
 
       final profileState = context.read<ProfileCubit>().state;
       if (profileState is ProfileLoaded &&
-          profileState.profile.roleId == 4) return;
+          profileState.profile.roleId == 4) {
+        return;
+      }
 
       final code = await _couponCubit.getOrFetchFirstOrderCoupon();
       if (!mounted || code == null || code.isEmpty) return;
@@ -272,7 +274,7 @@ class _CartScreenState extends State<CartScreen> {
                           _buildEmptyWithRefresh(
                               key: const ValueKey('empty')),
                       CartLoaded() =>
-                          _buildLoaded(context, state as CartLoaded),
+                          _buildLoaded(context, state),
                     },
                   ),
                 );

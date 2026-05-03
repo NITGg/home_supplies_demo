@@ -150,14 +150,21 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _QuickActionButton(
-                        icon: Icons.stars_rounded,
-                        label: isArabic ? 'النقاط' : 'Points',
-                        color: Colors.amber.shade700,
-                        onTap: () => context.push(
-                          '/wallet/points',
-                          extra: context.read<WalletCubit>().cachedWalletData?.wallet.points,
-                        ),
+                      child:
+                      BlocBuilder<WalletCubit, WalletState>(
+                        buildWhen: (_, curr) => curr is WalletLoaded || curr is WalletLoading,
+                        builder: (context, state) {
+                          final points = context.read<WalletCubit>().cachedWalletData?.wallet.points;
+                          final isReady = points != null;
+                          return _QuickActionButton(
+                            icon: isReady ? Icons.stars_rounded : Icons.hourglass_empty_rounded,
+                            label: isArabic ? 'النقاط' : 'Points',
+                            color: isReady ? Colors.amber.shade700 : Colors.grey.shade400,
+                            onTap: isReady
+                                ? () => context.push('/wallet/points', extra: points.toDouble())
+                                : () {}, // no-op while loading
+                          );
+                        },
                       ),
                     ),
                   ],

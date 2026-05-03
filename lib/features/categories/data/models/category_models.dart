@@ -1,6 +1,5 @@
 import 'package:tawreedat_go/l10n/manager/locale_cubit.dart';
 
-import '../../../../l10n/app_localizations.dart';
 
 class CategoryModel {
   final int id;

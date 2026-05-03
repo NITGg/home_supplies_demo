@@ -1,11 +1,9 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/widgets/banners.dart';
-import 'package:tawreedat_go/core/widgets/text_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
@@ -288,9 +286,6 @@ class OrderCard extends StatelessWidget {
                                   ) ??
                                   0.0;
 
-                              final fee =
-                                  (double.tryParse(order.totalFee ?? '') ?? 0) /
-                                  100;
                               final discount =
                                   (double.tryParse(
                                         order.discountAmount ?? '',
@@ -298,31 +293,30 @@ class OrderCard extends StatelessWidget {
                                       0) /
                                   100;
 
+                              // AFTER
+                              final courierFee =
+                                  (double.tryParse(order.courierFee ?? '') ?? 0) / 100;
+                              final platformFee =
+                                  (double.tryParse(order.platformFee ?? '') ?? 0) / 100;
+                              final fee = courierFee + platformFee;
+
                               String budgetText;
 
                               if (order.couponType == 'DELIVERY_FEE') {
-                                final discountedFee = (fee - discount).clamp(
-                                  0,
-                                  double.infinity,
-                                );
+                                final discountedCourierFee = (courierFee - discount).clamp(0.0, double.infinity);
                                 budgetText =
-                                    '${productPrice.toStringAsFixed(2)} + ${discountedFee.toStringAsFixed(2)}';
-                              } else if (order.couponType == 'PRODUCTS_ONLY' &&
-                                  discount > 0) {
-                                final discountedProduct =
-                                    (productPrice - discount).clamp(
-                                      0,
-                                      double.infinity,
-                                    );
+                                (productPrice + discountedCourierFee + platformFee).toStringAsFixed(2);
+                              } else if (order.couponType == 'PRODUCTS_ONLY' && discount > 0) {
+
+                                final discountedProduct = (productPrice - discount).clamp(0.0, double.infinity);
                                 budgetText =
-                                    '${discountedProduct.toStringAsFixed(2)} + ${fee.toStringAsFixed(2)}';
-                              } else if (order.couponType == 'ORDER_TOTAL' &&
-                                  discount > 0) {
+                                    (discountedProduct + fee).toStringAsFixed(2);
+                              } else if (order.couponType == 'ORDER_TOTAL' && discount > 0) {
                                 budgetText =
-                                    '${productPrice.toStringAsFixed(2)} + ${fee.toStringAsFixed(2)} - ${discount.toStringAsFixed(2)}';
+                                    ((productPrice + fee)- discount).toStringAsFixed(2);
                               } else {
                                 budgetText =
-                                    '${productPrice.toStringAsFixed(2)} + ${fee.toStringAsFixed(2)}';
+                                    ((productPrice + fee)- discount).toStringAsFixed(2);
                               }
 
                               return OrderBudgetChip(budget: budgetText);

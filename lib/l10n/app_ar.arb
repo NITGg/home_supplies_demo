@@ -686,6 +686,7 @@
     "openAppSettings": "فتح إعدادات التطبيق",
     "suppliers": "المتاجر",
         "readyIn": "جاهز خلال",
+        "serviceFee": "رسوم الخدمة",
      "workingHours": "ساعات العمل",
       "@workingHours": { "description": "Section title for the supplier's opening schedule" },
 

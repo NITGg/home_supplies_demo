@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
-import '../../products/data/models/product_model.dart';
 import '../../products/data/repo/product_repo.dart';
 import '../data/repo/supplier_repo.dart';
 import 'supplier_states.dart';

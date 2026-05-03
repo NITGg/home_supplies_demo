@@ -50,7 +50,9 @@ class CategoriesCubit extends Cubit<CategoriesState> {
   Future<void> loadMore() async {
     final current = state;
     if (current is! CategoriesLoaded || !current.hasMore ||
-        current.isLoadingMore) return;
+        current.isLoadingMore) {
+      return;
+    }
 
     if (!isClosed) emit(current.copyWith(isLoadingMore: true));
 

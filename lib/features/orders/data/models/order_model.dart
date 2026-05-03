@@ -136,11 +136,11 @@ class Order {
       budget: json['budget'] == null
           ? null
           : ((num.tryParse(json['budget'].toString()) ?? 0) / 100)
-                .toStringAsFixed(0),
+                .toString(),
       actualPrice: json['actual_price'] == null
           ? null
           : ((num.tryParse(json['actual_price'].toString()) ?? 0) / 100)
-                .toStringAsFixed(0),
+                .toString(),
       pickupAreaId: json['pickup_area_id'] as int?,
       // nullable
       pickupAddressDescription: json['pickup_address_description'] as String?,

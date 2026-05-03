@@ -77,14 +77,14 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
     switch (_sortOption) {
       case _SortOption.feeAsc:
         list.sort(
-          (a, b) => (double.tryParse(a.totalFee) ?? 0).compareTo(
-            double.tryParse(b.totalFee) ?? 0,
+          (a, b) => (a.totalFee).compareTo(
+            b.totalFee,
           ),
         );
       case _SortOption.feeDesc:
         list.sort(
-          (a, b) => (double.tryParse(b.totalFee) ?? 0).compareTo(
-            double.tryParse(a.totalFee) ?? 0,
+          (a, b) => (b.totalFee).compareTo(
+            a.totalFee,
           ),
         );
       case _SortOption.distanceAsc:
@@ -199,10 +199,8 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                       // ── Discount-aware fee display ──────────────────────────────
                       Builder(
                         builder: (_) {
-                          final total = double.tryParse(proposal.totalFee) ?? 0;
-                          final discount = proposal.discountFee;
-                          final hasDiscount = discount > 0;
-                          final finalFee = (total - discount).clamp(
+                          final hasDiscount =  proposal.discountFee > 0;
+                          final finalFee = (proposal.courierFee - proposal.discountFee).clamp(
                             0,
                             double.infinity,
                           );
@@ -220,7 +218,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                           return Row(
                             children: [
                               Text(
-                                '${total.toInt()} ${l10n.egp}',
+                                '${proposal.courierFee} ${l10n.egp}',
                                 style: AppTextStyles.bold14.copyWith(
                                   fontSize: 13,
                                   color: Colors.red.shade300,
@@ -230,7 +228,7 @@ class _OrderProposalsSheetState extends State<OrderProposalsSheet> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                '${finalFee.toInt()} ${l10n.egp}',
+                                '${(finalFee + proposal.platformFee).toStringAsFixed(2)} ${l10n.egp}',
                                 style: AppTextStyles.bold16.copyWith(
                                   color: Colors.green,
                                   fontSize: 17,
@@ -930,14 +928,13 @@ class _ProposalCardState extends State<_ProposalCard> {
                 const SizedBox(width: 3),
                 Text(
                   () {
-                    final total =
-                        double.tryParse(widget.proposal.totalFee) ?? 0;
+
                     final discount = widget.proposal.discountFee ?? 0;
-                    final finalFee = (total - discount).clamp(
+                    final finalFee = (widget.proposal.courierFee - discount).clamp(
                       0,
                       double.infinity,
                     );
-                    return '$finalFee ${l10n.egp}';
+                    return '${(finalFee + widget.proposal.platformFee).toStringAsFixed(2)} ${l10n.egp}';
                   }(),
                   style: AppTextStyles.bold14.copyWith(
                     fontSize: 13,
@@ -984,7 +981,11 @@ class _ProposalCardState extends State<_ProposalCard> {
     final vehicleName = isArabic
         ? widget.proposal.vehicle.nameAr
         : widget.proposal.vehicle.name;
-
+    final courierFee = widget.proposal.courierFee;
+    final discount = widget.proposal.discountFee;
+    final hasDiscount = discount > 0;
+    final discountedCourierFee = (courierFee - discount).clamp(0.0, double.infinity);
+    final platformFee = widget.proposal.platformFee;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Column(
@@ -1084,7 +1085,7 @@ class _ProposalCardState extends State<_ProposalCard> {
 
           const SizedBox(height: 10),
 
-          // Fee
+          // ── Courier / delivery fee ──────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -1092,7 +1093,6 @@ class _ProposalCardState extends State<_ProposalCard> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: AppColors.kPrimaryColor.withOpacity(0.2),
-                width: 1,
               ),
             ),
             child: Row(
@@ -1100,59 +1100,69 @@ class _ProposalCardState extends State<_ProposalCard> {
               children: [
                 Text(
                   l10n.deliveryFee,
-                  style: AppTextStyles.bold14.copyWith(
-                    color: Colors.grey.shade700,
-                  ),
+                  style: AppTextStyles.bold14.copyWith(color: Colors.grey.shade700),
                 ),
-                // ── Fee display ──────────────────────────────────────────────
-                Builder(
-                  builder: (_) {
-                    final total =
-                        double.tryParse(widget.proposal.totalFee) ?? 0;
-                    final discount = widget.proposal.discountFee ?? 0;
-                    final hasDiscount = discount > 0;
-                    final finalFee = (total - discount).clamp(
-                      0,
-                      double.infinity,
-                    );
-
-                    if (!hasDiscount) {
-                      return Text(
-                        '${widget.proposal.totalFee} ${l10n.egp}',
+                if (!hasDiscount)
+                  Text(
+                    '${courierFee.toStringAsFixed(2)} ${l10n.egp}',
+                    style: AppTextStyles.bold18.copyWith(
+                      color: AppColors.kPrimaryColor,
+                      fontSize: 20,
+                    ),
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${courierFee.toStringAsFixed(2)} ${l10n.egp}',
+                        style: AppTextStyles.bold14.copyWith(
+                          fontSize: 13,
+                          color: Colors.red.shade400,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: Colors.red.shade400,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${discountedCourierFee.toStringAsFixed(2)} ${l10n.egp}',
                         style: AppTextStyles.bold18.copyWith(
-                          color: AppColors.kPrimaryColor,
+                          color: Colors.green.shade700,
                           fontSize: 20,
                         ),
-                      );
-                    }
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        // Original — struck through in red
-                        Text(
-                          '${total.toInt()} ${l10n.egp}',
-                          style: AppTextStyles.bold14.copyWith(
-                            fontSize: 13,
-                            color: Colors.red.shade400,
-                            decoration: TextDecoration.lineThrough,
-                            decorationColor: Colors.red.shade400,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        // Discounted — green
-                        Text(
-                          '${finalFee.toInt()} ${l10n.egp}',
-                          style: AppTextStyles.bold18.copyWith(
-                            color: Colors.green.shade700,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+          const SizedBox(height: 8),
+
+// ── Platform / service fee ──────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.kPrimaryColor.withOpacity(0.2),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l10n.serviceFee,
+                  style: AppTextStyles.bold14.copyWith(color: Colors.grey.shade700),
                 ),
-                // ────────────────────────────────────────────────────────────
+                Text(
+                  '${platformFee.toStringAsFixed(2)} ${l10n.egp}',
+                  style: AppTextStyles.bold18.copyWith(
+                    color: AppColors.kPrimaryColor,
+                    fontSize: 20,
+                  ),
+                ),
               ],
             ),
           ),

@@ -32,7 +32,7 @@ class ReferralCaptureService {
 
     try {
       final referrerDetails = await PlayInstallReferrer.installReferrer;
-      final referrerString = referrerDetails?.installReferrer;
+      final referrerString = referrerDetails.installReferrer;
 
       log('ReferralCapture: raw referrer = $referrerString');
 

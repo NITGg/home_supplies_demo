@@ -1634,6 +1634,9 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get serviceFee => 'رسوم الخدمة';
+
+  @override
   String get daySunday => 'الأحد';
 
   @override

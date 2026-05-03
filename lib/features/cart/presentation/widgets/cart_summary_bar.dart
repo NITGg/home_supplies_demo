@@ -65,7 +65,7 @@ class CartSummaryBar extends StatelessWidget {
 
     final double finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
 
-    final double rawDeliveryFee = preview?.deliveryFee ?? 0.0;
+    final double rawDeliveryFee = preview?.courierFee ?? 0.0;
     final double? deliveryFeeRounded =
     preview != null ? double.parse(rawDeliveryFee.toStringAsFixed(2)) : null;
     final double? vatAmountRounded = preview?.vatAmount;
@@ -80,8 +80,10 @@ class CartSummaryBar extends StatelessWidget {
 
     final double effectiveDeliveryFee = discountedDeliveryFee ?? deliveryFeeRounded ?? 0.0;
 
+    final double platformFee = preview?.platformFee ?? 0.0;
+
     final double? grandTotalRaw = preview != null
-        ? finalTotal + effectiveDeliveryFee + vatAmountRounded!
+        ? finalTotal + effectiveDeliveryFee + vatAmountRounded! + platformFee
         : null;
 
     final double? orderTotalCouponDiscount =
@@ -171,6 +173,13 @@ class CartSummaryBar extends StatelessWidget {
               discounted: discountedDeliveryFee,
               egp: l10n.egp,
               label: l10n.deliveryFee,
+              theme: theme,
+            ),
+            CartDeliveryFeeRow(
+              original: preview?.platformFee??0,
+              discounted: preview?.platformFee??0,
+              egp: l10n.egp,
+              label: l10n.serviceFee,
               theme: theme,
             ),
           ],

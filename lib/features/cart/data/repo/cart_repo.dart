@@ -54,6 +54,7 @@ class CartRepositoryImpl implements CartRepository {
         quantity: quantity,
       );
 
+  @override
   Future<OrderPreviewModel> getOrderPreview() => _dataSource.getOrderPreview();
 
   @override

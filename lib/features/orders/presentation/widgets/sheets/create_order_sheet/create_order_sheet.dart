@@ -804,7 +804,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  '${discountedFee!.toInt()} ${l10n.egp}',
+                  '${discountedFee.toInt()} ${l10n.egp}',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,

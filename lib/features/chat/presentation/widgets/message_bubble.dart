@@ -49,7 +49,7 @@ class MessageBubble extends StatelessWidget {
     if (message.status == MessageStatus.failed) return Colors.red.shade100;
     if (message.type == MessageType.image) return Colors.transparent;
     if (message.isMe) return Theme.of(context).colorScheme.primary;
-    return Theme.of(context).colorScheme.surfaceVariant;
+    return Theme.of(context).colorScheme.surfaceContainerHighest;
   }
 
   BorderRadius _bubbleRadius() {
@@ -177,7 +177,7 @@ class _ImageContent extends StatelessWidget {
     return Container(
       width: MediaQuery.of(context).size.width * 0.65,
       height: 180,
-      color: Theme.of(context).colorScheme.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: const Center(
         child: Icon(Icons.broken_image_outlined, size: 40, color: Colors.grey),
       ),

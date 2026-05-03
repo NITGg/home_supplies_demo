@@ -734,6 +734,7 @@
         "description": "Subtitle in the weekly hours sheet showing the IANA timezone",
         "placeholders": { "tz": { "type": "String" } }
       },
+        "serviceFee": "Service Fee",
 
       "daySunday": "Sunday",
       "@daySunday": { "description": "Full name of Sunday" },

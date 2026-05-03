@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/utils/image_picker.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -100,7 +99,7 @@ class _ChatInputState extends State<ChatInput> {
             child: Container(
               constraints: const BoxConstraints(maxHeight: 120),
               decoration: BoxDecoration(
-                color: widget.isEnabled ? cs.surface : cs.surfaceVariant,
+                color: widget.isEnabled ? cs.surface : cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: cs.outline.withOpacity(0.2)),
               ),
