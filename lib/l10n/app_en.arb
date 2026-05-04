@@ -457,7 +457,7 @@
           "distanceTooClose": "Pickup and delivery locations are too close. Please choose different locations",
           "pleaseSelectLocation": "Please select a location",
                     "oneTimeAddress": "Enter Adress (Don't Save)",
-          "productImageOptional": "Product Image (Optional)",
+          "productImageOptional": "Product Image",
           "newOrder": "New Order",
           "imageTooLarge": "Image Too Large",
   "categories": "Categories",

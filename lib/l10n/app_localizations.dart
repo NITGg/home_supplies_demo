@@ -2132,7 +2132,7 @@ abstract class AppLocalizations {
   /// No description provided for @productImageOptional.
   ///
   /// In en, this message translates to:
-  /// **'Product Image (Optional)'**
+  /// **'Product Image'**
   String get productImageOptional;
 
   /// No description provided for @newOrder.

@@ -1043,7 +1043,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get oneTimeAddress => 'Enter Adress (Don\'t Save)';
 
   @override
-  String get productImageOptional => 'Product Image (Optional)';
+  String get productImageOptional => 'Product Image';
 
   @override
   String get newOrder => 'New Order';

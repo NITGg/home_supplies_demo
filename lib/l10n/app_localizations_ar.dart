@@ -1043,7 +1043,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get oneTimeAddress => 'إدخال عنوان (لا تحفظ)';
 
   @override
-  String get productImageOptional => 'صورة المنتج (اختياري)';
+  String get productImageOptional => 'صورة المنتج';
 
   @override
   String get newOrder => 'طلب جديد';
