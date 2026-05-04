@@ -4,6 +4,7 @@ class OrderPreviewModel {
   final double platformFee;
   final double vatAmount;
   final double totalFee;
+  final double distanceM;
 
   const OrderPreviewModel({
     required this.deliveryFee,
@@ -11,6 +12,7 @@ class OrderPreviewModel {
     required this.courierFee,
     required this.vatAmount,
     required this.totalFee,
+    required this.distanceM,
   });
 
   factory OrderPreviewModel.fromJson(Map<String, dynamic> json) {
@@ -19,6 +21,7 @@ class OrderPreviewModel {
       platformFee: (p['platformFee'] as num).toDouble()/100,
       deliveryFee: (p['deliveryFee'] as num).toDouble()/100,
       courierFee: (p['courierFee'] as num).toDouble()/100,
+      distanceM: (p['distanceM'] as num).toDouble(),
       vatAmount:   (p['vatAmount']   as num).toDouble()/100,
       totalFee:    (p['totalFee']    as num).toDouble()/100,
     );

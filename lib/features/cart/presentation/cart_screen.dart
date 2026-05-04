@@ -356,7 +356,7 @@ class _CartScreenState extends State<CartScreen> {
       ),
       actions: [
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 8.0, 0),
           child: CircleAvatar(
             radius: 20,
             backgroundColor: Colors.grey.shade200,
@@ -371,7 +371,7 @@ class _CartScreenState extends State<CartScreen> {
         ),
         if (state is CartLoaded && state.data.cartItems.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 8.0, 0),
             child: CircleAvatar(
               radius: 20,
               backgroundColor: Colors.grey.shade200,

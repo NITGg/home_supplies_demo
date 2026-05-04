@@ -169,7 +169,7 @@ class CartDeliveryFeeRow extends StatelessWidget {
               const SizedBox(width: 6),
               HighlighterWidget(
                 child: Text(
-                  '$discounted $egp',
+                  '${discounted?.toStringAsFixed(2)} $egp',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -181,7 +181,7 @@ class CartDeliveryFeeRow extends StatelessWidget {
           )
               : Text(
             key: ValueKey('normal_$original'),
-            '$original $egp',
+            '${original.toStringAsFixed(2)} $egp',
             style: theme.textTheme.bodyMedium,
           ),
         ),
