@@ -59,8 +59,16 @@ class CartSummaryBar extends StatelessWidget {
 
     final bool isOrderTotalCoupon = appliedCoupon?.isOrderTotalDiscount ?? false;
 
+    // When a preview has been fetched with the coupon code, prefer the
+    // server-computed discountAmount — it is cap-aware and always correct.
+    // Fall back to local computation only while the preview is still loading.
+    final bool hasServerDiscount =
+        preview != null && (preview?.discountAmount??0) > 0 && appliedCoupon != null;
+
     final double? couponDiscount = (appliedCoupon != null && !isOrderTotalCoupon)
-        ? computeCouponCartDiscount(appliedCoupon!, priceBeforeCoupon)
+        ? (hasServerDiscount && !appliedCoupon!.isDeliveryFeeDiscount
+        ? preview!.discountAmount
+        : computeCouponCartDiscount(appliedCoupon!, priceBeforeCoupon))
         : null;
 
     final double finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
@@ -72,7 +80,10 @@ class CartSummaryBar extends StatelessWidget {
 
     final double? deliveryFeeDiscount =
     (appliedCoupon != null && preview != null && !isOrderTotalCoupon)
-        ? computeDeliveryFeeDiscount(appliedCoupon!, rawDeliveryFee)
+        ? (hasServerDiscount && appliedCoupon!.isDeliveryFeeDiscount
+    // Server-authoritative: cap-aware delivery discount
+        ? preview?.discountAmount??0
+        : computeDeliveryFeeDiscount(appliedCoupon!, rawDeliveryFee))
         : null;
     final double? discountedDeliveryFee = deliveryFeeDiscount != null
         ? (rawDeliveryFee - deliveryFeeDiscount).clamp(0.0, rawDeliveryFee)
@@ -88,7 +99,9 @@ class CartSummaryBar extends StatelessWidget {
 
     final double? orderTotalCouponDiscount =
     (isOrderTotalCoupon && appliedCoupon != null && grandTotalRaw != null)
-        ? computeCouponCartDiscount(appliedCoupon!, grandTotalRaw)
+        ? (hasServerDiscount
+        ? preview!.discountAmount
+        : computeCouponCartDiscount(appliedCoupon!, grandTotalRaw))
         : null;
 
     final double? grandTotal = grandTotalRaw != null

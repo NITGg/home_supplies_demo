@@ -72,11 +72,12 @@ class _CartScreenState extends State<CartScreen> {
         : null;
     final finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
     final preview = state.preview;
-    return preview != null
-        ? finalTotal +
-        preview.totalFee.ceilToDouble() +
-        preview.vatAmount.ceilToDouble()
-        : finalTotal;
+    if (preview == null) return finalTotal;
+
+    return finalTotal
+        + preview.totalFee.ceilToDouble()
+        + preview.vatAmount.ceilToDouble()
+        - preview.discountAmount.ceilToDouble(); // 👈 server-authoritative discount
   }
 
   double _computeDisplayTotal(CartLoaded state) {
@@ -90,11 +91,12 @@ class _CartScreenState extends State<CartScreen> {
         : null;
     final subtotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
     final preview = state.preview;
-    return preview != null
-        ? subtotal +
-        preview.totalFee.ceilToDouble() +
-        preview.vatAmount.ceilToDouble()
-        : subtotal;
+    if (preview == null) return subtotal;
+
+    return subtotal
+        + preview.totalFee.ceilToDouble()
+        + preview.vatAmount.ceilToDouble()
+        - preview.discountAmount.ceilToDouble(); // 👈
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -178,6 +180,8 @@ class _CartScreenState extends State<CartScreen> {
       _appliedCoupon = null;
       _couponController.clear();
     });
+    // Re-fetch preview without coupon so fees reset to undiscounted values.
+    _cubit.refreshPreview();
   }
 
   Future<void> _checkout() async {
@@ -295,6 +299,11 @@ class _CartScreenState extends State<CartScreen> {
         _couponValidating = false;
         if (state.coupon != null) _appliedCoupon = state.coupon;
       });
+      // Re-fetch preview with the coupon code so preview.discountAmount
+      // is server-computed (cap-aware) rather than estimated locally.
+      if (state.coupon != null) {
+        _cubit.refreshPreview(couponCode: state.coupon!.code);
+      }
       Fluttertoast.showToast(
         msg: l10n.couponRedeemed,
         toastLength: Toast.LENGTH_SHORT,

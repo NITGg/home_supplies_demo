@@ -23,7 +23,7 @@ abstract class CartRemoteDataSource {
   });
   Future<void> clearCart();
 
-  Future<OrderPreviewModel> getOrderPreview();
+  Future<OrderPreviewModel> getOrderPreview(String? code);
 
 }
 
@@ -40,8 +40,8 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   }
 
   @override
-  Future<OrderPreviewModel> getOrderPreview() async {
-    final response = await _dio.post('/orders/preview?lang=${LocaleManager.currentLocale}',data: {});
+  Future<OrderPreviewModel> getOrderPreview(String? code) async {
+    final response = await _dio.post('/orders/preview?lang=${LocaleManager.currentLocale}',data: {if (code != null)'coupon_code': code});
     log('[Cart] GET /orders/preview → ${response.statusCode}');
     return OrderPreviewModel.fromJson(response.data as Map<String, dynamic>);
   }

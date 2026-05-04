@@ -35,7 +35,7 @@ class CartCubit extends Cubit<CartState> {
       final data = await _repository.getCart();
       _safeEmit(CartLoaded(_enrichSummary(data)));
       if (data.cartItems.isNotEmpty) {
-        unawaited(_fetchPreviewSilently()); // ← add this
+        unawaited(_fetchPreviewSilently()); // coupon unknown at fetch time
       }
     } catch (e) {
       _safeEmit(CartError(extractErrorMessage(e)));
@@ -88,9 +88,9 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
-  Future<void> _fetchPreviewSilently() async {
+  Future<void> _fetchPreviewSilently({String? couponCode}) async {
     try {
-      final preview = await _repository.getOrderPreview();
+      final preview = await _repository.getOrderPreview(couponCode: couponCode);
       final loaded = _loaded;
       if (loaded != null) {
         _safeEmit(loaded.copyWith(preview: preview));
@@ -99,6 +99,14 @@ class CartCubit extends Cubit<CartState> {
       log('[CartCubit] fetchPreview error: $e');
       // non-fatal — summary still shows product totals
     }
+  }
+
+  /// Re-fetches the order preview with an optional coupon code.
+  /// Call this whenever a coupon is applied or removed so that
+  /// [preview.discountAmount] reflects the server-computed (cap-aware) value.
+  Future<void> refreshPreview({String? couponCode}) async {
+    if (_loaded == null) return;
+    unawaited(_fetchPreviewSilently(couponCode: couponCode));
   }
 
   /// Clears the current cart and immediately adds [spId] with [quantity].

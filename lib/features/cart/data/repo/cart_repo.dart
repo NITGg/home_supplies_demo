@@ -18,8 +18,7 @@ abstract class CartRepository {
     required CartUpdateAction action,
     required int quantity,
   });
-  Future<OrderPreviewModel> getOrderPreview();
-
+  Future<OrderPreviewModel> getOrderPreview({String? couponCode});
 
   Future<void> clearCart();
 }
@@ -55,7 +54,8 @@ class CartRepositoryImpl implements CartRepository {
       );
 
   @override
-  Future<OrderPreviewModel> getOrderPreview() => _dataSource.getOrderPreview();
+  Future<OrderPreviewModel> getOrderPreview({String? couponCode}) =>
+      _dataSource.getOrderPreview(couponCode);
 
   @override
   Future<void> clearCart() => _dataSource.clearCart();
