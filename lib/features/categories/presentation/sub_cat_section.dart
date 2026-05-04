@@ -23,7 +23,7 @@ class SubCategorySectionWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Column(
+    return section.products.isEmpty? SizedBox.shrink():Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Section header ───────────────────────────────────────────────
