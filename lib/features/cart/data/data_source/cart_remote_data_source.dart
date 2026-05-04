@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/cart_response_model.dart';
 import '../models/cart_item_model.dart';
 import '../models/multiple_supplier_exception.dart';
@@ -33,14 +34,14 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
 
   @override
   Future<CartResponseModel> getCart() async {
-    final response = await _dio.get('/cart');
+    final response = await _dio.get('/cart?lang=${LocaleManager.currentLocale}');
     log('[Cart] GET /cart → ${response.statusCode}');
     return CartResponseModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
   Future<OrderPreviewModel> getOrderPreview() async {
-    final response = await _dio.post('/orders/preview',data: {});
+    final response = await _dio.post('/orders/preview?lang=${LocaleManager.currentLocale}',data: {});
     log('[Cart] GET /orders/preview → ${response.statusCode}');
     return OrderPreviewModel.fromJson(response.data as Map<String, dynamic>);
   }
@@ -52,7 +53,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   }) async {
     try {
       final response = await _dio.post(
-        '/cart',
+        '/cart?lang=${LocaleManager.currentLocale}',
         data: {'sp_id': spId, 'quantity': quantity},
       );
       log('[Cart] POST /cart → ${response.statusCode}');
@@ -71,7 +72,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
     required int quantity,
   }) async {
     final response = await _dio.put(
-      '/cart',
+      '/cart?lang=${LocaleManager.currentLocale}',
       data: {
         'sp_id': cartItemId,
         'action': action.value,
@@ -94,7 +95,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
 
   @override
   Future<void> clearCart() async {
-    final response = await _dio.delete('/cart');
+    final response = await _dio.delete('/cart?lang=${LocaleManager.currentLocale}');
     log('[Cart] DELETE /cart → ${response.statusCode}');
   }
 

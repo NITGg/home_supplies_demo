@@ -100,6 +100,9 @@ class _CategoriesSection extends StatelessWidget {
   final VoidCallback onLoadMore;
   final bool showHeader;
 
+  /// Maximum number of categories shown on the home grid before "View All"
+  static const int _homeGridLimit = 6;
+
   const _CategoriesSection({
     required this.state,
     required this.onCategoryTap,
@@ -110,13 +113,15 @@ class _CategoriesSection extends StatelessWidget {
   List<CategoryModel> get _parents =>
       state.categories.where((c) => c.parentId == null).toList();
 
+  /// The slice shown on home — capped at [_homeGridLimit]
+  List<CategoryModel> get _visibleParents =>
+      _parents.take(_homeGridLimit).toList();
+
+  bool get _hasMore => _parents.length > _homeGridLimit;
+
   bool get _useCompact => false;
 
-  int get _crossAxisCount {
-    if (!_useCompact) return 3;
-    if (_parents.length > 12) return 5;
-    return 4;
-  }
+  int get _crossAxisCount => _useCompact ? 4 : 3;
 
   double get _childAspectRatio => _useCompact ? 0.95 : 0.82;
 
@@ -203,7 +208,7 @@ class _CategoriesSection extends StatelessWidget {
         const FeaturedProductsSection(),
         const LastPurchasedSection(),
 
-        // ── Categories label ──────────────────────────────────────────────
+        // ── Categories label + View All ───────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: Row(
@@ -223,46 +228,71 @@ class _CategoriesSection extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              const Spacer(),
+              if (_hasMore)
+                GestureDetector(
+                  onTap: () => context.push('/categories'),
+                  child: Text(
+                    AppLocalizations.of(context)!.viewAll,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.kPrimaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
 
-        // ── Grid ──────────────────────────────────────────────────────────
-        NotificationListener<ScrollNotification>(
-          onNotification: (n) {
-            if (n is ScrollEndNotification &&
-                n.metrics.pixels >= n.metrics.maxScrollExtent - 40 &&
-                state.hasMore) {
-              onLoadMore();
-            }
-            return false;
-          },
-          child: GridView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: _crossAxisCount,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: _childAspectRatio,
-            ),
-            itemCount: _parents.length,
-            itemBuilder: (_, i) => CategoryCard(
-              category: _parents[i],
-              onTap: () => onCategoryTap(_parents[i]),
-              style: _useCompact
-                  ? CategoryCardStyle.compact
-                  : CategoryCardStyle.regular,
-            ),
+        // ── Grid (limited to 6) ───────────────────────────────────────────
+        GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: _crossAxisCount,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: _childAspectRatio,
+          ),
+          itemCount: _visibleParents.length,
+          itemBuilder: (_, i) => CategoryCard(
+            category: _visibleParents[i],
+            onTap: () => onCategoryTap(_visibleParents[i]),
+            style: _useCompact
+                ? CategoryCardStyle.compact
+                : CategoryCardStyle.regular,
           ),
         ),
+
+        // ── "View All Categories" button (shown when there are more) ──────
+        // if (_hasMore)
+        //   Padding(
+        //     padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+        //     child: SizedBox(
+        //       width: double.infinity,
+        //       child: OutlinedButton(
+        //         onPressed: () => context.push('/categories'),
+        //         style: OutlinedButton.styleFrom(
+        //           foregroundColor: AppColors.kPrimaryColor,
+        //           side: BorderSide(color: AppColors.kPrimaryColor, width: 1.2),
+        //           shape: RoundedRectangleBorder(
+        //             borderRadius: BorderRadius.circular(10),
+        //           ),
+        //           padding: const EdgeInsets.symmetric(vertical: 12),
+        //         ),
+        //         child: Text(
+        //           AppLocalizations.of(context)!.viewAll,
+        //           style: const TextStyle(fontWeight: FontWeight.w600),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
 
         const SizedBox(height: 4),
         Divider(color: Colors.grey.shade200, height: 1),
 
         // ── Suppliers Strip ───────────────────────────────────────────────
-        // Shows ALL suppliers (no category filter on the home page)
         const SuppliersStripWidget(),
       ],
     );
@@ -332,12 +362,12 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
+              crossAxisCount: 3,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
-              childAspectRatio: 0.95,
+              childAspectRatio: 0.82,
             ),
-            itemCount: 8,
+            itemCount: 6,
             itemBuilder: (_, __) => AnimatedBuilder(
               animation: _anim,
               builder: (_, __) => Opacity(

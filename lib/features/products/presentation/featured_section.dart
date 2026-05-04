@@ -94,7 +94,7 @@ class _FeaturedProductsSectionState extends State<FeaturedProductsSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Section label ─────────────────────────────────────────────────
+        // ── Section label + View All ───────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: Row(
@@ -112,6 +112,17 @@ class _FeaturedProductsSectionState extends State<FeaturedProductsSection> {
                 AppLocalizations.of(context)!.featured,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => context.push('/featured'),
+                child: Text(
+                  AppLocalizations.of(context)!.viewAll,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.kPrimaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

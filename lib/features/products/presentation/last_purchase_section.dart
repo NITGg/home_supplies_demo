@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -62,7 +61,7 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
       final response = await _repo.getProducts(
         skip: _skip,
         limit: _pageSize,
-        isLastPurchased: true
+        isLastPurchased: true,
       );
 
       if (!mounted) return;
@@ -93,7 +92,7 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Section label ─────────────────────────────────────────────────
+        // ── Section label + View All ───────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: Row(
@@ -111,6 +110,17 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
                 AppLocalizations.of(context)!.purchasedBefore,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => context.push('/last-purchased'),
+                child: Text(
+                  AppLocalizations.of(context)!.viewAll,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.kPrimaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

@@ -14,6 +14,7 @@ import '../features/auth/presentation/pages/profile_screen.dart';
 import '../features/auth/presentation/pages/register_screen.dart';
 import '../features/cart/presentation/cart_screen.dart';
 import '../features/categories/data/models/category_models.dart';
+import '../features/categories/presentation/all_categories_screen.dart';
 import '../features/categories/presentation/category_details_screen.dart';
 import '../features/chat/config/chat_injection.dart';
 import '../features/home/drawer_pages/faq_page.dart';
@@ -26,6 +27,8 @@ import '../features/onboarding/onboarding.dart';
 import '../core/utils/secure_storage_service.dart';
 import '../features/points/presentation/points_screen.dart';
 import '../features/products/data/models/product_model.dart';
+import '../features/products/presentation/all_featured_screen.dart';
+import '../features/products/presentation/all_last_purchased_screen.dart';
 import '../features/products/presentation/product_details_screen.dart';
 import '../features/referral/referral_screen.dart';
 import '../features/reviews/data/data_source/reviews_remote_data_source.dart';
@@ -259,6 +262,20 @@ Future<GoRouter> createAppRouter({
         ),
       ),
       GoRoute(path: '/cart', builder: (context, state) => const CartScreen()),
+      GoRoute(
+        path: '/categories',
+        builder: (context, state) => const AllCategoriesScreen(),
+      ),
+
+      GoRoute(
+        path: '/featured',
+        builder: (context, state) => const AllFeaturedProductsScreen(),
+      ),
+
+      GoRoute(
+        path: '/last-purchased',
+        builder: (context, state) => const AllLastPurchasedScreen(),
+      ),
     ],
     errorBuilder: (context, state) {
       log('❌ 404 Error - Location: ${state.uri}');

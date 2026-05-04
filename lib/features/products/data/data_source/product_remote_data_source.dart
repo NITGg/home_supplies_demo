@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/product_model.dart';
 import '../models/product_response_model.dart';
 
@@ -42,7 +43,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     };
 
     final response = await _dio.get(
-      '/products',
+      '/products?lang=${LocaleManager.currentLocale}',
       queryParameters: queryParams,
     );
 
@@ -58,7 +59,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   Future<ProductModel> getProductById(int id, {int? supplierId}) async {
     final sid = supplierId ?? AppSettings.kMainSupplierId;
     final response = await _dio.get(
-      '/products/$id?supplier_id=$sid&include=attributes',
+      '/products/$id?lang=${LocaleManager.currentLocale}&supplier_id=$sid&include=attributes',
     );
 
     final data = response.data as Map<String, dynamic>;

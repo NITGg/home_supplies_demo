@@ -243,8 +243,6 @@ class _SkeletonCardState extends State<_SkeletonCard>
 
 // ── Standalone product grid (for direct products / no sub-categories) ─────────
 
-// ── Standalone product grid (for direct products / no sub-categories) ─────────
-
 class DirectProductsGrid extends StatelessWidget {
   final List<ProductModel> products;
   final bool isLoadingMore;
