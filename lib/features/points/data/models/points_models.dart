@@ -43,20 +43,41 @@ class PointsProgressModel {
   final PointsBalance balance;
   final UpcomingExpiration? upcomingExpiration;
   final PointsProgress progress;
+  final int pendingBatchBalance; // 👈 points accumulated, not yet unlocked
 
   PointsProgressModel({
     required this.balance,
     this.upcomingExpiration,
     required this.progress,
+    required this.pendingBatchBalance,
   });
 
   factory PointsProgressModel.fromJson(Map<String, dynamic> json) {
+    final availableBatches = (json['availableBatches'] as List<dynamic>?) ?? [];
+    final totalPoints = availableBatches.fold<int>(
+      0,
+          (sum, b) => sum + (b['balance'] as num).toInt(),
+    );
+
+    final allExpirations = (json['allExpirations'] as List<dynamic>?) ?? [];
+    final pendingBatch = json['pendingBatch'] as Map<String, dynamic>?;
+
     return PointsProgressModel(
-      balance: PointsBalance.fromJson(json['balance']),
-      upcomingExpiration: json['upcomingExpiration'] != null
-          ? UpcomingExpiration.fromJson(json['upcomingExpiration'])
+      balance: PointsBalance(
+        availablePoints: totalPoints,
+        monetaryValueEgp: 0,
+      ),
+      upcomingExpiration: allExpirations.isNotEmpty
+          ? UpcomingExpiration.fromJson(
+        allExpirations.first as Map<String, dynamic>,
+      )
           : null,
-      progress: PointsProgress.fromJson(json['progress']),
+      progress: PointsProgress.fromJson(
+        json['ordersProgress'] as Map<String, dynamic>? ?? {},
+      ),
+      pendingBatchBalance: pendingBatch != null
+          ? (pendingBatch['balance'] as num).toInt()
+          : 0,
     );
   }
 }
@@ -65,17 +86,7 @@ class PointsBalance {
   final int availablePoints;
   final double monetaryValueEgp;
 
-  PointsBalance({
-    required this.availablePoints,
-    required this.monetaryValueEgp,
-  });
-
-  factory PointsBalance.fromJson(Map<String, dynamic> json) {
-    return PointsBalance(
-      availablePoints: (json['availablePoints'] as num).toInt(),
-      monetaryValueEgp: (json['monetaryValueEgp'] as num).toDouble(),
-    );
-  }
+  PointsBalance({required this.availablePoints, required this.monetaryValueEgp});
 }
 
 class UpcomingExpiration {
@@ -86,8 +97,8 @@ class UpcomingExpiration {
 
   factory UpcomingExpiration.fromJson(Map<String, dynamic> json) {
     return UpcomingExpiration(
-      points: (json['points_expiring'] as num).toInt(), // was 'points'
-      expiresAt: DateTime.parse(json['date'] as String), // was 'expires_at'
+      points: (json['points'] as num).toInt(),
+      expiresAt: DateTime.parse(json['expiryDate'] as String),
     );
   }
 }
@@ -99,44 +110,44 @@ class PointsProgress {
 
   factory PointsProgress.fromJson(Map<String, dynamic> json) {
     return PointsProgress(
-      ordersBatch: json['ordersBatch'] != null
-          ? OrdersBatch.fromJson(json['ordersBatch'])
-          : OrdersBatch.empty(), // 👈 fallback
+      ordersBatch: json.isNotEmpty
+          ? OrdersBatch.fromJson(json)
+          : OrdersBatch.empty(),
     );
   }
 }
 
 class OrdersBatch {
-  final int currentOrder;
-  final int requiredOrders;
-  final List<dynamic> batches;
+  final int ordersCompletedInCurrentBatch;
+  final int requiredOrdersForNextBatch;
+  final double percentComplete;
 
   OrdersBatch({
-    required this.currentOrder,
-    required this.requiredOrders,
-    required this.batches,
+    required this.ordersCompletedInCurrentBatch,
+    required this.requiredOrdersForNextBatch,
+    required this.percentComplete,
   });
 
-  factory OrdersBatch.empty() {
-    return OrdersBatch(
-      currentOrder: 0,
-      requiredOrders: 1, // 👈 avoid division by zero
-      batches: const [],
-    );
-  }
+  factory OrdersBatch.empty() => OrdersBatch(
+    ordersCompletedInCurrentBatch: 0,
+    requiredOrdersForNextBatch: 1,
+    percentComplete: 0,
+  );
 
   factory OrdersBatch.fromJson(Map<String, dynamic> json) {
     return OrdersBatch(
-      currentOrder: (json['current_order'] as num).toInt(),
-      requiredOrders: (json['required_orders'] as num).toInt(),
-      batches: json['batches'] as List<dynamic>? ?? [],
+      ordersCompletedInCurrentBatch:
+      (json['ordersCompletedInCurrentBatch'] as num).toInt(),
+      requiredOrdersForNextBatch:
+      (json['requiredOrdersForNextBatch'] as num).toInt(),
+      percentComplete: (json['percentComplete'] as num).toDouble(),
     );
   }
 
-  double get progressPercentage => requiredOrders > 0
-      ? (currentOrder / requiredOrders).clamp(0.0, 1.0)
-      : 0.0;
+  /// 0.0 → 1.0 for LinearProgressIndicator
+  double get progressFraction => (percentComplete / 100).clamp(0.0, 1.0);
 
   int get remainingOrders =>
-      (requiredOrders - currentOrder).clamp(0, requiredOrders);
+      (requiredOrdersForNextBatch - ordersCompletedInCurrentBatch)
+          .clamp(0, requiredOrdersForNextBatch);
 }

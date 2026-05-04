@@ -138,97 +138,97 @@ class _PointsView extends StatelessWidget {
                       children: [
                         const SizedBox(height: 16),
 // ── Balance Card ───────────────────────────────────────────
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [AppColors.kPrimaryColor, AppColors.kPrimaryColor.withOpacity(0.75)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.kPrimaryColor.withOpacity(0.35),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(Icons.stars_rounded, color: Colors.white, size: 22),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      isArabic ? 'رصيد النقاط' : 'Points Balance',
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  balance.toInt().toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 48,
-                                    fontWeight: FontWeight.bold,
-                                    height: 1,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  isArabic ? 'نقطة' : 'points',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.account_balance_wallet_outlined, color: Colors.white, size: 16),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        isArabic
-                                            ? '≈ ${(balance / 10).toStringAsFixed(2)} جنيه'
-                                            : '≈ ${(balance / 10).toStringAsFixed(2)} EGP',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+//                         Padding(
+//                           padding: const EdgeInsets.symmetric(horizontal: 20),
+//                           child: Container(
+//                             width: double.infinity,
+//                             padding: const EdgeInsets.all(24),
+//                             decoration: BoxDecoration(
+//                               gradient: LinearGradient(
+//                                 colors: [AppColors.kPrimaryColor, AppColors.kPrimaryColor.withOpacity(0.75)],
+//                                 begin: Alignment.topLeft,
+//                                 end: Alignment.bottomRight,
+//                               ),
+//                               borderRadius: BorderRadius.circular(20),
+//                               boxShadow: [
+//                                 BoxShadow(
+//                                   color: AppColors.kPrimaryColor.withOpacity(0.35),
+//                                   blurRadius: 16,
+//                                   offset: const Offset(0, 6),
+//                                 ),
+//                               ],
+//                             ),
+//                             child: Column(
+//                               crossAxisAlignment: CrossAxisAlignment.start,
+//                               children: [
+//                                 Row(
+//                                   children: [
+//                                     Container(
+//                                       padding: const EdgeInsets.all(8),
+//                                       decoration: BoxDecoration(
+//                                         color: Colors.white.withOpacity(0.2),
+//                                         borderRadius: BorderRadius.circular(10),
+//                                       ),
+//                                       child: const Icon(Icons.stars_rounded, color: Colors.white, size: 22),
+//                                     ),
+//                                     const SizedBox(width: 10),
+//                                     Text(
+//                                       isArabic ? 'رصيد النقاط' : 'Points Balance',
+//                                       style: const TextStyle(
+//                                         color: Colors.white70,
+//                                         fontSize: 14,
+//                                         fontWeight: FontWeight.w500,
+//                                       ),
+//                                     ),
+//                                   ],
+//                                 ),
+//                                 const SizedBox(height: 16),
+//                                 Text(
+//                                   balance.toInt().toString(),
+//                                   style: const TextStyle(
+//                                     color: Colors.white,
+//                                     fontSize: 48,
+//                                     fontWeight: FontWeight.bold,
+//                                     height: 1,
+//                                   ),
+//                                 ),
+//                                 const SizedBox(height: 4),
+//                                 Text(
+//                                   isArabic ? 'نقطة' : 'points',
+//                                   style: const TextStyle(
+//                                     color: Colors.white70,
+//                                     fontSize: 14,
+//                                   ),
+//                                 ),
+//                                 const SizedBox(height: 16),
+//                                 Container(
+//                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+//                                   decoration: BoxDecoration(
+//                                     color: Colors.white.withOpacity(0.15),
+//                                     borderRadius: BorderRadius.circular(10),
+//                                   ),
+//                                   child: Row(
+//                                     mainAxisSize: MainAxisSize.min,
+//                                     children: [
+//                                       const Icon(Icons.account_balance_wallet_outlined, color: Colors.white, size: 16),
+//                                       const SizedBox(width: 6),
+//                                       Text(
+//                                         isArabic
+//                                             ? '≈ ${(balance / 10).toStringAsFixed(2)} جنيه'
+//                                             : '≈ ${(balance / 10).toStringAsFixed(2)} EGP',
+//                                         style: const TextStyle(
+//                                           color: Colors.white,
+//                                           fontWeight: FontWeight.w600,
+//                                           fontSize: 14,
+//                                         ),
+//                                       ),
+//                                     ],
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                           ),
+//                         ),
 
                         const SizedBox(height: 20),
                         // ── Quick Actions ──────────────────────────────────
@@ -269,10 +269,11 @@ class _PointsView extends StatelessWidget {
                         const SizedBox(height: 20),
 
                         // ── Progress Section ──
-                        // _ProgressSection(
-                        //   batch: innerState.progress.progress.ordersBatch,
-                        //   isArabic: isArabic,
-                        // ),
+                        _ProgressSection(
+                          pendingBatchBalance: innerState.progress.pendingBatchBalance,
+                          batch: innerState.progress.progress.ordersBatch,
+                          isArabic: isArabic,
+                        ),
 
                         // ── Upcoming Expiration ──
                         if (innerState.progress.upcomingExpiration != null) ...[
@@ -648,9 +649,14 @@ class _ActionButton extends StatelessWidget {
 
 class _ProgressSection extends StatelessWidget {
   final OrdersBatch batch;
+  final int pendingBatchBalance; // 👈
   final bool isArabic;
 
-  const _ProgressSection({required this.batch, required this.isArabic});
+  const _ProgressSection({
+    required this.batch,
+    required this.pendingBatchBalance, // 👈
+    required this.isArabic,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -671,11 +677,12 @@ class _ProgressSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Header row ───────────────────────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isArabic ? 'تقدمك نحو النقاط' : 'Progress to Next Reward',
+                isArabic ? 'تقدمك نحو المكافأة' : 'Progress to Next Reward',
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -683,16 +690,13 @@ class _ProgressSection extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.kPrimaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${batch.currentOrder} / ${batch.requiredOrders}',
+                  '${batch.ordersCompletedInCurrentBatch} / ${batch.requiredOrdersForNextBatch}',
                   style: TextStyle(
                     color: AppColors.kPrimaryColor,
                     fontWeight: FontWeight.bold,
@@ -702,22 +706,26 @@ class _ProgressSection extends StatelessWidget {
               ),
             ],
           ),
+
           const SizedBox(height: 16),
+
+          // ── Progress bar ──────────────────────────────────────────────
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: batch.progressPercentage,
+              value: batch.progressFraction,
               minHeight: 12,
               backgroundColor: Colors.grey.shade100,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                AppColors.kPrimaryColor,
-              ),
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.kPrimaryColor),
             ),
           ),
+
           const SizedBox(height: 12),
+
+          // ── Step dots ─────────────────────────────────────────────────
           Row(
-            children: List.generate(batch.requiredOrders, (index) {
-              final isCompleted = index < batch.currentOrder;
+            children: List.generate(batch.requiredOrdersForNextBatch, (index) {
+              final isCompleted = index < batch.ordersCompletedInCurrentBatch;
               return Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -735,6 +743,91 @@ class _ProgressSection extends StatelessWidget {
               );
             }),
           ),
+
+          const SizedBox(height: 12),
+
+          // ── Remaining orders hint ─────────────────────────────────────
+          if (batch.remainingOrders > 0)
+            Text(
+              isArabic
+                  ? 'متبقي ${batch.remainingOrders} طلب لإتمام الدفعة'
+                  : '${batch.remainingOrders} more ${batch.remainingOrders == 1 ? 'order' : 'orders'} to complete this batch',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            )
+          else
+            Text(
+              isArabic ? '🎉 لقد أكملت الدفعة!' : '🎉 Batch complete!',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.green.shade600,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+
+          // ── Pending batch balance ─────────────────────────────────────
+          if (pendingBatchBalance > 0) ...[
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.lock_clock_rounded,
+                    size: 18,
+                    color: Colors.amber.shade700,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isArabic ? 'نقاط قيد الإتمام' : 'Pending Points',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isArabic
+                            ? 'ستُفتح عند إتمام الدفعة'
+                            : 'Unlocks when you complete this batch',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Text(
+                    '$pendingBatchBalance ${isArabic ? 'نقطة' : 'pts'}',
+                    style: TextStyle(
+                      color: Colors.amber.shade800,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
