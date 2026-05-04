@@ -1119,86 +1119,89 @@ class _LoadingViewState extends State<_LoadingView>
       builder: (context, _) {
         final shimmer = Colors.black.withOpacity(_pulse.value);
 
-        return Scaffold(
-          body: CustomScrollView(
-            physics: const NeverScrollableScrollPhysics(),
-            slivers: [
-              // ── Image gallery — real images (or placeholder) ─────────────
-              _ImageGalleryAppBar(
-                images: widget.product?.images ?? const [],
-                selectedIndex: 0,
-                onImageSelected: (_) {},
-              ),
+        return SafeArea(
+          bottom: false,
+          child: Scaffold(
+            body: CustomScrollView(
+              physics: const NeverScrollableScrollPhysics(),
+              slivers: [
+                // ── Image gallery — real images (or placeholder) ─────────────
+                _ImageGalleryAppBar(
+                  images: widget.product?.images ?? const [],
+                  selectedIndex: 0,
+                  onImageSelected: (_) {},
+                ),
 
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ── Name skeleton ──────────────────────────────────────
-                      _Skel(color: shimmer, h: 26, w: double.infinity),
-                      const SizedBox(height: 7),
-                      _Skel(color: shimmer, h: 26, w: 180),
-                      const SizedBox(height: 18),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ── Name skeleton ──────────────────────────────────────
+                        _Skel(color: shimmer, h: 26, w: double.infinity),
+                        const SizedBox(height: 7),
+                        _Skel(color: shimmer, h: 26, w: 180),
+                        const SizedBox(height: 18),
 
-                      // ── Price skeleton ─────────────────────────────────────
-                      Row(
-                        children: [
-                          _Skel(color: shimmer, h: 38, w: 130, r: 10),
-                          const SizedBox(width: 10),
-                          _Skel(color: shimmer, h: 22, w: 80),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
+                        // ── Price skeleton ─────────────────────────────────────
+                        Row(
+                          children: [
+                            _Skel(color: shimmer, h: 38, w: 130, r: 10),
+                            const SizedBox(width: 10),
+                            _Skel(color: shimmer, h: 22, w: 80),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
 
-                      // ── Stock chip skeleton ────────────────────────────────
-                      _Skel(color: shimmer, h: 24, w: 110, r: 20),
-                      const SizedBox(height: 28),
+                        // ── Stock chip skeleton ────────────────────────────────
+                        _Skel(color: shimmer, h: 24, w: 110, r: 20),
+                        const SizedBox(height: 28),
 
-                      // ── Section title ──────────────────────────────────────
-                      _Skel(color: shimmer, h: 13, w: 70),
-                      const SizedBox(height: 12),
+                        // ── Section title ──────────────────────────────────────
+                        _Skel(color: shimmer, h: 13, w: 70),
+                        const SizedBox(height: 12),
 
-                      // ── Description lines ──────────────────────────────────
-                      ...[1.0, 1.0, 1.0, 0.6].map(
-                            (fraction) => Padding(
-                          padding: const EdgeInsets.only(bottom: 9),
-                          child: _Skel(
-                            color: shimmer,
-                            h: 12,
-                            w: double.infinity,
-                            widthFactor: fraction,
+                        // ── Description lines ──────────────────────────────────
+                        ...[1.0, 1.0, 1.0, 0.6].map(
+                              (fraction) => Padding(
+                            padding: const EdgeInsets.only(bottom: 9),
+                            child: _Skel(
+                              color: shimmer,
+                              h: 12,
+                              w: double.infinity,
+                              widthFactor: fraction,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // ── Attributes table skeleton ──────────────────────────
-                      _Skel(color: shimmer, h: 13, w: 90),
-                      const SizedBox(height: 10),
-                      _Skel(color: shimmer, h: 100, w: double.infinity, r: 10),
-                    ],
+                        // ── Attributes table skeleton ──────────────────────────
+                        _Skel(color: shimmer, h: 13, w: 90),
+                        const SizedBox(height: 10),
+                        _Skel(color: shimmer, h: 100, w: double.infinity, r: 10),
+                      ],
+                    ),
                   ),
-                ),
-              ),
-            ],
-          ),
-
-          // ── Bottom bar skeleton ────────────────────────────────────────────
-          bottomNavigationBar: Container(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottomPadding),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, -4),
                 ),
               ],
             ),
-            child: _Skel(color: shimmer, h: 56, r: 16),
+
+            // ── Bottom bar skeleton ────────────────────────────────────────────
+            bottomNavigationBar: Container(
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottomPadding),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: _Skel(color: shimmer, h: 56, r: 16),
+            ),
           ),
         );
       },

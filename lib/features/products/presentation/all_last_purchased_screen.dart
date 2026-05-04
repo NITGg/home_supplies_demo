@@ -81,7 +81,8 @@ class _AllLastPurchasedScreenState extends State<AllLastPurchasedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.purchasedBefore),
+        title: Text(AppLocalizations.of(context)!.purchasedBefore,          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         leading: CircleBackButton(),
         elevation: 0,
       ),

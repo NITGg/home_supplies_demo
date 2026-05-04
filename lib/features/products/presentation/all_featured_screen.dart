@@ -83,7 +83,8 @@ class _AllFeaturedProductsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.featured),
+        title: Text(AppLocalizations.of(context)!.featured,          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         leading: CircleBackButton(),
         elevation: 0,
       ),

@@ -269,10 +269,10 @@ class _PointsView extends StatelessWidget {
                         const SizedBox(height: 20),
 
                         // ── Progress Section ──
-                        _ProgressSection(
-                          batch: innerState.progress.progress.ordersBatch,
-                          isArabic: isArabic,
-                        ),
+                        // _ProgressSection(
+                        //   batch: innerState.progress.progress.ordersBatch,
+                        //   isArabic: isArabic,
+                        // ),
 
                         // ── Upcoming Expiration ──
                         if (innerState.progress.upcomingExpiration != null) ...[

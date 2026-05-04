@@ -40,7 +40,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.categories),
+        title: Text(AppLocalizations.of(context)!.categories,          style: const TextStyle(fontWeight: FontWeight.bold),),
         leading: CircleBackButton(),
         elevation: 0,
       ),
