@@ -147,16 +147,7 @@ class _CategoriesSection extends StatelessWidget {
     if (isEmpty) {
       return Center(
         child: SingleChildScrollView(
-          child: Column(
-            children: [
-              CategoriesFallbackWidget(
-                title: AppLocalizations.of(context)!.welcome,
-                subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice,
-                lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',
-              ),
-              SquareAdsFeed(),
-            ],
-          ),
+          child: SquareAdsFeed(),
         ),
       );
     }
