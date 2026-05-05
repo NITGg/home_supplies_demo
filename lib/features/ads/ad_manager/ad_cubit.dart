@@ -20,11 +20,7 @@ class AdsCubit extends Cubit<AdsState> {
       final now = DateTime.now().toIso8601String().split('T')[0];
       final response = await _dio.get(
         '/ads',
-        queryParameters: {
-          'limit': 3,
-          'ad_type': 'BANNER',
-          'sort': 'priority',
-        },
+        queryParameters: {'limit': 3, 'ad_type': 'BANNER', 'sort': 'priority'},
       );
       log('ads response : $response');
 
@@ -32,17 +28,25 @@ class AdsCubit extends Cubit<AdsState> {
 
       final response2 = await _dio.get(
         '/ads',
-        queryParameters: {
-          'ad_type': 'POPUP',
-        },
+        queryParameters: {'ad_type': 'POPUP'},
       );
       final data2 = AdsResponse.fromJson(response2.data);
+      final response3 = await _dio.get(
+        '/ads',
+        queryParameters: {'ad_type': 'SPLASH', 'sort': 'priority'},
+      );
+      final data3 = AdsResponse.fromJson(response3.data);
       if (!isClosed) {
-        emit(AdsSuccess(homeAds: data.ads, popupAds: data2.ads));
+        emit(
+          AdsSuccess(
+            homeAds: data.ads,
+            popupAds: data2.ads,
+            feedAds: data3.ads,
+          ),
+        );
       }
 
       log('ads popups : ${response2.toString()}');
-
     } catch (e) {
       log('ads error : $e');
       if (!isClosed) {

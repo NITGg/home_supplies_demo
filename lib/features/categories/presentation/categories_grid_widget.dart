@@ -7,6 +7,7 @@ import 'package:tawreedat_go/features/ads/ad_manager/ad_cubit.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../addresses/presentation/default_address_chip.dart';
 import '../../ads/presentation/widgets/home_ads_carousel.dart';
+import '../../ads/presentation/widgets/square_ads_feed.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
@@ -25,12 +26,14 @@ class CategoriesGridWidget extends StatefulWidget {
   final void Function(CategoryModel category) onCategoryTap;
   final int pageSize;
   final bool showHeader;
+  final void Function(bool isEmpty)? onEmptyChanged;
 
   const CategoriesGridWidget({
     super.key,
     required this.onCategoryTap,
     this.pageSize = 30,
     this.showHeader = true,
+    this.onEmptyChanged,
   });
 
   @override
@@ -77,12 +80,23 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
                 'assets/animation_json/Shopping_cart_animation.json',
               ),
             ),
-            CategoriesLoaded() => _CategoriesSection(
-              state: state,
-              onCategoryTap: widget.onCategoryTap,
-              onLoadMore: _cubit.loadMore,
-              showHeader: false,
-            ),
+            CategoriesLoaded() => Builder(builder: (context) {
+              final isEmpty = state.categories
+                  .where((c) => c.parentId == null)
+                  .isEmpty;
+
+              // notify parent after the frame settles
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                widget.onEmptyChanged?.call(isEmpty);
+              });
+
+              return _CategoriesSection(
+                state: state,
+                onCategoryTap: widget.onCategoryTap,
+                onLoadMore: _cubit.loadMore,
+                showHeader: false,
+              );
+            }),
           };
         },
       ),
@@ -128,14 +142,21 @@ class _CategoriesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isEmpty = _parents.isEmpty;
 
-    if (state.totalCount == 0) {
+    if (isEmpty) {
       return Center(
-        child: CategoriesFallbackWidget(
-          title: AppLocalizations.of(context)!.welcome,
-          subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice,
-          lottieAsset:
-          'assets/animation_json/Shopping_cart_animation.json',
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              CategoriesFallbackWidget(
+                title: AppLocalizations.of(context)!.welcome,
+                subtitle: AppLocalizations.of(context)!.tawreedatIsYourBestChoice,
+                lottieAsset: 'assets/animation_json/Shopping_cart_animation.json',
+              ),
+              SquareAdsFeed(),
+            ],
+          ),
         ),
       );
     }

@@ -13,7 +13,9 @@ import '../data/models/category_models.dart';
 import 'categories_grid_widget.dart';
 
 class CategoriesScreen extends StatefulWidget {
-  const CategoriesScreen({super.key});
+  final void Function(bool isEmpty)? onEmptyChanged;
+
+  const CategoriesScreen({super.key, this.onEmptyChanged});
 
   @override
   State<CategoriesScreen> createState() => _CategoriesScreenState();
@@ -21,6 +23,7 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
   final GlobalKey<CategoriesGridWidgetState> _categoriesKey = GlobalKey();
+  bool _categoriesEmpty = false;
 
   void _navigateToCategory(CategoryModel category) {
     context.push('/categories/${category.id}', extra: category);
@@ -31,7 +34,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: () =>
-        _categoriesKey.currentState?.refresh() ?? Future.value(),
+            _categoriesKey.currentState?.refresh() ?? Future.value(),
         color: AppColors.kPrimaryColor,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -39,10 +42,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             const SliverToBoxAdapter(child: PopupAdsHandler()),
 
             // Pinned sticky header — only the search/address/cart row
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SearchBarDelegate(),
-            ),
+            if (!_categoriesEmpty)
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SearchBarDelegate(),
+              ),
 
             // Everything else scrolls: ads + featured + grid
             SliverToBoxAdapter(
@@ -50,6 +54,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 key: _categoriesKey,
                 onCategoryTap: _navigateToCategory,
                 showHeader: false,
+                onEmptyChanged: (isEmpty) {
+                  setState(() => _categoriesEmpty = isEmpty);
+                  widget.onEmptyChanged?.call(isEmpty);
+                },
               ),
             ),
 
@@ -78,7 +86,10 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Material(
       elevation: overlapsContent ? 2 : 0,
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -124,9 +135,8 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
                 }
                 return 0;
               },
-              builder: (context, count) => AnimatedCartIcon(
-                onTap: () => context.push('/cart'),
-              ),
+              builder: (context, count) =>
+                  AnimatedCartIcon(onTap: () => context.push('/cart')),
             ),
           ],
         ),

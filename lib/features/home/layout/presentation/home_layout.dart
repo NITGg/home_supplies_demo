@@ -55,6 +55,7 @@ class HomeLayout extends StatefulWidget {
 
 class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   StreamSubscription? _newOfferSubscription;
+  final ValueNotifier<bool> _categoriesEmpty = ValueNotifier(false);
 
   String _userId = '';
   late final HomeCubit _homeCubit = HomeCubit();
@@ -63,8 +64,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   bool _phoneSheetShown = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  static const List<Widget> _screens = [CategoriesScreen(), OrdersListScreen()];
-
+  List<Widget> get _screens => [
+    CategoriesScreen(onEmptyChanged: (v) => _categoriesEmpty.value = v),
+    const OrdersListScreen(),
+  ];
   @override
   void initState() {
     super.initState();
@@ -142,6 +145,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     _couponCubit.close();
     WidgetsBinding.instance.removeObserver(this);
     notificationDialogTrigger.removeListener(_onExternalNotificationTrigger);
+    _categoriesEmpty.dispose();
     super.dispose();
   }
 
@@ -357,6 +361,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                         scaffoldKey: _scaffoldKey,
                         localizations: localizations,
                         userId: _userId,
+                          categoriesEmpty: _categoriesEmpty,
                       ),
                     ),
                   ),
@@ -1161,11 +1166,14 @@ class _ProfileAvatar extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AppLayoutAppBar extends StatefulWidget {
+  final ValueNotifier<bool> categoriesEmpty;
+
   const AppLayoutAppBar({
     super.key,
     required this.localizations,
     required this.scaffoldKey,
     required this.userId,
+    required this.categoriesEmpty,
   });
 
   final AppLocalizations localizations;
@@ -1228,7 +1236,11 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: CouponTickerTitle(),
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: widget.categoriesEmpty,
+                  builder: (_, isEmpty, __) =>
+                  isEmpty ? const SizedBox.shrink() : const CouponTickerTitle(),
+                ),
               ),
             ),
           ],
