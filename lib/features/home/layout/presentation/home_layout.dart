@@ -20,6 +20,7 @@ import '../../../addresses/data/models/governorate_model.dart';
 import '../../../addresses/manager/address_cubit.dart';
 import '../../../addresses/manager/governorate_cubit.dart';
 import '../../../addresses/manager/governorate_states.dart';
+import '../../../addresses/presentation/default_address_chip.dart';
 import '../../../addresses/presentation/default_address_picker_sheet.dart';
 import '../../../ads/ad_manager/ad_cubit.dart';
 import '../../../auth/manager/auth_cubit.dart';
@@ -314,38 +315,38 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       if (!mounted) return;
 
                       // 3. First-order coupon dialog
-                      if (profileState.profile.roleId == 4) return;
+                      // if (profileState.profile.roleId == 4) return;
+                      //
+                      // final coupon = await _couponCubit
+                      //     .checkFirstOrderDiscount();
+                      // if (coupon == null || !context.mounted) return;
+                      //
+                      // final govState = context.read<GovernorateCubit>().state;
+                      // final governorates = govState is GovernoratesLoaded
+                      //     ? govState.response
+                      //     : GovernoratesResponse(
+                      //         governorates: [],
+                      //         totalCount: 0,
+                      //         totalPages: 0,
+                      //       );
+                      // final balance =
+                      //     context
+                      //         .read<WalletCubit>()
+                      //         .cachedWalletData
+                      //         ?.wallet
+                      //         .balance ??
+                      //     0.0;
 
-                      final coupon = await _couponCubit
-                          .checkFirstOrderDiscount();
-                      if (coupon == null || !context.mounted) return;
-
-                      final govState = context.read<GovernorateCubit>().state;
-                      final governorates = govState is GovernoratesLoaded
-                          ? govState.response
-                          : GovernoratesResponse(
-                              governorates: [],
-                              totalCount: 0,
-                              totalPages: 0,
-                            );
-                      final balance =
-                          context
-                              .read<WalletCubit>()
-                              .cachedWalletData
-                              ?.wallet
-                              .balance ??
-                          0.0;
-
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) => FirstOrderDiscountDialog(
-                          coupon: coupon,
-                          governorates: governorates,
-                          walletBalance: balance,
-                          couponCubit: _couponCubit,
-                        ),
-                      );
+                      // showDialog(
+                      //   context: context,
+                      //   barrierDismissible: false,
+                      //   builder: (_) => FirstOrderDiscountDialog(
+                      //     coupon: coupon,
+                      //     governorates: governorates,
+                      //     walletBalance: balance,
+                      //     couponCubit: _couponCubit,
+                      //   ),
+                      // );
                     },
                   ),
                 ],
@@ -1249,10 +1250,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            SvgPicture.asset(
-                              'assets/images/appbar/logo.svg',
-                              height: 30,
-                            ),
+                            const DefaultAddressChip(),
                           ],
                         )
                       : const CouponTickerTitle(),
