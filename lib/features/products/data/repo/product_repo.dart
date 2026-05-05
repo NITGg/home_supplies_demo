@@ -10,6 +10,8 @@ abstract class ProductRepository {
     int limit = 20,
     int? categoryId,
     bool? isFeatured,
+    bool? isBestSelling,
+    bool? isOffered,
     bool? isLastPurchased,
     int? supplierId,
   });
@@ -31,6 +33,8 @@ class ProductRepositoryImpl implements ProductRepository {
     int limit = 20,
     int? categoryId,
     bool? isFeatured,
+    bool? isBestSelling,
+    bool? isOffered,
     bool? isLastPurchased,
     int? supplierId,
   }) async {
@@ -41,6 +45,8 @@ class ProductRepositoryImpl implements ProductRepository {
       isFeatured: isFeatured,
       isLastPurchased: isLastPurchased,
       supplierId: supplierId,
+      isBestSelling: isBestSelling,
+      isOffered: isOffered,
     );
   }
 

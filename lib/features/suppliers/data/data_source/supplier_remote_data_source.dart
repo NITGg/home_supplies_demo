@@ -30,7 +30,7 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
     };
 
     final response = await _dio.get(
-      '/users/suppliers?is_approved=true&lang=${LocaleManager.currentLocale}',
+      '/users/suppliers?includes=user&lang=${LocaleManager.currentLocale}',
       queryParameters: queryParams.isNotEmpty ? queryParams : null,
     );
     log('[SupplierDS] getSuppliers → ${response.data}');
@@ -51,7 +51,7 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
   Future<SupplierCategoriesResponseModel> getSupplierCategories(
       int supplierId) async {
     final response =
-    await _dio.get('/users/suppliers/$supplierId/categories?is_approved=true&lang=${LocaleManager.currentLocale}');
+    await _dio.get('/users/suppliers/$supplierId/categories?lang=${LocaleManager.currentLocale}');
     log('[SupplierDS] getSupplierCategories($supplierId) → ${response.data}');
     return SupplierCategoriesResponseModel.fromJson(
         response.data as Map<String, dynamic>);

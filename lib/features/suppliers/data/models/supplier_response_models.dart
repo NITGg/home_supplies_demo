@@ -6,8 +6,9 @@ class SuppliersResponseModel {
   const SuppliersResponseModel({required this.suppliers});
 
   factory SuppliersResponseModel.fromJson(Map<String, dynamic> json) {
+    final result = (json['result'] ?? json) as Map<String, dynamic>;
     return SuppliersResponseModel(
-      suppliers: (json['suppliers'] as List<dynamic>? ?? [])
+      suppliers: (result['suppliers'] as List<dynamic>? ?? [])
           .map((e) => SupplierModel.fromJson(e as Map<String, dynamic>))
           .toList(),
     );

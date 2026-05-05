@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tawreedat_go/features/products/presentation/all_best_selling_screen.dart';
+import 'package:tawreedat_go/features/products/presentation/all_offered_screen.dart';
 import '../core/utils/check_for_updates.dart';
 import '../core/widgets/loading_screen.dart';
 import '../features/addresses/presentation/default_address_chip.dart';
@@ -270,6 +272,14 @@ Future<GoRouter> createAppRouter({
       GoRoute(
         path: '/featured',
         builder: (context, state) => const AllFeaturedProductsScreen(),
+      ),
+      GoRoute(
+        path: '/best-selling',
+        builder: (context, state) => const AllBestSellingScreen(),
+      ),
+      GoRoute(
+        path: '/offered',
+        builder: (context, state) => const AllOfferedScreen(),
       ),
 
       GoRoute(

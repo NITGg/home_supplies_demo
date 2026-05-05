@@ -1134,14 +1134,15 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           //     backgroundColor: Colors.orange,
           //     textColor: Colors.white,
           //   );
-          // } else if (state is OrderSuccess) {
-          //   CreateOrderDraft.clear(); // ← DRAFT — wipe draft after a successful order
-          //   Navigator.pop(context, state.order);
-          //   showSuccessBanner(
-          //     context,
-          //     '${l10n.created}: ${state.order.orderNumber}',
-          //   );
           // } else
+          if (state is OrderSuccess) {
+            CreateOrderDraft.clear(); // ← DRAFT — wipe draft after a successful order
+            Navigator.pop(context, state.order);
+            showSuccessBanner(
+              context,
+              '${l10n.created}: ${state.order.orderNumber}',
+            );
+          } else
             if (state is OrderError) {
             Fluttertoast.showToast(
               msg: state.message,

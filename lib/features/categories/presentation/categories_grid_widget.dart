@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 import 'package:tawreedat_go/features/ads/ad_manager/ad_cubit.dart';
+import 'package:tawreedat_go/features/products/presentation/best_selling_section.dart';
+import 'package:tawreedat_go/features/products/presentation/offered_section.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../addresses/presentation/default_address_chip.dart';
@@ -217,6 +219,8 @@ class _CategoriesSection extends StatelessWidget {
         const HomeAdsCarousel(),
 
         // ── Featured & Last Purchased ─────────────────────────────────────
+        const OfferedSection(),
+        const BestSellingSection(),
         const FeaturedProductsSection(),
         const LastPurchasedSection(),
 

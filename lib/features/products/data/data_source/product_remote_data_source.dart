@@ -13,6 +13,8 @@ abstract class ProductRemoteDataSource {
     int? categoryId,
     bool? isFeatured,
     bool? isLastPurchased,
+    bool? isOffered,
+    bool? isBestSelling,
     int? supplierId,
   });
 
@@ -29,8 +31,10 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     int skip = 0,
     int limit = 20,
     int? categoryId,
+    bool? isOffered,
     bool? isFeatured,
     bool? isLastPurchased,
+    bool? isBestSelling,
     int? supplierId,
   }) async {
     final queryParams = <String, dynamic>{
@@ -39,6 +43,8 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       'supplier_id': supplierId ?? AppSettings.kMainSupplierId,
       if (categoryId != null) 'product[category_id]': categoryId,
       if (isFeatured != null) 'is_featured': isFeatured,
+      if (isOffered != null) 'has_offers': isOffered,
+      if (isBestSelling != null) 'best_seller': isBestSelling,
       if (isLastPurchased != null) 'last_bought': isLastPurchased,
     };
 
