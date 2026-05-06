@@ -982,6 +982,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   .round()
                   .toString()
             : '1',
+        //1 means shipping
         pickupAreaId: effectivePickup.areaId,
         pickupAddressDescription: effectivePickup.detailedAddress,
         pickupLat: effectivePickup.addressLat,
