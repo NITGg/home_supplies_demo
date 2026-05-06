@@ -83,7 +83,7 @@ class WalletRemoteDataSource {
     int limit = 20,
   }) async {
     final response = await _dio.get(
-      '/profile/wallet/penalties?lang=${LocaleManager.currentLocale}',
+      '/profile/wallet/penalties?lang=${LocaleManager.currentLocale}&sort=is_paid,created_at',
       queryParameters: {'page': page, 'limit': limit},
     );
 
