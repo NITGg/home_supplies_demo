@@ -145,7 +145,7 @@ class TransactionCard extends StatelessWidget {
                   DateFormat(
                     'dd MMM yyyy, hh:mm a',
                   ).format(transaction.createdAt),
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
                 ),
               ],
             ),
