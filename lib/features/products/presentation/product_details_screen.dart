@@ -102,9 +102,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _StockChip(product: product),
-                        if (product.pickupReadyDuration != null)
+                        if (product.pickupReadyDurationFrom != null)
                           Text(
-                            '${l10n.readyIn} : ${formatDuration(product.pickupReadyDuration ?? 0, l10n)}',
+                            '${l10n.readyIn} : ${formatDuration(product.pickupReadyDurationFrom ?? 0, l10n)} ${l10n.to} ${formatDuration(product.pickupReadyDurationTo ?? 0, l10n)}',
                           ),
                       ],
                     ),

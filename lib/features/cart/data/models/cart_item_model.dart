@@ -5,6 +5,8 @@ class CartItemModel {
   final int cartId;
   final int spId;
   final int quantity;
+  final int readyInFrom;
+  final int readyInTo;
 
   /// Merged supplier + product data — use [product.spId] for cart PUT/DELETE calls.
   final ProductModel product;
@@ -22,6 +24,8 @@ class CartItemModel {
     required this.unitPrice,
     required this.originalPrice,
     required this.lineTotal,
+    required this.readyInFrom,
+    required this.readyInTo,
   });
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +39,8 @@ class CartItemModel {
       quantity: json['quantity'] as int? ?? 1,
       product: ProductModel.fromCartJson(sp: sp, product: p),
       // Backend sends monetary values in cents → divide by 100 to get EGP.
+      readyInFrom: sp['estimated_time_from'] as int? ?? 0,
+      readyInTo: sp['estimated_time_to'] as int? ?? 0,
       unitPrice: ((sp['unit_price'] as num?)?.toDouble() ?? 0.0) / 100.0,
       originalPrice: ((sp['original_price'] as num?)?.toDouble() ?? 0.0) / 100.0,
       lineTotal: ((json['line_total'] as num?)?.toDouble() ?? 0.0) / 100.0,
@@ -51,6 +57,8 @@ class CartItemModel {
       unitPrice: unitPrice,
       originalPrice: originalPrice,
       lineTotal: unitPrice * newQuantity,
+      readyInFrom: readyInFrom,
+      readyInTo: readyInTo,
     );
   }
 

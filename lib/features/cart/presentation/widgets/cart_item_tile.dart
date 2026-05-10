@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/formatDate.dart';
 import '../../../../core/widgets/highlighter_widget.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../products/presentation/quantity_selector.dart';
 import '../../data/models/cart_item_model.dart';
 
 // ── Price formatting helper ───────────────────────────────────────────────────
-// All monetary values in the app are displayed with exactly 2 decimal places
-// so the user always sees "850.00 EGP" instead of "850 EGP".
 String _fmt(double v) => v.toStringAsFixed(2);
 
 class CartItemTile extends StatefulWidget {
@@ -32,13 +31,11 @@ class CartItemTile extends StatefulWidget {
 }
 
 class _CartItemTileState extends State<CartItemTile> {
-  // Locked the instant the user taps; released when the cubit finishes.
   bool _localBusy = false;
 
   @override
   void didUpdateWidget(CartItemTile old) {
     super.didUpdateWidget(old);
-    // Cubit finished → unlock local guard.
     if (old.isBusy && !widget.isBusy) {
       setState(() => _localBusy = false);
     }
@@ -61,7 +58,7 @@ class _CartItemTileState extends State<CartItemTile> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final product = widget.item.product;   // ← widget. prefix now needed
+    final product = widget.item.product;
     final l10n = AppLocalizations.of(context)!;
     final hMargin = MediaQuery.of(context).size.width < 360 ? 10.0 : 16.0;
 
@@ -86,63 +83,83 @@ class _CartItemTileState extends State<CartItemTile> {
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: InkWell(
-            onTap: () => context.push('/products/${product.id}', extra: product),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _ProductThumb(imageUrl: product.primaryImage),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+        child: InkWell(
+          onTap: () =>
+              context.push('/products/${product.id}', extra: product),
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Main content row ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ProductThumb(imageUrl: product.primaryImage),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              product.displayName,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                height: 1.3,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  product.displayName,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.3,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              const SizedBox(width: 8),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 250),
+                                child: _busy
+                                    ? _BusySpinner(
+                                  key: const ValueKey('spinner'),
+                                  color: theme.colorScheme.primary,
+                                )
+                                    : QuantitySelector(
+                                  key: const ValueKey('selector'),
+                                  quantity: widget.item.quantity,
+                                  onIncrement: _handleIncrement,
+                                  onDecrement: _handleDecrement,
+                                  minQuantity: 0,
+                                  maxQuantity:
+                                  product.maxAmountForOneOrder,
+                                  size: 32,
+                                  compact: true,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 250),
-                            child: _busy
-                                ? _BusySpinner(
-                              key: const ValueKey('spinner'),
-                              color: theme.colorScheme.primary,
-                            )
-                                : QuantitySelector(
-                              key: const ValueKey('selector'),
-                              quantity: widget.item.quantity,
-                              onIncrement: _handleIncrement,  // ← local
-                              onDecrement: _handleDecrement,  // ← local
-                              minQuantity: 0,
-                              maxQuantity: product.maxAmountForOneOrder,
-                              size: 32,
-                              compact: true,
-                            ),
-                          ),
+                          const SizedBox(height: 7),
+                          _PriceBlock(
+                              item: widget.item, l10n: l10n, theme: theme),
+                          const SizedBox(height: 9),
+                          _LineTotalBlock(
+                              item: widget.item, theme: theme, l10n: l10n),
                         ],
                       ),
-                      const SizedBox(height: 7),
-                      _PriceBlock(item: widget.item, l10n: l10n, theme: theme),
-                      const SizedBox(height: 9),
-                      _LineTotalBlock(item: widget.item, theme: theme, l10n: l10n),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              // ── Ready-time footer ─────────────────────────────────────────
+              if (widget.item.readyInFrom > 0 || widget.item.readyInTo > 0)
+                _ReadyTimeFooter(
+                  from: widget.item.readyInFrom,
+                  to: widget.item.readyInTo,
+                  l10n: l10n,
+                  theme: theme,
+                ),
+            ],
           ),
         ),
       ),
@@ -150,9 +167,72 @@ class _CartItemTileState extends State<CartItemTile> {
   }
 }
 
+// ── Ready-time footer ─────────────────────────────────────────────────────────
+// Sits at the bottom of the card, separated by a hairline divider.
+// Full card width so any duration string fits without wrapping tricks.
+
+class _ReadyTimeFooter extends StatelessWidget {
+  final int from;
+  final int to;
+  final AppLocalizations l10n;
+  final ThemeData theme;
+
+  const _ReadyTimeFooter({
+    required this.from,
+    required this.to,
+    required this.l10n,
+    required this.theme,
+  });
+
+  String get _label {
+    final fromStr = formatDuration(from, l10n);
+    if (to == 0 || from == to) return fromStr;
+    return '$fromStr – ${formatDuration(to, l10n)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Divider(
+          height: 1,
+          thickness: 1,
+          color: theme.dividerColor.withOpacity(0.5),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Icon(
+                Icons.schedule_rounded,
+                size: 14,
+                color: const Color(0xFFF59E0B),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                l10n.readyIn,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.grey.shade500,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                _label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFFF59E0B),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ── Price block ───────────────────────────────────────────────────────────────
-// Unit price per item. Uses the thin underline highlighter on the discounted
-// price so it stands out without dominating the card.
 
 class _PriceBlock extends StatelessWidget {
   final CartItemModel item;
@@ -171,7 +251,6 @@ class _PriceBlock extends StatelessWidget {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ── Underline-highlighted discounted unit price ───────────────────
           HighlighterWidget(
             style: HighlighterStyle.underline,
             child: Text(
@@ -184,7 +263,6 @@ class _PriceBlock extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          // ── Original price struck through ─────────────────────────────────
           Text(
             '${_fmt(item.originalPrice)} ${l10n.egp}',
             style: TextStyle(
@@ -205,7 +283,6 @@ class _PriceBlock extends StatelessWidget {
       );
     }
 
-    // No discount — simple muted unit price label.
     return Text(
       '${_fmt(item.unitPrice)} ${l10n.egp} ${l10n.perUnit}',
       style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade500),
@@ -214,8 +291,6 @@ class _PriceBlock extends StatelessWidget {
 }
 
 // ── Line total block ──────────────────────────────────────────────────────────
-// Shows the line total and, when a discount applies, a full-block highlighted
-// saving label.
 
 class _LineTotalBlock extends StatelessWidget {
   final CartItemModel item;
@@ -238,13 +313,12 @@ class _LineTotalBlock extends StatelessWidget {
           transitionBuilder: (child, animation) => FadeTransition(
             opacity: animation,
             child: SlideTransition(
-              position:
-                  Tween<Offset>(
-                    begin: const Offset(0, 0.3),
-                    end: Offset.zero,
-                  ).animate(
-                    CurvedAnimation(parent: animation, curve: Curves.easeOut),
-                  ),
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.3),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOut),
+              ),
               child: child,
             ),
           ),
@@ -257,8 +331,6 @@ class _LineTotalBlock extends StatelessWidget {
             ),
           ),
         ),
-
-        // ── Saving label — full-block highlighted in green ───────────────────
         if (item.hasDiscount && item.lineSaving > 0) ...[
           const SizedBox(height: 4),
           HighlighterWidget(
@@ -316,10 +388,10 @@ class _ProductThumb extends StatelessWidget {
         height: 76,
         child: imageUrl != null && imageUrl!.isNotEmpty
             ? Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _placeholder(),
-              )
+          imageUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _placeholder(),
+        )
             : _placeholder(),
       ),
     );

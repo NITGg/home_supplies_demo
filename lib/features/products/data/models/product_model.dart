@@ -53,7 +53,8 @@ class ProductModel {
   final int? maxAmountForOneUser;
   final int? minAmountForOneUser;
   final int? reservedInCartsAmount;
-  final int? pickupReadyDuration;
+  final int? pickupReadyDurationFrom;
+  final int? pickupReadyDurationTo;
 
   const ProductModel({
     required this.id,
@@ -102,7 +103,8 @@ class ProductModel {
     this.maxAmountForOneUser,
     this.minAmountForOneUser,
     this.reservedInCartsAmount,
-    this.pickupReadyDuration,
+    this.pickupReadyDurationFrom,
+    this.pickupReadyDurationTo,
   });
 
   // ── Type-coercion helpers ─────────────────────────────────────────────────
@@ -246,7 +248,8 @@ class ProductModel {
       maxAmountForOneUser:   _parseInt(sp?['max_amount_for_one_user']),
       minAmountForOneUser:   _parseInt(sp?['min_amount_for_one_user']),
       reservedInCartsAmount: _parseInt(sp?['reserved_in_carts_amount']),
-      pickupReadyDuration:   _parseInt(sp?['pickup_ready_duration']),
+      pickupReadyDurationFrom:   _parseInt(sp?['estimated_time_from']),
+      pickupReadyDurationTo:   _parseInt(sp?['estimated_time_to']),
 
       // ── Offer: unit_price < original_price means an active discount ───────
       offer:        offerPrice,
@@ -332,7 +335,8 @@ class ProductModel {
       maxAmountForOneUser:   _parseInt(sp['max_amount_for_one_user']),
       minAmountForOneUser:   _parseInt(sp['min_amount_for_one_user']),
       reservedInCartsAmount: _parseInt(sp['reserved_in_carts_amount']),
-      pickupReadyDuration:   _parseInt(sp['pickup_ready_duration']),
+      pickupReadyDurationFrom:   _parseInt(sp['estimated_time_from']),
+      pickupReadyDurationTo:   _parseInt(sp['estimated_time_to']),
 
       // ── Offer ─────────────────────────────────────────────────────────────
       offer:             offerPrice,

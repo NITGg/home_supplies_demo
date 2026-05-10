@@ -38,7 +38,7 @@ import '../features/reviews/data/repositories/reviews_repo.dart';
 import '../features/reviews/manager/reviews_cubit.dart';
 import '../features/reviews/presentation/reviews_screen.dart';
 import '../features/suppliers/data/models/supplier_models.dart';
-import '../features/suppliers/presentation/supllier_details_screen.dart';
+import '../features/suppliers/presentation/supplier_details_screen.dart';
 import '../features/wallet/presentation/manual_topup_screen.dart';
 import '../features/wallet/presentation/payment_success_screen.dart';
 import '../features/wallet/presentation/paymob_webview.dart';

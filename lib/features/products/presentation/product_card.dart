@@ -207,12 +207,12 @@ class _ProductCardState extends State<ProductCard>
                     fit: StackFit.expand,
                     children: [
                       _ProductImage(imageUrl: product.primaryImage),
-                      if (product.pickupReadyDuration != null)
+                      if (product.pickupReadyDurationFrom != null)
                         Positioned(
                           bottom: 8,
                           left: 8,
                           child: _ReadyTimePill(
-                            minutes: product.pickupReadyDuration!,
+                            minutes: product.pickupReadyDurationFrom!,
                           ),
                         ),
                       Positioned(

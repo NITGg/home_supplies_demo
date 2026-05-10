@@ -26,7 +26,7 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
   @override
   Future<SuppliersResponseModel> getSuppliers({int? categoryId}) async {
     final queryParams = <String, dynamic>{
-      if (categoryId != null) 'category_id': categoryId,
+      if (categoryId != null) 'categories[some][category_id]': categoryId,
     };
 
     final response = await _dio.get(
