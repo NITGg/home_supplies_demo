@@ -69,25 +69,46 @@ class CartCubit extends Cubit<CartState> {
   /// due to a supplier conflict — callers are expected to catch this and
   /// show the resolution dialog.
   Future<void> addItem({required int spId, required int quantity}) async {
+    // ← Mark the item as busy before the network call
+    final loaded = _loaded;
+    if (loaded != null) {
+      _safeEmit(loaded.copyWith(busyItemIds: {...loaded.busyItemIds, spId}));
+    }
+
     try {
       final item = await _repository.addItem(spId: spId, quantity: quantity);
 
       if (_loaded != null) {
+        // Clear busy flag, then apply the add
+        final current = _loaded!;
+        final busy = Set<int>.from(current.busyItemIds)..remove(spId);
+        _safeEmit(current.copyWith(busyItemIds: busy));
+
         _applyItemAdd(item);
         unawaited(_silentRefresh());
       } else {
         await fetchCart();
       }
     } on MultipleSupplierException {
-      // Let the UI handle the supplier-conflict dialog — don't swallow it.
+      // Clear busy flag before rethrowing
+      final current = _loaded;
+      if (current != null) {
+        final busy = Set<int>.from(current.busyItemIds)..remove(spId);
+        _safeEmit(current.copyWith(busyItemIds: busy));
+      }
       rethrow;
     } catch (e) {
       log('[CartCubit] addItem error: $e');
-      if (_loaded != null) rethrow;
+      // Clear busy flag on error
+      final current = _loaded;
+      if (current != null) {
+        final busy = Set<int>.from(current.busyItemIds)..remove(spId);
+        _safeEmit(current.copyWith(busyItemIds: busy));
+        rethrow;
+      }
       _safeEmit(CartError(extractErrorMessage(e)));
     }
   }
-
   Future<void> _fetchPreviewSilently({String? couponCode}) async {
     try {
       final preview = await _repository.getOrderPreview(couponCode: couponCode);
