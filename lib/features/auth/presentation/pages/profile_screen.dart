@@ -185,17 +185,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: Column(
                             children: [
-                              if (profile.loginType == 'LOCAL')
-                                AppCustomButton(
-                                  onPressed: () {
-                                    showChangePasswordBottomSheet(context);
-                                  },
-                                  text: localizations.changePassword,
-                                  isSecondary: true,
-                                  isLoading:
-                                      context.read<AuthCubit>().state
-                                          is AuthLoading,
-                                ),
+                              // if (profile.loginType == 'LOCAL')
+                              //   AppCustomButton(
+                              //     onPressed: () {
+                              //       showChangePasswordBottomSheet(context);
+                              //     },
+                              //     text: localizations.changePassword,
+                              //     isSecondary: true,
+                              //     isLoading:
+                              //         context.read<AuthCubit>().state
+                              //             is AuthLoading,
+                              //   ),
                               AppCustomButton(
                                 onPressed: () {
                                   showDialog(

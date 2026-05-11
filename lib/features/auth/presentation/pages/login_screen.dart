@@ -175,18 +175,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          AppTextButton(
-                            text: loc.forgotPassword,
-                            color: AppColors.kPrimaryColor,
-                            underline: true,
-                            onPressed: () =>
-                                context.push('/auth/forgot-password'),
-                          ),
-                        ],
-                      ),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.end,
+                      //   children: [
+                      //     AppTextButton(
+                      //       text: loc.forgotPassword,
+                      //       color: AppColors.kPrimaryColor,
+                      //       underline: true,
+                      //       onPressed: () =>
+                      //           context.push('/auth/forgot-password'),
+                      //     ),
+                      //   ],
+                      // ),
 
                       const SizedBox(height: 20),
                       Text(
