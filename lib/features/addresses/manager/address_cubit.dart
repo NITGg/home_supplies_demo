@@ -1,6 +1,6 @@
-import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/logger.dart';
 import '../data/models/address_model.dart';
 import '../data/repo/address_repo.dart';
 import 'address_states.dart';
@@ -15,14 +15,14 @@ class AddressCubit extends Cubit<AddressState> {
   Future<void> loadAddresses() async {
     emit(AddressLoading());
     try {
-      log('AddressCubit: Loading addresses');
+      dLog('AddressCubit: Loading addresses');
       final response = await _repository.getAddresses();
-      log('AddressCubit: Loaded ${response.addresses.length} addresses');
+      dLog('AddressCubit: Loaded ${response.addresses.length} addresses');
       if (!isClosed) {
         emit(AddressesLoaded(response.addresses));
       }
     } catch (e) {
-      log('AddressCubit: Error loading addresses: $e');
+      dLog('AddressCubit: Error loading addresses: $e');
       if (!isClosed) {
         emit(AddressError(extractErrorMessage(e)));
       }
@@ -32,9 +32,9 @@ class AddressCubit extends Cubit<AddressState> {
   Future<void> createAddress(Address address) async {
     emit(AddressLoading());
     try {
-      log('AddressCubit: Creating address');
+      dLog('AddressCubit: Creating address');
       final response = await _repository.createAddress(address);
-      log('AddressCubit: Address created successfully');
+      dLog('AddressCubit: Address created successfully');
       if (!isClosed) {
         emit(
           AddressOperationSuccess(
@@ -47,7 +47,7 @@ class AddressCubit extends Cubit<AddressState> {
       // Reload addresses
       await loadAddresses();
     } catch (e) {
-      log('AddressCubit: Error creating address: $e');
+      dLog('AddressCubit: Error creating address: $e');
       if (!isClosed) {
         emit(AddressError(extractErrorMessage(e)));
       }
@@ -57,9 +57,9 @@ class AddressCubit extends Cubit<AddressState> {
   Future<void> updateAddress(int addressId, Address address) async {
     emit(AddressLoading());
     try {
-      log('AddressCubit: Updating address $addressId');
+      dLog('AddressCubit: Updating address $addressId');
       final response = await _repository.updateAddress(addressId, address);
-      log('AddressCubit: Address updated successfully');
+      dLog('AddressCubit: Address updated successfully');
       if (!isClosed) {
         emit(
           AddressOperationSuccess(
@@ -72,7 +72,7 @@ class AddressCubit extends Cubit<AddressState> {
       // Reload addresses
       await loadAddresses();
     } catch (e) {
-      log('AddressCubit: Error updating address: $e');
+      dLog('AddressCubit: Error updating address: $e');
       if (!isClosed) {
         emit(AddressError(extractErrorMessage(e)));
       }
@@ -82,9 +82,9 @@ class AddressCubit extends Cubit<AddressState> {
   Future<void> deleteAddress(int addressId) async {
     emit(AddressLoading());
     try {
-      log('AddressCubit: Deleting address $addressId');
+      dLog('AddressCubit: Deleting address $addressId');
       await _repository.deleteAddress(addressId);
-      log('AddressCubit: Address deleted successfully');
+      dLog('AddressCubit: Address deleted successfully');
       if (!isClosed) {
         emit(
           const AddressOperationSuccess(
@@ -96,7 +96,7 @@ class AddressCubit extends Cubit<AddressState> {
       // Reload addresses
       await loadAddresses();
     } catch (e) {
-      log('AddressCubit: Error deleting address: $e');
+      dLog('AddressCubit: Error deleting address: $e');
       if (!isClosed) {
         emit(AddressError(extractErrorMessage(e)));
       }
@@ -112,7 +112,7 @@ class AddressCubit extends Cubit<AddressState> {
     String governorate,
   ) async {
     try {
-      log('AddressCubit: Creating address unavailable request');
+      dLog('AddressCubit: Creating address unavailable request');
       await _repository.createAddressUnAvailableRequest(
         isPickup,
         long,
@@ -121,9 +121,9 @@ class AddressCubit extends Cubit<AddressState> {
         area,
         governorate,
       );
-      log('AddressCubit: Address unavailable request created successfully');
+      dLog('AddressCubit: Address unavailable request created successfully');
     } catch (e) {
-      log('AddressCubit: Error creating address unavailable request: $e');
+      dLog('AddressCubit: Error creating address unavailable request: $e');
     }
   }
 }

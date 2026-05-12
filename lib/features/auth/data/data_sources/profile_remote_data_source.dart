@@ -1,8 +1,8 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/user_profile_model.dart';
 
@@ -19,10 +19,10 @@ class ProfileRemoteDataSource {
         ),
       );
 
-      log('Get profile response: ${response.data}');
+      dLog('Get profile response: ${response.data}');
       return ProfileResponseModel.fromJson(response.data);
     } catch (e) {
-      log('Get profile error: $e');
+      dLog('Get profile error: $e');
       rethrow;
     }
   }
@@ -50,10 +50,10 @@ class ProfileRemoteDataSource {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      log('Update profile response: ${response.data}');
+      dLog('Update profile response: ${response.data}');
       return UpdateProfileResponseModel.fromJson(response.data);
     } catch (e) {
-      log('Update profile error: $e');
+      dLog('Update profile error: $e');
       rethrow;
     }
   }
@@ -68,10 +68,10 @@ class ProfileRemoteDataSource {
         data: {'phone': phone},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      log('Change phone response: ${response.data}');
+      dLog('Change phone response: ${response.data}');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      log('Change phone error: $e');
+      dLog('Change phone error: $e');
       rethrow;
     }
   }
@@ -87,10 +87,10 @@ class ProfileRemoteDataSource {
         data: {'email': email},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      log('Change email response: ${response.data}');
+      dLog('Change email response: ${response.data}');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      log('Change email error: $e');
+      dLog('Change email error: $e');
       rethrow;
     }
   }
@@ -127,10 +127,10 @@ class ProfileRemoteDataSource {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      log('Update profile with photo response: ${response.data}');
+      dLog('Update profile with photo response: ${response.data}');
       return UpdateProfileResponseModel.fromJson(response.data);
     } catch (e) {
-      log('Update profile with photo error: $e');
+      dLog('Update profile with photo error: $e');
       rethrow;
     }
   }
@@ -146,10 +146,10 @@ class ProfileRemoteDataSource {
         data: {'code': code},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      log('Confirm OTP response: ${response.data}');
+      dLog('Confirm OTP response: ${response.data}');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      log('Confirm OTP error: $e');
+      dLog('Confirm OTP error: $e');
       rethrow;
     }
   }

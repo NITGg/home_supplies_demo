@@ -1,9 +1,9 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/widgets/circel_back_button.dart';
 
+import '../../../core/utils/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../categories/presentation/sub_cat_section.dart';
 import '../../products/data/models/product_model.dart';
@@ -70,7 +70,7 @@ class _AllFeaturedProductsScreenState
         _initialLoadDone = true;
       });
     } catch (e) {
-      log('[AllFeaturedProductsScreen] error: $e');
+      dLog('[AllFeaturedProductsScreen] error: $e');
       if (!mounted) return;
       setState(() {
         _isLoading = false;

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,6 +10,7 @@ import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/review_
 import 'package:tawreedat_go/features/orders/presentation/widgets/status_banner.dart';
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
+import '../../../core/utils/logger.dart';
 import '../../../core/utils/socket_service.dart';
 import '../../../core/widgets/banners.dart';
 import '../../../l10n/app_localizations.dart';
@@ -168,14 +168,14 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   ///      mirrors the behaviour that already exists in [QRScannerScreen] for
   ///      the customer-initiated QR confirmation flow.
   void _handleOrderCollected(Map<String, dynamic> data) {
-    log('[OrderCollected] Event received: $data');
+    dLog('[OrderCollected] Event received: $data');
 
     final orderId = data['orderId'] as int?;
     final courierId = data['courierId'] as int?;
     final courierUserId = data['userId'] as int?;
 
     if (orderId == null || courierId == null || courierUserId == null) {
-      log('[OrderCollected] ❌ Aborting — null ids');
+      dLog('[OrderCollected] ❌ Aborting — null ids');
       return;
     }
 
@@ -188,10 +188,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       if (freshState is! OrdersLoaded) return;
 
       final orderStillActive = freshState.orders.any((o) => o.id == orderId);
-      log('[OrderCollected] orderStillActive=$orderStillActive');
+      dLog('[OrderCollected] orderStillActive=$orderStillActive');
 
       if (!orderStillActive) {
-        log('[OrderCollected] ✅ Order gone — showing review sheet');
+        dLog('[OrderCollected] ✅ Order gone — showing review sheet');
         _showReviewSheet(orderId, courierId, courierUserId);
       }
     });

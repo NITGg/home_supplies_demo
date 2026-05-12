@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tawreedat_go/core/style/app_colors.dart';
 
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../l10n/app_localizations.dart';

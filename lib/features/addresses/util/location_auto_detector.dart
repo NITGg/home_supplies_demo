@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/utils/constants.dart';
 import '../../../core/utils/location_service.dart';
+import '../../../core/utils/logger.dart';
 
 class LocationAutoDetector {
   LocationAutoDetector._();
@@ -23,7 +23,7 @@ class LocationAutoDetector {
     required String language,
   }) async {
     try {
-      log('Auto address called ...');
+      dLog('Auto address called ...');
 
       // ── 1. Get GPS position via the existing service ──────────────────────
       // All permission dialogs, retry loops, and settings-open flows are
@@ -33,11 +33,11 @@ class LocationAutoDetector {
       );
 
       if (position == null) {
-        log('LocationAutoDetector: position is null — permission denied or service off');
+        dLog('LocationAutoDetector: position is null — permission denied or service off');
         return null;
       }
 
-      log('LocationAutoDetector: got position ${position.latitude}, ${position.longitude}');
+      dLog('LocationAutoDetector: got position ${position.latitude}, ${position.longitude}');
 
       // ── 2. Reverse-geocode (same endpoint used by map_location_picker) ────
       final uri = Uri.parse(
@@ -50,20 +50,20 @@ class LocationAutoDetector {
       final response = await http.get(uri);
 
       if (response.statusCode != 200) {
-        log('LocationAutoDetector: geocoding HTTP ${response.statusCode}');
+        dLog('LocationAutoDetector: geocoding HTTP ${response.statusCode}');
         return null;
       }
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (data['status'] != 'OK') {
-        log('LocationAutoDetector: geocoding status ${data['status']}');
+        dLog('LocationAutoDetector: geocoding status ${data['status']}');
         return null;
       }
 
       final results = data['results'] as List<dynamic>;
       if (results.isEmpty) {
-        log('LocationAutoDetector: no geocoding results');
+        dLog('LocationAutoDetector: no geocoding results');
         return null;
       }
 
@@ -90,7 +90,7 @@ class LocationAutoDetector {
       final formattedAddress =
           results.first['formatted_address'] as String? ?? '';
 
-      log('LocationAutoDetector: area="$administrativeArea" gov="$governorate" address="$formattedAddress"');
+      dLog('LocationAutoDetector: area="$administrativeArea" gov="$governorate" address="$formattedAddress"');
 
       return {
         'latitude': '${position.latitude}',
@@ -100,7 +100,7 @@ class LocationAutoDetector {
         'governorate': governorate ?? '',
       };
     } catch (e) {
-      log('LocationAutoDetector: error — $e');
+      dLog('LocationAutoDetector: error — $e');
       return null;
     }
   }

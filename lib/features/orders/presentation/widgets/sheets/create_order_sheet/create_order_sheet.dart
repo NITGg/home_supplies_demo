@@ -13,6 +13,7 @@ import 'package:tawreedat_go/l10n/app_localizations.dart';
 
 import '../../../../../../core/utils/area_boundry_validator.dart';
 import '../../../../../../core/utils/distance_service.dart';
+import '../../../../../../core/utils/logger.dart';
 import '../../../../../../core/widgets/custom_button.dart';
 import '../../../../../../core/widgets/text_form.dart';
 import '../../../../../addresses/data/models/address_model.dart';
@@ -20,14 +21,12 @@ import '../../../../../addresses/data/models/governorate_model.dart';
 import '../../../../../addresses/manager/address_cubit.dart';
 import '../../../../../addresses/manager/address_states.dart';
 import '../../../../../auth/manager/profile_cubit.dart';
-import '../../../../../coupons/manager/coupons_cubit.dart';
 import '../../../../../wallet/manager/wallet_cubit.dart';
 import '../../../../../wallet/manager/wallet_state.dart';
 import '../../../../data/models/draft_model.dart';
 import '../../../../data/models/order_model.dart';
 import '../../../../manager/order_cubit.dart';
 import '../../../../manager/order_states.dart';
-import 'coupon_section.dart';
 import 'insufficient_balance_sheet.dart';
 import 'pin_icon.dart';
 import 'product_image_picker.dart';
@@ -235,7 +234,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
       if (mounted) setState(() => _distanceResult = result);
     } catch (e) {
-      log('❌ [Distance] fetch failed: $e');
+      dLog('❌ [Distance] fetch failed: $e');
       if (mounted) setState(() => _distanceResult = null);
     } finally {
       if (mounted) setState(() => _fetchingDistance = false);
@@ -260,7 +259,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final fee = calculatedFee < minFee ? minFee : calculatedFee;
     final finalFee = fee.ceilToDouble();
 
-    log('🚚 [Shipping] dist=${distanceMeters}m  fee=$finalFee EGP');
+    dLog('🚚 [Shipping] dist=${distanceMeters}m  fee=$finalFee EGP');
     return finalFee;
   }
 

@@ -1,8 +1,8 @@
-import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/logger.dart';
 import '../../products/data/repo/product_repo.dart';
 import '../data/repo/supplier_repo.dart';
 import 'supplier_states.dart';
@@ -64,7 +64,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
         );
       }
     } catch (e) {
-      log('SupplierDetailCubit: ❌ Failed at "$step" for supplier $supplierId → $e');
+      dLog('SupplierDetailCubit: ❌ Failed at "$step" for supplier $supplierId → $e');
       if (!isClosed) emit(SupplierDetailError(extractErrorMessage(e)));
     }
   }
@@ -131,7 +131,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
 
       if (!isClosed) emit(fresh.copyWith(sections: newSections));
     } catch (e) {
-      log('SupplierDetailCubit: Error loading products for category $categoryId: $e');
+      dLog('SupplierDetailCubit: Error loading products for category $categoryId: $e');
 
       if (isClosed) return;
 

@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -7,6 +6,7 @@ import 'package:tawreedat_go/features/auth/manager/profile_states.dart';
 import 'package:tawreedat_go/core/utils/secure_storage_service.dart';
 
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/logger.dart';
 import '../../../l10n/manager/locale_cubit.dart';
 import '../data/models/user_profile_model.dart';
 import '../data/repositories/profile_repository.dart';
@@ -35,11 +35,11 @@ class ProfileCubit extends Cubit<ProfileState> {
         if (cachedProfile != null) {
           _currentProfile = UserProfileModel.fromJson(cachedProfile);
           emit(ProfileLoaded(profile: _currentProfile!));
-          log('ProfileCubit: Loaded cached profile');
+          dLog('ProfileCubit: Loaded cached profile');
         }
       }
     } catch (e) {
-      log('ProfileCubit: Error loading cached profile: $e');
+      dLog('ProfileCubit: Error loading cached profile: $e');
       // Don't emit error state, just continue without cached data
     }
   }
@@ -54,26 +54,26 @@ class ProfileCubit extends Cubit<ProfileState> {
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {
-        log('ProfileCubit: No token found');
+        dLog('ProfileCubit: No token found');
         emit(ProfileFailure('لا يوجد رمز مصادقة'));
         return;
       }
 
-      log('ProfileCubit: Fetching profile with token');
+      dLog('ProfileCubit: Fetching profile with token');
       final result = await _authRepository.getProfile(token);
       _currentProfile = result.user;
       // Sync local locale to match profile lang (no backend call).
       await LocaleManager.syncFromProfile(_currentProfile?.lang??'AR');
       emit(ProfileLoaded(profile: result.user));
-      log('ProfileCubit: Profile loaded successfully');
+      dLog('ProfileCubit: Profile loaded successfully');
     } on DioException catch (e) {
-      log('ProfileCubit fetchProfile DioException: $e');
-      log('Response data: ${e.response?.data}');
-      log('Status code: ${e.response?.statusCode}');
+      dLog('ProfileCubit fetchProfile DioException: $e');
+      dLog('Response data: ${e.response?.data}');
+      dLog('Status code: ${e.response?.statusCode}');
       emit(ProfileFailure(extractErrorMessage(e)));
     } catch (e, stackTrace) {
-      log('ProfileCubit fetchProfile error: $e');
-      log('Stack trace: $stackTrace');
+      dLog('ProfileCubit fetchProfile error: $e');
+      dLog('Stack trace: $stackTrace');
       emit(ProfileFailure(extractErrorMessage(e)));
     }
   }
@@ -107,10 +107,10 @@ class ProfileCubit extends Cubit<ProfileState> {
       await fetchProfile();
       emit(ProfileUpdateSuccess(message: result.message));
     } on DioException catch (e) {
-      log('ProfileCubit updateProfile DioException: $e');
+      dLog('ProfileCubit updateProfile DioException: $e');
       emit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
-      log('ProfileCubit updateProfile error: $e');
+      dLog('ProfileCubit updateProfile error: $e');
       emit(ProfileFailure(extractErrorMessage(e)));
     }
   }
@@ -144,10 +144,10 @@ class ProfileCubit extends Cubit<ProfileState> {
       await fetchProfile();
       emit(ProfileUpdateSuccess(message: result.message));
     } on DioException catch (e) {
-      log('ProfileCubit updateProfileWithPhoto DioException: $e');
+      dLog('ProfileCubit updateProfileWithPhoto DioException: $e');
       emit(ProfileFailure(extractErrorMessage(e)));
     } catch (e, stackTrace) {
-      log('ProfileCubit updateProfileWithPhoto error: $e\n$stackTrace');
+      dLog('ProfileCubit updateProfileWithPhoto error: $e\n$stackTrace');
       emit(ProfileFailure(extractErrorMessage(e)));
     }
   }

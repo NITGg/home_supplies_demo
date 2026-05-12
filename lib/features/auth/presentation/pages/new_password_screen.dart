@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/widgets/banners.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/loading_screen.dart';
@@ -38,7 +38,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    log('Resetting password with otp: ${widget.otp}');
+    dLog('Resetting password with otp: ${widget.otp}');
     context.read<AuthCubit>().resetPassword(
       code: widget.otp,
       password: _newPasswordController.text.trim(),

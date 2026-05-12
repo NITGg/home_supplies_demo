@@ -1,7 +1,8 @@
 // lib/core/utils/area_boundary_validator.dart
 
 import 'dart:math' hide log;
-import 'dart:developer';
+
+import 'logger.dart';
 
 class AreaBoundaryValidator {
   /// Parses a single boundary point from either format:
@@ -62,25 +63,25 @@ class AreaBoundaryValidator {
   }) {
     final points = _extractPoints(boundaries);
 
-    log('🔍 AreaBoundaryValidator.isPointInArea');
-    log('   pin       : ($lat, $lng)');
-    log('   points    : ${points.map((p) => "(${p.lat}, ${p.lng})").toList()}');
+    dLog('🔍 AreaBoundaryValidator.isPointInArea');
+    dLog('   pin       : ($lat, $lng)');
+    dLog('   points    : ${points.map((p) => "(${p.lat}, ${p.lng})").toList()}');
 
     if (points.isEmpty) {
-      log('   result    : true (no boundaries defined — permissive)');
+      dLog('   result    : true (no boundaries defined — permissive)');
       return true;
     }
 
     final bool result;
     if (points.length == 2) {
       result = _boundingBoxCheck(lat, lng, points[0], points[1]);
-      log('   method    : bounding box');
+      dLog('   method    : bounding box');
     } else {
       result = _polygonCheck(lat, lng, points);
-      log('   method    : ray-casting polygon');
+      dLog('   method    : ray-casting polygon');
     }
 
-    log('   result    : $result');
+    dLog('   result    : $result');
     return result;
   }
 

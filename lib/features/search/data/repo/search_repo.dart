@@ -1,6 +1,6 @@
 // search_repository.dart
 
-import 'dart:developer';
+import '../../../../core/utils/logger.dart';
 import '../data_source/search_remote_data_source.dart';
 import '../models/search_models.dart';
 
@@ -19,7 +19,7 @@ class SearchRepositoryImpl implements SearchRepository {
     try {
       return await _dataSource.search(query);
     } catch (e, st) {
-      log('[SearchRepository] error: $e', stackTrace: st);
+      dLog('[SearchRepository] error: $e $st');
       rethrow;
     }
   }

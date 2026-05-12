@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -9,6 +8,7 @@ import 'package:tawreedat_go/core/utils/secure_storage_service.dart';
 import 'package:tawreedat_go/features/auth/data/repositories/auth_repository.dart';
 
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/logger.dart';
 import '../../../core/utils/social_auth_service.dart';
 import 'auth_state.dart';
 
@@ -36,10 +36,10 @@ class AuthCubit extends Cubit<AuthState> {
             },
           ),
         );
-        log('✅ FCM token registered successfully');
+        dLog('✅ FCM token registered successfully');
       }
     } catch (e) {
-      log('⚠️ Error registering FCM token: $e');
+      dLog('⚠️ Error registering FCM token: $e');
     }
   }
 

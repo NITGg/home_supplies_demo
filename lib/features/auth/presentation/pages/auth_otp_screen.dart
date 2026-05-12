@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +7,7 @@ import 'package:pinput/pinput.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/widgets/banners.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -122,7 +122,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   void _onState(BuildContext ctx, AuthState state) {
     if (_hasNavigated) return;
-    log('OtpVerificationScreen — ${state.runtimeType}');
+    dLog('OtpVerificationScreen — ${state.runtimeType}');
 
     if (state is AuthSuccess && !widget.isPasswordReset) {
       _hasNavigated = true;

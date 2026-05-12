@@ -1,7 +1,8 @@
-import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
+import 'logger.dart';
 
 class SocialAuthService {
   static final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
@@ -74,7 +75,7 @@ class SocialAuthService {
         'fullName': fullName,
       };
     } catch (e) {
-      log('❌ Apple Sign-In failed: $e');
+      dLog('❌ Apple Sign-In failed: $e');
       return null;
     }
   }

@@ -1,10 +1,10 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 import 'package:tawreedat_go/features/products/presentation/product_card.dart';
 
+import '../../../core/utils/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/data/repo/product_repo.dart';
@@ -74,7 +74,7 @@ class _OfferedSectionState extends State<OfferedSection> {
         _initialLoadDone = true;
       });
     } catch (e) {
-      log('[OfferedSection] error: $e');
+      dLog('[OfferedSection] error: $e');
       if (!mounted) return;
       setState(() {
         _isLoading = false;

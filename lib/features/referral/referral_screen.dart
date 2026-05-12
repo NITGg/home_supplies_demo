@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
@@ -13,6 +12,7 @@ import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 import '../../core/style/app_colors.dart';
 import '../../core/style/text_styles.dart';
 import '../../core/utils/api_client.dart';
+import '../../core/utils/logger.dart';
 import '../../l10n/app_localizations.dart';
 import '../auth/manager/profile_cubit.dart';
 import '../auth/manager/profile_states.dart';
@@ -76,7 +76,7 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
         _linkLoading = false;
       });
     } on DioException catch (e) {
-      log('ReferralQrScreen: link error: $e');
+      dLog('ReferralQrScreen: link error: $e');
       setState(() {
         _linkError = e.message ?? 'Something went wrong';
         _linkLoading = false;
@@ -104,7 +104,7 @@ class _ReferralQrScreenState extends State<ReferralQrScreen>
         _statsLoading = false;
       });
     } on DioException catch (e) {
-      log('ReferralQrScreen: stats error: $e');
+      dLog('ReferralQrScreen: stats error: $e');
       setState(() {
         _statsError = e.message ?? 'Something went wrong';
         _statsLoading = false;

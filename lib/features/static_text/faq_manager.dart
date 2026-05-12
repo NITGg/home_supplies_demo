@@ -1,7 +1,7 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
 
 import '../../core/utils/api_client.dart';
+import '../../core/utils/logger.dart';
 
 /// MODEL
 class FaqModel {
@@ -68,12 +68,12 @@ class FaqManager {
       final response = await _dio.get('/faqs?sort=sort_id?target_user[in]=["ALL", "CUSTOMER"]&is_active=true');
       if (response.statusCode == 200 && response.data['faqs'] != null) {
         _faqsResponse = FaqsResponse.fromJson(response.data);
-        log('✅ FAQs loaded successfully');
+        dLog('✅ FAQs loaded successfully');
       } else {
-        log('⚠️ Failed to load FAQs: ${response.statusCode}');
+        dLog('⚠️ Failed to load FAQs: ${response.statusCode}');
       }
     } catch (e, s) {
-      log('❌ Error loading FAQs: $e', stackTrace: s);
+      dLog('❌ Error loading FAQs: $e $s');
     }
   }
 }

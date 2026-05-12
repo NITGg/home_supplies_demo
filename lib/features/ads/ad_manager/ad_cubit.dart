@@ -1,8 +1,8 @@
-import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
 import '../../../../../../core/utils/api_client.dart';
+import '../../../core/utils/logger.dart';
 import '../data/models/ad_model.dart';
 import 'ad_state.dart';
 
@@ -16,13 +16,13 @@ class AdsCubit extends Cubit<AdsState> {
       emit(AdsLoading());
     }
     try {
-      log("loading ADS");
+      dLog("loading ADS");
       final now = DateTime.now().toIso8601String().split('T')[0];
       final response = await _dio.get(
         '/ads',
         queryParameters: {'limit': 3, 'ad_type': 'BANNER', 'sort': 'priority'},
       );
-      log('ads response : $response');
+      dLog('ads response : $response');
 
       final data = AdsResponse.fromJson(response.data);
 
@@ -46,9 +46,9 @@ class AdsCubit extends Cubit<AdsState> {
         );
       }
 
-      log('ads popups : ${response2.toString()}');
+      dLog('ads popups : ${response2.toString()}');
     } catch (e) {
-      log('ads error : $e');
+      dLog('ads error : $e');
       if (!isClosed) {
         emit(AdsFailure(e.toString()));
       }

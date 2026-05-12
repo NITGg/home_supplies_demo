@@ -1,6 +1,7 @@
-import 'dart:developer';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'dart:async';
+
+import 'logger.dart';
 
 class SocketService {
   static final SocketService _instance = SocketService._internal();
@@ -51,7 +52,7 @@ class SocketService {
   // ================= CONNECT =================
   void connect({required String baseUrl, required String accessToken}) {
     if (_socket?.connected ?? false) {
-      log('✅ Socket already connected');
+      dLog('✅ Socket already connected');
       return;
     }
 
@@ -72,61 +73,61 @@ class SocketService {
   // ================= SETUP LISTENERS (called once) =================
   void _setupListeners() {
     _socket!.onConnect((_) {
-      log('✅ Socket Connected: ${_socket!.id}');
+      dLog('✅ Socket Connected: ${_socket!.id}');
       // Rejoin all active order rooms after reconnection
       for (final orderId in _activeOrderRooms) {
         _socket!.emit('join:order', {'orderId': orderId});
-        log('🔗 Re-joined order room: $orderId');
+        dLog('🔗 Re-joined order room: $orderId');
       }
     });
 
     _socket!.onDisconnect((_) {
-      log('❌ Socket Disconnected');
+      dLog('❌ Socket Disconnected');
     });
 
     _socket!.onConnectError((e) {
-      log('⚠️ Socket Connection Error: $e');
+      dLog('⚠️ Socket Connection Error: $e');
     });
 
     _socket!.on('order:collected', (data) {
-      log('📦 ORDER COLLECTED: $data');
+      dLog('📦 ORDER COLLECTED: $data');
       if (data is Map<String, dynamic>) {
         _orderCollectedController.add(data);
       }
     });
 
     _socket!.on('offer:new', (data) {
-      log('📦 NEW OFFER raw socket event — data: $data');
-      log('📦 controller.hasListener: ${_newOfferController.hasListener}');
+      dLog('📦 NEW OFFER raw socket event — data: $data');
+      dLog('📦 controller.hasListener: ${_newOfferController.hasListener}');
       if (data is Map<String, dynamic>) {
         _newOfferController.add(data);
-        log('📦 added to controller');
+        dLog('📦 added to controller');
       }
     });
 
     _socket!.on('order:price_report', (data) {
-      log('💰 NEW PRICE REPORT: $data');
+      dLog('💰 NEW PRICE REPORT: $data');
       if (data is Map<String, dynamic>) {
         _priceReportController.add(data);
       }
     });
 
     _socket!.on('order:cancelledUnavailable', (data) {
-      log('🚫 ORDER CANCELLED (UNAVAILABLE): $data');
+      dLog('🚫 ORDER CANCELLED (UNAVAILABLE): $data');
       if (data is Map<String, dynamic>) {
         _orderCancelledController.add({...data, 'reason': 'unavailable'});
       }
     });
 
     _socket!.on('order:cancelledOther', (data) {
-      log('🚫 ORDER CANCELLED (OTHER): $data');
+      dLog('🚫 ORDER CANCELLED (OTHER): $data');
       if (data is Map<String, dynamic>) {
         _orderCancelledController.add({...data, 'reason': 'other'});
       }
     });
 
     _socket!.on('order:courier_location', (data) {
-      log('🗺️ COURIER LOCATION: $data');
+      dLog('🗺️ COURIER LOCATION: $data');
       if (data is Map<String, dynamic>) {
         _courierLocationController.add(data);
       }
@@ -136,18 +137,18 @@ class SocketService {
   // ================= JOIN ORDER =================
   void joinOrder(int orderId) {
     if (!isConnected) {
-      log('⚠️ Cannot join order $orderId - socket not connected');
+      dLog('⚠️ Cannot join order $orderId - socket not connected');
       return;
     }
 
     if (_activeOrderRooms.contains(orderId)) {
-      log('ℹ️ Already in order room: $orderId');
+      dLog('ℹ️ Already in order room: $orderId');
       return;
     }
 
     _socket!.emit('join:order', {'orderId': orderId});
     _activeOrderRooms.add(orderId);
-    log('🔗 Joined order room: $orderId');
+    dLog('🔗 Joined order room: $orderId');
   }
 
   // ================= LEAVE ORDER =================
@@ -156,7 +157,7 @@ class SocketService {
 
     _socket?.emit('leave:order', {'orderId': orderId});
     _activeOrderRooms.remove(orderId);
-    log('🔓 Left order room: $orderId');
+    dLog('🔓 Left order room: $orderId');
   }
 
   // ================= LEAVE ALL INACTIVE ORDERS =================
@@ -176,7 +177,7 @@ class SocketService {
     _socket?.disconnect();
     _socket?.dispose();
     _socket = null;
-    log('🔌 Socket disconnected and disposed');
+    dLog('🔌 Socket disconnected and disposed');
   }
 
   // ================= DISPOSE STREAMS =================

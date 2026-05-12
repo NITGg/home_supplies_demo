@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/features/products/presentation/all_best_selling_screen.dart';
 import 'package:tawreedat_go/features/products/presentation/all_offered_screen.dart';
 import '../core/utils/check_for_updates.dart';
+import '../core/utils/logger.dart';
 import '../core/widgets/loading_screen.dart';
 import '../features/addresses/presentation/default_address_chip.dart';
 import '../features/auth/presentation/pages/auth_otp_screen.dart';
@@ -288,7 +288,7 @@ Future<GoRouter> createAppRouter({
       ),
     ],
     errorBuilder: (context, state) {
-      log('❌ 404 Error - Location: ${state.uri}');
+      dLog('❌ 404 Error - Location: ${state.uri}');
       return Scaffold(body: Center(child: LoadingScreen()));
     },
   );

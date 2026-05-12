@@ -1,10 +1,10 @@
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/widgets/banners.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/text_form.dart';
@@ -43,7 +43,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       email = value;
     }
 
-    log('Requesting password reset — phone: $phone  email: $email');
+    dLog('Requesting password reset — phone: $phone  email: $email');
     context.read<AuthCubit>().forgotPassword(phone: phone, email: email);
   }
 

@@ -1,8 +1,8 @@
-import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import 'package:tawreedat_go/core/utils/extract_error_message.dart';
+import '../../../core/utils/logger.dart';
 import '../../products/data/repo/product_repo.dart';
 import '../../suppliers/data/models/supplier_models.dart';
 import '../../suppliers/data/repo/supplier_repo.dart';
@@ -50,7 +50,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
             .getSupplierById(AppSettings.kMainSupplierId)
             .then<SupplierModel?>((s) => s)
             .catchError((e) {
-          log('CategoryDetailCubit: Could not fetch main supplier → $e');
+          dLog('CategoryDetailCubit: Could not fetch main supplier → $e');
           return null;
         }),
       ]);
@@ -85,8 +85,8 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
             sections.map((s) => s.subCategory.id).toList());
       }
     } catch (e) {
-      log('CategoryDetailCubit: ❌ Failed at step "$step" for category $categoryId');
-      log('CategoryDetailCubit: Error → $e');
+      dLog('CategoryDetailCubit: ❌ Failed at step "$step" for category $categoryId');
+      dLog('CategoryDetailCubit: Error → $e');
       if (!isClosed) emit(CategoryDetailError(extractErrorMessage(e)));
     }
   }
@@ -153,7 +153,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
 
       if (!isClosed) emit(freshState.copyWith(sections: newSections));
     } catch (e) {
-      log('CategoryDetailCubit: Error loading products for section $subCategoryId: $e');
+      dLog('CategoryDetailCubit: Error loading products for section $subCategoryId: $e');
 
       if (isClosed) return;
 
@@ -209,7 +209,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
         ));
       }
     } catch (e) {
-      log('CategoryDetailCubit: Error loading more direct products: $e');
+      dLog('CategoryDetailCubit: Error loading more direct products: $e');
 
       if (isClosed) return;
 

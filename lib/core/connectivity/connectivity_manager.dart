@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
+import '../utils/logger.dart';
+
 class ConnectivityManager {
   static final ConnectivityManager _instance = ConnectivityManager._internal();
 
@@ -32,11 +34,11 @@ class ConnectivityManager {
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
       _updateConnectionStatus,
       onError: (error) {
-        log('❌ Connectivity error: $error');
+        dLog('❌ Connectivity error: $error');
       },
     );
 
-    log('✅ ConnectivityManager initialized');
+    dLog('✅ ConnectivityManager initialized');
   }
 
   /// Update connection status

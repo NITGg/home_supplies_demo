@@ -1,7 +1,7 @@
-import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/features/reviews/manager/reviews_states.dart';
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/logger.dart';
 import '../data/models/reviews_model.dart';
 import '../data/repositories/reviews_repo.dart';
 
@@ -59,7 +59,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
       ));
     } catch (e) {
       _currentPage--;
-      log('Fetch more reviews error: $e');
+      dLog('Fetch more reviews error: $e');
     } finally {
       _isFetchingMore = false;
     }

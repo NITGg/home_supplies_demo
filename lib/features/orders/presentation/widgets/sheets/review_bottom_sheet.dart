@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/style/app_colors.dart';
 import '../../../../../core/style/text_styles.dart';
 import '../../../../../core/utils/api_client.dart';
+import '../../../../../core/utils/logger.dart';
 import '../../../../../core/widgets/custom_button.dart';
 import '../../../../../l10n/app_localizations.dart';
 
@@ -58,7 +59,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
       "comment": _commentController.text.trim(),
     };
 
-    log('📤 Submitting review: $payload');
+    dLog('📤 Submitting review: $payload');
 
     try {
       final response = await ApiClient.instance.dio.post(
@@ -70,8 +71,8 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
         '/customer/points/give-points-to-courier/${widget.courierUserId}',
       );
 
-      log('✅ Response: ${response.statusCode} — ${response.data}');
-      log('✅ Response: ${response2.statusCode} — ${response2.data}');
+      dLog('✅ Response: ${response.statusCode} — ${response.data}');
+      dLog('✅ Response: ${response2.statusCode} — ${response2.data}');
 
       if (response.statusCode == 201 && mounted) {
         navigatedAway = true; // ← set BEFORE popping
@@ -99,7 +100,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
         );
       }
     } catch (e) {
-      log('❌ Unexpected: $e');
+      dLog('❌ Unexpected: $e');
     } finally {
       // Only reset if we're still on screen
       if (mounted && !navigatedAway) {

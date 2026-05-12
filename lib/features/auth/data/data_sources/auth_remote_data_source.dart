@@ -1,16 +1,32 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:mime/mime.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/auth_response_model.dart';
 import '../models/user_profile_model.dart';
-
+class ImageValidationException implements Exception {
+  final String message;
+  const ImageValidationException(this.message);
+  @override
+  String toString() => 'ImageValidationException: $message';
+}
 class AuthRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
+  static const _allowedMimeTypes = {'image/jpeg', 'image/png', 'image/webp'};
 
+  Future<void> _validateImage(File file) async {
+    final bytes = await file.readAsBytes();
+    final mimeType = lookupMimeType(file.path, headerBytes: bytes);
+    if (!_allowedMimeTypes.contains(mimeType)) {
+      throw const ImageValidationException(
+        'Only JPEG, PNG, or WEBP images are allowed',
+      );
+    }
+  }
   Future<ShortAuthResponseModel> register({
     required BuildContext context,
     required String fullName,
@@ -87,7 +103,7 @@ class AuthRemoteDataSource {
     );
 
     final authResponse = LongAuthResponseModel.fromJson(response.data);
-    log('Google sign in user: ${authResponse.token}');
+    dLog('Google sign in user: ${authResponse.token}');
     return authResponse;
   }
 
@@ -104,7 +120,7 @@ class AuthRemoteDataSource {
     );
 
     final authResponse = LongAuthResponseModel.fromJson(response.data);
-    log('Apple sign in user: ${authResponse.token}');
+    dLog('Apple sign in user: ${authResponse.token}');
     return authResponse;
   }
 
@@ -115,6 +131,8 @@ class AuthRemoteDataSource {
     String? lang,
     File? personalPhoto,
   }) async {
+    if (personalPhoto != null) await _validateImage(personalPhoto);
+
     final formData = FormData();
 
     if (fullName != null) formData.fields.add(MapEntry('full_name', fullName));
@@ -139,12 +157,12 @@ class AuthRemoteDataSource {
     );
 
     try {
-      log('Update profile response: ${response.data}');
+      dLog('Update profile response: ${response.data}');
       final updateResponse = UpdateProfileResponseModel.fromJson(response.data);
-      log('Updated user profile: ${updateResponse.user.fullName}');
+      dLog('Updated user profile: ${updateResponse.user.fullName}');
       return updateResponse;
     } catch (e, s) {
-      log('Error parsing updated user profile', error: e, stackTrace: s);
+      dLog('Error parsing updated user profile $e $s');
       rethrow;
     }
   }

@@ -2,6 +2,8 @@
 
 import 'dart:developer';
 
+import '../../../../core/utils/logger.dart';
+
 /// Supported message content types.
 ///
 /// Guarded by [ChatFeatureConfig] flags at the UI layer —
@@ -84,20 +86,20 @@ class MessageModel {
         required int currentUserId,
       }) {
     // ── Diagnostic: log every field and its runtime type ──────────────────
-    log('🔍 [MessageModel.fromJson] raw json keys: ${json.keys.toList()}');
-    log(
+    dLog('🔍 [MessageModel.fromJson] raw json keys: ${json.keys.toList()}');
+    dLog(
       '🔍 [MessageModel.fromJson] id: ${json['id']} (${json['id']?.runtimeType})',
     );
-    log(
+    dLog(
       '🔍 [MessageModel.fromJson] chat_id: ${json['chat_id']} (${json['chat_id']?.runtimeType})',
     );
-    log(
+    dLog(
       '🔍 [MessageModel.fromJson] sender_id: ${json['sender_id']} (${json['sender_id']?.runtimeType})',
     );
-    log('🔍 [MessageModel.fromJson] content: ${json['content']}');
-    log('🔍 [MessageModel.fromJson] type: ${json['type']}');
-    log('🔍 [MessageModel.fromJson] status: ${json['status']}');
-    log('🔍 [MessageModel.fromJson] created_at: ${json['created_at']}');
+    dLog('🔍 [MessageModel.fromJson] content: ${json['content']}');
+    dLog('🔍 [MessageModel.fromJson] type: ${json['type']}');
+    dLog('🔍 [MessageModel.fromJson] status: ${json['status']}');
+    dLog('🔍 [MessageModel.fromJson] created_at: ${json['created_at']}');
 
     // ── Safe int parsing ─────────────────────────────────────────────────
     // The server may return ints as num, int, or String depending on the

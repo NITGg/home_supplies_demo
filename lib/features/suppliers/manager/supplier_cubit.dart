@@ -1,9 +1,9 @@
-import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/logger.dart';
 import '../data/models/supplier_models.dart';
 import '../data/repo/supplier_repo.dart';
 import 'supplier_states.dart';
@@ -39,7 +39,7 @@ class SuppliersCubit extends Cubit<SuppliersState> {
       final suppliers = await _fetchAndMerge();
       if (!isClosed) emit(SuppliersLoaded(suppliers: suppliers));
     } catch (e) {
-      log('SuppliersCubit: Error loading suppliers: $e');
+      dLog('SuppliersCubit: Error loading suppliers: $e');
       if (!isClosed) emit(SuppliersError(extractErrorMessage(e)));
     }
   }
@@ -52,9 +52,9 @@ class SuppliersCubit extends Cubit<SuppliersState> {
     if (categoryIds.isEmpty) {
       final response = await _repository.getSuppliers();
       raw = response.suppliers;
-      log('SuppliersCubit: fetched ${raw.length} suppliers');
-      log('SuppliersCubit: ids=${raw.map((s) => s.id).toList()}');
-      log('SuppliersCubit: kMainSupplierId=${AppSettings.kMainSupplierId}');
+      dLog('SuppliersCubit: fetched ${raw.length} suppliers');
+      dLog('SuppliersCubit: ids=${raw.map((s) => s.id).toList()}');
+      dLog('SuppliersCubit: kMainSupplierId=${AppSettings.kMainSupplierId}');
     } else if (categoryIds.length == 1) {
       final response =
       await _repository.getSuppliers(categoryId: categoryIds.first);
@@ -80,7 +80,7 @@ class SuppliersCubit extends Cubit<SuppliersState> {
     // Always exclude the main supplier — their products already fill the
     // catalogue so showing them again in the strip is redundant.
     final result = raw.where((s) => s.id != AppSettings.kMainSupplierId).toList();
-    log('SuppliersCubit: after filter=${result.length}');
+    dLog('SuppliersCubit: after filter=${result.length}');
     return result;
   }
 }

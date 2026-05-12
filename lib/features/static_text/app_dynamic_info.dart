@@ -1,7 +1,7 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
 
 import '../../core/utils/api_client.dart';
+import '../../core/utils/logger.dart';
 
 class AppInfoModel {
   final String id;
@@ -117,12 +117,12 @@ class AppInfoManager {
       final response = await _dio.get('/about-app');
       if (response.statusCode == 200 && response.data['about_app'] != null) {
         _appInfo = AppInfoModel.fromJson(response.data['about_app']);
-        log('✅ App info loaded successfully');
+        dLog('✅ App info loaded successfully');
       } else {
-        log('⚠️ Failed to load app info: ${response.statusCode}');
+        dLog('⚠️ Failed to load app info: ${response.statusCode}');
       }
     } catch (e, s) {
-      log('❌ Error loading app info: $e', stackTrace: s);
+      dLog('❌ Error loading app info: $e $s');
     }
   }
 }

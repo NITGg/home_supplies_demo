@@ -1,9 +1,9 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/style/app_colors.dart';
+import '../../../core/utils/logger.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../../l10n/app_localizations.dart';
@@ -176,7 +176,7 @@ class _DefaultAddressPickerSheetState
             !_addSheetAutoOpened) {
           _addSheetAutoOpened = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            log('Auto Opening add sheet...');
+            dLog('Auto Opening add sheet...');
             if (mounted) _openAddSheet(autoDetect: true);
           });
         }

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +6,7 @@ import 'package:pinput/pinput.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../manager/profile_cubit.dart';
@@ -85,7 +85,7 @@ class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
       );
       return;
     }
-    log('ProfileOtpScreen: verifying OTP for ${widget.destination}');
+    dLog('ProfileOtpScreen: verifying OTP for ${widget.destination}');
     context.read<ProfileCubit>().confirmOtp(code: otp);
   }
 

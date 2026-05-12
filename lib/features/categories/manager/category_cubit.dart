@@ -1,8 +1,8 @@
-import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/logger.dart';
 import '../data/repo/category_repo.dart';
 import 'category_states.dart';
 
@@ -42,7 +42,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
         ));
       }
     } catch (e) {
-      log('CategoriesCubit: Error loading categories: $e');
+      dLog('CategoriesCubit: Error loading categories: $e');
       if (!isClosed) emit(CategoriesError(extractErrorMessage(e)));
     }
   }
@@ -72,7 +72,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
         ));
       }
     } catch (e) {
-      log('CategoriesCubit: Error loading more categories: $e');
+      dLog('CategoriesCubit: Error loading more categories: $e');
       if (!isClosed) emit(current.copyWith(isLoadingMore: false));
     }
   }

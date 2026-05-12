@@ -1,8 +1,8 @@
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
 
 import '../../../../core/utils/api_client.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/supplier_models.dart';
 import '../models/supplier_response_models.dart';
@@ -33,7 +33,7 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
       '/users/suppliers?includes=user&lang=${LocaleManager.currentLocale}',
       queryParameters: queryParams.isNotEmpty ? queryParams : null,
     );
-    log('[SupplierDS] getSuppliers → ${response.data}');
+    dLog('[SupplierDS] getSuppliers → ${response.data}');
 
     return SuppliersResponseModel.fromJson(
         response.data as Map<String, dynamic>);
@@ -43,7 +43,7 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
   Future<SupplierModel> getSupplierById(int id) async {
     final response = await _dio.get('/users/suppliers/$id?lang=${LocaleManager.currentLocale}');
     final data = response.data as Map<String, dynamic>;
-    log('[SupplierDS] getSupplierById($id) → $data');
+    dLog('[SupplierDS] getSupplierById($id) → $data');
     return SupplierModel.fromJson(data['supplier'] as Map<String, dynamic>);
   }
 
@@ -52,7 +52,7 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
       int supplierId) async {
     final response =
     await _dio.get('/users/suppliers/$supplierId/categories?lang=${LocaleManager.currentLocale}');
-    log('[SupplierDS] getSupplierCategories($supplierId) → ${response.data}');
+    dLog('[SupplierDS] getSupplierCategories($supplierId) → ${response.data}');
     return SupplierCategoriesResponseModel.fromJson(
         response.data as Map<String, dynamic>);
   }

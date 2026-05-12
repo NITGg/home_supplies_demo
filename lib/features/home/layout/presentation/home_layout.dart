@@ -34,7 +34,6 @@ import '../../../auth/manager/profile_states.dart';
 import '../../../categories/presentation/categories_screen.dart';
 import '../../../chat/config/chat_injection.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
-import '../../../coupons/presentation/first_order_discount_dialog.dart';
 import '../../../notifications/presentation/widgets/notification_dialog.dart';
 import '../../../orders/data/models/order_model.dart';
 import '../../../orders/manager/order_cubit.dart';

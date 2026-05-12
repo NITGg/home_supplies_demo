@@ -1,7 +1,7 @@
-import 'dart:developer';
 import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
+import '../../../core/utils/logger.dart';
 import '../../../core/utils/socket_service.dart';
 
 /// Handles all chat-specific socket events and room management.
@@ -83,13 +83,13 @@ class ChatSocketService {
   /// the handshake completes.
   void attach() {
     if (_socket != null) {
-      log('🔗 [ChatSocket] Already attached — skipping');
+      dLog('🔗 [ChatSocket] Already attached — skipping');
       return;
     }
 
     final socket = SocketService().rawSocket;
     if (socket == null) {
-      log('🚨 [ChatSocket] attach() called before SocketService.connect() — '
+      dLog('🚨 [ChatSocket] attach() called before SocketService.connect() — '
           'chat socket events will not work. Call ChatModule.init() after '
           'the main socket is connected.');
       return;
@@ -100,17 +100,17 @@ class ChatSocketService {
     _connectionStatusController.add(socket.connected);
 
     if (socket.connected) {
-      log('🔗 [ChatSocket] Attached to SocketService socket (id: ${socket.id}, '
+      dLog('🔗 [ChatSocket] Attached to SocketService socket (id: ${socket.id}, '
           'connected: true)');
       _drainPendingRooms();
     } else {
       // Socket exists but hasn't finished the handshake yet (id is null).
       // Register a one-shot connect callback to drain pending rooms.
-      log('🔗 [ChatSocket] Attached to SocketService socket — '
+      dLog('🔗 [ChatSocket] Attached to SocketService socket — '
           'not yet connected, will join pending rooms on connect');
 
       void onConnect(_) {
-        log('🔗 [ChatSocket] Socket connected (id: ${_socket?.id}) — '
+        dLog('🔗 [ChatSocket] Socket connected (id: ${_socket?.id}) — '
             'draining ${_pendingRooms.length} pending room(s)');
         _connectionStatusController.add(true);
         _drainPendingRooms();
@@ -135,7 +135,7 @@ class ChatSocketService {
     // Leave every room we joined.
     for (final chatId in Set<int>.from(_activeChatRooms)) {
       _socket!.emit('chat:leave', {'chatId': chatId});
-      log('🔓 [ChatSocket] Left chat room $chatId (detach)');
+      dLog('🔓 [ChatSocket] Left chat room $chatId (detach)');
     }
     _activeChatRooms.clear();
     _pendingRooms.clear();
@@ -148,33 +148,33 @@ class ChatSocketService {
     _socket!.off('chat:message_read');
 
     _socket = null;
-    log('🔓 [ChatSocket] Detached from SocketService socket');
+    dLog('🔓 [ChatSocket] Detached from SocketService socket');
   }
 
   // ─── EVENT LISTENERS ──────────────────────────────────────────────────────
 
   void _registerChatListeners() {
     _socket!.on('chat:new_message', (data) {
-      log('💬 [ChatSocket] chat:new_message → $data');
+      dLog('💬 [ChatSocket] chat:new_message → $data');
       final map = _toMap(data);
       if (map != null) _newMessageController.add(map);
     });
 
     _socket!.on('chat:user_typing', (data) {
-      log('✏️  [ChatSocket] chat:user_typing → $data');
+      dLog('✏️  [ChatSocket] chat:user_typing → $data');
       final map = _toMap(data);
       if (map != null) _userTypingController.add(map);
     });
 
 
     _socket!.on('chat:message_read', (data) {
-      log('✅ [ChatSocket] chat:message_read → $data');
+      dLog('✅ [ChatSocket] chat:message_read → $data');
       final map = _toMap(data);
       if (map != null) _messageReadController.add(map);
     });
 
     _socket!.on('chat:user_stopped_typing', (data) {
-      log('⏹️  [ChatSocket] chat:user_stopped_typing → $data');
+      dLog('⏹️  [ChatSocket] chat:user_stopped_typing → $data');
       final map = _toMap(data);
       if (map != null) _userStoppedTypingController.add(map);
     });
@@ -193,13 +193,13 @@ class ChatSocketService {
     if (!isConnected) {
       // Socket isn't ready yet — buffer and replay on connect.
       _pendingRooms.add(chatId);
-      log('⏳ [ChatSocket] Socket not connected — buffering join for chat $chatId');
+      dLog('⏳ [ChatSocket] Socket not connected — buffering join for chat $chatId');
       return;
     }
 
     _socket!.emit('chat:join', {'chatId': chatId});
     _activeChatRooms.add(chatId);
-    log('🔗 [ChatSocket] Joined chat room: $chatId');
+    dLog('🔗 [ChatSocket] Joined chat room: $chatId');
   }
 
   void leaveChat(int chatId) {
@@ -208,7 +208,7 @@ class ChatSocketService {
 
     _socket?.emit('chat:leave', {'chatId': chatId});
     _activeChatRooms.remove(chatId);
-    log('🔓 [ChatSocket] Left chat room: $chatId');
+    dLog('🔓 [ChatSocket] Left chat room: $chatId');
   }
 
   /// Drains [_pendingRooms] by emitting `chat:join` for each room.
@@ -221,7 +221,7 @@ class ChatSocketService {
       if (_activeChatRooms.contains(chatId)) continue;
       _socket!.emit('chat:join', {'chatId': chatId});
       _activeChatRooms.add(chatId);
-      log('🔗 [ChatSocket] Joined pending chat room: $chatId');
+      dLog('🔗 [ChatSocket] Joined pending chat room: $chatId');
     }
   }
 
@@ -239,7 +239,7 @@ class ChatSocketService {
 
   void markRead(int chatId) {
     _socket?.emit('chat:read_messages', {'chatId': chatId});
-    log('👁️  [ChatSocket] Marked chat $chatId as read');
+    dLog('👁️  [ChatSocket] Marked chat $chatId as read');
   }
 
   // ─── HELPERS ──────────────────────────────────────────────────────────────

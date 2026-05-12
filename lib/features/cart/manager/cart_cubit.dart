@@ -1,8 +1,8 @@
-import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/logger.dart';
 import '../data/data_source/cart_remote_data_source.dart';
 import '../data/models/cart_item_model.dart';
 import '../data/models/cart_response_model.dart';
@@ -52,7 +52,7 @@ class CartCubit extends Cubit<CartState> {
         unawaited(_fetchPreviewSilently()); // ← re-fetch fees after every mutation
       }
     } catch (e) {
-      log('[CartCubit] silentRefresh error: $e');
+      dLog('[CartCubit] silentRefresh error: $e');
     }
   }
 
@@ -98,7 +98,7 @@ class CartCubit extends Cubit<CartState> {
       }
       rethrow;
     } catch (e) {
-      log('[CartCubit] addItem error: $e');
+      dLog('[CartCubit] addItem error: $e');
       // Clear busy flag on error
       final current = _loaded;
       if (current != null) {
@@ -117,7 +117,7 @@ class CartCubit extends Cubit<CartState> {
         _safeEmit(loaded.copyWith(preview: preview));
       }
     } catch (e) {
-      log('[CartCubit] fetchPreview error: $e');
+      dLog('[CartCubit] fetchPreview error: $e');
       // non-fatal — summary still shows product totals
     }
   }
@@ -160,7 +160,7 @@ class CartCubit extends Cubit<CartState> {
       await _repository.clearCart();
       await addItem(spId: spId, quantity: quantity);
     } catch (e) {
-      log('[CartCubit] clearAndAddItem error: $e');
+      dLog('[CartCubit] clearAndAddItem error: $e');
       // Restore cart state from server if anything fails.
       await fetchCart();
       rethrow;
@@ -197,7 +197,7 @@ class CartCubit extends Cubit<CartState> {
         );
         await _silentRefresh();
       } catch (e) {
-        log('[CartCubit] decrementItem(remove) error: $e');
+        dLog('[CartCubit] decrementItem(remove) error: $e');
         await fetchCart();
         rethrow;
       }
@@ -232,7 +232,7 @@ class CartCubit extends Cubit<CartState> {
       );
       await _silentRefresh();
     } catch (e) {
-      log('[CartCubit] removeItem error: $e');
+      dLog('[CartCubit] removeItem error: $e');
       await fetchCart();
       rethrow;
     }
@@ -260,7 +260,7 @@ class CartCubit extends Cubit<CartState> {
       await _repository.clearCart();
       await _silentRefresh();
     } catch (e) {
-      log('[CartCubit] clearCart error: $e');
+      dLog('[CartCubit] clearCart error: $e');
       await fetchCart();
       _safeEmit(CartError(extractErrorMessage(e)));
     }
@@ -293,7 +293,7 @@ class CartCubit extends Cubit<CartState> {
         _applyItemUpdate(updated);
       }
     } catch (e) {
-      log('[CartCubit] _updateItem error: $e');
+      dLog('[CartCubit] _updateItem error: $e');
       final current = _loaded;
       if (current != null) {
         final busy = Set<int>.from(current.busyItemIds)..remove(cartItemId);

@@ -1,6 +1,6 @@
-import 'dart:developer';
 import 'dart:io';
 
+import '../../../../core/utils/logger.dart';
 import '../../../../core/utils/secure_storage_service.dart';
 import '../data_sources/auth_remote_data_source.dart';
 import '../models/auth_response_model.dart';
@@ -98,7 +98,7 @@ class AuthRepository {
     );
     await _storageService.saveUserProfile(response.user.toJson());
     final savedProfile = await _storageService.getUserProfile();
-    log('Updated and saved user profile: ${savedProfile.toString()}');
+    dLog('Updated and saved user profile: ${savedProfile.toString()}');
     return response;
   }
 

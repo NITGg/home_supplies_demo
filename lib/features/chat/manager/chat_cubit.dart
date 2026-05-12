@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/utils/logger.dart';
 import '../config/chat_feature_config.dart';
 import '../data/models/chat_model.dart';
 import '../data/models/message_model.dart';
@@ -24,13 +25,13 @@ class ChatCubit extends Cubit<ChatState> {
   ChatCubit({required ChatRepository repo, required this.currentUserId})
     : _repo = repo,
       super(const ChatInitial()) {
-    log('🟢 [ChatCubit] created — currentUserId: $currentUserId');
+    dLog('🟢 [ChatCubit] created — currentUserId: $currentUserId');
   }
 
   // ─── Open Existing Chat (from inbox) ─────────────────────────────────────
 
   Future<void> joinExistingChat(int chatId) async {
-    log('🔵 [ChatCubit] joinExistingChat(chatId: $chatId)');
+    dLog('🔵 [ChatCubit] joinExistingChat(chatId: $chatId)');
     emit(const ChatLoading());
     try {
       final chats = await _repo.getMyChats();
@@ -59,7 +60,7 @@ class ChatCubit extends Cubit<ChatState> {
         ),
       );
     } catch (e, st) {
-      log('🔴 [ChatCubit] joinExistingChat error: $e\n$st');
+      dLog('🔴 [ChatCubit] joinExistingChat error: $e\n$st');
       emit(ChatError(e.toString()));
     }
   }
@@ -67,7 +68,7 @@ class ChatCubit extends Cubit<ChatState> {
   // ─── Start New Chat ───────────────────────────────────────────────────────
 
   Future<void> openChat(int targetUserId) async {
-    log('🔵 [ChatCubit] openChat(targetUserId: $targetUserId)');
+    dLog('🔵 [ChatCubit] openChat(targetUserId: $targetUserId)');
     emit(const ChatLoading());
     try {
       final existingChats = await _repo.getMyChats();
@@ -103,7 +104,7 @@ class ChatCubit extends Cubit<ChatState> {
         ),
       );
     } catch (e, st) {
-      log('🔴 [ChatCubit] openChat error: $e\n$st');
+      dLog('🔴 [ChatCubit] openChat error: $e\n$st');
       emit(ChatError(e.toString()));
     }
   }
@@ -152,7 +153,7 @@ class ChatCubit extends Cubit<ChatState> {
         ),
       );
     } catch (e) {
-      log('❌ [ChatCubit] sendTextMessage failed: $e');
+      dLog('❌ [ChatCubit] sendTextMessage failed: $e');
       _markFailed(optimistic.localId, 'Failed to send message. Tap to retry.');
     }
   }
@@ -212,7 +213,7 @@ class ChatCubit extends Cubit<ChatState> {
         ),
       );
     } catch (e) {
-      log('❌ [ChatCubit] sendImageMessage failed: $e');
+      dLog('❌ [ChatCubit] sendImageMessage failed: $e');
       _markFailed(optimistic.localId, 'Failed to send image. Tap to retry.');
     }
   }
@@ -220,7 +221,7 @@ class ChatCubit extends Cubit<ChatState> {
   // ─── Retry a failed message ───────────────────────────────────────────────
 
   Future<void> retryMessage(String localId) async {
-    log('🔄 [ChatCubit] retryMessage — localId: $localId');
+    dLog('🔄 [ChatCubit] retryMessage — localId: $localId');
     final raw = state is MessageSendFailed
         ? (state as MessageSendFailed).currentState
         : null;
@@ -287,7 +288,7 @@ class ChatCubit extends Cubit<ChatState> {
         );
       }
     } catch (e) {
-      log('❌ [ChatCubit] retryMessage failed: $e');
+      dLog('❌ [ChatCubit] retryMessage failed: $e');
       if (state is! ChatLoaded) return;
       emit(
         MessageSendFailed(
@@ -328,7 +329,7 @@ class ChatCubit extends Cubit<ChatState> {
         ),
       );
     } catch (e, st) {
-      log('🔴 [ChatCubit] loadMoreMessages error: $e\n$st');
+      dLog('🔴 [ChatCubit] loadMoreMessages error: $e\n$st');
       if (state is ChatLoaded) {
         emit((state as ChatLoaded).copyWith(isLoadingMore: false));
       }

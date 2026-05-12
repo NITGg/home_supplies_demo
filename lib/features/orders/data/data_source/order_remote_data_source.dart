@@ -1,14 +1,28 @@
 import 'dart:developer';
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:mime/mime.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
+import '../../../auth/data/data_sources/auth_remote_data_source.dart';
 import '../models/order_model.dart';
 import '../models/proposal_model.dart';
 import '../models/qr_model.dart';
 
 class OrderRemoteDataSource {
   final Dio _dio = ApiClient.instance.dio;
+  static const _allowedMimeTypes = {'image/jpeg', 'image/png', 'image/webp'};
 
+  Future<void> _validateImage(File file) async {
+    final bytes = await file.readAsBytes();
+    final mimeType = lookupMimeType(file.path, headerBytes: bytes);
+    if (!_allowedMimeTypes.contains(mimeType)) {
+      throw const ImageValidationException(
+        'Only JPEG, PNG, or WEBP images are allowed',
+      );
+    }
+  }
   // Create Order
   Future<OrderResponse> createOrder(
     Order order,
@@ -16,8 +30,10 @@ class OrderRemoteDataSource {
       required String estimatedDeliveryFee,
     String? couponCode,
   }) async {
-    log('Creating order: ${order.toJson()} payment method: $paymentMethod coupon code: $couponCode, estimated delivery fee: $estimatedDeliveryFee');
-
+    dLog('Creating order: ${order.toJson()} payment method: $paymentMethod coupon code: $couponCode, estimated delivery fee: $estimatedDeliveryFee');
+    if (order.productImageFile != null) {
+      await _validateImage(order.productImageFile!);
+    }
     FormData formData;
 
     if (order.productImageFile != null) {
@@ -51,14 +67,14 @@ class OrderRemoteDataSource {
         'estemated_delivery_fee': estimatedDeliveryFee,
       });
     }
-    log('Form data: ${formData.fields}');
+    dLog('Form data: ${formData.fields}');
 
     final response = await _dio.post(
       '/orders?lang=${LocaleManager.currentLocale}',
       data: formData,
     );
 
-    log('Create order response: ${response.data}');
+    dLog('Create order response: ${response.data}');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       return OrderResponse.fromJson(response.data);
@@ -72,7 +88,7 @@ class OrderRemoteDataSource {
     required String paymentMethod,
     String? couponCode,
   }) async {
-    log('Creating catalog order — payment: $paymentMethod, coupon: $couponCode');
+    dLog('Creating catalog order — payment: $paymentMethod, coupon: $couponCode');
 
     final response = await _dio.post(
       '/orders?lang=${LocaleManager.currentLocale}',
@@ -85,7 +101,7 @@ class OrderRemoteDataSource {
       options: Options()
     );
 
-    log('Create catalog order response: ${response.data}');
+    dLog('Create catalog order response: ${response.data}');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       return OrderResponse.fromJson(response.data);
@@ -101,7 +117,7 @@ class OrderRemoteDataSource {
     String? status,
     bool filterByExpiry = true,
   }) async {
-    log('Fetching orders - skip: $skip, limit: $limit, status: $status, filterByExpiry: $filterByExpiry');
+    dLog('Fetching orders - skip: $skip, limit: $limit, status: $status, filterByExpiry: $filterByExpiry');
 
     final queryParams = {
       'skip': skip,
@@ -118,7 +134,7 @@ class OrderRemoteDataSource {
       queryParameters: queryParams,
     );
 
-    log('Get orders response: ${response.data}');
+    dLog('Get orders response: ${response.data}');
 
     if (response.statusCode == 200) {
       return OrdersListResponse.fromJson(response.data);
@@ -129,14 +145,14 @@ class OrderRemoteDataSource {
 
   // Cancel Order
   Future<void> cancelOrder(int orderId, String reason) async {
-    log('Cancelling order $orderId with reason: $reason');
+    dLog('Cancelling order $orderId with reason: $reason');
 
     final response = await _dio.post(
       '/orders/$orderId/cancel?lang=${LocaleManager.currentLocale}',
       data: {'cancelled_reason': reason},
     );
 
-    log('Cancel order response: ${response.data}');
+    dLog('Cancel order response: ${response.data}');
 
     if (response.statusCode == 200) {
     } else {
@@ -146,13 +162,13 @@ class OrderRemoteDataSource {
 
   // Get Proposals for an Order
   Future<ProposalsResponse> getOrderProposals(int orderId) async {
-    log('Fetching proposals for order $orderId');
+    dLog('Fetching proposals for order $orderId');
 
     final response = await _dio.get(
       '/orders/$orderId/proposals?lang=${LocaleManager.currentLocale}',
     );
 
-    log('Get proposals response: ${response.data}');
+    dLog('Get proposals response: ${response.data}');
 
     if (response.statusCode == 200) {
       return ProposalsResponse.fromJson(response.data);
@@ -167,14 +183,14 @@ class OrderRemoteDataSource {
     required int proposalId,
     required String status, // ACCEPTED or REJECTED
   }) async {
-    log('Updating proposal $proposalId status to $status');
+    dLog('Updating proposal $proposalId status to $status');
 
     final response = await _dio.put(
       '/orders/$orderId/proposals/$proposalId?lang=${LocaleManager.currentLocale}',
       data: {'status': status},
     );
 
-    log('Update proposal response: ${response.data}');
+    dLog('Update proposal response: ${response.data}');
 
     if (response.statusCode == 200) {
       return response.data;
@@ -188,7 +204,7 @@ class OrderRemoteDataSource {
     required int orderId,
     required int courierId,
   }) async {
-    log('Confirming delivery for order $orderId by courier $courierId');
+    dLog('Confirming delivery for order $orderId by courier $courierId');
 
     final request = ConfirmDeliveryRequest(
       orderId: orderId,
@@ -200,7 +216,7 @@ class OrderRemoteDataSource {
       data: request.toJson(),
     );
 
-    log('Confirm delivery response: ${response.data}');
+    dLog('Confirm delivery response: ${response.data}');
 
     if (response.statusCode == 200) {
       return response.data;
@@ -237,7 +253,7 @@ class OrderRemoteDataSource {
       data: {'status': status},
     );
 
-    log('Price adjustment response: ${response.data}');
+    dLog('Price adjustment response: ${response.data}');
 
     if (response.statusCode == 200) {
       return response.data;
@@ -260,11 +276,11 @@ class OrderRemoteDataSource {
   }
 
   Future<Map<String, dynamic>> retryOrder(int orderId) async {
-    log('Retrying order $orderId');
+    dLog('Retrying order $orderId');
     final response = await _dio.post(
       '/orders/$orderId/retry?lang=${LocaleManager.currentLocale}',
     );
-    log('Retry order response: ${response.data}');
+    dLog('Retry order response: ${response.data}');
     if (response.statusCode == 200) {
       return response.data;
     } else {

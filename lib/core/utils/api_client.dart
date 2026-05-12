@@ -1,6 +1,5 @@
 
 
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
@@ -21,71 +20,42 @@ class ApiClient {
   // static const String baseUrlDev = 'https://adminapis-dev.nitg-eg.com/api/v1';
 
   void init() {
-    dio = Dio(
+    dio = _createDio(baseUrl);
+  }
+
+  Dio _createDio(String url) {
+    final instance = Dio(
       BaseOptions(
-        baseUrl: baseUrl,
+        baseUrl: url,
         connectTimeout: const Duration(seconds: 25),
         receiveTimeout: const Duration(seconds: 30),
       ),
     );
-
-    dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = await SecureStorageService().getToken();
-          // log('Token: $token');
-          if (token != null && token.isNotEmpty) {
-            // Add the authorization token to the headers
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          handler.next(options);
-        },
-        onError: (e, handler) async {
-          final friendlyError = _toFriendlyError(e);
-          handler.next(friendlyError);
-          if (e.response?.statusCode == 401) {
-            await SecureStorageService().clearAll();
-            if (rootNavigatorKey.currentContext != null) {
-              rootNavigatorKey.currentContext?.go('/auth/login');
-            }
-          }
-        },
-      ),
-    );
-
-    // dioDEV = Dio(
-    //   BaseOptions(
-    //     baseUrl: baseUrlDev,
-    //     connectTimeout: const Duration(seconds: 25),
-    //     receiveTimeout: const Duration(seconds: 30),
-    //   ),
-    // );
-    //
-    // dioDEV.interceptors.add(
-    //   InterceptorsWrapper(
-    //     onRequest: (options, handler) async {
-    //       final token = await SecureStorageService().getToken();
-    //       // log('Token: $token');
-    //       if (token != null && token.isNotEmpty) {
-    //         // Add the authorization token to the headers
-    //         options.headers['Authorization'] = 'Bearer $token';
-    //       }
-    //       handler.next(options);
-    //     },
-    //     onError: (e, handler) async {
-    //       final friendlyError = _toFriendlyError(e);
-    //       handler.next(friendlyError);
-    //       if (e.response?.statusCode == 401) {
-    //         await SecureStorageService().clearAll();
-    //         if (rootNavigatorKey.currentContext != null) {
-    //           rootNavigatorKey.currentContext?.go('/auth/login');
-    //         }
-    //       }
-    //     },
-    //   ),
-    // );
+    instance.interceptors.add(_buildInterceptor(instance));
+    return instance;
   }
 
+  InterceptorsWrapper _buildInterceptor(Dio targetDio) {
+    return InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        final token = await SecureStorageService().getToken();
+        if (token != null && token.isNotEmpty) {
+          options.headers['Authorization'] = 'Bearer $token';
+        }
+        handler.next(options);
+      },
+      onError: (e, handler) async {
+        final friendlyError = _toFriendlyError(e);
+        handler.next(friendlyError);
+        if (e.response?.statusCode == 401) {
+          await SecureStorageService().clearAll();
+          if (rootNavigatorKey.currentContext != null) {
+            rootNavigatorKey.currentContext?.go('/auth/login');
+          }
+        }
+      },
+    );
+  }
   DioException _toFriendlyError(DioException error) {
     String? message;
 

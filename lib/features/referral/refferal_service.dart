@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +5,7 @@ import 'package:play_install_referrer/play_install_referrer.dart';
 
 import '../../../../core/utils/api_client.dart';
 import '../../../../core/utils/secure_storage_service.dart';
+import '../../core/utils/logger.dart';
 
 class ReferralCaptureService {
   static const _checkedKey = 'referral_capture_checked';
@@ -24,7 +24,7 @@ class ReferralCaptureService {
 
     final alreadyChecked = await storage.readValue(_checkedKey);
     if (alreadyChecked != null) {
-      log('ReferralCapture: already checked, skipping');
+      dLog('ReferralCapture: already checked, skipping');
       return null;
     }
 
@@ -34,17 +34,17 @@ class ReferralCaptureService {
       final referrerDetails = await PlayInstallReferrer.installReferrer;
       final referrerString = referrerDetails.installReferrer;
 
-      log('ReferralCapture: raw referrer = $referrerString');
+      dLog('ReferralCapture: raw referrer = $referrerString');
 
       if (referrerString == null ||
           referrerString.isEmpty ||
           _ignoredReferrers.contains(referrerString.toLowerCase().trim())) {
-        log('ReferralCapture: ignored referrer value, skipping');
+        dLog('ReferralCapture: ignored referrer value, skipping');
         return null;
       }
 
       final code = _parseCode(referrerString);
-      log('ReferralCapture: parsed code = $code');
+      dLog('ReferralCapture: parsed code = $code');
 
       if (code != null) {
         await _sendCodeToBackend(userId: userId, code: code);
@@ -52,10 +52,10 @@ class ReferralCaptureService {
 
       return code;
     } on PlatformException catch (e) {
-      log('ReferralCapture: PlatformException (not a Play install): ${e.message}');
+      dLog('ReferralCapture: PlatformException (not a Play install): ${e.message}');
       return null;
     } catch (e) {
-      log('ReferralCapture: error reading referrer: $e');
+      dLog('ReferralCapture: error reading referrer: $e');
       return null;
     }
   }
@@ -69,9 +69,9 @@ class ReferralCaptureService {
         '/admin/manage-seller/save-referral-code/$userId',
         data: {'referral_code': code},
       );
-      log('ReferralCapture: code "$code" saved to backend successfully');
+      dLog('ReferralCapture: code "$code" saved to backend successfully');
     } on DioException catch (e) {
-      log('ReferralCapture: failed to save code to backend: ${e.message}');
+      dLog('ReferralCapture: failed to save code to backend: ${e.message}');
     }
   }
 

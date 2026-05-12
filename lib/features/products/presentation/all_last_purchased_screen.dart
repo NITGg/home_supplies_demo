@@ -1,8 +1,8 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/utils/logger.dart';
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../categories/presentation/sub_cat_section.dart';
@@ -68,7 +68,7 @@ class _AllLastPurchasedScreenState extends State<AllLastPurchasedScreen> {
         _initialLoadDone = true;
       });
     } catch (e) {
-      log('[AllLastPurchasedScreen] error: $e');
+      dLog('[AllLastPurchasedScreen] error: $e');
       if (!mounted) return;
       setState(() {
         _isLoading = false;

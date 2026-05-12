@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/logger.dart';
 import '../data/models/order_model.dart';
 import '../data/repositories/order_repo.dart';
 import 'order_states.dart';
@@ -104,7 +105,7 @@ class OrderCubit extends Cubit<OrderState> {
       );
     } catch (e) {
       _activeLoading = false;
-      log('OrderCubit: Error loading active orders: $e');
+      dLog('OrderCubit: Error loading active orders: $e');
       safeEmit(OrderError(extractErrorMessage(e)));
     }
   }
@@ -213,7 +214,7 @@ class OrderCubit extends Cubit<OrderState> {
       );
     } catch (e) {
       _historyLoading = false;
-      log('OrderCubit: Error loading history orders: $e');
+      dLog('OrderCubit: Error loading history orders: $e');
       safeEmit(OrderError(extractErrorMessage(e)));
     }
   }
@@ -232,20 +233,20 @@ class OrderCubit extends Cubit<OrderState> {
   }) async {
     safeEmit(OrderOperationLoading());
     try {
-      log('OrderCubit: Creating order');
+      dLog('OrderCubit: Creating order');
       final response = await _repository.createOrder(
         order,
         paymentMethod,
         couponCode: couponCode,
         estimatedDeliveryFee: estimatedDeliveryFee,
       );
-      log('OrderCubit: Order created — ${response.order.orderNumber}');
+      dLog('OrderCubit: Order created — ${response.order.orderNumber}');
 
       safeEmit(OrderSuccess(message: response.message, order: response.order));
       // Reload active orders (new order will be PENDING)
       await loadActiveOrders(loadMore: false);
     } catch (e) {
-      log('OrderCubit: Error creating order: $e');
+      dLog('OrderCubit: Error creating order: $e');
       safeEmit(OrderError(extractErrorMessage(e)));
     }
   }
@@ -267,20 +268,20 @@ class OrderCubit extends Cubit<OrderState> {
   }) async {
     safeEmit(OrderOperationLoading());
     try {
-      log('OrderCubit: Creating catalog order — payment: $paymentMethod');
+      dLog('OrderCubit: Creating catalog order — payment: $paymentMethod');
 
       final response = await _repository.createCatalogOrder(
         paymentMethod: paymentMethod,
         couponCode: couponCode,
       );
 
-      log('OrderCubit: Catalog order created — ${response.order.orderNumber}');
+      dLog('OrderCubit: Catalog order created — ${response.order.orderNumber}');
       safeEmit(OrderSuccess(message: response.message, order: response.order));
 
       // Reload active orders so the new PENDING order appears immediately.
       await loadActiveOrders(loadMore: false);
     } catch (e) {
-      log('OrderCubit: Error creating catalog order: $e');
+      dLog('OrderCubit: Error creating catalog order: $e');
       safeEmit(OrderError(extractErrorMessage(e)));
     }
   }
@@ -291,16 +292,16 @@ class OrderCubit extends Cubit<OrderState> {
   Future<void> cancelOrder(int orderId, String reason) async {
     safeEmit(CancelingOrder());
     try {
-      log('OrderCubit: Cancelling order $orderId');
+      dLog('OrderCubit: Cancelling order $orderId');
       await _repository.cancelOrder(orderId, reason);
-      log('OrderCubit: Order cancelled');
+      dLog('OrderCubit: Order cancelled');
 
       safeEmit(const OrderCancelled(message: 'Order cancelled successfully'));
 
       // Reload both lists (order moved from active to history)
       await loadActiveOrders(loadMore: false);
     } catch (e) {
-      log('OrderCubit: Error cancelling order: $e');
+      dLog('OrderCubit: Error cancelling order: $e');
       safeEmit(OrderCancelError(extractErrorMessage(e)));
     }
   }
@@ -308,12 +309,12 @@ class OrderCubit extends Cubit<OrderState> {
   Future<void> retryOrder(int? orderId) async {
     safeEmit(const RetryingOrder());
     try {
-      log('OrderCubit: Retrying order $orderId');
+      dLog('OrderCubit: Retrying order $orderId');
       if (orderId == null) {
         throw Exception('Order ID is null');
       }
       final response = await _repository.retryOrder(orderId);
-      log('OrderCubit: Order retried — $response');
+      dLog('OrderCubit: Order retried — $response');
       safeEmit(
         OrderRetried(
           message: response['message'] ?? 'Order retried successfully',
@@ -322,7 +323,7 @@ class OrderCubit extends Cubit<OrderState> {
       // New order will appear as PENDING in active orders
       await loadActiveOrders(loadMore: false);
     } catch (e) {
-      log('OrderCubit: Error retrying order: $e');
+      dLog('OrderCubit: Error retrying order: $e');
       safeEmit(OrderRetryError(extractErrorMessage(e)));
     }
   }
@@ -338,13 +339,13 @@ class OrderCubit extends Cubit<OrderState> {
   Future<void> loadProposals(int orderId) async {
     safeEmit(ProposalsLoading(orderId));
     try {
-      log('OrderCubit: Loading proposals for order $orderId');
+      dLog('OrderCubit: Loading proposals for order $orderId');
       final response = await _repository.getOrderProposals(orderId);
-      log('OrderCubit: Loaded ${response.proposals.length} proposals');
+      dLog('OrderCubit: Loaded ${response.proposals.length} proposals');
 
       safeEmit(ProposalsLoaded(orderId: orderId, proposals: response.proposals));
     } catch (e) {
-      log('OrderCubit: Error loading proposals: $e');
+      dLog('OrderCubit: Error loading proposals: $e');
       safeEmit(ProposalsError(orderId, extractErrorMessage(e)));
     }
   }
@@ -357,13 +358,13 @@ class OrderCubit extends Cubit<OrderState> {
   }) async {
     safeEmit(ProposalUpdating());
     try {
-      log('OrderCubit: Accepting proposal $proposalId for order $orderId');
+      dLog('OrderCubit: Accepting proposal $proposalId for order $orderId');
       await _repository.updateProposalStatus(
         orderId: orderId,
         proposalId: proposalId,
         status: 'ACCEPTED',
       );
-      log('OrderCubit: Proposal accepted');
+      dLog('OrderCubit: Proposal accepted');
       safeEmit(ProposalAccepted(orderId: orderId, proposalId: proposalId));
       await loadActiveOrders(loadMore: false);
       await loadProposals(orderId);
@@ -390,10 +391,10 @@ class OrderCubit extends Cubit<OrderState> {
         return;
       }
 
-      log('OrderCubit: Error accepting proposal: $e');
+      dLog('OrderCubit: Error accepting proposal: $e');
       safeEmit(OrderError(extractErrorMessage(e)));
     } catch (e) {
-      log('OrderCubit: Error accepting proposal: $e');
+      dLog('OrderCubit: Error accepting proposal: $e');
       safeEmit(OrderError(extractErrorMessage(e)));
     }
   }
@@ -406,18 +407,18 @@ class OrderCubit extends Cubit<OrderState> {
   }) async {
     safeEmit(ProposalUpdating());
     try {
-      log('OrderCubit: Rejecting proposal $proposalId for order $orderId');
+      dLog('OrderCubit: Rejecting proposal $proposalId for order $orderId');
       await _repository.updateProposalStatus(
         orderId: orderId,
         proposalId: proposalId,
         status: 'REJECTED',
       );
-      log('OrderCubit: Proposal rejected');
+      dLog('OrderCubit: Proposal rejected');
 
       safeEmit(ProposalRejected(orderId: orderId, proposalId: proposalId));
       await loadProposals(orderId);
     } catch (e) {
-      log('OrderCubit: Error rejecting proposal: $e');
+      dLog('OrderCubit: Error rejecting proposal: $e');
       safeEmit(OrderError(extractErrorMessage(e)));
     }
   }
@@ -427,7 +428,7 @@ class OrderCubit extends Cubit<OrderState> {
   Future<void> validateCoupon(String code, {bool customOrder = false}) async {
     safeEmit(CouponValidating());
     try {
-      log('OrderCubit: Validating coupon $code');
+      dLog('OrderCubit: Validating coupon $code');
       final data = await _repository.validateCoupon(code,customOrder);
       final coupon = data['coupon'] as Map<String, dynamic>;
       final isValid = data['valid'] == true;
@@ -457,7 +458,7 @@ class OrderCubit extends Cubit<OrderState> {
       );
     } catch (e) {
       // This handles 4xx/5xx from validate endpoint (e.g. errors.not_found)
-      log('OrderCubit: Coupon validation error: $e');
+      dLog('OrderCubit: Coupon validation error: $e');
       safeEmit(CouponInvalid(extractErrorMessage(e)));
     }
   }
@@ -471,16 +472,16 @@ class OrderCubit extends Cubit<OrderState> {
   }) async {
     safeEmit(DeliveryConfirming());
     try {
-      log('OrderCubit: Confirming delivery for order $orderId');
+      dLog('OrderCubit: Confirming delivery for order $orderId');
       await _repository.confirmDelivery(orderId: orderId, courierId: courierId);
-      log('OrderCubit: Delivery confirmed');
+      dLog('OrderCubit: Delivery confirmed');
 
       safeEmit(DeliveryConfirmed(orderId: orderId, courierId: courierId, courierUserId: courierUserId));
 
       // Reload both lists (order moved from active to history)
       await loadActiveOrders(loadMore: false);
     } catch (e) {
-      log('OrderCubit: Error confirming delivery: $e');
+      dLog('OrderCubit: Error confirming delivery: $e');
       safeEmit(OrderError(extractErrorMessage(e)));
     }
   }

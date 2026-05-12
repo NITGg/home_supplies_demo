@@ -1,6 +1,6 @@
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
+import '../../../../core/utils/logger.dart';
 import '../models/chat_model.dart';
 import '../models/message_model.dart';
 
@@ -47,9 +47,9 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
   @override
   Future<List<ChatModel>> getMyChats() async {
-    log('📡 [ChatDS] GET $_kChatBase/get-my-chats');
+    dLog('📡 [ChatDS] GET $_kChatBase/get-my-chats');
     final response = await _dio.get('$_kChatBase/get-my-chats');
-    log('📡 [ChatDS] getMyChats raw response: ${response.data}');
+    dLog('📡 [ChatDS] getMyChats raw response: ${response.data}');
 
     final extracted = _extractData(response.data);
 
@@ -59,7 +59,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
         ? extracted
         : <dynamic>[];
 
-    log('📡 [ChatDS] getMyChats list length: ${raw.length}');
+    dLog('📡 [ChatDS] getMyChats list length: ${raw.length}');
     return raw
         .map((e) => ChatModel.fromJson(
       e as Map<String, dynamic>,
@@ -74,12 +74,12 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
         int page = 1,
         ChatModel? knownChat,
       }) async {
-    log('📡 [ChatDS] GET $_kChatBase/get-chat/$chatId?page=$page');
+    dLog('📡 [ChatDS] GET $_kChatBase/get-chat/$chatId?page=$page');
     final response = await _dio.get(
       '$_kChatBase/get-chat/$chatId',
       queryParameters: {'page': page, 'limit': 30},
     );
-    log('📡 [ChatDS] getChatById($chatId) raw response: ${response.data}');
+    dLog('📡 [ChatDS] getChatById($chatId) raw response: ${response.data}');
 
     final extracted = _extractData(response.data) as Map<String, dynamic>;
     return ChatWithMessagesModel.fromJson(
@@ -91,9 +91,9 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
   @override
   Future<({ChatModel chat, bool created})> createOrGetChat(int userId) async {
-    log('📡 [ChatDS] POST $_kChatBase/create-chat/$userId');
+    dLog('📡 [ChatDS] POST $_kChatBase/create-chat/$userId');
     final response = await _dio.post('$_kChatBase/create-chat/$userId');
-    log('📡 [ChatDS] createOrGetChat($userId) raw response: ${response.data}');
+    dLog('📡 [ChatDS] createOrGetChat($userId) raw response: ${response.data}');
 
     final data = _extractData(response.data) as Map<String, dynamic>;
     final chatJson = (data['chat'] as Map<String, dynamic>?) ?? data;
@@ -110,7 +110,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       int chatId, {
         required int page,
       }) async {
-    log('📡 [ChatDS] GET $_kChatBase/get-chat/$chatId?page=$page (loadMore)');
+    dLog('📡 [ChatDS] GET $_kChatBase/get-chat/$chatId?page=$page (loadMore)');
     final response = await _dio.get(
       '$_kChatBase/get-chat/$chatId',
       queryParameters: {'page': page, 'limit': 30},
@@ -131,12 +131,12 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     required String content,
     required String type,
   }) async {
-    log('📡 [ChatDS] POST $_kChatBase/send-message/$chatId (text)');
+    dLog('📡 [ChatDS] POST $_kChatBase/send-message/$chatId (text)');
     final response = await _dio.post(
       '$_kChatBase/send-message/$chatId',
       data: {'content': content, 'type': type},
     );
-    log('📡 [ChatDS] sendMessage($chatId) raw response: ${response.data}');
+    dLog('📡 [ChatDS] sendMessage($chatId) raw response: ${response.data}');
 
     final raw = _extractData(response.data);
     final msgJson = raw is Map<String, dynamic>
@@ -151,7 +151,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     required int chatId,
     required String filePath,
   }) async {
-    log('📡 [ChatDS] POST $_kChatBase/send-message/$chatId (image)');
+    dLog('📡 [ChatDS] POST $_kChatBase/send-message/$chatId (image)');
 
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
@@ -166,7 +166,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
         contentType: 'multipart/form-data',
       ),
     );
-    log('📡 [ChatDS] sendImageMessage($chatId) raw response: ${response.data}');
+    dLog('📡 [ChatDS] sendImageMessage($chatId) raw response: ${response.data}');
 
     final raw = _extractData(response.data);
     final msgJson = raw is Map<String, dynamic>

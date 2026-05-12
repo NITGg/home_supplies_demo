@@ -1,9 +1,9 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/features/auth/manager/auth_cubit.dart';
 
+import '../../core/utils/logger.dart';
 import '../../core/utils/secure_storage_service.dart';
 import '../../features/auth/data/repositories/profile_repository.dart';
 
@@ -30,7 +30,7 @@ class LocaleCubit extends Cubit<LocaleState> {
     if (state.locale == locale) return;
     await _storage.saveLocale(locale.languageCode);
     emit(LocaleState(locale));
-    log('LocaleCubit: locale synced from profile → ${locale.languageCode}');
+    dLog('LocaleCubit: locale synced from profile → ${locale.languageCode}');
   }
 
   /// Called when the user manually toggles locale — persists and updates profile.
@@ -44,9 +44,9 @@ class LocaleCubit extends Cubit<LocaleState> {
 
     try {
       await profileRepository?.updateProfile(lang: newLocale.languageCode.toUpperCase(), token: kAuthtoken);
-      log('LocaleCubit: profile lang updated → ${newLocale.languageCode}');
+      dLog('LocaleCubit: profile lang updated → ${newLocale.languageCode}');
     } catch (e) {
-      log('LocaleCubit: failed to update profile lang: $e');
+      dLog('LocaleCubit: failed to update profile lang: $e');
     }
   }
 }

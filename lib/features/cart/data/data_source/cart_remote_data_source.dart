@@ -1,6 +1,6 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/cart_response_model.dart';
 import '../models/cart_item_model.dart';
@@ -35,14 +35,14 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   @override
   Future<CartResponseModel> getCart() async {
     final response = await _dio.get('/cart?lang=${LocaleManager.currentLocale}');
-    log('[Cart] GET /cart → ${response.statusCode}');
+    dLog('[Cart] GET /cart → ${response.statusCode}');
     return CartResponseModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
   Future<OrderPreviewModel> getOrderPreview(String? code) async {
     final response = await _dio.post('/orders/preview?lang=${LocaleManager.currentLocale}',data: {if (code != null)'coupon_code': code});
-    log('[Cart] GET /orders/preview → ${response.statusCode}');
+    dLog('[Cart] GET /orders/preview → ${response.statusCode}');
     return OrderPreviewModel.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -56,7 +56,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
         '/cart?lang=${LocaleManager.currentLocale}',
         data: {'sp_id': spId, 'quantity': quantity},
       );
-      log('[Cart] POST /cart → ${response.statusCode}');
+      dLog('[Cart] POST /cart → ${response.statusCode}');
       final data = response.data as Map<String, dynamic>;
       return CartItemModel.fromJson(data['cartItem'] as Map<String, dynamic>);
     } on DioException catch (e) {
@@ -80,7 +80,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
       },
     );
 
-    log('[Cart] PUT /cart → ${response.statusCode}');
+    dLog('[Cart] PUT /cart → ${response.statusCode}');
     final data = response.data as Map<String, dynamic>;
 
     if (data['cartItem'] != null) {
@@ -96,7 +96,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   @override
   Future<void> clearCart() async {
     final response = await _dio.delete('/cart?lang=${LocaleManager.currentLocale}');
-    log('[Cart] DELETE /cart → ${response.statusCode}');
+    dLog('[Cart] DELETE /cart → ${response.statusCode}');
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/reviews_model.dart';
 
@@ -23,7 +23,7 @@ class ReviewsRemoteDataSource {
       );
       return ReviewsResponse.fromJson(response.data);
     } catch (e) {
-      log('Get reviews error: $e');
+      dLog('Get reviews error: $e');
       rethrow;
     }
   }

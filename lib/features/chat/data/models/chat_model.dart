@@ -1,5 +1,5 @@
-import 'dart:developer';
 
+import '../../../../core/utils/logger.dart';
 import 'chat_user_model.dart';
 import 'message_model.dart';
 
@@ -29,8 +29,8 @@ class ChatModel {
       Map<String, dynamic> json, {
         required int currentUserId,
       }) {
-    log('🔍 [ChatModel.fromJson] keys: ${json.keys.toList()}');
-    log('🔍 [ChatModel.fromJson] id: ${json['id']} (${json['id']?.runtimeType}), '
+    dLog('🔍 [ChatModel.fromJson] keys: ${json.keys.toList()}');
+    dLog('🔍 [ChatModel.fromJson] id: ${json['id']} (${json['id']?.runtimeType}), '
         'is_closed: ${json['is_closed']} (${json['is_closed']?.runtimeType}), '
         'participants: ${json['participants']?.runtimeType}');
 
@@ -78,7 +78,7 @@ class ChatModel {
 
     final id = _toInt(json['id']);
     if (id == null) {
-      log('🚨 [ChatModel.fromJson] id is null! Full json: $json');
+      dLog('🚨 [ChatModel.fromJson] id is null! Full json: $json');
     }
 
     return ChatModel(
@@ -163,7 +163,7 @@ class ChatWithMessagesModel {
         // Current page number — used to correctly compute hasMore from totalPages.
         int currentPage = 1,
       }) {
-    log('🔍 [ChatWithMessagesModel.fromJson] keys: ${json.keys.toList()}');
+    dLog('🔍 [ChatWithMessagesModel.fromJson] keys: ${json.keys.toList()}');
 
     // ── Detect response shape ─────────────────────────────────────────────────
     // Messages-only shape: { totalMessages, totalPages, messages: [...] }
@@ -176,7 +176,7 @@ class ChatWithMessagesModel {
       // Use the caller-supplied chat object; fall back to a safe placeholder.
       // ChatCubit always passes knownChat so id is never 0 in practice.
       chat = knownChat ?? ChatModel(id: 0, participants: [], isClosed: false);
-      log('🔍 [ChatWithMessagesModel.fromJson] messages-only shape — '
+      dLog('🔍 [ChatWithMessagesModel.fromJson] messages-only shape — '
           'using ${knownChat != null ? "knownChat id:${knownChat.id}" : "placeholder"}');
     } else {
       chat = ChatModel.fromJson(json, currentUserId: currentUserId);
@@ -184,7 +184,7 @@ class ChatWithMessagesModel {
 
     // ── Parse messages ────────────────────────────────────────────────────────
     final msgData = json['messages'];
-    log('🔍 [ChatWithMessagesModel.fromJson] messages field type: ${msgData?.runtimeType}');
+    dLog('🔍 [ChatWithMessagesModel.fromJson] messages field type: ${msgData?.runtimeType}');
 
     List<dynamic> rawMessages = [];
     bool hasMore = false;
@@ -207,7 +207,7 @@ class ChatWithMessagesModel {
       }
     }
 
-    log('🔍 [ChatWithMessagesModel.fromJson] '
+    dLog('🔍 [ChatWithMessagesModel.fromJson] '
         'rawMessages: ${rawMessages.length}, hasMore: $hasMore, nextPage: $nextPage');
 
     final messages = rawMessages

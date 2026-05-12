@@ -1,21 +1,21 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pub_semver/pub_semver.dart';
+import 'package:tawreedat_go/core/utils/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../style/app_colors.dart';
 import 'app_dynamic_settings.dart';
 
 Future<bool> checkForUpdate(BuildContext context) async {
-  log("checkForUpdate called");
+  dLog("checkForUpdate called");
 
   // Get current version
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
-  log("Current version: ${packageInfo.version}");
+  dLog("Current version: ${packageInfo.version}");
   String currentVersion = packageInfo.version;
 
   String? latestVersion;
@@ -28,7 +28,7 @@ Future<bool> checkForUpdate(BuildContext context) async {
     updateUrl = AppSettings.ios_url;
   }
 
-  log("Latest version: $latestVersion");
+  dLog("Latest version: $latestVersion");
   if (latestVersion != null &&
       latestVersion.isNotEmpty &&
       updateUrl != null &&

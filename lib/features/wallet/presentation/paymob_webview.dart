@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'dart:developer';
 
+import '../../../core/utils/logger.dart';
 import '../../../l10n/app_localizations.dart';
 
 class PaymobWebViewScreen extends StatefulWidget {
@@ -36,15 +36,15 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            log("➡️ Page started loading: $url");
+            dLog("➡️ Page started loading: $url");
             setState(() => _isLoading = true);
           },
           onPageFinished: (url) {
-            log("✅ Page finished loading: $url");
+            dLog("✅ Page finished loading: $url");
             setState(() => _isLoading = false);
           },
           onNavigationRequest: (request) async {
-            log("🔗 Navigation request: ${request.url}");
+            dLog("🔗 Navigation request: ${request.url}");
 
             // Prevent back navigation during payment
             if (request.url.contains(
@@ -90,7 +90,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
             return NavigationDecision.navigate;
           },
           onWebResourceError: (error) {
-            log("❌ WebView error: ${error.description}");
+            dLog("❌ WebView error: ${error.description}");
           },
         ),
       )

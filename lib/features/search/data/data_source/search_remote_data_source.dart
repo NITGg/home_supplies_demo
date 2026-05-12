@@ -1,8 +1,8 @@
 // search_datasource.dart
 
-import 'dart:developer';
 import 'package:dio/dio.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../core/utils/logger.dart';
 import '../models/search_models.dart';
 
 abstract class SearchDataSource {
@@ -14,12 +14,12 @@ class SearchRemoteDataSource implements SearchDataSource {
 
   @override
   Future<SearchResponse> search(String query) async {
-    log('[Search] query: "$query"');
+    dLog('[Search] query: "$query"');
     final response = await _dio.get(
       '/search',
       queryParameters: {'q': query},
     );
-    log('[Search] response: ${response.statusCode}');
+    dLog('[Search] response: ${response.statusCode}');
     return SearchResponse.fromJson(response.data as Map<String, dynamic>);
   }
 }

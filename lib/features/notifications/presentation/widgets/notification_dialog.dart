@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/style/app_colors.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/widgets/loading_screen.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../main.dart';
@@ -173,12 +173,12 @@ class NotificationsDialog extends StatelessWidget {
       case _NotifType.orderCancelled:
       case _NotifType.orderDelivered:
       case _NotifType.orderExpired:
-        log('ordernoti');
+      dLog('ordernoti');
         _requestHistoryTab();
         return;
 
       case _NotifType.newMessage:
-        log('messagenoti');
+        dLog('messagenoti');
         _openChat(context, payload, notifData); // pass context and payload
         return;
 
