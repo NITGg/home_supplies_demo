@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../core/utils/logger.dart';
+import '../../../core/widgets/banners.dart';
+import '../../../core/widgets/circel_back_button.dart';
 import '../../../l10n/app_localizations.dart';
 
 class PaymobWebViewScreen extends StatefulWidget {
@@ -25,6 +27,12 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
   late final WebViewController _controller;
   bool _canPop = true;
   bool _isLoading = true;
+
+  // SEC-12: Only these domains may be navigated to inside the payment WebView.
+  static const _allowedDomains = [
+    'paymob.com',
+    'tawreedat.nitg-eg.com',
+  ];
 
   @override
   void initState() {
@@ -53,7 +61,9 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
               setState(() => _canPop = false);
             }
 
-            // Detect Paymob redirect
+            // Detect Paymob redirect — must be checked before the allowlist
+            // because these URLs are intercepted and never actually navigated
+            // to; blocking them here would break success/failure handling.
             if (request.url.contains("redirection-url") ||
                 request.url.contains("post_pay")) {
               final uri = Uri.parse(request.url);
@@ -74,16 +84,22 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
                 // Payment failed
                 if (mounted) {
                   final l10n = AppLocalizations.of(context)!;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.paymentFailed),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  showErrorBanner(context, l10n.paymentFailed);
                   setState(() => _canPop = true);
                   Navigator.pop(context);
                 }
               }
+              return NavigationDecision.prevent;
+            }
+
+            // SEC-12: Block any navigation that does not originate from the
+            // payment provider or the app's own backend. This prevents an
+            // injected or rogue page from redirecting the WebView to an
+            // arbitrary third-party origin.
+            final isAllowed =
+            _allowedDomains.any((d) => request.url.contains(d));
+            if (!isAllowed) {
+              dLog("🚫 Blocked navigation to unlisted domain: ${request.url}");
               return NavigationDecision.prevent;
             }
 
@@ -115,10 +131,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
               Navigator.pop(context); // Close dialog
               Navigator.pop(context); // Close WebView
             },
-            child: Text(
-              l10n.yes,
-              style: const TextStyle(color: Colors.red),
-            ),
+            child: Text(l10n.yes, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -145,8 +158,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
           backgroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          leading: BackButton(
-            color: Colors.black,
+          leading: CircleBackButton(
             onPressed: () {
               if (_canPop) {
                 Navigator.pop(context);
