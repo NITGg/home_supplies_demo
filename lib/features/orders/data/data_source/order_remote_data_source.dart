@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:mime/mime.dart';
@@ -244,7 +243,7 @@ class OrderRemoteDataSource {
     required int orderId,
     required String status, // 'ACCEPTED' or 'REJECTED'
   }) async {
-    log(
+    dLog(
       'Responding to price adjustment for order $orderId with status: $status',
     );
 

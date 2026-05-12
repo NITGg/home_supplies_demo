@@ -1,6 +1,6 @@
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
+import 'package:tawreedat_go/core/utils/logger.dart';
 import '../../../../core/utils/api_client.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/transaction_penality_models.dart';
@@ -49,7 +49,7 @@ class WalletRemoteDataSource {
     final queryParameters = <String, dynamic>{'page': page, 'limit': limit};
     if (startDate != null) queryParameters['created_at[gte]'] = startDate;
     if (endDate != null) queryParameters['created_at[lte]'] = endDate;
-    log(queryParameters.toString());
+    dLog(queryParameters.toString());
     final response = await _dio.get(
       '/profile/wallet/transactions?lang=${LocaleManager.currentLocale}',
       queryParameters: queryParameters,

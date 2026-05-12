@@ -13,3 +13,8 @@ key.properties
 **/*.keystore
 **/*.jks
 /app/google-services.json
+
+# Environment & dart-define secrets
+.env
+.env.*
+*.dartdefines

@@ -1,6 +1,5 @@
 //courier
 
-import 'dart:developer';
 
 import '../../../../core/utils/logger.dart';
 
@@ -111,13 +110,13 @@ class MessageModel {
     final chatId = _toInt(json['chat_id']);
 
     if (senderId == null) {
-      log(
+      dLog(
         '🚨 [MessageModel.fromJson] sender_id is null or unparseable! '
             'Full json: $json',
       );
     }
     if (chatId == null) {
-      log(
+      dLog(
         '🚨 [MessageModel.fromJson] chat_id is null or unparseable! '
             'Full json: $json',
       );

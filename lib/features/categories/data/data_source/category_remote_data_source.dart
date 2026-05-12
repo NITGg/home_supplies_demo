@@ -1,6 +1,6 @@
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
+import 'package:tawreedat_go/core/utils/logger.dart';
 
 import '../../../../core/utils/api_client.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
@@ -39,7 +39,7 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
       '/categories?lang=${LocaleManager.currentLocale}',
       queryParameters: queryParams,
     );
-    log(response.data.toString());
+    dLog(response.data.toString());
 
     return CategoriesResponseModel.fromJson(
       response.data as Map<String, dynamic>,
@@ -50,7 +50,7 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
   Future<CategoryModel> getCategoryById(int id) async {
     final response = await _dio.get('/categories/$id?lang=${LocaleManager.currentLocale}');
     final data = response.data as Map<String, dynamic>;
-    log(data.toString());
+    dLog(data.toString());
     return CategoryModel.fromJson(data['category'] as Map<String, dynamic>);
   }
 }

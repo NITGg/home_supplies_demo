@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/logger.dart';
@@ -135,7 +134,7 @@ class ChatCubit extends Cubit<ChatState> {
         content: trimmed,
         type: MessageType.text.toApiString(),
       );
-      log(
+      dLog(
         '✅ confirmed — serverId: ${confirmed.serverId}, content: ${confirmed.content}',
       );
 
@@ -176,7 +175,7 @@ class ChatCubit extends Cubit<ChatState> {
       type: MessageType.image,
     );
 
-    log(
+    dLog(
       '📤 [ChatCubit] sendImageMessage — optimistic localId: ${optimistic.localId}',
     );
     emit(loaded.copyWith(messages: [...loaded.messages, optimistic]));
@@ -186,7 +185,7 @@ class ChatCubit extends Cubit<ChatState> {
         chatId: loaded.chat.id,
         filePath: filePath,
       );
-      log(
+      dLog(
         '✅ [ChatCubit] sendImageMessage confirmed — url: ${confirmed.content}',
       );
 

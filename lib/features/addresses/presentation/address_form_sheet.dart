@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -264,7 +263,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
         _longController.text = result['longitude'] ?? '';
         _pickedAdministrativeArea = result['administrativeArea'];
         _pickedGovernorate = result['governorate'];
-        log(
+        dLog(
           '📍 Location picked: ${result['administrativeArea']} - area selected : ${_governoratesResponse?.findAreaById(_selectedAreaId!)?.nameAr}',
         );
 
@@ -311,7 +310,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
 
         dLog('🗺️ Validation start');
         dLog('   selectedAreaId : $_selectedAreaId');
-        log(
+        dLog(
           '   area found     : ${area != null ? "yes (id=${area.id}, name=${area.name})" : "NO"}',
         );
 
@@ -344,7 +343,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
               nameMatches = matchesAr || matchesEn;
 
               dLog('   Step 1 — name check:');
-              log(
+              dLog(
                 '   picked     : "$_pickedAdministrativeArea" → "$pickedNormalized"',
               );
               dLog('   nameAr     : "$areaNameAr" → matches: $matchesAr');
@@ -352,7 +351,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
               dLog('   nameMatches: $nameMatches');
               dLog('   governorate: $_pickedGovernorate');
             } else {
-              log(
+              dLog(
                 '   Step 1 — name check: skipped (no administrativeArea from map)',
               );
             }
@@ -361,7 +360,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
             if (!nameMatches &&
                 _pickedAdministrativeArea != null &&
                 _pickedAdministrativeArea!.isNotEmpty) {
-              log(
+              dLog(
                 '   Step 2 — searching all areas for a name match with "$_pickedAdministrativeArea"',
               );
 
@@ -383,13 +382,13 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
               });
 
               if (matchedArea != null) {
-                log(
+                dLog(
                   '✅ Step 2 — found matching area: id=${matchedArea.id}, name=${matchedArea.name}',
                 );
                 setState(() => _selectedAreaId = matchedArea.id);
                 nameMatches = true;
               } else {
-                log(
+                dLog(
                   '   Step 2 — no area name match found, falling back to boundary check',
                 );
               }
@@ -439,12 +438,12 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
           }
         } else {
           dLog('⚠️ Area not found — skipping validation');
-          log(
+          dLog(
             '   available ids: ${_governoratesResponse!.governorates.expand((g) => g.areas).map((a) => a.id).toList()}',
           );
         }
       } else {
-        log(
+        dLog(
           '⚠️ Validation skipped — governoratesResponse=${_governoratesResponse != null ? "loaded" : "NULL"}, selectedAreaId=$_selectedAreaId',
         );
       }

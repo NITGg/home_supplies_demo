@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
@@ -26,14 +25,10 @@ class SocialAuthService {
       // Get authentication tokens
       final auth = account.authentication;
       final idToken = auth.idToken;
-      if (kDebugMode) {
-        print('✅ Google ID Token: $idToken');
-      }
+      dLog('✅ Google Sign-In succeeded');
       return idToken; // Send this to your backend
     } catch (e) {
-      if (kDebugMode) {
-        print('❌ Google Sign-In failed: $e');
-      }
+      dLog('❌ Google Sign-In failed: $e');
       return null;
     }
   }
@@ -58,17 +53,11 @@ class SocialAuthService {
       final String? identityToken = appleCredential.identityToken;
 
       if (identityToken == null) {
-        if (kDebugMode) {
-          print('❌ Apple Sign-In: Identity token is null');
-        }
+        dLog('❌ Apple Sign-In: Identity token is null');
         return null;
       }
 
-      if (kDebugMode) {
-        print('✅ Apple Identity Token: $identityToken');
-        print('✅ Apple Full Name: $fullName');
-        print('✅ Apple Email: ${appleCredential.email ?? "Not provided"}');
-      }
+      dLog('✅ Apple Sign-In succeeded');
 
       return {
         'token': identityToken,

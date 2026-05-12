@@ -1,5 +1,5 @@
-import 'dart:developer';
 import 'dart:io';
+import 'package:tawreedat_go/core/utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -173,7 +173,7 @@ class ProfileHeaderSection extends StatelessWidget {
     final sizeInMB = bytes / (1024 * 1024);
     const limitInMB = 5;
 
-    log(
+    dLog(
       'Image size: ${sizeInMB.toStringAsFixed(2)} MB (Limit: $limitInMB MB)',
     );
 

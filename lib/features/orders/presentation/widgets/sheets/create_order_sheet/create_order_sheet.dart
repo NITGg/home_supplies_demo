@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -229,7 +228,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         deliveryLng: double.parse(delivery.addressLong),
       );
 
-      log(
+      dLog(
         '📏 [Distance] ${result.distanceMeters} m  '
         '⏱ ${result.durationSeconds} s  '
         '(${result.provider})',

@@ -1,11 +1,9 @@
-
-
-
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/utils/secure_storage_service.dart';
 
 import '../../main.dart';
+import 'logger.dart';
 
 class ApiClient {
   ApiClient._();
@@ -38,6 +36,19 @@ class ApiClient {
   InterceptorsWrapper _buildInterceptor(Dio targetDio) {
     return InterceptorsWrapper(
       onRequest: (options, handler) async {
+        // SEC-07: enforce 30-day max session age client-side
+        final sessionStart = await SecureStorageService().getSessionStart();
+        if (sessionStart != null &&
+            DateTime.now().difference(sessionStart).inDays >= 30) {
+          dLog('⏰ Session older than 30 days — forcing re-login');
+          await _clearSession();
+          handler.reject(DioException(
+            requestOptions: options,
+            message: 'Session expired — please log in again',
+          ));
+          return;
+        }
+
         final token = await SecureStorageService().getToken();
         if (token != null && token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
@@ -46,16 +57,21 @@ class ApiClient {
       },
       onError: (e, handler) async {
         final friendlyError = _toFriendlyError(e);
-        handler.next(friendlyError);
         if (e.response?.statusCode == 401) {
-          await SecureStorageService().clearAll();
-          if (rootNavigatorKey.currentContext != null) {
-            rootNavigatorKey.currentContext?.go('/auth/login');
-          }
+          await _clearSession();
         }
+        handler.next(friendlyError);
       },
     );
   }
+  Future<void> _clearSession() async {
+    await SecureStorageService().clearAll();
+    final context = rootNavigatorKey.currentContext;
+    if (context != null && context.mounted) {
+      GoRouter.of(context).go('/auth/login');
+    }
+  }
+
   DioException _toFriendlyError(DioException error) {
     String? message;
 

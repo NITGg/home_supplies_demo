@@ -1,8 +1,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tawreedat_go/features/auth/manager/auth_cubit.dart';
-
 import '../../core/utils/logger.dart';
 import '../../core/utils/secure_storage_service.dart';
 import '../../features/auth/data/repositories/profile_repository.dart';
@@ -43,7 +41,8 @@ class LocaleCubit extends Cubit<LocaleState> {
     emit(LocaleState(newLocale));
 
     try {
-      await profileRepository?.updateProfile(lang: newLocale.languageCode.toUpperCase(), token: kAuthtoken);
+      final token = await _storage.getToken() ?? '';
+      await profileRepository?.updateProfile(lang: newLocale.languageCode.toUpperCase(), token: token);
       dLog('LocaleCubit: profile lang updated → ${newLocale.languageCode}');
     } catch (e) {
       dLog('LocaleCubit: failed to update profile lang: $e');

@@ -21,8 +21,5 @@ class AppConstants {
 
   /// Google Maps / Places / Geocoding API key.
   /// Supplied via --dart-define=MAPS_API_KEY=... at build time.
-  static const String googleMapsApiKey = String.fromEnvironment(
-    'MAPS_API_KEY',
-    defaultValue: '', // empty string fails loudly in debug rather than silently
-  );
+  static const String googleMapsApiKey = String.fromEnvironment('MAPS_API_KEY');
 }

@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
@@ -45,7 +44,7 @@ class OrderCubit extends Cubit<OrderState> {
     }
 
     try {
-      log(
+      dLog(
         'OrderCubit: Loading active orders — skip: $_activeSkip, limit: $_activeLimit',
       );
 
@@ -92,7 +91,7 @@ class OrderCubit extends Cubit<OrderState> {
 
       _activeLoading = false;
 
-      log(
+      dLog(
         'OrderCubit: Loaded ${_activeOrders.length} active orders out of $_activeTotalCount total',
       );
 
@@ -133,7 +132,7 @@ class OrderCubit extends Cubit<OrderState> {
     }
 
     try {
-      log(
+      dLog(
         'OrderCubit: Loading history orders — skip: $_historySkip, limit: $_historyLimit, filter: $_historyFilter',
       );
 
@@ -201,7 +200,7 @@ class OrderCubit extends Cubit<OrderState> {
       _historySkip = _historyOrders.length;
       _historyLoading = false;
 
-      log(
+      dLog(
         'OrderCubit: Loaded ${_historyOrders.length} history orders out of $_historyTotalCount total',
       );
 
@@ -379,7 +378,7 @@ class OrderCubit extends Cubit<OrderState> {
           inner.containsKey('current')) {
         final required = ((inner['required'] as num?) ?? 0) / 100.0;
         final current = ((inner['current'] as num?) ?? 0) / 100.0;
-        log(
+        dLog(
           'OrderCubit: Insufficient balance — required: $required, current: $current',
         );
         safeEmit(

@@ -14,10 +14,11 @@ class SecureStorageService {
   );
 
   // Keys
-  static const String _accessTokenKey = 'access_token';
+  static const String _accessTokenKey  = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
-  static const String _userProfileKey = 'user_profile';
-  static const String _localeKey = 'app_locale';
+  static const String _userProfileKey  = 'user_profile';
+  static const String _localeKey       = 'app_locale';
+  static const String _sessionStartKey = 'session_start_ms';
 
   /// Save locale
   Future<void> saveLocale(String languageCode) async {
@@ -34,9 +35,30 @@ class SecureStorageService {
     await _storage.delete(key: _localeKey);
   }
 
+  // ─── Session lifetime (SEC-07) ────────────────────────────────────────────
+
+  Future<void> _initSessionStart() async {
+    final existing = await _storage.read(key: _sessionStartKey);
+    if (existing == null) {
+      await _storage.write(
+        key: _sessionStartKey,
+        value: DateTime.now().millisecondsSinceEpoch.toString(),
+      );
+    }
+  }
+
+  Future<DateTime?> getSessionStart() async {
+    final val = await _storage.read(key: _sessionStartKey);
+    if (val == null) return null;
+    return DateTime.fromMillisecondsSinceEpoch(int.parse(val));
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+
   /// Save access token
   Future<void> saveToken(String token) async {
     await _storage.write(key: _accessTokenKey, value: token);
+    await _initSessionStart();
   }
 
   /// Get access token

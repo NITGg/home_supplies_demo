@@ -1,5 +1,5 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
+import 'package:tawreedat_go/core/utils/logger.dart';
 import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import '../../../../core/utils/api_client.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
@@ -53,8 +53,8 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       queryParameters: queryParams,
     );
 
-    log(response.statusCode.toString());
-    log(response.data.toString());
+    dLog(response.statusCode.toString());
+    dLog(response.data.toString());
 
     return ProductsResponseModel.fromJson(
       response.data as Map<String, dynamic>,
@@ -69,7 +69,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     );
 
     final data = response.data as Map<String, dynamic>;
-    log(data.toString());
+    dLog(data.toString());
     return ProductModel.fromJson(data['product'] as Map<String, dynamic>);
   }
 }

@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -88,7 +87,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
         }
       }
     } on DioException catch (e) {
-      log(
+      dLog(
         '❌ DioException: ${e.type} | status: ${e.response?.statusCode} | data: ${e.response?.data}',
       );
       if (mounted) {

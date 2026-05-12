@@ -1,6 +1,6 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:tawreedat_go/core/utils/logger.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/api_client.dart';
@@ -55,7 +55,7 @@ class ChatModule {
       socket: ChatSocketService(),
     );
 
-    log('🟢 [ChatModule] Initialised — currentUserId: $currentUserId');
+    dLog('🟢 [ChatModule] Initialised — currentUserId: $currentUserId');
   }
 
   /// True after [init] has been called and before [dispose] is called.
@@ -86,7 +86,7 @@ class ChatModule {
     ChatSocketService().detach();
     _repository = null;
     _currentUserId = null;
-    log('🔌 [ChatModule] Disposed');
+    dLog('🔌 [ChatModule] Disposed');
   }
 }
 

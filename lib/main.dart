@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:floating_draggable_widget/floating_draggable_widget.dart';
@@ -215,11 +214,12 @@ Future<void> _initializeFirebaseMessaging() async {
     messaging.onTokenRefresh.listen((newToken) async {
       dLog('🔄 FCM Token refreshed: $newToken');
       try {
-        if (kAuthtoken.isNotEmpty) {
+        final hasSession = await SecureStorageService().getToken() != null;
+        if (hasSession) {
+          // Interceptor injects Authorization header automatically
           await ApiClient.instance.dio.post(
             '/profile/fcm-token',
             data: {'fcmToken': newToken},
-            options: Options(headers: {'Authorization': 'Bearer $kAuthtoken'}),
           );
           dLog('✅ Refreshed FCM token sent to backend');
         }

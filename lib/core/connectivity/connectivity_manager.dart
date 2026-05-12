@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../utils/logger.dart';
@@ -49,7 +48,7 @@ class ConnectivityManager {
 
     if (_isConnected != hasConnection) {
       _isConnected = hasConnection;
-      log(
+      dLog(
         '🌐 Connectivity changed: ${_isConnected ? "Connected" : "Disconnected"}',
       );
 

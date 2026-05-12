@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/utils/api_client.dart';
@@ -25,16 +24,12 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> _registerFCMToken() async {
     try {
       final fcmToken = await FirebaseMessaging.instance.getToken();
-      if (fcmToken != null && kAuthtoken.isNotEmpty) {
+      final hasSession = await SecureStorageService().getToken() != null;
+      if (fcmToken != null && hasSession) {
+        // Interceptor injects Authorization header automatically
         await ApiClient.instance.dio.post(
           '/profile/fcm-token',
           data: {'fcmToken': fcmToken},
-          options: Options(
-            headers: {
-              'Authorization':
-              'Bearer ${await SecureStorageService().getToken()}',
-            },
-          ),
         );
         dLog('✅ FCM token registered successfully');
       }
