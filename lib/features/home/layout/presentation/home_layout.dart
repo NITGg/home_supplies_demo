@@ -64,7 +64,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   bool _phoneSheetShown = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  List<Widget> get _screens => [
+  // Late final so widgets are created exactly once and their state is
+  // preserved across tab switches. A getter would recreate them on every
+  // build(), discarding CategoriesScreen's loaded data each time.
+  late final List<Widget> _screens = [
     CategoriesScreen(onEmptyChanged: (v) => _categoriesEmpty.value = v),
     const OrdersListScreen(),
   ];
@@ -799,7 +802,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
-                  body: _screens[cubit.currentIndex],
+                  body: IndexedStack(
+                    index: cubit.currentIndex,
+                    children: _screens,
+                  ),
                   bottomNavigationBar: _BottomNavBar(
                     currentIndex: cubit.currentIndex,
                     userId: _userId,
@@ -1248,9 +1254,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
                   builder: (_, isEmpty, __) => isEmpty
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            const DefaultAddressChip(),
-                          ],
+                          children: [const DefaultAddressChip()],
                         )
                       : const CouponTickerTitle(),
                 ),
