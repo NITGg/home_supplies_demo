@@ -36,6 +36,7 @@ import 'vertical_dashed_line_painter.dart';
 class CreateOrderBottomSheet extends StatefulWidget {
   final GovernoratesResponse governorates;
   final double? walletBalance;
+
   // final String? initialCouponCode;
 
   const CreateOrderBottomSheet({
@@ -53,10 +54,12 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final FocusNode _productDescriptionFocus = FocusNode();
   final FocusNode _budgetFocus = FocusNode();
+
   // final FocusNode _couponFocus = FocusNode();
 
   final _productDescriptionController = TextEditingController();
   final _budgetController = TextEditingController();
+
   // final _couponController = TextEditingController();
 
   Address? _pickupAddress;
@@ -1142,8 +1145,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               context,
               '${l10n.created}: ${state.order.orderNumber}',
             );
-          } else
-            if (state is OrderError) {
+          } else if (state is OrderError) {
             Fluttertoast.showToast(
               msg: state.message,
               toastLength: Toast.LENGTH_LONG,
@@ -1310,8 +1312,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                               isOverBudget,
                             ),
                             const SizedBox(height: 24),
-                          ] else
-                            if (_isShopping && !isOverBudget) ...[
+                          ] else if (_isShopping && !isOverBudget) ...[
                             _buildPaymentToggle(),
                             const SizedBox(height: 24),
                           ],
@@ -1341,7 +1342,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           return AppCustomButton(
                             onPressed: _submit,
                             text: l10n.confirm,
-                            isLoading: state is OrderOperationLoading,
+                            isLoading:
+                            _distanceResult == null || (!_pickupNearMe && _pickupAddress == null) ||
+                                state is OrderOperationLoading,
                           );
                         },
                       ),
