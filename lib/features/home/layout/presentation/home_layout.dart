@@ -72,8 +72,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   late final List<Widget> _screens = [
-    CategoriesScreen(
-      onEmptyChanged: (v) => _categoriesEmpty.value = v,),
+    CategoriesScreen(onEmptyChanged: (v) => _categoriesEmpty.value = v),
     const OrdersListScreen(),
   ];
 
@@ -1347,25 +1346,22 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
             ],
 
             // ── Address chip / coupon ticker — hidden for guests ──────────────
-            if (!widget.isGuest)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: widget.categoriesEmpty,
-                    builder: (_, isEmpty, __) => isEmpty
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [const DefaultAddressChip()],
-                          )
-                        : const CouponTickerTitle(),
-                  ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: widget.categoriesEmpty,
+                  builder: (_, isEmpty, __) => isEmpty
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (!widget.isGuest) const DefaultAddressChip(),
+                          ],
+                        )
+                      : const CouponTickerTitle(),
                 ),
-              )
-            else
-              // Push menu icon to the correct side when the right-side widgets
-              // are hidden so the layout doesn't collapse oddly.
-              const Spacer(),
+              ),
+            ),
           ],
         ),
       ),
