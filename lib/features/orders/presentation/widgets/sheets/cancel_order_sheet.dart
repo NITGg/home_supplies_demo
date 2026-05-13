@@ -82,7 +82,7 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
     } on DioException catch (e) {
       if (mounted) {
         setState(() {
-          _reasonsError = e.message ?? 'Failed to load reasons';
+          'Failed to load reasons';
           _isLoadingReasons = false;
         });
       }
