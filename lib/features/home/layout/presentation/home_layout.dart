@@ -751,7 +751,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                       Navigator.pop(context);
                                       context.go('/auth/login');
                                     },
-                                    child: Container(
+                                    child: SizedBox(
                                       height: 70,
                                       width: double.infinity,
                                       child: Row(
@@ -761,12 +761,12 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                         children: [
                                           const Icon(
                                             Icons.login_rounded,
-                                            color: Colors.white,
+                                            color: Colors.black,
                                           ),
                                           Text(
                                             localizations.signin,
                                             style: AppTextStyles.bold16
-                                                .copyWith(color: Colors.white),
+                                                .copyWith(color: Colors.black),
                                           ),
                                         ],
                                       ),

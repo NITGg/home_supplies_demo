@@ -199,29 +199,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
 
                       const SizedBox(height: 12),
-
-                      // ── Browse as Guest ─────────────────────────────────────
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () => context.go('/mainHome'),
-                          icon: const Icon(Icons.storefront_outlined, size: 18),
-                          label: Text(loc.browseAsGuest),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.grey.shade700,
-                            side: BorderSide(
-                              color: Colors.grey.shade300,
-                              width: 1.2,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            textStyle: AppTextStyles.regular14,
-                          ),
-                        ),
+                      AppTextButton(
+                        text: loc.browseAsGuest,
+                        color: AppColors.kPrimaryColor,
+                        underline: true,
+                        onPressed: () => context.go('/mainHome'),
                       ),
-
                       const SizedBox(height: 24),
 
                       Column(
