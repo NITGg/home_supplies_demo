@@ -66,7 +66,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       body: BlocListener<AuthCubit, AuthState>(
-        // in LoginScreen's BlocListener
         listener: (context, state) {
           if (state is AuthLoading) {
             showDialog(
@@ -92,12 +91,9 @@ class _LoginScreenState extends State<LoginScreen> {
               state is AuthUpdateSuccess ||
               state is AuthProfileDeleted ||
               state is AuthInitial) {
-            // These states are handled by other screens in the stack.
-            // Just dismiss any loading dialog the login screen may have opened.
             if (Navigator.of(context, rootNavigator: true).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
             }
-            // ← add this: dismiss dialog when forgot-password OTP is sent
           } else if (state is AuthForgotPasswordOtpSent) {
             if (Navigator.of(context, rootNavigator: true).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
@@ -120,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
-                      const Spacer(), // ← ALL white space goes here
+                      const Spacer(),
 
                       AuthHeaderImage(),
 
@@ -152,7 +148,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   String phone = normalizeEgyptPhone(
                                     phoneController.text.trim(),
                                   );
-
                                   context.read<AuthCubit>().login(
                                     phone: phone,
                                     password: passwordController.text.trim(),
@@ -174,19 +169,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                       ),
-
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.end,
-                      //   children: [
-                      //     AppTextButton(
-                      //       text: loc.forgotPassword,
-                      //       color: AppColors.kPrimaryColor,
-                      //       underline: true,
-                      //       onPressed: () =>
-                      //           context.push('/auth/forgot-password'),
-                      //     ),
-                      //   ],
-                      // ),
 
                       const SizedBox(height: 20),
                       Text(
@@ -216,7 +198,32 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
 
+                      const SizedBox(height: 12),
+
+                      // ── Browse as Guest ─────────────────────────────────────
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.go('/mainHome'),
+                          icon: const Icon(Icons.storefront_outlined, size: 18),
+                          label: Text(loc.browseAsGuest),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.grey.shade700,
+                            side: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1.2,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            textStyle: AppTextStyles.regular14,
+                          ),
+                        ),
+                      ),
+
                       const SizedBox(height: 24),
+
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [

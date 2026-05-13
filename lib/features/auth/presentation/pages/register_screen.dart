@@ -23,7 +23,6 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // FocusNodes
   final FocusNode firstNameFocus = FocusNode();
   final FocusNode lastNameFocus = FocusNode();
   final FocusNode emailFocus = FocusNode();
@@ -32,17 +31,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final FocusNode confirmPasswordFocus = FocusNode();
 
   final TextEditingController firstNameController = TextEditingController();
-
   final TextEditingController lastNameController = TextEditingController();
-
   final TextEditingController emailController = TextEditingController();
-
   final TextEditingController phoneController = TextEditingController();
-
   final TextEditingController passwordController = TextEditingController();
-
   final TextEditingController confirmPasswordController =
-      TextEditingController();
+  TextEditingController();
 
   @override
   void dispose() {
@@ -79,6 +73,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
@@ -124,7 +120,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 bottom: 10,
                               ),
                               child: Text(
-                                AppLocalizations.of(context)!.register,
+                                loc.register,
                                 style: AppTextStyles.bold14,
                               ),
                             ),
@@ -142,11 +138,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         context,
                                       ).requestFocus(lastNameFocus);
                                     },
-                                    label:
-                                        '${AppLocalizations.of(context)!.firstName} *',
+                                    label: '${loc.firstName} *',
                                     controller: firstNameController,
                                     validator: (v) =>
-                                        v!.isEmpty ? 'Required' : null,
+                                    v!.isEmpty ? 'Required' : null,
                                   ),
                                   const SizedBox(height: 18),
                                   AppTextFormField(
@@ -157,11 +152,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         context,
                                       ).requestFocus(emailFocus);
                                     },
-                                    label:
-                                        '${AppLocalizations.of(context)!.lastName} *',
+                                    label: '${loc.lastName} *',
                                     controller: lastNameController,
                                     validator: (v) =>
-                                        v!.isEmpty ? 'Required' : null,
+                                    v!.isEmpty ? 'Required' : null,
                                   ),
                                   const SizedBox(height: 18),
                                   AppTextFormField(
@@ -172,17 +166,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         context,
                                       ).requestFocus(phoneFocus);
                                     },
-                                    label: AppLocalizations.of(context)!.email,
+                                    label: loc.email,
                                     controller: emailController,
                                     validator: (v) {
-                                      if (v!.isEmpty) return null; // optional
+                                      if (v!.isEmpty) return null;
                                       final emailRegex = RegExp(
                                         r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                                       );
                                       if (!emailRegex.hasMatch(v)) {
-                                        return AppLocalizations.of(
-                                          context,
-                                        )!.invalidEmail;
+                                        return loc.invalidEmail;
                                       }
                                       return null;
                                     },
@@ -196,8 +188,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         context,
                                       ).requestFocus(passwordFocus);
                                     },
-                                    label:
-                                        '${AppLocalizations.of(context)!.phone} *',
+                                    label: '${loc.phone} *',
                                     controller: phoneController,
                                     isPhone: true,
                                   ),
@@ -210,16 +201,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         context,
                                       ).requestFocus(confirmPasswordFocus);
                                     },
-                                    label: AppLocalizations.of(
-                                      context,
-                                    )!.password,
+                                    label: loc.password,
                                     controller: passwordController,
                                     isPassword: true,
                                     validator: (v) {
                                       if (v!.length < 6) {
-                                        return AppLocalizations.of(
-                                          context,
-                                        )!.shortPassword;
+                                        return loc.shortPassword;
                                       }
                                       return null;
                                     },
@@ -233,16 +220,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         _submit();
                                       }
                                     },
-                                    label: AppLocalizations.of(
-                                      context,
-                                    )!.confirmPassword,
+                                    label: loc.confirmPassword,
                                     controller: confirmPasswordController,
                                     isPassword: true,
                                     validator: (v) {
                                       if (v != passwordController.text) {
-                                        return AppLocalizations.of(
-                                          context,
-                                        )!.passwordMismatch;
+                                        return loc.passwordMismatch;
                                       }
                                       return null;
                                     },
@@ -252,7 +235,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              AppLocalizations.of(context)!.orRegisterwith,
+                              loc.orRegisterwith,
                               style: AppTextStyles.regular14.copyWith(
                                 color: Colors.grey,
                               ),
@@ -263,33 +246,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Text(AppLocalizations.of(context)!.iAgreeTo, style: AppTextStyles.regular14),
+                                Text(
+                                  loc.iAgreeTo,
+                                  style: AppTextStyles.regular14,
+                                ),
                                 const SizedBox(width: 4),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     AppTextButton(
-                                      text: AppLocalizations.of(context)!.termsAndConditions,
+                                      text: loc.termsAndConditions,
                                       color: AppColors.kPrimaryColor,
                                       underline: true,
-                                      onPressed: () => context.push('/Terms'),
+                                      onPressed: () =>
+                                          context.push('/Terms'),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                                      child: Text('&', style: AppTextStyles.regular14),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                      ),
+                                      child: Text(
+                                        '&',
+                                        style: AppTextStyles.regular14,
+                                      ),
                                     ),
                                     AppTextButton(
-                                      text: AppLocalizations.of(context)!.privecyPolicy,
+                                      text: loc.privecyPolicy,
                                       color: AppColors.kPrimaryColor,
                                       underline: true,
-                                      onPressed: () => context.push('/PrivacyPage'),
+                                      onPressed: () =>
+                                          context.push('/PrivacyPage'),
                                     ),
                                   ],
                                 ),
                               ],
                             ),
                             const SizedBox(height: 16),
-
                           ],
                         ),
                       ),
@@ -299,33 +291,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    AppCustomButton(
-                      text: AppLocalizations.of(context)!.register,
-                      onPressed: () {
-                        _submit();
-                      },
-                    ),
-                    Row(
-                      spacing: 5,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          AppLocalizations.of(context)!.haveAccount,
-                          style: AppTextStyles.bold14,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      AppCustomButton(
+                        text: loc.register,
+                        onPressed: _submit,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // ── Browse as Guest ──────────────────────────────────────
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.go('/mainHome'),
+                          icon: const Icon(
+                            Icons.storefront_outlined,
+                            size: 18,
+                          ),
+                          label: Text(loc.browseAsGuest),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.grey.shade700,
+                            side: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1.2,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            textStyle: AppTextStyles.regular14,
+                          ),
                         ),
-                        AppTextButton(
-                          text: AppLocalizations.of(context)!.signin,
-                          color: AppColors.kPrimaryColor,
-                          underline: true,
-                          onPressed: () => context.go('/auth/login'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
-                  ],
+                      ),
+
+                      const SizedBox(height: 12),
+                      Row(
+                        spacing: 5,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            loc.haveAccount,
+                            style: AppTextStyles.bold14,
+                          ),
+                          AppTextButton(
+                            text: loc.signin,
+                            color: AppColors.kPrimaryColor,
+                            underline: true,
+                            onPressed: () => context.go('/auth/login'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
                 ),
               ),
             ],

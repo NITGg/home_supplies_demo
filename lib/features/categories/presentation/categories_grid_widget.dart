@@ -13,6 +13,7 @@ import '../../ads/presentation/widgets/square_ads_feed.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
+import '../../home/layout/manager/guest_cubit.dart';
 import '../../products/presentation/featured_section.dart';
 import '../../products/presentation/last_purchase_section.dart';
 import '../../search/presentation/search_dialog.dart';
@@ -63,6 +64,7 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
@@ -91,12 +93,14 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 widget.onEmptyChanged?.call(isEmpty);
               });
+              final isGuest = context.read<GuestModeCubit>().state;
 
               return _CategoriesSection(
                 state: state,
                 onCategoryTap: widget.onCategoryTap,
                 onLoadMore: _cubit.loadMore,
                 showHeader: false,
+                isGuest: isGuest,
               );
             }),
           };
@@ -115,6 +119,7 @@ class _CategoriesSection extends StatelessWidget {
   final void Function(CategoryModel) onCategoryTap;
   final VoidCallback onLoadMore;
   final bool showHeader;
+  final bool isGuest;
 
   /// Maximum number of categories shown on the home grid before "View All"
   static const int _homeGridLimit = 6;
@@ -124,6 +129,7 @@ class _CategoriesSection extends StatelessWidget {
     required this.onCategoryTap,
     required this.onLoadMore,
     this.showHeader = true,
+    this.isGuest = false,
   });
 
   List<CategoryModel> get _parents =>
@@ -167,6 +173,7 @@ class _CategoriesSection extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
               child: Row(
                 children: [
+                  if(!isGuest)...[
                   Container(
                     width: 4,
                     height: 18,
@@ -178,7 +185,7 @@ class _CategoriesSection extends StatelessWidget {
                   const SizedBox(width: 8),
                   const DefaultAddressChip(),
                   const SizedBox(width: 8),
-                  const Spacer(),
+                  const Spacer(),],
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: Colors.grey.shade200,
@@ -222,7 +229,7 @@ class _CategoriesSection extends StatelessWidget {
         const OfferedSection(),
         const BestSellingSection(),
         const FeaturedProductsSection(),
-        const LastPurchasedSection(),
+        LastPurchasedSection(isGuest:isGuest),
 
         // ── Categories label + View All ───────────────────────────────────
         Padding(

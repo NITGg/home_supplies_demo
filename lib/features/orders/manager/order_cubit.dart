@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/secure_storage_service.dart';
 import '../data/models/order_model.dart';
 import '../data/repositories/order_repo.dart';
 import 'order_states.dart';
@@ -10,6 +11,8 @@ enum OrderViewMode { active, history }
 
 class OrderCubit extends Cubit<OrderState> {
   final OrderRepository _repository;
+  bool _isGuest = false;
+  void setGuestMode(bool value) => _isGuest = value;
 
   // Separate caches for active and history
   List<Order> _activeOrders = [];
@@ -31,6 +34,9 @@ class OrderCubit extends Cubit<OrderState> {
   // ── Load Active Orders ─────────────────────────────────────────────────────
 
   Future<void> loadActiveOrders({bool loadMore = false}) async {
+    if (_isGuest) return;
+    final token = await SecureStorageService().getToken();   // ← self-check
+    if (token == null || token.isEmpty) return;
     if (_activeLoading) return;
     _activeLoading = true; // ✅ guard BOTH paths immediately
 
@@ -117,6 +123,9 @@ class OrderCubit extends Cubit<OrderState> {
     bool loadMore = false,
     String filter = 'all',
   }) async {
+    if (_isGuest) return;
+    final token = await SecureStorageService().getToken();   // ← self-check
+    if (token == null || token.isEmpty) return;
     if (_historyLoading) return;
 
     // Reset pagination when filter changes

@@ -225,4 +225,13 @@ class AuthRemoteDataSource {
       ),
     );
   }
+
+  Future<void> logout() async {
+    await _dio.post(
+      '/auth/logout?lang=${LocaleManager.currentLocale}',
+      options: Options(
+        headers: {'Accept-Language': LocaleManager.currentLocale},
+      ),
+    );
+  }
 }

@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/utils/socket_service.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/loading_screen.dart';
+import '../../../../core/widgets/login_prompt.dart';
 import '../../../../core/widgets/text_form.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../main.dart';
@@ -43,6 +44,7 @@ import '../../../orders/presentation/widgets/sheets/create_order_sheet/create_or
 import '../../../orders/presentation/widgets/sheets/proposal_sheet.dart';
 import '../../../referral/refferal_service.dart';
 import '../../../static_text/app_dynamic_info.dart';
+import '../manager/guest_cubit.dart';
 import '../manager/home_cubit.dart';
 import 'go_button.dart';
 
@@ -57,6 +59,11 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   StreamSubscription? _newOfferSubscription;
   final ValueNotifier<bool> _categoriesEmpty = ValueNotifier(false);
 
+  // ── Guest mode ─────────────────────────────────────────────────────────────
+  // _isGuest: plain bool for reactive rebuilds of HomeLayout itself.
+  // so it can react to the value even though the widget is created only once.
+  bool _isGuest = false;
+
   String _userId = '';
   late final HomeCubit _homeCubit = HomeCubit();
   late final CouponCubit _couponCubit = CouponCubit()..loadCoupons();
@@ -64,13 +71,13 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   bool _phoneSheetShown = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Late final so widgets are created exactly once and their state is
-  // preserved across tab switches. A getter would recreate them on every
-  // build(), discarding CategoriesScreen's loaded data each time.
   late final List<Widget> _screens = [
-    CategoriesScreen(onEmptyChanged: (v) => _categoriesEmpty.value = v),
+    CategoriesScreen(
+      onEmptyChanged: (v) => _categoriesEmpty.value = v,),
     const OrdersListScreen(),
   ];
+
+  // ── Life-cycle ──────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -79,30 +86,42 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     notificationDialogTrigger.addListener(_onExternalNotificationTrigger);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // ── 1. Connect socket FIRST ──────────────────────────────────────────
-      // Must happen before fetchProfile() so that by the time the
-      // ProfileCubit BlocListener fires and calls ChatModule.init(),
-      // SocketService.rawSocket is already set and attachWhenReady() can
-      // attach immediately instead of waiting.
+      // ── 0. Determine guest mode first ────────────────────────────────────
+      await _checkGuestMode();
+
+      // Guests can browse categories without any authenticated services.
+      if (_isGuest) return;
+
+      // ── 1. Connect socket ─────────────────────────────────────────────────
       await _connectSocket();
 
-      // ── 2. Fetch profile and wallet (triggers ChatModule.init via listener)
+      // ── 2. Fetch profile and wallet ───────────────────────────────────────
       if (mounted) {
         context.read<ProfileCubit>().fetchProfile();
         context.read<WalletCubit>().fetchWalletData();
       }
 
-      // ── 3. Subscribe to order offer events ───────────────────────────────
+      // ── 3. Subscribe to order offer events ────────────────────────────────
       _newOfferSubscription = SocketService().onNewOffer.listen((data) {
         if (mounted) _handleNewOffer(data);
       });
     });
   }
 
+  /// Checks for a stored token and marks the session as guest when absent.
+  Future<void> _checkGuestMode() async {
+    final token = await SecureStorageService().getToken();
+    final guest = token == null || token.isEmpty;
+    if (mounted) {
+      setState(() => _isGuest = guest);
+      // ← Propagate guest mode to cubits so they skip 401-bound API calls
+      context.read<OrderCubit>().setGuestMode(guest);
+      context.read<AddressCubit>().setGuestMode(guest);
+      context.read<GuestModeCubit>().setGuest(guest);
+    }
+  }
+
   /// Reads the token and connects the shared socket.
-  /// Synchronous from the caller's perspective — awaits the token read,
-  /// then [SocketService.connect] creates the socket object synchronously
-  /// so rawSocket is non-null before this method returns.
   Future<void> _connectSocket() async {
     final token = await SecureStorageService().getToken();
     if (token == null || token.isEmpty) return;
@@ -164,6 +183,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   Object? _lastHandledExtra;
 
   Future<void> _ensureSocketConnection() async {
+    if (_isGuest) return;
     final socketService = SocketService();
     if (!socketService.isConnected) {
       await _connectSocket();
@@ -237,7 +257,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     if (extra is GoToTab && extra != _lastHandledExtra) {
       _lastHandledExtra = extra;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _homeCubit.changeTab(extra.index);
+        // Guests may not switch to the orders tab.
+        if (!_isGuest || extra.index == 0) {
+          if (mounted) _homeCubit.changeTab(extra.index);
+        }
       });
     }
 
@@ -277,14 +300,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                         () => _userId = profileState.profile.id.toString(),
                       );
 
-                      // Initialise chat module — safe to call even if the
-                      // socket handshake hasn't completed yet; attachWhenReady
-                      // inside ChatModule.init handles the timing.
                       if (!ChatModule.isInitialized) {
                         ChatModule.init(currentUserId: profileState.profile.id);
                       }
 
-                      // ── Referral capture ───────────────────────────────────
                       if (profileState.profile.referralCode == null) {
                         ReferralCaptureService.captureOnFirstLaunch(
                           userId: _userId,
@@ -298,11 +317,9 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                         });
                       }
 
-                      // ── Startup-sheet sequence (once per session) ──────────
                       if (_firstOrderChecked) return;
                       _firstOrderChecked = true;
 
-                      // 1. Phone number sheet
                       if (profileState.profile.phone == null &&
                           !_phoneSheetShown) {
                         _phoneSheetShown = true;
@@ -310,68 +327,32 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       }
 
                       if (!mounted) return;
-
-                      // 2. Pending notification dialog
                       _showPendingNotificationDialog();
-
-                      if (!mounted) return;
-
-                      // 3. First-order coupon dialog
-                      // if (profileState.profile.roleId == 4) return;
-                      //
-                      // final coupon = await _couponCubit
-                      //     .checkFirstOrderDiscount();
-                      // if (coupon == null || !context.mounted) return;
-                      //
-                      // final govState = context.read<GovernorateCubit>().state;
-                      // final governorates = govState is GovernoratesLoaded
-                      //     ? govState.response
-                      //     : GovernoratesResponse(
-                      //         governorates: [],
-                      //         totalCount: 0,
-                      //         totalPages: 0,
-                      //       );
-                      // final balance =
-                      //     context
-                      //         .read<WalletCubit>()
-                      //         .cachedWalletData
-                      //         ?.wallet
-                      //         .balance ??
-                      //     0.0;
-
-                      // showDialog(
-                      //   context: context,
-                      //   barrierDismissible: false,
-                      //   builder: (_) => FirstOrderDiscountDialog(
-                      //     coupon: coupon,
-                      //     governorates: governorates,
-                      //     walletBalance: balance,
-                      //     couponCubit: _couponCubit,
-                      //   ),
-                      // );
                     },
                   ),
                 ],
                 child: Scaffold(
                   key: _scaffoldKey,
                   appBar: PreferredSize(
-                    preferredSize: const Size.fromHeight(60),
-                    child: Padding(
-                      padding: Platform.isIOS
-                          ? const EdgeInsets.only(top: 0.0)
-                          : const EdgeInsets.only(top: 10.0),
-                      child: AppLayoutAppBar(
-                        scaffoldKey: _scaffoldKey,
-                        localizations: localizations,
-                        userId: _userId,
-                        categoriesEmpty: _categoriesEmpty,
-                      ),
+                    preferredSize: Size.fromHeight(Platform.isIOS ? 60 : 70),
+                    child: AppLayoutAppBar(
+                      scaffoldKey: _scaffoldKey,
+                      localizations: localizations,
+                      userId: _userId,
+                      categoriesEmpty: _categoriesEmpty,
+                      isGuest: _isGuest,
                     ),
                   ),
                   floatingActionButtonLocation:
                       FloatingActionButtonLocation.centerDocked,
                   floatingActionButton: FloatingActionButton.large(
                     onPressed: () {
+                      // Guests cannot create orders — show login prompt instead.
+                      if (_isGuest) {
+                        showGuestLoginPrompt(context);
+                        return;
+                      }
+
                       final govState = context.read<GovernorateCubit>().state;
                       final governorates = govState is GovernoratesLoaded
                           ? govState.response
@@ -416,6 +397,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                               child: ListView(
                                 padding: EdgeInsets.zero,
                                 children: [
+                                  // ── Drawer header ──────────────────────────
                                   BlocBuilder<WalletCubit, WalletState>(
                                     builder: (context, walletState) {
                                       final walletCubit = context
@@ -444,8 +426,12 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                           ),
                                         ),
                                         child: GestureDetector(
-                                          onTap: () =>
-                                              context.push('/ProfileScreen'),
+                                          // Guests cannot navigate to profile.
+                                          onTap: _isGuest
+                                              ? null
+                                              : () => context.push(
+                                                  '/ProfileScreen',
+                                                ),
                                           child: Row(
                                             spacing: 10,
                                             children: [
@@ -454,9 +440,12 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                   bottom: 10.0,
                                                 ),
                                                 child: _ProfileAvatar(
-                                                  imageUrl:
-                                                      profile?.personalPhoto,
-                                                  badgeName: badgeName,
+                                                  imageUrl: _isGuest
+                                                      ? null
+                                                      : profile?.personalPhoto,
+                                                  badgeName: _isGuest
+                                                      ? null
+                                                      : badgeName,
                                                 ),
                                               ),
                                               Expanded(
@@ -497,6 +486,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                       );
                                     },
                                   ),
+
+                                  // ── Menu items ─────────────────────────────
                                   Padding(
                                     padding: const EdgeInsets.all(17.0),
                                     child: Material(
@@ -511,6 +502,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                       clipBehavior: Clip.antiAlias,
                                       child: Column(
                                         children: [
+                                          // ── Language — always visible ──────
                                           ListTile(
                                             leading: const Icon(
                                               Icons.language_outlined,
@@ -567,109 +559,121 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                 .read<LocaleCubit>()
                                                 .toggleLocale(),
                                           ),
-                                          if (profileState is ProfileLoaded &&
-                                              profileState.profile.roleId
-                                                      .toString() ==
-                                                  '4') ...[
+
+                                          // ── Account items — hidden for guests ──
+                                          if (!_isGuest) ...[
+                                            if (profileState is ProfileLoaded &&
+                                                profileState.profile.roleId
+                                                        .toString() ==
+                                                    '4') ...[
+                                              const Divider(),
+                                              ListTile(
+                                                onTap: () => context.push(
+                                                  '/ReferralQrScreen',
+                                                ),
+                                                leading: const Icon(
+                                                  Icons.share,
+                                                ),
+                                                title: Text(
+                                                  localizations.referral,
+                                                  style: AppTextStyles.bold16,
+                                                ),
+                                              ),
+                                            ],
+                                            const Divider(),
+                                            ListTile(
+                                              onTap: () =>
+                                                  context.push('/cart'),
+                                              leading: const Icon(
+                                                Icons.shopping_cart_rounded,
+                                              ),
+                                              title: Text(
+                                                localizations.cart,
+                                                style: AppTextStyles.bold16,
+                                              ),
+                                            ),
+                                            const Divider(),
+                                            ListTile(
+                                              onTap: () =>
+                                                  context.push('/WalletScreen'),
+                                              leading: const Icon(
+                                                Icons
+                                                    .account_balance_wallet_rounded,
+                                              ),
+                                              title: Text(
+                                                localizations.wallet,
+                                                style: AppTextStyles.bold16,
+                                              ),
+                                            ),
+                                            const Divider(),
+                                            ListTile(
+                                              onTap: () {
+                                                context.pop();
+                                                showModalBottomSheet(
+                                                  context: context,
+                                                  isScrollControlled: true,
+                                                  isDismissible: false,
+                                                  enableDrag: false,
+                                                  backgroundColor:
+                                                      Colors.transparent,
+                                                  builder: (_) =>
+                                                      BlocProvider.value(
+                                                        value: context
+                                                            .read<
+                                                              AddressCubit
+                                                            >(),
+                                                        child:
+                                                            const DefaultAddressPickerSheet(),
+                                                      ),
+                                                );
+                                              },
+                                              leading: const Icon(
+                                                Icons.location_pin,
+                                              ),
+                                              title: Text(
+                                                localizations.address,
+                                                style: AppTextStyles.bold16,
+                                              ),
+                                            ),
                                             const Divider(),
                                             ListTile(
                                               onTap: () => context.push(
-                                                '/ReferralQrScreen',
+                                                '/ProfileScreen',
                                               ),
-                                              leading: const Icon(Icons.share),
+                                              leading: const Icon(Icons.person),
                                               title: Text(
-                                                localizations.referral,
+                                                localizations.profile,
+                                                style: AppTextStyles.bold16,
+                                              ),
+                                            ),
+                                            const Divider(),
+                                            ListTile(
+                                              onTap: () => context.push(
+                                                '/ReviewsScreen',
+                                              ),
+                                              leading: const Icon(
+                                                Icons.star_half,
+                                              ),
+                                              title: Text(
+                                                localizations.reviews,
+                                                style: AppTextStyles.bold16,
+                                              ),
+                                            ),
+                                            const Divider(),
+                                            ListTile(
+                                              onTap: () =>
+                                                  context.push('/FaqPage'),
+                                              leading: const Icon(
+                                                Icons.question_mark,
+                                              ),
+                                              title: Text(
+                                                localizations.faq,
                                                 style: AppTextStyles.bold16,
                                               ),
                                             ),
                                           ],
-                                          const Divider(),
-                                          ListTile(
-                                            onTap: () => context.push('/cart'),
-                                            leading: const Icon(
-                                              Icons.shopping_cart_rounded,
-                                            ),
-                                            title: Text(
-                                              localizations.cart,
-                                              style: AppTextStyles.bold16,
-                                            ),
-                                          ),
-                                          const Divider(),
-                                          ListTile(
-                                            onTap: () =>
-                                                context.push('/WalletScreen'),
-                                            leading: const Icon(
-                                              Icons
-                                                  .account_balance_wallet_rounded,
-                                            ),
-                                            title: Text(
-                                              localizations.wallet,
-                                              style: AppTextStyles.bold16,
-                                            ),
-                                          ),
-                                          const Divider(),
-                                          ListTile(
-                                            onTap: () {
-                                              context.pop();
-                                              showModalBottomSheet(
-                                                context: context,
-                                                isScrollControlled: true,
-                                                // Only block dismissal when there are truly no addresses — the sheet
-                                                // itself enforces this via PopScope once it knows its own state.
-                                                isDismissible: false,
-                                                enableDrag: false,
-                                                backgroundColor:
-                                                    Colors.transparent,
-                                                builder: (_) => BlocProvider.value(
-                                                  value: context
-                                                      .read<AddressCubit>(),
-                                                  child:
-                                                      const DefaultAddressPickerSheet(),
-                                                ),
-                                              );
-                                            },
-                                            leading: const Icon(
-                                              Icons.location_pin,
-                                            ),
-                                            title: Text(
-                                              localizations.address,
-                                              style: AppTextStyles.bold16,
-                                            ),
-                                          ),
-                                          const Divider(),
-                                          ListTile(
-                                            onTap: () =>
-                                                context.push('/ProfileScreen'),
-                                            leading: const Icon(Icons.person),
-                                            title: Text(
-                                              localizations.profile,
-                                              style: AppTextStyles.bold16,
-                                            ),
-                                          ),
-                                          const Divider(),
-                                          ListTile(
-                                            onTap: () =>
-                                                context.push('/ReviewsScreen'),
-                                            leading: const Icon(
-                                              Icons.star_half,
-                                            ),
-                                            title: Text(
-                                              localizations.reviews,
-                                              style: AppTextStyles.bold16,
-                                            ),
-                                          ),
-                                          const Divider(),
-                                          ListTile(
-                                            onTap: () =>
-                                                context.push('/FaqPage'),
-                                            leading: const Icon(
-                                              Icons.question_mark,
-                                            ),
-                                            title: Text(
-                                              localizations.faq,
-                                              style: AppTextStyles.bold16,
-                                            ),
-                                          ),
+
+                                          // ── Public items — always visible ──
                                           const Divider(),
                                           ListTile(
                                             onTap: () => context.push(
@@ -729,74 +733,117 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                               ),
                             ),
 
-                            // ── Logout button ──────────────────────────────
-                            FutureBuilder(
-                              future: SecureStorageService().getToken(),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Expanded(
-                                    child: Center(
-                                      child: LoadingScreen(asWidget: true),
-                                    ),
-                                  );
-                                } else if (snapshot.hasData &&
-                                    snapshot.data != null) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 17.0,
-                                    ),
-                                    child: Material(
-                                      elevation: 1,
-                                      color: Colors.white,
-                                      shadowColor: AppColors.kPrimaryColor,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
+                            // ── Logout (authenticated) / Login (guest) ────────
+                            if (_isGuest)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 17.0,
+                                ),
+                                child: Material(
+                                  elevation: 1,
+                                  color: AppColors.kPrimaryColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      context.go('/auth/login');
+                                    },
+                                    child: Container(
+                                      height: 70,
+                                      width: double.infinity,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        spacing: 10,
+                                        children: [
+                                          const Icon(
+                                            Icons.login_rounded,
+                                            color: Colors.white,
+                                          ),
+                                          Text(
+                                            localizations.signin,
+                                            style: AppTextStyles.bold16
+                                                .copyWith(color: Colors.white),
+                                          ),
+                                        ],
                                       ),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: InkWell(
-                                        onTap: () async {
-                                          // Tear down chat before clearing
-                                          // storage so dispose() can still
-                                          // emit socket leave events.
-                                          ChatModule.dispose();
-                                          await SecureStorageService()
-                                              .clearAll();
-                                          if (context.mounted) {
-                                            context.go('/auth/login');
-                                          }
-                                        },
-                                        child: Container(
-                                          color: Colors.white,
-                                          height: 70,
-                                          width: double.infinity,
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            spacing: 10,
-                                            children: [
-                                              SvgPicture.asset(
-                                                'assets/images/drawer/logout.svg',
-                                              ),
-                                              Text(
-                                                localizations.logout,
-                                                style: AppTextStyles.bold16
-                                                    .copyWith(
-                                                      color: AppColors
-                                                          .kPrimaryColor,
-                                                    ),
-                                              ),
-                                            ],
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else
+                              FutureBuilder(
+                                future: SecureStorageService().getToken(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const Expanded(
+                                      child: Center(
+                                        child: LoadingScreen(asWidget: true),
+                                      ),
+                                    );
+                                  } else if (snapshot.hasData &&
+                                      snapshot.data != null) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 17.0,
+                                      ),
+                                      child: Material(
+                                        elevation: 1,
+                                        color: Colors.white,
+                                        shadowColor: AppColors.kPrimaryColor,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: InkWell(
+                                          onTap: () async {
+                                            await context
+                                                .read<AuthCubit>()
+                                                .logout();
+                                            ChatModule.dispose();
+                                            await SecureStorageService()
+                                                .clearAll();
+                                            if (context.mounted) {
+                                              context.go('/auth/login');
+                                            }
+                                          },
+                                          child: Container(
+                                            color: Colors.white,
+                                            height: 70,
+                                            width: double.infinity,
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              spacing: 10,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  'assets/images/drawer/logout.svg',
+                                                ),
+                                                Text(
+                                                  localizations.logout,
+                                                  style: AppTextStyles.bold16
+                                                      .copyWith(
+                                                        color: AppColors
+                                                            .kPrimaryColor,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                } else {
-                                  return const SizedBox.shrink();
-                                }
-                              },
-                            ),
+                                    );
+                                  } else {
+                                    return const SizedBox.shrink();
+                                  }
+                                },
+                              ),
                           ],
                         ),
                       ),
@@ -810,8 +857,12 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                     currentIndex: cubit.currentIndex,
                     userId: _userId,
                     localizations: localizations,
+                    isGuest: _isGuest,
                     onOrdersTap: () => cubit.changeTab(1),
                     onCategoriesTap: () => cubit.changeTab(0),
+                    onGuestRestrictedTap: () {
+                      showGuestLoginPrompt(context);
+                    },
                     onNotificationsTap: () => showNotificationsDialog(
                       context,
                       _userId,
@@ -966,24 +1017,31 @@ class _PhoneNumberSheetState extends State<_PhoneNumberSheet> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Bottom nav bar (unchanged)
+// Bottom nav bar
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final String userId;
   final AppLocalizations localizations;
+  final bool isGuest;
   final VoidCallback onOrdersTap;
   final VoidCallback onCategoriesTap;
   final VoidCallback onNotificationsTap;
+
+  /// Called instead of [onOrdersTap] when the session is a guest, so the
+  /// parent can show a login prompt rather than switching tabs.
+  final VoidCallback onGuestRestrictedTap;
 
   const _BottomNavBar({
     required this.currentIndex,
     required this.userId,
     required this.localizations,
+    required this.isGuest,
     required this.onOrdersTap,
     required this.onCategoriesTap,
     required this.onNotificationsTap,
+    required this.onGuestRestrictedTap,
   });
 
   @override
@@ -1023,6 +1081,7 @@ class _BottomNavBar extends StatelessWidget {
                 top: 8,
                 child: Row(
                   children: [
+                    // ── Categories tab ───────────────────────────────────────
                     Expanded(
                       child: InkWell(
                         onTap: onCategoriesTap,
@@ -1054,29 +1113,58 @@ class _BottomNavBar extends StatelessWidget {
                         ),
                       ),
                     ),
+
+                    // ── Orders tab — login prompt for guests ─────────────────
                     Expanded(
                       child: InkWell(
-                        onTap: onOrdersTap,
+                        onTap: isGuest ? onGuestRestrictedTap : onOrdersTap,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              currentIndex == 1
-                                  ? Icons.receipt
-                                  : Icons.receipt_long,
-                              color: currentIndex == 1
-                                  ? AppColors.kPrimaryColor
-                                  : Colors.grey,
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Icon(
+                                  currentIndex == 1
+                                      ? Icons.receipt
+                                      : Icons.receipt_long,
+                                  color: isGuest
+                                      ? Colors.grey.shade400
+                                      : currentIndex == 1
+                                      ? AppColors.kPrimaryColor
+                                      : Colors.grey,
+                                ),
+                                // Small lock badge for guests
+                                if (isGuest)
+                                  Positioned(
+                                    right: -6,
+                                    top: -4,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade400,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.lock_rounded,
+                                        size: 8,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             Text(
                               localizations.orders,
                               style: TextStyle(
                                 height: 2,
                                 fontSize: 10,
-                                fontWeight: currentIndex == 1
+                                fontWeight: (!isGuest && currentIndex == 1)
                                     ? FontWeight.w700
                                     : FontWeight.w500,
-                                color: currentIndex == 1
+                                color: isGuest
+                                    ? Colors.grey.shade400
+                                    : currentIndex == 1
                                     ? AppColors.kPrimaryColor
                                     : Colors.grey,
                               ),
@@ -1175,11 +1263,18 @@ class _ProfileAvatar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// App bar (unchanged)
+// App bar
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AppLayoutAppBar extends StatefulWidget {
   final ValueNotifier<bool> categoriesEmpty;
+  final AppLocalizations localizations;
+  final GlobalKey<ScaffoldState> scaffoldKey;
+  final String userId;
+
+  /// When true the notification button and address chip are hidden so that
+  /// guest users see a clean browsing experience.
+  final bool isGuest;
 
   const AppLayoutAppBar({
     super.key,
@@ -1187,11 +1282,8 @@ class AppLayoutAppBar extends StatefulWidget {
     required this.scaffoldKey,
     required this.userId,
     required this.categoriesEmpty,
+    this.isGuest = false,
   });
-
-  final AppLocalizations localizations;
-  final GlobalKey<ScaffoldState> scaffoldKey;
-  final String userId;
 
   @override
   State<AppLayoutAppBar> createState() => _AppLayoutAppBarState();
@@ -1219,6 +1311,8 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      toolbarHeight: Platform.isIOS ? 60 : 70,
+      // 60 + 10 padding on Android
       automaticallyImplyLeading: false,
       scrolledUnderElevation: 0,
       elevation: 0,
@@ -1230,6 +1324,7 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // ── Menu button — always visible ─────────────────────────────────
             CircleAvatar(
               radius: 20,
               backgroundColor: Colors.grey.shade200,
@@ -1241,25 +1336,36 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
               ),
             ),
             const SizedBox(width: 5),
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.grey.shade200,
-              child: NotificationButton(userId: widget.userId),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: ValueListenableBuilder<bool>(
-                  valueListenable: widget.categoriesEmpty,
-                  builder: (_, isEmpty, __) => isEmpty
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [const DefaultAddressChip()],
-                        )
-                      : const CouponTickerTitle(),
-                ),
+
+            // ── Notification button — hidden for guests ───────────────────────
+            if (!widget.isGuest) ...[
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.grey.shade200,
+                child: NotificationButton(userId: widget.userId),
               ),
-            ),
+            ],
+
+            // ── Address chip / coupon ticker — hidden for guests ──────────────
+            if (!widget.isGuest)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: widget.categoriesEmpty,
+                    builder: (_, isEmpty, __) => isEmpty
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [const DefaultAddressChip()],
+                          )
+                        : const CouponTickerTitle(),
+                  ),
+                ),
+              )
+            else
+              // Push menu icon to the correct side when the right-side widgets
+              // are hidden so the layout doesn't collapse oddly.
+              const Spacer(),
           ],
         ),
       ),

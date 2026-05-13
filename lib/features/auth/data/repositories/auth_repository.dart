@@ -130,4 +130,10 @@ class AuthRepository {
   Future<void> resendOtp({required String phone}) async {
     await _remoteDataSource.resendOtp(phone: phone);
   }
+
+  Future<void> logout() async {
+    await _remoteDataSource.logout();
+    await _storageService.deleteToken();
+    await _storageService.deleteUserProfile();
+  }
 }

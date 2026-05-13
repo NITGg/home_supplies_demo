@@ -35,6 +35,7 @@ import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/data/repositories/profile_repository.dart';
 import 'features/auth/manager/profile_cubit.dart';
 import 'features/cart/manager/cart_cubit.dart';
+import 'features/home/layout/manager/guest_cubit.dart';
 import 'features/notifications/manager/notification_services.dart';
 import 'features/static_text/app_dynamic_info.dart';
 import 'features/wallet/data/data_source/wallet_remote_data_source.dart';
@@ -369,6 +370,7 @@ class _MyAppState extends State<MyApp> {
     final profileRepository = ProfileRepository(ProfileRemoteDataSource());
     return MultiBlocProvider(
       providers: [
+        BlocProvider<GuestModeCubit>(create: (_) => GuestModeCubit()),
         BlocProvider(
           create: (_) {
             final cubit = LocaleCubit(SecureStorageService());

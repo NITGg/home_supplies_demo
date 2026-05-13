@@ -1,10 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 import 'package:tawreedat_go/features/products/presentation/product_card.dart';
 
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/secure_storage_service.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/data/repo/product_repo.dart';
@@ -14,11 +14,12 @@ import '../../products/data/repo/product_repo.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class LastPurchasedSection extends StatefulWidget {
-  const LastPurchasedSection({super.key});
+  final bool isGuest;
+
+  const LastPurchasedSection({super.key, this.isGuest = false});
 
   @override
-  State<LastPurchasedSection> createState() =>
-      _LastPurchasedSectionState();
+  State<LastPurchasedSection> createState() => _LastPurchasedSectionState();
 }
 
 class _LastPurchasedSectionState extends State<LastPurchasedSection> {
@@ -36,7 +37,8 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
   @override
   void initState() {
     super.initState();
-    _load();
+    if (!widget.isGuest) _load();
+
     _scrollController.addListener(_onScroll);
   }
 
@@ -47,6 +49,7 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
   }
 
   void _onScroll() {
+    if (widget.isGuest) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 80) {
       _load();
@@ -54,6 +57,10 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
   }
 
   Future<void> _load() async {
+    if (widget.isGuest) return;
+    // Guard against renders that fire before the guest flag is set
+    final token = await SecureStorageService().getToken();   // ← self-check
+    if (token == null || token.isEmpty) return;
     if (_isLoading || !_hasMore) return;
     setState(() => _isLoading = true);
 
@@ -85,6 +92,7 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isGuest) return const SizedBox.shrink();
     // Don't render the section at all until we know there's something to show
     if (_initialLoadDone && _products.isEmpty) return const SizedBox.shrink();
 
@@ -108,9 +116,9 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context)!.purchasedBefore,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               GestureDetector(
@@ -133,30 +141,30 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
           child: !_initialLoadDone
               ? _SkeletonRow()
               : ListView.builder(
-            controller: _scrollController,
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: _products.length + (_isLoading ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index == _products.length) {
-                return const _LoadingCard();
-              }
-              final product = _products[index];
-              return SizedBox(
-                width: 160,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: ProductCard(
-                    product: product,
-                    onTap: () => context.push(
-                      '/products/${product.id}',
-                      extra: product,
-                    ),
-                  ),
+                  controller: _scrollController,
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: _products.length + (_isLoading ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == _products.length) {
+                      return const _LoadingCard();
+                    }
+                    final product = _products[index];
+                    return SizedBox(
+                      width: 160,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: ProductCard(
+                          product: product,
+                          onTap: () => context.push(
+                            '/products/${product.id}',
+                            extra: product,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
 
         const SizedBox(height: 8),
@@ -186,8 +194,10 @@ class _SkeletonRowState extends State<_SkeletonRow>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.3, end: 0.85)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _anim = Tween<double>(
+      begin: 0.3,
+      end: 0.85,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override

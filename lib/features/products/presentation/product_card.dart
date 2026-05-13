@@ -7,11 +7,13 @@ import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/formatDate.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
+import '../../../core/widgets/login_prompt.dart';               // ← ADD THIS IMPORT
 import '../../../l10n/app_localizations.dart';
 import '../../cart/data/models/multiple_supplier_exception.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/multiple_supplier_dialog.dart';
+import '../../home/layout/manager/guest_cubit.dart';
 import '../data/models/product_model.dart';
 
 // ── Price formatting helper ───────────────────────────────────────────────────
@@ -112,11 +114,28 @@ class _ProductCardState extends State<ProductCard>
     super.dispose();
   }
 
-  // ── Cart operations ──────────────────────────────────────────────────────
+  // ── Guest guard ───────────────────────────────────────────────────────────
+  //
+  // Returns true (and shows the login prompt) when the current session is a
+  // guest. All cart handlers call this first and bail out if it returns true.
+
+  bool _isGuest(BuildContext ctx) {
+    try {
+      return ctx.read<GuestModeCubit>().state;
+    } catch (_) {
+      // GuestModeCubit not in tree (e.g. standalone usage) — allow cart ops.
+      return false;
+    }
+  }
+
+  void _promptLogin(BuildContext ctx) => showGuestLoginPrompt(ctx);
+
+  // ── Cart operations ───────────────────────────────────────────────────────
 
   void _triggerBounce() => _bounceCtrl.forward(from: 0);
 
   Future<void> _handleAdd(BuildContext ctx) async {
+    if (_isGuest(ctx)) { _promptLogin(ctx); return; }                 // ← GUARD
     if (widget.product.isOutOfStock || !widget.isSupplierOpen) return;
     HapticFeedback.lightImpact();
     _triggerBounce();
@@ -136,6 +155,7 @@ class _ProductCardState extends State<ProductCard>
   }
 
   Future<void> _handleIncrement(BuildContext ctx, int currentQty) async {
+    if (_isGuest(ctx)) { _promptLogin(ctx); return; }                 // ← GUARD
     HapticFeedback.selectionClick();
     _triggerBounce();
     try {
@@ -149,6 +169,7 @@ class _ProductCardState extends State<ProductCard>
   }
 
   Future<void> _handleDecrement(BuildContext ctx, int currentQty) async {
+    if (_isGuest(ctx)) { _promptLogin(ctx); return; }                 // ← GUARD
     HapticFeedback.selectionClick();
     try {
       await ctx.read<CartCubit>().decrementItem(
@@ -160,7 +181,7 @@ class _ProductCardState extends State<ProductCard>
     }
   }
 
-  void _showError(BuildContext ctx , [String? message]) {
+  void _showError(BuildContext ctx, [String? message]) {
     ScaffoldMessenger.of(ctx).showSnackBar(
       SnackBar(
         content: Text(message ?? AppLocalizations.of(ctx)!.cartUpdateFailed),
@@ -320,7 +341,6 @@ class _ProductCardState extends State<ProductCard>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Product name
                         Text(
                           product.displayName,
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -333,11 +353,9 @@ class _ProductCardState extends State<ProductCard>
                           overflow: TextOverflow.ellipsis,
                         ),
 
-                        // Rating + price on the same row to save vertical space
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Rating pill — only shown when reviews exist
                             if (product.totalReviews > 0) ...[
                               _RatingPill(
                                 rating: product.rating,
@@ -345,8 +363,6 @@ class _ProductCardState extends State<ProductCard>
                               ),
                               const SizedBox(width: 5),
                             ],
-
-                            // Price pushes to the end
                             Expanded(
                               child: Align(
                                 alignment: AlignmentDirectional.centerEnd,
@@ -396,8 +412,6 @@ class _CartControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // When the supplier is closed, always show a disabled add button —
-    // regardless of what's already in the cart.
     if (!isSupplierOpen && !product.isOutOfStock) {
       return _AddButton(onTap: null, color: primaryColor);
     }
@@ -534,15 +548,11 @@ class _QuantityPill extends StatelessWidget {
               transitionBuilder: (child, animation) => FadeTransition(
                 opacity: animation,
                 child: SlideTransition(
-                  position:
-                  Tween<Offset>(
+                  position: Tween<Offset>(
                     begin: const Offset(0, 0.4),
                     end: Offset.zero,
                   ).animate(
-                    CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOut,
-                    ),
+                    CurvedAnimation(parent: animation, curve: Curves.easeOut),
                   ),
                   child: child,
                 ),
@@ -739,7 +749,6 @@ class _PriceRow extends StatelessWidget {
         children: [
           HighlighterWidget(
             child: Text(
-              // Fixed: was toStringAsFixed(0) — now shows cents
               '${_fmt(product.offer!)} ${l10n.egp}',
               style: const TextStyle(
                 color: Colors.black87,

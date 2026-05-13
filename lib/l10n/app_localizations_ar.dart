@@ -42,6 +42,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get support => 'الدعم';
 
   @override
+  String get browseAsGuest => 'تصفح الآن';
+
+  @override
   String get faq => 'الأسئلة الشائعة';
 
   @override

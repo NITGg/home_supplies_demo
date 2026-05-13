@@ -8,12 +8,16 @@ import '../../addresses/presentation/default_address_chip.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
+import '../../home/layout/manager/guest_cubit.dart';
 import '../../search/presentation/search_dialog.dart';
 import '../data/models/category_models.dart';
 import 'categories_grid_widget.dart';
 
 class CategoriesScreen extends StatefulWidget {
   final void Function(bool isEmpty)? onEmptyChanged;
+
+  /// When provided the screen listens to this notifier and hides the address
+  /// chip and cart icon while the value is [true] (guest session).
 
   const CategoriesScreen({super.key, this.onEmptyChanged});
 
@@ -31,39 +35,91 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: () =>
-            _categoriesKey.currentState?.refresh() ?? Future.value(),
-        color: AppColors.kPrimaryColor,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            const SliverToBoxAdapter(child: PopupAdsHandler()),
+    return RefreshIndicator(
+      onRefresh: () => _categoriesKey.currentState?.refresh() ?? Future.value(),
+      color: AppColors.kPrimaryColor,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          const SliverToBoxAdapter(child: PopupAdsHandler()),
 
-            // Pinned sticky header — only the search/address/cart row
-            if (!_categoriesEmpty)
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _SearchBarDelegate(),
-              ),
-
-            // Everything else scrolls: ads + featured + grid
-            SliverToBoxAdapter(
-              child: CategoriesGridWidget(
-                key: _categoriesKey,
-                onCategoryTap: _navigateToCategory,
-                showHeader: false,
-                onEmptyChanged: (isEmpty) {
-                  setState(() => _categoriesEmpty = isEmpty);
-                  widget.onEmptyChanged?.call(isEmpty);
-                },
+          // Pinned sticky header — only the search/address/cart row.
+          // Hidden entirely when categories are empty (fallback view).
+          if (!_categoriesEmpty)
+            SliverAppBar(
+              actions: const [SizedBox.shrink()],
+              pinned: true,
+              toolbarHeight: 60,
+              automaticallyImplyLeading: false,
+              scrolledUnderElevation: 2,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              // ← title instead of flexibleSpace avoids the layering issue
+              titleSpacing: 0,
+              title: BlocBuilder<GuestModeCubit, bool>(
+                builder: (context, guest) => Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 4,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: AppColors.kPrimaryColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (!guest) ...[
+                        const DefaultAddressChip(),
+                        const SizedBox(width: 8),
+                      ],
+                      const Spacer(),
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.grey.shade200,
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.search_rounded,
+                            color: Colors.grey.shade700,
+                          ),
+                          onPressed: () => showSearchDialog(context),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                        const SizedBox(width: 4),
+                        BlocSelector<CartCubit, CartState, int>(
+                          selector: (state) {
+                            if (state is CartLoaded) {
+                              final total = state.data.summary.totalItems;
+                              return total < 0 ? 0 : total;
+                            }
+                            return 0;
+                          },
+                          builder: (context, count) => AnimatedCartIcon(
+                            onTap: () => context.push('/cart'),
+                          ),
+                        ),     ],
+                  ),
+                ),
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 300)),
-          ],
-        ),
+          // Everything else scrolls: ads + featured + grid
+          SliverToBoxAdapter(
+            child: CategoriesGridWidget(
+              key: _categoriesKey,
+              onCategoryTap: _navigateToCategory,
+              showHeader: false,
+              onEmptyChanged: (isEmpty) {
+                setState(() => _categoriesEmpty = isEmpty);
+                widget.onEmptyChanged?.call(isEmpty);
+              },
+            ),
+          ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 300)),
+        ],
       ),
     );
   }
@@ -74,6 +130,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
+  /// Optional notifier that controls guest-mode visibility.
+  /// When the value is [true] the address chip and cart icon are hidden.
+  final ValueNotifier<bool>? isGuest;
+
+  const _SearchBarDelegate({this.isGuest});
+
   @override
   double get minExtent => 60;
 
@@ -81,8 +143,8 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => 60;
 
   @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
-      false;
+  bool shouldRebuild(covariant _SearchBarDelegate oldDelegate) =>
+      oldDelegate.isGuest != isGuest;
 
   @override
   Widget build(
@@ -90,57 +152,77 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Material(
-      elevation: overlapsContent ? 2 : 0,
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-        child: Row(
-          children: [
-            const SizedBox(width: 8),
-            // Accent bar
-            Container(
-              width: 4,
-              height: 18,
-              decoration: BoxDecoration(
-                color: AppColors.kPrimaryColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(width: 8),
+    // Use a ListenableBuilder so the inner widget reacts to isGuest changes
+    // even when shouldRebuild returns false (the delegate instance is reused).
+    final listenable = isGuest ?? ValueNotifier(false);
 
-            // Default address chip
-            const DefaultAddressChip(),
-            const SizedBox(width: 8),
-            const Spacer(),
+    return ListenableBuilder(
+      listenable: listenable,
+      builder: (context, _) {
+        final guest = isGuest?.value ?? false;
 
-            // Search button
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.grey.shade200,
-              child: IconButton(
-                icon: Icon(Icons.search_rounded, color: Colors.grey.shade700),
-                onPressed: () => showSearchDialog(context),
-                padding: EdgeInsets.zero,
-              ),
-            ),
-            const SizedBox(width: 4),
+        return Material(
+          elevation: overlapsContent ? 2 : 0,
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+            child: Row(
+              children: [
+                const SizedBox(width: 8),
 
-            // Cart icon
-            BlocSelector<CartCubit, CartState, int>(
-              selector: (state) {
-                if (state is CartLoaded) {
-                  final total = state.data.summary.totalItems;
-                  return total < 0 ? 0 : total;
-                }
-                return 0;
-              },
-              builder: (context, count) =>
-                  AnimatedCartIcon(onTap: () => context.push('/cart')),
+                // Accent bar
+                Container(
+                  width: 4,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: AppColors.kPrimaryColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Default address chip — hidden for guests
+                if (!guest) ...[
+                  const DefaultAddressChip(),
+                  const SizedBox(width: 8),
+                ],
+
+                const Spacer(),
+
+                // Search button — always visible
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.grey.shade200,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.search_rounded,
+                      color: Colors.grey.shade700,
+                    ),
+                    onPressed: () => showSearchDialog(context),
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+
+                // Cart icon — hidden for guests
+                if (!guest) ...[
+                  const SizedBox(width: 4),
+                  BlocSelector<CartCubit, CartState, int>(
+                    selector: (state) {
+                      if (state is CartLoaded) {
+                        final total = state.data.summary.totalItems;
+                        return total < 0 ? 0 : total;
+                      }
+                      return 0;
+                    },
+                    builder: (context, count) =>
+                        AnimatedCartIcon(onTap: () => context.push('/cart')),
+                  ),
+                ],
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

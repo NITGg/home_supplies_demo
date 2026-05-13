@@ -8,12 +8,14 @@ import '../../../core/utils/formatDate.dart';
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
+import '../../../core/widgets/login_prompt.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/data/models/multiple_supplier_exception.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../cart/presentation/widgets/multiple_supplier_dialog.dart';
+import '../../home/layout/manager/guest_cubit.dart';
 import '../data/models/product_model.dart';
 import '../manager/product_detail_cubit.dart';
 import '../manager/product_details_states.dart';
@@ -245,9 +247,18 @@ class _AddToCartBarState extends State<_AddToCartBar>
     super.dispose();
   }
 
+  bool _isGuest(BuildContext ctx) {
+    try {
+      return ctx.read<GuestModeCubit>().state;
+    } catch (_) {
+      return false; // cubit absent → not a guest (standalone usage)
+    }
+  }
+
   // ── Handlers ────────────────────────────────────────────────────────────
 
   Future<void> _handleAdd(BuildContext ctx) async {
+    if (_isGuest(ctx)) { showGuestLoginPrompt(ctx); return; }
     if (_tapLocked) return; // HARD GUARD (instant)
     _tapLocked = true;
 
@@ -274,6 +285,7 @@ class _AddToCartBarState extends State<_AddToCartBar>
   }
 
   Future<void> _handleIncrement(BuildContext ctx) async {
+    if (_isGuest(ctx)) { showGuestLoginPrompt(ctx); return; }  // ← GUARD
     if (_tapLocked) return;
     _tapLocked = true;
 
@@ -292,6 +304,7 @@ class _AddToCartBarState extends State<_AddToCartBar>
   }
 
   Future<void> _handleDecrement(BuildContext ctx) async {
+    if (_isGuest(ctx)) { showGuestLoginPrompt(ctx); return; }  // ← GUARD
     if (_tapLocked) return;
     _tapLocked = true;
     HapticFeedback.selectionClick();

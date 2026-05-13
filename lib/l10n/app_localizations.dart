@@ -161,6 +161,12 @@ abstract class AppLocalizations {
   /// **'Support'**
   String get support;
 
+  /// No description provided for @browseAsGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse As Guest'**
+  String get browseAsGuest;
+
   /// No description provided for @faq.
   ///
   /// In en, this message translates to:

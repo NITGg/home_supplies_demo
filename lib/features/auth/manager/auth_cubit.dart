@@ -228,6 +228,16 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  Future<void> logout() async {
+    emit(AuthLoading());
+    try {
+      await _repository.logout();
+      emit(AuthLoggedOut());
+    } catch (e) {
+      emit(AuthFailure(extractErrorMessage(e)));
+    }
+  }
+
   Future<void> resendPhoneOtp({required String phone}) async {
     emit(AuthLoading());
     try {

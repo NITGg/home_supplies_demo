@@ -58,7 +58,14 @@ class ApiClient {
       onError: (e, handler) async {
         final friendlyError = _toFriendlyError(e);
         if (e.response?.statusCode == 401) {
-          await _clearSession();
+          final token = await SecureStorageService().getToken();
+          if (token != null && token.isNotEmpty) {
+            dLog('🔒 401 on ${e.requestOptions.method} ${e.requestOptions.uri} — authenticated session expired, clearing');
+            await _clearSession();
+          } else {
+            // Guest hit an authenticated endpoint — log it so we can guard it properly
+            dLog('⚠️ 401 on ${e.requestOptions.method} ${e.requestOptions.uri} — no token (guest), skipping redirect');
+          }
         }
         handler.next(friendlyError);
       },

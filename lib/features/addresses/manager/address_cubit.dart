@@ -1,18 +1,24 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/secure_storage_service.dart';
 import '../data/models/address_model.dart';
 import '../data/repo/address_repo.dart';
 import 'address_states.dart';
 
 class AddressCubit extends Cubit<AddressState> {
   final AddressRepository _repository;
+  bool _isGuest = false;
+  void setGuestMode(bool value) => _isGuest = value;
 
   AddressCubit({AddressRepository? repository})
     : _repository = repository ?? AddressRepository(),
       super(AddressInitial());
 
   Future<void> loadAddresses() async {
+    if (_isGuest) return;
+    final token = await SecureStorageService().getToken();
+    if (token == null || token.isEmpty) return;
     emit(AddressLoading());
     try {
       dLog('AddressCubit: Loading addresses');

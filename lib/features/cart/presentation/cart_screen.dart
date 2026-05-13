@@ -18,6 +18,7 @@ import '../../addresses/presentation/default_address_chip.dart';
 import '../../auth/manager/profile_cubit.dart';
 import '../../auth/manager/profile_states.dart';
 import '../../coupons/manager/coupons_cubit.dart';
+import '../../home/layout/manager/guest_cubit.dart';
 import '../../orders/manager/order_cubit.dart';
 import '../../orders/manager/order_states.dart';
 import '../../orders/presentation/widgets/sheets/create_order_sheet/insufficient_balance_sheet.dart';
@@ -229,6 +230,46 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+// ── Guest fallback ──────────────────────────────────────────────────────
+    final isGuest = context.read<GuestModeCubit>().state;
+    if (isGuest) {
+      return Scaffold(
+        appBar: AppBar(leading: CircleBackButton()),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.shopping_cart_outlined,
+                    size: 72, color: Colors.grey.shade300),
+                const SizedBox(height: 20),
+                Text(
+                  l10n.cart,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 28),
+                FilledButton.icon(
+                  onPressed: () => context.go('/auth/login'),
+                  icon: const Icon(Icons.login_rounded),
+                  label: Text(l10n.signin),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(200, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    // ── End guest fallback ──────────────────────────────────────────────────
 
     return BlocProvider.value(
       value: _couponCubit,

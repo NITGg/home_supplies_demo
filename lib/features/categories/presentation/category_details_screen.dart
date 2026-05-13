@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -319,7 +321,6 @@ class _LoadedViewState extends State<_LoadedView> {
     final state = widget.state;
     final theme = Theme.of(context);
     final hasPills = state.hasSections && state.sections.length > 1;
-
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       notificationPredicate: (notification) => notification.depth == 0,

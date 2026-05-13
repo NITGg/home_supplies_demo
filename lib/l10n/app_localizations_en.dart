@@ -42,6 +42,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get support => 'Support';
 
   @override
+  String get browseAsGuest => 'Browse As Guest';
+
+  @override
   String get faq => 'FAQ';
 
   @override
