@@ -12,7 +12,7 @@ class AppSettings {
   AppSettings._internal();
 
   static String? android_version;
-  static const int kMainSupplierId = 9;
+  static int kMainSupplierId = 9;
   static String? ios_url;
   static bool? chat_enable_send_images;
 
@@ -40,8 +40,9 @@ class AppSettings {
         final settings = data['settings'];
         android_version = settings['app_android_version'];
         ios_url = settings['app_ios_url'];
-        chat_enable_send_images = settings['chat_enable_send_images'] as bool?;
-        customer_budget_cash_on_delivery_limit = settings['customer_budget_cash_on_delivery_limit'];
+        kMainSupplierId = (settings['main_supplier_id'] as int?) ?? 9;        chat_enable_send_images = settings['chat_enable_send_images'] as bool?;
+        customer_budget_cash_on_delivery_limit =
+            settings['customer_budget_cash_on_delivery_limit'];
         ios_version = settings['app_ios_version'];
         android_url = settings['app_android_url'];
         min_delivery_distance = settings['min_delivery_distance'];
