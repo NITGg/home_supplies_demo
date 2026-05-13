@@ -83,10 +83,7 @@ class WorkingSlot {
 /// Day keys follow JavaScript's [Date.getDay()] convention:
 ///   0 = Sunday, 1 = Monday, … 6 = Saturday
 class SupplierWorkingHours {
-  /// IANA timezone identifier, e.g. "Africa/Cairo".
   final String timezone;
-
-  /// Map from weekday index (0–6) to that day's schedule.
   final Map<int, _DaySchedule> days;
 
   const SupplierWorkingHours({
@@ -94,37 +91,55 @@ class SupplierWorkingHours {
     required this.days,
   });
 
-  /// Parses the raw JSON *string* value stored in working_hours.
-  factory SupplierWorkingHours.fromJsonString(String raw) {
-    final map = jsonDecode(raw) as Map<String, dynamic>;
+  /// NEW: Parse directly from API map
+  factory SupplierWorkingHours.fromMap(Map<String, dynamic> map) {
     final timezone = map['timezone'] as String? ?? 'UTC';
-    final daysRaw = map['days'] as Map<String, dynamic>;
+
+    final daysRaw = map['days'] as Map<String, dynamic>? ?? {};
 
     final days = <int, _DaySchedule>{};
+
     daysRaw.forEach((key, value) {
       final dayIndex = int.tryParse(key);
+
       if (dayIndex == null) return;
+
       final dayMap = value as Map<String, dynamic>;
+
       final isClosed = dayMap['is_closed'] as bool? ?? true;
+
       final slotsRaw = dayMap['slots'] as List<dynamic>? ?? [];
+
       final slots = slotsRaw
           .map((s) => WorkingSlot.fromJson(s as Map<String, dynamic>))
           .toList();
-      days[dayIndex] = _DaySchedule(isClosed: isClosed, slots: slots);
+
+      days[dayIndex] = _DaySchedule(
+        isClosed: isClosed,
+        slots: slots,
+      );
     });
 
-    return SupplierWorkingHours(timezone: timezone, days: days);
+    return SupplierWorkingHours(
+      timezone: timezone,
+      days: days,
+    );
   }
 
-  // ── Status computation ────────────────────────────────────────────────────
+  /// Optional backward compatibility
+  factory SupplierWorkingHours.fromJsonString(String raw) {
+    return SupplierWorkingHours.fromMap(
+      jsonDecode(raw) as Map<String, dynamic>,
+    );
+  }
 
-  /// Computes the supplier's open/closed status relative to [nowUtc].
   SupplierStatus computeStatus([DateTime? nowUtc]) {
     final utc = nowUtc ?? DateTime.now().toUtc();
+
     final local = _toTimezone(utc, timezone);
 
-    // JS-style weekday: DateTime.weekday is 1=Mon..7=Sun -> 0=Sun..6=Sat
     final jsDay = local.weekday % 7;
+
     final hour = local.hour;
     final minute = local.minute;
 
@@ -135,7 +150,12 @@ class SupplierWorkingHours {
         isOpen: false,
         closingHour: null,
         closingMinute: null,
-        nextOpenInfo: _findNextOpen(jsDay, hour, minute, skipToday: true),
+        nextOpenInfo: _findNextOpen(
+          jsDay,
+          hour,
+          minute,
+          skipToday: true,
+        ),
       );
     }
 
@@ -154,7 +174,12 @@ class SupplierWorkingHours {
       isOpen: false,
       closingHour: null,
       closingMinute: null,
-      nextOpenInfo: _findNextOpen(jsDay, hour, minute, skipToday: false),
+      nextOpenInfo: _findNextOpen(
+        jsDay,
+        hour,
+        minute,
+        skipToday: false,
+      ),
     );
   }
 
@@ -166,14 +191,20 @@ class SupplierWorkingHours {
       }) {
     for (int offset = skipToday ? 1 : 0; offset <= 7; offset++) {
       final checkDay = (jsDay + offset) % 7;
+
       final sched = days[checkDay];
-      if (sched == null || sched.isClosed || sched.slots.isEmpty) continue;
+
+      if (sched == null || sched.isClosed || sched.slots.isEmpty) {
+        continue;
+      }
 
       for (final slot in sched.slots) {
         if (offset == 0) {
           final mins = slot.minutesUntilOpen(nowHour, nowMinute);
+
           if (mins == null) continue;
         }
+
         return NextOpenInfo(
           jsDayIndex: checkDay,
           isToday: offset == 0,
@@ -183,10 +214,9 @@ class SupplierWorkingHours {
         );
       }
     }
+
     return null;
   }
-
-  // ── Timezone conversion (fixed-offset, no external package) ──────────────
 
   static DateTime _toTimezone(DateTime utc, String tz) =>
       utc.add(Duration(hours: _tzOffset(tz)));
@@ -214,25 +244,30 @@ class SupplierWorkingHours {
       'Europe/Paris': 2,
       'UTC': 0,
     };
+
     return map[tz] ?? 0;
   }
 
-  // ── Display helpers (return raw data — formatting done in widget layer) ───
-
-  /// Today's open slots, or empty when the supplier is closed today.
   List<WorkingSlot> todaySlots([DateTime? nowUtc]) {
     final utc = nowUtc ?? DateTime.now().toUtc();
+
     final local = _toTimezone(utc, timezone);
+
     final jsDay = local.weekday % 7;
+
     final sched = days[jsDay];
-    if (sched == null || sched.isClosed) return [];
+
+    if (sched == null || sched.isClosed) {
+      return [];
+    }
+
     return sched.slots;
   }
 
-  /// All seven days in Sun-Sat order for the weekly overview sheet.
   List<({int jsDay, bool isClosed, List<WorkingSlot> slots})> allDays() {
     return List.generate(7, (i) {
       final sched = days[i];
+
       return (
       jsDay: i,
       isClosed: sched?.isClosed ?? true,
@@ -241,9 +276,9 @@ class SupplierWorkingHours {
     });
   }
 
-  /// JS-style weekday index for the current moment in the supplier's timezone.
   int currentJsDay([DateTime? nowUtc]) {
     final utc = nowUtc ?? DateTime.now().toUtc();
+
     return _toTimezone(utc, timezone).weekday % 7;
   }
 }
@@ -331,14 +366,19 @@ class SupplierAddressModel {
 
   factory SupplierAddressModel.fromJson(Map<String, dynamic> json) {
     SupplierWorkingHours? wh;
+
     final raw = json['working_hours'];
-    if (raw is String && raw.trim().isNotEmpty) {
-      try {
+
+    try {
+      if (raw is Map<String, dynamic>) {
+        wh = SupplierWorkingHours.fromMap(raw);
+      } else if (raw is String && raw.trim().isNotEmpty) {
         wh = SupplierWorkingHours.fromJsonString(raw);
-      } catch (_) {
-        wh = null;
       }
+    } catch (_) {
+      wh = null;
     }
+
     return SupplierAddressModel(
       id: json['id'] as int,
       addressLine1: json['address_line_1'] as String? ?? '',
