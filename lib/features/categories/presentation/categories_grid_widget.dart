@@ -46,7 +46,12 @@ class CategoriesGridWidget extends StatefulWidget {
 class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
   late final CategoriesCubit _cubit;
 
+  /// Incremented on every pull-to-refresh. Passed as a [ValueKey] to each
+  /// product section so they are fully recreated (new initState → new _load).
+  int _refreshKey = 0;
+
   Future<void> refresh() async {
+    setState(() => _refreshKey++);
     _cubit.loadCategories(refresh: true);
     context.read<AdsCubit>().getHomeAds();
   }
@@ -78,15 +83,19 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
           // ── Product sections — start fetching right away, in parallel
           //    with the categories API call. Each section independently
           //    shows its own skeleton until its own data arrives.
-          const OfferedSection(),
-          const BestSellingSection(
-            loadDelay: Duration(milliseconds: 200),
+          //    Re-keyed on refresh so they fully recreate and reload.
+          OfferedSection(key: ValueKey('offered_$_refreshKey')),
+          BestSellingSection(
+            key: ValueKey('best_$_refreshKey'),
+            loadDelay: const Duration(milliseconds: 200),
           ),
-          const FeaturedProductsSection(
-            loadDelay: Duration(milliseconds: 400),
+          FeaturedProductsSection(
+            key: ValueKey('featured_$_refreshKey'),
+            loadDelay: const Duration(milliseconds: 400),
           ),
           BlocBuilder<GuestModeCubit, bool>(
             builder: (context, isGuest) => LastPurchasedSection(
+              key: ValueKey('last_purchased_${_refreshKey}_$isGuest'),
               isGuest: isGuest,
               loadDelay: const Duration(milliseconds: 600),
             ),

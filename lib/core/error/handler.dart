@@ -226,7 +226,12 @@ class GlobalErrorHandler {
       'ClientException with SocketException: Connection refused',
     )) {
       return true;
+    }if (message.contains(
+      'ClientException with SocketException: Connection timed out',
+    )) {
+      return true;
     }
+    if (message.contains('HttpException: Invalid')) return true;
     if (message.contains('Failed host lookup')) return true;
     if (message.contains('Image provider')) return true;
     if (message.contains('HTTP request failed')) return true;

@@ -833,8 +833,7 @@ class _ProposalCardState extends State<_ProposalCard> {
                     width: 30,
                     height: 30,
                     fit: BoxFit.cover,
-                    iconSize: 20,
-                  ),
+                    iconSize: 20,),
                 ),
                 const SizedBox(width: 8),
 
