@@ -12,7 +12,9 @@
   "profile": "الملف الشخصي",
   "menu": "القائمة",
   "browseAsGuest": "تصفح الآن",
-
+    "messages": "الرسائل",
+    "showMoreCount": "عرض {count} أكثر",
+    "showLess": "عرض أقل",
 
   "imageTooLargeDetailed": "حجم الصورة {size} ميجابايت. الحد الأقصى المسموح {limit} ميجابايت",
   "@imageTooLargeDetailed": {

@@ -36,6 +36,10 @@
   "points": "Points",
     "point": "Point",
     "extraPhone": "Extra Phone",
+    "messages": "Messages",
+    "showMoreCount": "Show {count} more",
+    "showLess": "Show less",
+
 
   "search": "Search",
     "searchFor": "search for a place, address, landmark....",

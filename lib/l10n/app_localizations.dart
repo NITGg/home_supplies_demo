@@ -287,6 +287,24 @@ abstract class AppLocalizations {
   /// **'Extra Phone'**
   String get extraPhone;
 
+  /// No description provided for @messages.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get messages;
+
+  /// No description provided for @showMoreCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count} more'**
+  String showMoreCount(Object count);
+
+  /// No description provided for @showLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get showLess;
+
   /// No description provided for @search.
   ///
   /// In en, this message translates to:
@@ -3094,12 +3112,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'..................'**
   String get chatClosed;
-
-  /// No description provided for @messages.
-  ///
-  /// In en, this message translates to:
-  /// **'Messages'**
-  String get messages;
 
   /// No description provided for @typing.
   ///

@@ -105,6 +105,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get extraPhone => 'رقم هاتف إضافي';
 
   @override
+  String get messages => 'الرسائل';
+
+  @override
+  String showMoreCount(Object count) {
+    return 'عرض $count أكثر';
+  }
+
+  @override
+  String get showLess => 'عرض أقل';
+
+  @override
   String get search => 'بحث';
 
   @override
@@ -1542,9 +1553,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get chatClosed => '..................';
-
-  @override
-  String get messages => 'الرسائل';
 
   @override
   String get typing => 'يكتب…';
