@@ -1,3 +1,4 @@
+import 'dart:async'; // ✅ Fix #6: real unawaited from dart:async
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -16,7 +17,10 @@ class CartCubit extends Cubit<CartState> {
 
   CartCubit({CartRepository? repository})
       : _repository = repository ?? CartRepositoryImpl(),
-        super(const CartInitial());
+  // ✅ Start in CartLoading so the skeleton renders immediately on first
+  // build — before fetchCart() is even called. This eliminates the
+  // CartInitial → CartLoading flash that caused a double skeleton render.
+        super(const CartLoading());
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -28,6 +32,12 @@ class CartCubit extends Cubit<CartState> {
   CartLoaded? get _loaded => state is CartLoaded ? state as CartLoaded : null;
 
   // ── Fetch ────────────────────────────────────────────────────────────────
+
+  /// Resets the cubit to [CartLoading] synchronously.
+  ///
+  /// Call this at the top of [initState] (before the first frame) so the
+  /// screen never renders stale cached data when navigating back to the cart.
+  void reset() => _safeEmit(const CartLoading());
 
   Future<void> fetchCart() async {
     _safeEmit(const CartLoading());
@@ -42,14 +52,18 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
+  /// Public silent refresh — skips the loading flash.
+  /// Use this for all background refreshes (coupon, address change, post-order).
+  Future<void> refreshCart() => _silentRefresh();
+
   /// Refreshes cart data in the background without a loading flash.
-  Future<void> _silentRefresh() async {
+  Future<void> _silentRefresh({bool refetchPreview = true}) async {
     try {
       final data = await _repository.getCart();
-      final currentPreview = _loaded?.preview; // ← preserve so UI doesn't flicker
+      final currentPreview = _loaded?.preview;
       _safeEmit(CartLoaded(_enrichSummary(data), preview: currentPreview));
-      if (data.cartItems.isNotEmpty) {
-        unawaited(_fetchPreviewSilently()); // ← re-fetch fees after every mutation
+      if (refetchPreview && data.cartItems.isNotEmpty) {
+        unawaited(_fetchPreviewSilently());
       }
     } catch (e) {
       dLog('[CartCubit] silentRefresh error: $e');
@@ -69,7 +83,7 @@ class CartCubit extends Cubit<CartState> {
   /// due to a supplier conflict — callers are expected to catch this and
   /// show the resolution dialog.
   Future<void> addItem({required int spId, required int quantity}) async {
-    // ← Mark the item as busy before the network call
+    // Mark the item as busy before the network call
     final loaded = _loaded;
     if (loaded != null) {
       _safeEmit(loaded.copyWith(busyItemIds: {...loaded.busyItemIds, spId}));
@@ -99,9 +113,9 @@ class CartCubit extends Cubit<CartState> {
       rethrow;
     } catch (e) {
       dLog('[CartCubit] addItem error: $e');
-      // Clear busy flag on error
       final current = _loaded;
       if (current != null) {
+        // ✅ Fix #7: clear busy flag and rethrow — clearly structured
         final busy = Set<int>.from(current.busyItemIds)..remove(spId);
         _safeEmit(current.copyWith(busyItemIds: busy));
         rethrow;
@@ -109,6 +123,7 @@ class CartCubit extends Cubit<CartState> {
       _safeEmit(CartError(extractErrorMessage(e)));
     }
   }
+
   Future<void> _fetchPreviewSilently({String? couponCode}) async {
     try {
       final preview = await _repository.getOrderPreview(couponCode: couponCode);
@@ -174,6 +189,7 @@ class CartCubit extends Cubit<CartState> {
       cartItemId: spId,
       action: CartUpdateAction.increment,
       quantity: 1,
+      refetchPreview: false,
     );
   }
 
@@ -206,6 +222,7 @@ class CartCubit extends Cubit<CartState> {
         cartItemId: spId,
         action: CartUpdateAction.decrement,
         quantity: 1,
+        refetchPreview: false,
       );
     }
   }
@@ -259,10 +276,17 @@ class CartCubit extends Cubit<CartState> {
     try {
       await _repository.clearCart();
       await _silentRefresh();
+      // ✅ Fix #9: removed the unconditional CartError emit after fetchCart —
+      // if _silentRefresh succeeds the loaded state is already emitted;
+      // if it fails _silentRefresh logs and keeps last state.
     } catch (e) {
       dLog('[CartCubit] clearCart error: $e');
+      // Refetch to restore accurate server state, then surface the error.
       await fetchCart();
-      _safeEmit(CartError(extractErrorMessage(e)));
+      // Only emit error if we're still in a non-loaded state after refetch.
+      if (_loaded == null) {
+        _safeEmit(CartError(extractErrorMessage(e)));
+      }
     }
   }
 
@@ -272,6 +296,7 @@ class CartCubit extends Cubit<CartState> {
     required int cartItemId,
     required CartUpdateAction action,
     required int quantity,
+    bool refetchPreview = true,
   }) async {
     final loaded = _loaded;
     if (loaded == null) return;
@@ -289,8 +314,10 @@ class CartCubit extends Cubit<CartState> {
 
       if (updated == null) {
         _applyOptimisticRemove(cartItemId);
+        unawaited(_silentRefresh(refetchPreview: refetchPreview));
       } else {
         _applyItemUpdate(updated);
+        if (refetchPreview) unawaited(_silentRefresh(refetchPreview: true));
       }
     } catch (e) {
       dLog('[CartCubit] _updateItem error: $e');
@@ -373,5 +400,5 @@ class CartCubit extends Cubit<CartState> {
   }
 }
 
-/// Discards a Future without lint warnings.
-void unawaited(Future<void> future) {}
+// ✅ Fix #6: removed the local no-op unawaited stub.
+// dart:async's unawaited() is now imported at the top of the file.

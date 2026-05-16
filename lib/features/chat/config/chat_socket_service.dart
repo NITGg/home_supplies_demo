@@ -197,7 +197,7 @@ class ChatSocketService {
       return;
     }
 
-    _socket!.emit('chat:join', {'chatId': chatId});
+    _socket?.emit('chat:join', {'chatId': chatId});
     _activeChatRooms.add(chatId);
     dLog('🔗 [ChatSocket] Joined chat room: $chatId');
   }

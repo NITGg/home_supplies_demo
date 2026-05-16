@@ -55,6 +55,7 @@ class _CartScreenState extends State<CartScreen> {
   bool _pillVisible = true;
   late final ScrollController _scrollController = ScrollController();
   double _lastScrollOffset = 0;
+
   void _toggleSummary() {
     _couponFocus.unfocus();
     setState(() => _summaryExpanded = !_summaryExpanded);
@@ -62,12 +63,18 @@ class _CartScreenState extends State<CartScreen> {
 
   // ── Price helpers ─────────────────────────────────────────────────────────
 
-  double _computeRequiredAmount(CartLoaded state) {
+  // ✅ Fix #5: extracted shared computation to avoid duplication.
+  double _priceBeforeCoupon(CartLoaded state) {
     final summary = state.data.summary;
     final originalTotal = toDouble(summary.originalTotal);
-    final totalDiscount =
-    toBool(summary.hasDiscount) ? toDouble(summary.totalDiscount) : 0.0;
-    final priceBeforeCoupon = originalTotal - totalDiscount;
+    final totalDiscount = toBool(summary.hasDiscount)
+        ? toDouble(summary.totalDiscount)
+        : 0.0;
+    return originalTotal - totalDiscount;
+  }
+
+  double _computeRequiredAmount(CartLoaded state) {
+    final priceBeforeCoupon = _priceBeforeCoupon(state);
     final couponDiscount = _appliedCoupon != null
         ? computeCouponCartDiscount(_appliedCoupon!, priceBeforeCoupon)
         : null;
@@ -75,18 +82,14 @@ class _CartScreenState extends State<CartScreen> {
     final preview = state.preview;
     if (preview == null) return finalTotal;
 
-    return finalTotal
-        + preview.totalFee.ceilToDouble()
-        + preview.vatAmount.ceilToDouble()
-        - preview.discountAmount.ceilToDouble(); // 👈 server-authoritative discount
+    return finalTotal +
+        preview.totalFee.ceilToDouble() +
+        preview.vatAmount.ceilToDouble() -
+        preview.discountAmount.ceilToDouble();
   }
 
   double _computeDisplayTotal(CartLoaded state) {
-    final summary = state.data.summary;
-    final originalTotal = toDouble(summary.originalTotal);
-    final totalDiscount =
-    toBool(summary.hasDiscount) ? toDouble(summary.totalDiscount) : 0.0;
-    final priceBeforeCoupon = originalTotal - totalDiscount;
+    final priceBeforeCoupon = _priceBeforeCoupon(state);
     final couponDiscount = _appliedCoupon != null
         ? computeCouponCartDiscount(_appliedCoupon!, priceBeforeCoupon)
         : null;
@@ -94,23 +97,23 @@ class _CartScreenState extends State<CartScreen> {
     final preview = state.preview;
     if (preview == null) return subtotal;
 
-    return subtotal
-        + preview.totalFee.ceilToDouble()
-        + preview.vatAmount.ceilToDouble()
-        - preview.discountAmount.ceilToDouble(); // 👈
+    return subtotal +
+        preview.totalFee.ceilToDouble() +
+        preview.vatAmount.ceilToDouble() -
+        preview.discountAmount.ceilToDouble();
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   void _onScroll() {
     final offset = _scrollController.offset;
-    final delta  = offset - _lastScrollOffset;
+    final delta = offset - _lastScrollOffset;
     _lastScrollOffset = offset;
 
     // Scrolling down → hide pill (and collapse summary)
     if (delta > 4 && _pillVisible) {
       setState(() {
-        _pillVisible      = false;
-        _summaryExpanded  = false;
+        _pillVisible = false;
+        _summaryExpanded = false;
       });
     }
     // Scrolling up or near top → show pill
@@ -118,11 +121,23 @@ class _CartScreenState extends State<CartScreen> {
       setState(() => _pillVisible = true);
     }
   }
+
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
 
+    // ✅ Reset to CartLoading synchronously before the first frame so the
+    // screen never flashes stale cached data. The cubit may already hold a
+    // CartLoaded from a previous visit; reset() clears it immediately so
+    // frame 1 always renders the skeleton, not old data.
+    context.read<CartCubit>().reset();
+
+    // ✅ The cubit starts in CartLoading so the skeleton is shown on frame 1.
+    // fetchCart() is still called via postFrameCallback because context.read<>
+    // for BlocProvider ancestors is only safe after the first frame.
+    // The key point: there is only ONE loading state — the cubit's initial
+    // CartLoading — not CartInitial → CartLoading (which caused the double flash).
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       context.read<CartCubit>().fetchCart();
@@ -131,8 +146,7 @@ class _CartScreenState extends State<CartScreen> {
       if (_couponController.text.isNotEmpty) return;
 
       final profileState = context.read<ProfileCubit>().state;
-      if (profileState is ProfileLoaded &&
-          profileState.profile.roleId == 4) {
+      if (profileState is ProfileLoaded && profileState.profile.roleId == 4) {
         return;
       }
 
@@ -154,14 +168,14 @@ class _CartScreenState extends State<CartScreen> {
 
   CartCubit get _cubit => context.read<CartCubit>();
 
+  // ✅ Fix #3: use _cubit consistently; stream listening is safe via Future.any.
   Future<void> _onRefresh() async {
-    context.read<CartCubit>().fetchCart();
+    _cubit.fetchCart();
     context.read<WalletCubit>().fetchWalletData();
     await Future.any([
-      context
-          .read<CartCubit>()
-          .stream
-          .firstWhere((s) => s is CartLoaded || s is CartError),
+      _cubit.stream.firstWhere(
+            (s) => s is CartLoaded || s is CartError,
+      ),
       Future.delayed(const Duration(seconds: 4)),
     ]);
   }
@@ -187,12 +201,14 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> _checkout() async {
     if (_paymentMethod == 'WALLET') {
-      final cartState = context.read<CartCubit>().state;
+      final cartState = _cubit.state;
       if (cartState is CartLoaded) {
         final required = _computeRequiredAmount(cartState);
         if (_walletBalance < required) {
           _showInsufficientBalanceDialog(
-              required: required, balance: _walletBalance);
+            required: required,
+            balance: _walletBalance,
+          );
           return;
         }
       }
@@ -203,8 +219,10 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  void _showInsufficientBalanceDialog(
-      {required double required, required double balance}) {
+  void _showInsufficientBalanceDialog({
+    required double required,
+    required double balance,
+  }) {
     final l10n = AppLocalizations.of(context)!;
     final shortfall = (required - balance).ceilToDouble();
     showModalBottomSheet(
@@ -230,109 +248,131 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-// ── Guest fallback ──────────────────────────────────────────────────────
-    final isGuest = context.read<GuestModeCubit>().state;
-    if (isGuest) {
-      return Scaffold(
-        appBar: AppBar(leading: CircleBackButton()),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.shopping_cart_outlined,
-                    size: 72, color: Colors.grey.shade300),
-                const SizedBox(height: 20),
-                Text(
-                  l10n.cart,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 28),
-                FilledButton.icon(
-                  onPressed: () => context.go('/auth/login'),
-                  icon: const Icon(Icons.login_rounded),
-                  label: Text(l10n.signin),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(200, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-    // ── End guest fallback ──────────────────────────────────────────────────
 
-    return BlocProvider.value(
-      value: _couponCubit,
-      child: BlocListener<AddressCubit, AddressState>(
-        listenWhen: (_, curr) => curr is AddressesLoaded,
-        listener: (context, state) {
-          if (state is AddressesLoaded) {
-            final newDefaultId =
-                state.addresses.where((a) => a.isDefault).firstOrNull?.id;
-            if (newDefaultId != _currentDefaultAddressId) {
-              _currentDefaultAddressId = newDefaultId;
-              if (newDefaultId != null) _cubit.fetchCart();
-            }
-          }
-        },
-        child: BlocListener<WalletCubit, WalletState>(
-          listenWhen: (_, curr) => curr is WalletLoaded,
-          listener: (context, state) {
-            if (state is WalletLoaded) {
-              setState(
-                      () => _walletBalance = state.walletData.wallet.balance);
-            }
-          },
-          child: BlocListener<OrderCubit, OrderState>(
-            listener: (context, state) =>
-                _handleOrderState(context, state, l10n),
-            child: BlocConsumer<CartCubit, CartState>(
-              listenWhen: (_, curr) => curr is CartError,
-              listener: (context, state) {
-                if (state is CartError) showErrorBanner(context, state.message);
-              },
-              builder: (context, state) {
-                return Scaffold(
-                  appBar: _buildAppBar(context, state),
-                  body: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: switch (state) {
-                      CartInitial() ||
-                      CartLoading() =>
-                      const CartLoadingView(key: ValueKey('loading')),
-                      CartError(:final message) => CartErrorView(
-                        key: const ValueKey('error'),
-                        message: message,
-                        onRetry: _cubit.fetchCart,
+    // ✅ Fix #4: use BlocBuilder so the guest screen reacts to auth changes.
+    return BlocBuilder<GuestModeCubit, bool>(
+      builder: (context, isGuest) {
+        if (isGuest) {
+          return Scaffold(
+            appBar: AppBar(leading: CircleBackButton()),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.shopping_cart_outlined,
+                      size: 72,
+                      color: Colors.grey.shade300,
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      l10n.cart,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                      CartLoaded(:final data) when data.cartItems.isEmpty =>
-                          _buildEmptyWithRefresh(
-                              key: const ValueKey('empty')),
-                      CartLoaded() =>
-                          _buildLoaded(context, state),
-                    },
-                  ),
-                );
+                    ),
+                    const SizedBox(height: 28),
+                    FilledButton.icon(
+                      onPressed: () => context.go('/auth/login'),
+                      icon: const Icon(Icons.login_rounded),
+                      label: Text(l10n.signin),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(200, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        return BlocProvider.value(
+          value: _couponCubit,
+          child: BlocListener<AddressCubit, AddressState>(
+            listenWhen: (_, curr) => curr is AddressesLoaded,
+            listener: (context, state) {
+              if (state is AddressesLoaded) {
+                final newDefaultId = state.addresses
+                    .where((a) => a.isDefault)
+                    .firstOrNull
+                    ?.id;
+                if (newDefaultId != _currentDefaultAddressId) {
+                  _currentDefaultAddressId = newDefaultId;
+                  if (newDefaultId != null) _cubit.refreshCart();
+                }
+              }
+            },
+            child: BlocListener<WalletCubit, WalletState>(
+              listenWhen: (_, curr) => curr is WalletLoaded,
+              listener: (context, state) {
+                if (state is WalletLoaded) {
+                  setState(
+                          () => _walletBalance = state.walletData.wallet.balance);
+                }
               },
+              child: BlocListener<OrderCubit, OrderState>(
+                listener: (context, state) =>
+                    _handleOrderState(context, state, l10n),
+                child: BlocConsumer<CartCubit, CartState>(
+                  listenWhen: (_, curr) => curr is CartError,
+                  listener: (context, state) {
+                    if (state is CartError) {
+                      showErrorBanner(context, state.message);
+                    }
+                  },
+                  // ✅ Fix #1: include preview changes so the pill total
+                  // updates when the order preview arrives.
+                  buildWhen: (prev, curr) {
+                    if (prev is CartLoaded && curr is CartLoaded) {
+                      return prev.data != curr.data ||
+                          prev.busyItemIds != curr.busyItemIds ||
+                          prev.preview != curr.preview; // ← was missing
+                    }
+                    return true;
+                  },
+                  builder: (context, state) {
+                    return Scaffold(
+                      appBar: _buildAppBar(context, state),
+                      body: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: switch (state) {
+                          CartInitial() ||
+                          CartLoading() =>
+                          const CartLoadingView(key: ValueKey('loading')),
+                          CartError(:final message) => CartErrorView(
+                            key: const ValueKey('error'),
+                            message: message,
+                            onRetry: _cubit.fetchCart,
+                          ),
+                          CartLoaded(:final data)
+                          when data.cartItems.isEmpty =>
+                              _buildEmptyWithRefresh(
+                                  key: const ValueKey('empty')),
+                          CartLoaded() => _buildLoaded(context, state),
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   void _handleOrderState(
-      BuildContext context, OrderState state, AppLocalizations l10n) {
+      BuildContext context,
+      OrderState state,
+      AppLocalizations l10n,
+      ) {
     if (state is CouponValidating) {
       if (!_couponValidating) setState(() => _couponValidating = true);
     } else if (state is CouponRedeemed) {
@@ -374,9 +414,8 @@ class _CartScreenState extends State<CartScreen> {
         FocusScope.of(context).unfocus();
         context.go('/mainHome', extra: GoToTab(HomeCubit.ordersTabIndex));
       }
-      context.read<CartCubit>().fetchCart();
-      showSuccessBanner(
-          context, '${l10n.created}: ${state.order.orderNumber}');
+      _cubit.refreshCart();
+      showSuccessBanner(context, '${l10n.created}: ${state.order.orderNumber}');
     } else if (state is OrderError) {
       Fluttertoast.showToast(
         msg: state.message,
@@ -426,8 +465,10 @@ class _CartScreenState extends State<CartScreen> {
               radius: 20,
               backgroundColor: Colors.grey.shade200,
               child: IconButton(
-                icon: Icon(Icons.delete_sweep_outlined,
-                    color: Colors.grey.shade700),
+                icon: Icon(
+                  Icons.delete_sweep_outlined,
+                  color: Colors.grey.shade700,
+                ),
                 tooltip: l10n.clearCart,
                 onPressed: () => _confirmClear(context),
               ),
@@ -462,7 +503,7 @@ class _CartScreenState extends State<CartScreen> {
     final displayTotal = _computeDisplayTotal(state);
 
     return Column(
-      key: ValueKey('loaded_${items.length}'),
+      key: const ValueKey('loaded'),
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(hPad, 10, hPad, 0),
@@ -508,8 +549,10 @@ class _CartScreenState extends State<CartScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // ── Pill ───────────────────────────────────────────────
+                // ✅ Fix #1: displayTotal is computed from the outer state
+                // which now rebuilds on preview changes — pill stays fresh.
                 _CheckoutPill(
-                  total: summary.subtotal,
+                  total: displayTotal,
                   expanded: _summaryExpanded,
                   onTap: _toggleSummary,
                 ),
@@ -521,23 +564,40 @@ class _CartScreenState extends State<CartScreen> {
                     curve: Curves.easeInOut,
                     alignment: Alignment.bottomCenter,
                     heightFactor: _summaryExpanded ? 1.0 : 0.0,
-                    child: CartSummaryBar(
-                      summary: summary,
-                      preview: state.preview,
-                      hPad: hPad,
-                      bottomPadding: bottomPadding,
-                      theme: theme,
-                      l10n: l10n,
-                      paymentMethod: _paymentMethod,
-                      onPaymentMethodChanged: (m) =>
-                          setState(() => _paymentMethod = m),
-                      couponController: _couponController,
-                      couponFocus: _couponFocus,
-                      appliedCoupon: _appliedCoupon,
-                      couponValidating: _couponValidating,
-                      onValidateCoupon: _validateCoupon,
-                      onRemoveCoupon: _removeCoupon,
-                      onCheckout: _checkout,
+                    // ✅ Fix #2: nested BlocBuilder only needed to scope
+                    // summary rebuilds. Use the inner builder's state
+                    // explicitly so CartSummaryBar always gets current preview.
+                    child: BlocBuilder<CartCubit, CartState>(
+                      buildWhen: (prev, curr) {
+                        if (prev is CartLoaded && curr is CartLoaded) {
+                          return prev.preview != curr.preview ||
+                              prev.data.summary != curr.data.summary;
+                        }
+                        return false;
+                      },
+                      builder: (context, innerState) {
+                        final loadedInner = innerState is CartLoaded
+                            ? innerState
+                            : state; // safe fallback
+                        return CartSummaryBar(
+                          summary: loadedInner.data.summary,
+                          preview: loadedInner.preview, // ← uses inner state
+                          hPad: hPad,
+                          bottomPadding: bottomPadding,
+                          theme: theme,
+                          l10n: l10n,
+                          paymentMethod: _paymentMethod,
+                          onPaymentMethodChanged: (m) =>
+                              setState(() => _paymentMethod = m),
+                          couponController: _couponController,
+                          couponFocus: _couponFocus,
+                          appliedCoupon: _appliedCoupon,
+                          couponValidating: _couponValidating,
+                          onValidateCoupon: _validateCoupon,
+                          onRemoveCoupon: _removeCoupon,
+                          onCheckout: _checkout,
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -555,7 +615,9 @@ class _CartScreenState extends State<CartScreen> {
     } catch (_) {
       if (context.mounted) {
         showErrorBanner(
-            context, AppLocalizations.of(context)!.updateQuantityFailed);
+          context,
+          AppLocalizations.of(context)!.updateQuantityFailed,
+        );
       }
     }
   }
@@ -566,7 +628,9 @@ class _CartScreenState extends State<CartScreen> {
     } catch (_) {
       if (context.mounted) {
         showErrorBanner(
-            context, AppLocalizations.of(context)!.updateQuantityFailed);
+          context,
+          AppLocalizations.of(context)!.updateQuantityFailed,
+        );
       }
     }
   }
@@ -623,13 +687,20 @@ class _CheckoutPill extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.fromLTRB(20, 12, 20, 12 + (expanded ? 0 : safePad)),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            12,
+            20,
+            12 + (expanded ? 0 : safePad),
+          ),
           child: Row(
             children: [
               // ── Total badge ──────────────────────────────────────────
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.kPrimaryColor.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(24),
@@ -648,7 +719,7 @@ class _CheckoutPill extends StatelessWidget {
 
               // ── Label ────────────────────────────────────────────────
               Text(
-                l10n.proceedToCheckout,
+                l10n.checkout,
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
@@ -661,10 +732,7 @@ class _CheckoutPill extends StatelessWidget {
                 turns: expanded ? 0.5 : 0.0,
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
-                child: const Icon(
-                  Icons.keyboard_arrow_up_rounded,
-                  size: 24,
-                ),
+                child: const Icon(Icons.keyboard_arrow_up_rounded, size: 24),
               ),
             ],
           ),
