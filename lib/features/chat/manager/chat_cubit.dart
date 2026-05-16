@@ -17,13 +17,12 @@ class ChatCubit extends Cubit<ChatState> {
   StreamSubscription<Map<String, dynamic>>? _typingStopSub;
   StreamSubscription<Map<String, dynamic>>? _messageReadSub;
 
-
   Timer? _typingDebounce;
   Timer? _typingTimeoutTimer;
 
   ChatCubit({required ChatRepository repo, required this.currentUserId})
-    : _repo = repo,
-      super(const ChatInitial()) {
+      : _repo = repo,
+        super(const ChatInitial()) {
     dLog('🟢 [ChatCubit] created — currentUserId: $currentUserId');
   }
 
@@ -35,7 +34,7 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       final chats = await _repo.getMyChats();
       final knownChat = chats.cast<ChatModel?>().firstWhere(
-        (c) => c?.id == chatId,
+            (c) => c?.id == chatId,
         orElse: () => null,
       );
 
@@ -159,19 +158,15 @@ class ChatCubit extends Cubit<ChatState> {
 
   // ─── Send Image Message ───────────────────────────────────────────────────
 
-  /// [filePath] is the absolute path to the picked image on disk.
-  /// Shows a local-file preview bubble immediately, then replaces it
-  /// with the server URL once the upload completes.
   Future<void> sendImageMessage(String filePath) async {
     if (state is! ChatLoaded) return;
     final loaded = state as ChatLoaded;
     if (loaded.isClosed) return;
 
-    // Optimistic: use the local file path as content for immediate preview.
     final optimistic = MessageModel.optimistic(
       chatId: loaded.chat.id,
       senderId: currentUserId,
-      content: filePath, // local path — bubble renders as Image.file
+      content: filePath,
       type: MessageType.image,
     );
 
@@ -195,14 +190,12 @@ class ChatCubit extends Cubit<ChatState> {
         current.copyWith(
           messages: current.messages.map((m) {
             if (m.localId != optimistic.localId) return m;
-            // Replace local path with the server URL.
             return MessageModel(
               localId: m.localId,
               serverId: confirmed.serverId,
               chatId: m.chatId,
               senderId: m.senderId,
               content: confirmed.content,
-              // ← server URL
               type: MessageType.image,
               status: MessageStatus.sent,
               createdAt: m.createdAt,
@@ -227,7 +220,7 @@ class ChatCubit extends Cubit<ChatState> {
     if (raw == null) return;
 
     final failed = raw.messages.cast<MessageModel?>().firstWhere(
-      (m) => m?.localId == localId,
+          (m) => m?.localId == localId,
       orElse: () => null,
     );
     if (failed == null) return;
@@ -241,7 +234,6 @@ class ChatCubit extends Cubit<ChatState> {
 
     try {
       if (failed.type == MessageType.image) {
-        // Re-upload the local file.
         final confirmed = await _repo.sendImageMessage(
           chatId: raw.chat.id,
           filePath: failed.content,
@@ -316,7 +308,7 @@ class ChatCubit extends Cubit<ChatState> {
       final current = state as ChatLoaded;
       final existingIds = current.messages.map((m) => m.localId).toSet();
       final newOnes = older
-          .reversed // ← add this
+          .reversed
           .where((m) => !existingIds.contains(m.localId))
           .toList();
       emit(
@@ -389,15 +381,23 @@ class ChatCubit extends Cubit<ChatState> {
       final msgJson = _flattenSender(data);
       final msg = MessageModel.fromJson(msgJson, currentUserId: currentUserId);
 
-      // Echo of our own optimistic message.
+      // ── Self-echo handling ─────────────────────────────────────────────────
       if (msg.isMe) {
+        // Case 1: HTTP response already confirmed this message (serverId present).
+        // The socket echo arrives late — nothing to do.
+        if (msg.serverId != null &&
+            current.messages.any((m) => m.serverId == msg.serverId)) {
+          return;
+        }
+
+        // Case 2: Message is still in-flight (status=sending).
+        // Confirm it via the socket echo instead of waiting for HTTP.
         final optimisticIdx = current.messages.lastIndexWhere(
-          (m) =>
-              m.status == MessageStatus.sending &&
+              (m) =>
+          m.status == MessageStatus.sending &&
               m.senderId == msg.senderId &&
               m.type == msg.type &&
-              // For text: match content exactly.
-              // For images: skip content check — local file path ≠ server URL.
+              // Images: skip content check — local path ≠ server URL.
               (msg.type == MessageType.image || m.content == msg.content),
         );
 
@@ -413,11 +413,11 @@ class ChatCubit extends Cubit<ChatState> {
         }
       }
 
-      if (current.messages.any(
-        (m) =>
-            (m.serverId != null && m.serverId == msg.serverId) ||
-            (m.isMe && m.type == msg.type && m.content == msg.content),
-      )) {
+      // ── General dedup — by serverId only ──────────────────────────────────
+      // Content-based matching is intentionally avoided: two different users
+      // can send identical text, and dropping one would cause a desync.
+      if (msg.serverId != null &&
+          current.messages.any((m) => m.serverId == msg.serverId)) {
         return;
       }
 
@@ -454,9 +454,9 @@ class ChatCubit extends Cubit<ChatState> {
       _removeTypingUser(userId);
     });
 
-
     _messageReadSub = _repo.onMessageRead.listen((data) {
-      final incomingChatId = _intField(data, 'chat_id') ?? _intField(data, 'chatId');
+      final incomingChatId =
+          _intField(data, 'chat_id') ?? _intField(data, 'chatId');
       if (incomingChatId != chatId) return;
 
       final ChatLoaded current;
@@ -464,7 +464,9 @@ class ChatCubit extends Cubit<ChatState> {
         current = state as ChatLoaded;
       } else if (state is MessageSendFailed) {
         current = (state as MessageSendFailed).currentState;
-      } else return;
+      } else {
+        return;
+      }
 
       final updated = current.messages.map((m) {
         if (m.isMe && m.status != MessageStatus.read) {
@@ -517,7 +519,7 @@ class ChatCubit extends Cubit<ChatState> {
     _typingTimeoutTimer?.cancel();
     _typingTimeoutTimer = Timer(
       ChatFeatureConfig.typingIndicatorTimeout,
-      () => _removeTypingUser(userId),
+          () => _removeTypingUser(userId),
     );
   }
 

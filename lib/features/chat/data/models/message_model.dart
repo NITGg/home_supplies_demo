@@ -107,6 +107,7 @@ class MessageModel {
     final senderId =
         _toInt(json['sender_id']) ??
             (senderObj is Map ? _toInt(senderObj['id']) : null);
+    dLog('🔍 [MessageModel.fromJson] resolved senderId: $senderId (senderObj type: ${senderObj?.runtimeType})');
     final chatId = _toInt(json['chat_id']);
 
     if (senderId == null) {
