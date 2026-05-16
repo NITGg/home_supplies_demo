@@ -87,13 +87,26 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     }
   }
 
-  void _showReviewSheet(BuildContext context, int orderId, int courierId , int courierUserId) {
-    showModalBottomSheet(
+  /// Shows the review sheet and closes the scanner screen once the sheet
+  /// is dismissed (whether the user submits a review or taps outside).
+  Future<void> _showReviewSheet(
+      BuildContext context,
+      int orderId,
+      int courierId,
+      int courierUserId,
+      ) async {
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ReviewBottomSheet(orderId: orderId, courierId: courierId, courierUserId: courierUserId),
+      builder: (_) => ReviewBottomSheet(
+        orderId: orderId,
+        courierId: courierId,
+        courierUserId: courierUserId,
+      ),
     );
+    // Close the scanner screen once the review sheet is dismissed.
+    if (mounted) Navigator.pop(context);
   }
 
   void _showError(String message) {
@@ -207,9 +220,10 @@ class ScannerOverlayPainter extends CustomPainter {
       Path.combine(
         PathOperation.difference,
         Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
-        Path()..addRRect(
-          RRect.fromRectAndRadius(scanAreaRect, const Radius.circular(20)),
-        ),
+        Path()
+          ..addRRect(
+            RRect.fromRectAndRadius(scanAreaRect, const Radius.circular(20)),
+          ),
       ),
       overlayPaint,
     );
@@ -261,6 +275,7 @@ class ScannerOverlayPainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
+
 // price_confirmation_sheet.dart
 
 class PriceConfirmationSheet extends StatelessWidget {

@@ -34,3 +34,23 @@ String formatDuration(int minutes, AppLocalizations l10n) {
 
   return '$hours ${l10n.hour} $remainingMinutes ${l10n.min}';
 }
+
+String formatDurationRange(int from, int to, AppLocalizations l10n) {
+  // Same unit on both sides → show "10–20 min" or "1–2 hr"
+  // Mixed (e.g. 50 min → 1 hr 10 min) → fall back to two full labels
+  if (from < 60 && to < 60) {
+    return '$from–$to ${l10n.min}';
+  }
+
+  final fromH = from ~/ 60;
+  final fromM = from % 60;
+  final toH   = to   ~/ 60;
+  final toM   = to   % 60;
+
+  if (fromM == 0 && toM == 0) {
+    return '$fromH–$toH ${l10n.hour}';
+  }
+
+  // Mixed — just join the two full strings with an en-dash
+  return '${formatDuration(from, l10n)}–${formatDuration(to, l10n)}';
+}

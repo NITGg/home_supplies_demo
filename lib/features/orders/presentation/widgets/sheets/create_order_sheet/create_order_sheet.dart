@@ -1339,10 +1339,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                             s is OrderSuccess,
                         builder: (context, state) {
                           return AppCustomButton(
+                            enabled: !(_distanceResult == null || (!_pickupNearMe && _pickupAddress == null)),
                             onPressed: _submit,
                             text: l10n.confirm,
                             isLoading:
-                            _distanceResult == null || (!_pickupNearMe && _pickupAddress == null) ||
                                 state is OrderOperationLoading,
                           );
                         },

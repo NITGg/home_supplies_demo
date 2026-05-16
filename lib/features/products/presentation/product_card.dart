@@ -234,6 +234,7 @@ class _ProductCardState extends State<ProductCard>
                           left: 8,
                           child: _ReadyTimePill(
                             minutes: product.pickupReadyDurationFrom!,
+                            minutesTo: product.pickupReadyDurationTo,   // ← ADD
                           ),
                         ),
                       Positioned(
@@ -783,13 +784,24 @@ class _PriceRow extends StatelessWidget {
 
 class _ReadyTimePill extends StatelessWidget {
   final int minutes;
+  final int? minutesTo;           // ← ADD
 
-  const _ReadyTimePill({required this.minutes});
+  const _ReadyTimePill({
+    required this.minutes,
+    this.minutesTo,               // ← ADD
+  });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final text = formatDuration(minutes, l10n);
+
+    // Build "5 min" OR "5–10 min" depending on whether `to` is set and differs
+    final String text;
+    if (minutesTo != null && minutesTo != minutes) {
+      text = formatDurationRange(minutes, minutesTo!, l10n);  // ← "10–20 min"
+    } else {
+      text = formatDuration(minutes, l10n);
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -805,6 +817,7 @@ class _ReadyTimePill extends StatelessWidget {
           Text(
             text,
             style: const TextStyle(
+              overflow: TextOverflow.ellipsis,
               color: Colors.white,
               fontSize: 9,
               fontWeight: FontWeight.w600,

@@ -123,6 +123,7 @@ class OrderCard extends StatelessWidget {
           children: [
             _buildHeader(statusColor, context),
             _buildProductInfo(),
+            _OrderItemsSection(order: order),
             _buildResultInfo(context),
             if (order.status == "IN_PROGRESS") _buildCourierFooter(context),
             if (order.hasPendingPriceAdjustment)
@@ -247,7 +248,7 @@ class OrderCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (order.productDescription != null)
+                        if (order.productDescription != null && order.orderItems.isNotEmpty)
                           Expanded(
                             child: Text(
                               order.productDescription!,
@@ -1146,6 +1147,209 @@ class _PulsingDotState extends State<_PulsingDot>
         decoration: const BoxDecoration(
           color: Color(0xFFE65100),
           shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
+
+class _OrderItemsSection extends StatefulWidget {
+  final Order order;
+
+  const _OrderItemsSection({required this.order});
+
+  @override
+  State<_OrderItemsSection> createState() => _OrderItemsSectionState();
+}
+
+class _OrderItemsSectionState extends State<_OrderItemsSection>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _expandAnim;
+  late final Animation<double> _rotateAnim;
+  bool _expanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    );
+    _expandAnim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+    _rotateAnim = Tween<double>(begin: 0, end: 0.5).animate(_expandAnim);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() => _expanded = !_expanded);
+    _expanded ? _ctrl.forward() : _ctrl.reverse();
+  }
+
+  bool get _isCatalog => widget.order.orderItems.isNotEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final order = widget.order;
+
+    // Nothing to show
+    if (!_isCatalog && (order.productDescription == null || order.productDescription!.isEmpty)) {
+      return const SizedBox.shrink();
+    }
+
+    final itemCount = _isCatalog ? order.orderItems.length : null;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          children: [
+            // ── Header (always visible) ──────────────────────────────────
+            InkWell(
+              onTap: _toggle,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    Icon(
+                      _isCatalog ? Icons.receipt_long_outlined : Icons.notes_outlined,
+                      size: 16,
+                      color: Colors.grey.shade600,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _isCatalog
+                            ? '${l10n.products} ($itemCount)'
+                            : l10n.description,
+                        style: AppTextStyles.bold14.copyWith(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ),
+                    RotationTransition(
+                      turns: _rotateAnim,
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 18,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Collapsible body ─────────────────────────────────────────
+            SizeTransition(
+              sizeFactor: _expandAnim,
+              child: Column(
+                children: [
+                  Divider(height: 1, color: Colors.grey.shade200),
+                  if (_isCatalog)
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      itemCount: order.orderItems.length,
+                      separatorBuilder: (_, __) =>
+                          Divider(height: 1, color: Colors.grey.shade100),
+                      itemBuilder: (context, index) {
+                        final item = order.orderItems[index];
+                        final name = item.product.nameAr.isNotEmpty
+                            ? item.product.nameAr
+                            : item.product.name;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 7),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: AppColors.kPrimaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.kPrimaryColor,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  name,
+                                  style: AppTextStyles.regular14.copyWith(
+                                    fontSize: 12,
+                                    color: Colors.black87,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.kPrimaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '× ${item.quantity}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.kPrimaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        order.productDescription!,
+                        style: AppTextStyles.regular14.copyWith(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
