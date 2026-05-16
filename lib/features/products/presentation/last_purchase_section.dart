@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 import 'package:tawreedat_go/features/products/presentation/product_card.dart';
+import 'package:tawreedat_go/features/products/presentation/product_secttion_skeleton.dart';
 
 import '../../../core/utils/logger.dart';
 import '../../../core/utils/secure_storage_service.dart';
@@ -16,7 +17,14 @@ import '../../products/data/repo/product_repo.dart';
 class LastPurchasedSection extends StatefulWidget {
   final bool isGuest;
 
-  const LastPurchasedSection({super.key, this.isGuest = false});
+  /// Delay before the first API call — used for staggered section loading.
+  final Duration loadDelay;
+
+  const LastPurchasedSection({
+    super.key,
+    this.isGuest = false,
+    this.loadDelay = Duration.zero,
+  });
 
   @override
   State<LastPurchasedSection> createState() => _LastPurchasedSectionState();
@@ -37,8 +45,15 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
   @override
   void initState() {
     super.initState();
-    if (!widget.isGuest) _load();
-
+    if (!widget.isGuest) {
+      if (widget.loadDelay == Duration.zero) {
+        _load();
+      } else {
+        Future.delayed(widget.loadDelay, () {
+          if (mounted) _load();
+        });
+      }
+    }
     _scrollController.addListener(_onScroll);
   }
 
@@ -59,7 +74,7 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
   Future<void> _load() async {
     if (widget.isGuest) return;
     // Guard against renders that fire before the guest flag is set
-    final token = await SecureStorageService().getToken();   // ← self-check
+    final token = await SecureStorageService().getToken();
     if (token == null || token.isEmpty) return;
     if (_isLoading || !_hasMore) return;
     setState(() => _isLoading = true);
@@ -92,9 +107,14 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
 
   @override
   Widget build(BuildContext context) {
+    // Guests never see this section — skip even the skeleton
     if (widget.isGuest) return const SizedBox.shrink();
-    // Don't render the section at all until we know there's something to show
-    if (_initialLoadDone && _products.isEmpty) return const SizedBox.shrink();
+
+    // Show skeleton while the first load is in progress
+    if (!_initialLoadDone) return const ProductSectionSkeleton();
+
+    // Nothing to show — collapse entirely
+    if (_products.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,9 +136,10 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context)!.purchasedBefore,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               GestureDetector(
@@ -138,112 +159,35 @@ class _LastPurchasedSectionState extends State<LastPurchasedSection> {
         // ── Horizontal list ───────────────────────────────────────────────
         SizedBox(
           height: 300,
-          child: !_initialLoadDone
-              ? _SkeletonRow()
-              : ListView.builder(
-                  controller: _scrollController,
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  itemCount: _products.length + (_isLoading ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == _products.length) {
-                      return const _LoadingCard();
-                    }
-                    final product = _products[index];
-                    return SizedBox(
-                      width: 160,
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: ProductCard(
-                          product: product,
-                          onTap: () => context.push(
-                            '/products/${product.id}',
-                            extra: product,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+          child: ListView.builder(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: _products.length + (_isLoading ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == _products.length) {
+                return const ProductSectionLoadingCard();
+              }
+              final product = _products[index];
+              return SizedBox(
+                width: 160,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: ProductCard(
+                    product: product,
+                    onTap: () => context.push(
+                      '/products/${product.id}',
+                      extra: product,
+                    ),
+                  ),
                 ),
+              );
+            },
+          ),
         ),
 
         const SizedBox(height: 8),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Skeleton & loading helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SkeletonRow extends StatefulWidget {
-  @override
-  State<_SkeletonRow> createState() => _SkeletonRowState();
-}
-
-class _SkeletonRowState extends State<_SkeletonRow>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-    _anim = Tween<double>(
-      begin: 0.3,
-      end: 0.85,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      itemCount: 4,
-      itemBuilder: (_, __) => AnimatedBuilder(
-        animation: _anim,
-        builder: (_, __) => Opacity(
-          opacity: _anim.value,
-          child: Container(
-            width: 150,
-            margin: const EdgeInsets.only(right: 10),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadingCard extends StatelessWidget {
-  const _LoadingCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 60,
-      child: Center(
-        child: SizedBox(
-          width: 18,
-          height: 18,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
     );
   }
 }

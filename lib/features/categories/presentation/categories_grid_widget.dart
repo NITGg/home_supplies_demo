@@ -64,70 +64,103 @@ class CategoriesGridWidgetState extends State<CategoriesGridWidget> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _cubit,
-      child: BlocBuilder<CategoriesCubit, CategoriesState>(
-        builder: (context, state) {
-          return switch (state) {
-            CategoriesInitial() ||
-            CategoriesLoading() =>
-            const _CategoriesSkeletonRow(),
-            CategoriesError() => Center(
-              child: CategoriesFallbackWidget(
-                title: AppLocalizations.of(context)!.welcome,
-                subtitle: AppLocalizations.of(context)!
-                    .tawreedatIsYourBestChoice,
-                lottieAsset:
-                'assets/animation_json/Shopping_cart_animation.json',
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Ads carousel — renders immediately ──────────────────────────
+          const HomeAdsCarousel(),
+
+          // ── Product sections — start fetching right away, in parallel
+          //    with the categories API call. Each section independently
+          //    shows its own skeleton until its own data arrives.
+          const OfferedSection(),
+          const BestSellingSection(
+            loadDelay: Duration(milliseconds: 200),
+          ),
+          const FeaturedProductsSection(
+            loadDelay: Duration(milliseconds: 400),
+          ),
+          BlocBuilder<GuestModeCubit, bool>(
+            builder: (context, isGuest) => LastPurchasedSection(
+              isGuest: isGuest,
+              loadDelay: const Duration(milliseconds: 600),
             ),
-            CategoriesLoaded() => Builder(builder: (context) {
-              final isEmpty = state.categories
-                  .where((c) => c.parentId == null)
-                  .isEmpty;
+          ),
 
-              // notify parent after the frame settles
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                widget.onEmptyChanged?.call(isEmpty);
-              });
-              final isGuest = context.read<GuestModeCubit>().state;
+          // ── Categories grid — has its own skeleton; independent of above ─
+          BlocBuilder<CategoriesCubit, CategoriesState>(
+            builder: (context, state) {
+              return switch (state) {
+                CategoriesInitial() ||
+                CategoriesLoading() =>
+                const _CategoriesSkeletonRow(),
+                CategoriesError() => Center(
+                  child: CategoriesFallbackWidget(
+                    title: AppLocalizations.of(context)!.welcome,
+                    subtitle: AppLocalizations.of(context)!
+                        .tawreedatIsYourBestChoice,
+                    lottieAsset:
+                    'assets/animation_json/Shopping_cart_animation.json',
+                  ),
+                ),
+                CategoriesLoaded() => Builder(builder: (context) {
+                  final isEmpty = state.categories
+                      .where((c) => c.parentId == null)
+                      .isEmpty;
 
-              return _CategoriesSection(
-                state: state,
-                onCategoryTap: widget.onCategoryTap,
-                onLoadMore: _cubit.loadMore,
-                showHeader: false,
-                isGuest: isGuest,
-              );
-            }),
-          };
-        },
+                  // Notify parent after the frame settles
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    widget.onEmptyChanged?.call(isEmpty);
+                  });
+
+                  if (isEmpty) {
+                    return Center(
+                      child: SingleChildScrollView(
+                        child: SquareAdsFeed(),
+                      ),
+                    );
+                  }
+
+                  final isGuest = context.read<GuestModeCubit>().state;
+
+                  return _CategoriesGrid(
+                    state: state,
+                    onCategoryTap: widget.onCategoryTap,
+                    showHeader: widget.showHeader,
+                    isGuest: isGuest,
+                  );
+                }),
+              };
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Section wrapper
+// Categories grid — label + card grid + suppliers strip only.
+// Product sections have been moved up into CategoriesGridWidget so they
+// load in parallel with (not after) the categories API call.
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _CategoriesSection extends StatelessWidget {
+class _CategoriesGrid extends StatelessWidget {
   final CategoriesLoaded state;
   final void Function(CategoryModel) onCategoryTap;
-  final VoidCallback onLoadMore;
   final bool showHeader;
   final bool isGuest;
 
-  /// Maximum number of categories shown on the home grid before "View All"
   static const int _homeGridLimit = 6;
 
-  const _CategoriesSection({
+  const _CategoriesGrid({
     required this.state,
     required this.onCategoryTap,
-    required this.onLoadMore,
     this.showHeader = true,
     this.isGuest = false,
   });
@@ -135,36 +168,20 @@ class _CategoriesSection extends StatelessWidget {
   List<CategoryModel> get _parents =>
       state.categories.where((c) => c.parentId == null).toList();
 
-  /// The slice shown on home — capped at [_homeGridLimit]
   List<CategoryModel> get _visibleParents =>
       _parents.take(_homeGridLimit).toList();
 
   bool get _hasMore => _parents.length > _homeGridLimit;
 
-  bool get _useCompact => false;
-
-  int get _crossAxisCount => _useCompact ? 4 : 3;
-
-  double get _childAspectRatio => _useCompact ? 0.95 : 0.82;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isEmpty = _parents.isEmpty;
-
-    if (isEmpty) {
-      return Center(
-        child: SingleChildScrollView(
-          child: SquareAdsFeed(),
-        ),
-      );
-    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Sticky Header Row ─────────────────────────────────────────────
+        // ── Optional sticky header ───────────────────────────────────────
         if (showHeader)
           Material(
             elevation: 0,
@@ -173,19 +190,20 @@ class _CategoriesSection extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
               child: Row(
                 children: [
-                  if(!isGuest)...[
-                  Container(
-                    width: 4,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: AppColors.kPrimaryColor,
-                      borderRadius: BorderRadius.circular(2),
+                  if (!isGuest) ...[
+                    Container(
+                      width: 4,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: AppColors.kPrimaryColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  const DefaultAddressChip(),
-                  const SizedBox(width: 8),
-                  const Spacer(),],
+                    const SizedBox(width: 8),
+                    const DefaultAddressChip(),
+                    const SizedBox(width: 8),
+                    const Spacer(),
+                  ],
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: Colors.grey.shade200,
@@ -222,16 +240,7 @@ class _CategoriesSection extends StatelessWidget {
             ),
           ),
 
-        // ── Ads Carousel ──────────────────────────────────────────────────
-        const HomeAdsCarousel(),
-
-        // ── Featured & Last Purchased ─────────────────────────────────────
-        const OfferedSection(),
-        const BestSellingSection(),
-        const FeaturedProductsSection(),
-        LastPurchasedSection(isGuest:isGuest),
-
-        // ── Categories label + View All ───────────────────────────────────
+        // ── "Categories" label + View All ───────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: Row(
@@ -267,55 +276,29 @@ class _CategoriesSection extends StatelessWidget {
           ),
         ),
 
-        // ── Grid (limited to 6) ───────────────────────────────────────────
+        // ── Grid (capped at 6) ───────────────────────────────────────────
         GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: _crossAxisCount,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
-            childAspectRatio: _childAspectRatio,
+            childAspectRatio: 0.82,
           ),
           itemCount: _visibleParents.length,
           itemBuilder: (_, i) => CategoryCard(
             category: _visibleParents[i],
             onTap: () => onCategoryTap(_visibleParents[i]),
-            style: _useCompact
-                ? CategoryCardStyle.compact
-                : CategoryCardStyle.regular,
+            style: CategoryCardStyle.regular,
           ),
         ),
-
-        // ── "View All Categories" button (shown when there are more) ──────
-        // if (_hasMore)
-        //   Padding(
-        //     padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-        //     child: SizedBox(
-        //       width: double.infinity,
-        //       child: OutlinedButton(
-        //         onPressed: () => context.push('/categories'),
-        //         style: OutlinedButton.styleFrom(
-        //           foregroundColor: AppColors.kPrimaryColor,
-        //           side: BorderSide(color: AppColors.kPrimaryColor, width: 1.2),
-        //           shape: RoundedRectangleBorder(
-        //             borderRadius: BorderRadius.circular(10),
-        //           ),
-        //           padding: const EdgeInsets.symmetric(vertical: 12),
-        //         ),
-        //         child: Text(
-        //           AppLocalizations.of(context)!.viewAll,
-        //           style: const TextStyle(fontWeight: FontWeight.w600),
-        //         ),
-        //       ),
-        //     ),
-        //   ),
 
         const SizedBox(height: 4),
         Divider(color: Colors.grey.shade200, height: 1),
 
-        // ── Suppliers Strip ───────────────────────────────────────────────
+        // ── Suppliers Strip ──────────────────────────────────────────────
         const SuppliersStripWidget(),
       ],
     );
@@ -323,15 +306,14 @@ class _CategoriesSection extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Skeleton row (shown while loading)
+// Skeleton shown only while the categories cubit is loading
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CategoriesSkeletonRow extends StatefulWidget {
   const _CategoriesSkeletonRow();
 
   @override
-  State<_CategoriesSkeletonRow> createState() =>
-      _CategoriesSkeletonRowState();
+  State<_CategoriesSkeletonRow> createState() => _CategoriesSkeletonRowState();
 }
 
 class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
@@ -362,6 +344,7 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Fake "Categories" label
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: AnimatedBuilder(
@@ -379,6 +362,7 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
             ),
           ),
         ),
+        // Fake 3×2 grid
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: GridView.builder(
@@ -396,8 +380,6 @@ class _CategoriesSkeletonRowState extends State<_CategoriesSkeletonRow>
               builder: (_, __) => Opacity(
                 opacity: _anim.value,
                 child: Container(
-                  width: double.infinity,
-                  height: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     color: Colors.grey.shade300,

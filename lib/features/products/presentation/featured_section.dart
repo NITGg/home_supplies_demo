@@ -1,10 +1,8 @@
-// featured_products_section.dart
-
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 import 'package:tawreedat_go/features/products/presentation/product_card.dart';
+import 'package:tawreedat_go/features/products/presentation/product_secttion_skeleton.dart';
 
 import '../../../core/utils/logger.dart';
 import '../../../l10n/app_localizations.dart';
@@ -16,7 +14,10 @@ import '../../products/data/repo/product_repo.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class FeaturedProductsSection extends StatefulWidget {
-  const FeaturedProductsSection({super.key});
+  /// Delay before the first API call — used for staggered section loading.
+  final Duration loadDelay;
+
+  const FeaturedProductsSection({super.key, this.loadDelay = Duration.zero});
 
   @override
   State<FeaturedProductsSection> createState() =>
@@ -38,7 +39,13 @@ class _FeaturedProductsSectionState extends State<FeaturedProductsSection> {
   @override
   void initState() {
     super.initState();
-    _load();
+    if (widget.loadDelay == Duration.zero) {
+      _load();
+    } else {
+      Future.delayed(widget.loadDelay, () {
+        if (mounted) _load();
+      });
+    }
     _scrollController.addListener(_onScroll);
   }
 
@@ -87,8 +94,11 @@ class _FeaturedProductsSectionState extends State<FeaturedProductsSection> {
 
   @override
   Widget build(BuildContext context) {
-    // Don't render the section at all until we know there's something to show
-    if (_initialLoadDone && _products.isEmpty) return const SizedBox.shrink();
+    // Show skeleton while the first load is in progress
+    if (!_initialLoadDone) return const ProductSectionSkeleton();
+
+    // Nothing to show — collapse entirely
+    if (_products.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,16 +142,14 @@ class _FeaturedProductsSectionState extends State<FeaturedProductsSection> {
         // ── Horizontal list ───────────────────────────────────────────────
         SizedBox(
           height: 300,
-          child: !_initialLoadDone
-              ? _SkeletonRow()
-              : ListView.builder(
+          child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: _products.length + (_isLoading ? 1 : 0),
             itemBuilder: (context, index) {
               if (index == _products.length) {
-                return const _LoadingCard();
+                return const ProductSectionLoadingCard();
               }
               final product = _products[index];
               return SizedBox(
@@ -163,79 +171,6 @@ class _FeaturedProductsSectionState extends State<FeaturedProductsSection> {
 
         const SizedBox(height: 8),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Skeleton & loading helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SkeletonRow extends StatefulWidget {
-  @override
-  State<_SkeletonRow> createState() => _SkeletonRowState();
-}
-
-class _SkeletonRowState extends State<_SkeletonRow>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.3, end: 0.85)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      itemCount: 4,
-      itemBuilder: (_, __) => AnimatedBuilder(
-        animation: _anim,
-        builder: (_, __) => Opacity(
-          opacity: _anim.value,
-          child: Container(
-            width: 150,
-            margin: const EdgeInsets.only(right: 10),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadingCard extends StatelessWidget {
-  const _LoadingCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 60,
-      child: Center(
-        child: SizedBox(
-          width: 18,
-          height: 18,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
     );
   }
 }
