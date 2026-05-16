@@ -1,3 +1,4 @@
+// client — chat_socket_service.dart
 import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
@@ -7,26 +8,30 @@ import '../../../core/utils/socket_service.dart';
 /// Handles all chat-specific socket events and room management.
 ///
 /// This service always borrows the live [IO.Socket] from [SocketService].
-/// It never opens its own connection — the app already has one shared socket
-/// that handles all real-time features (orders, offers, and chat).
+/// It never opens its own connection.
 ///
 /// ── Lifecycle ──────────────────────────────────────────────────────────────
 ///
-/// 1. Call [attach] once after [SocketService.connect] has been called
-///    (i.e. when the user logs in and the socket is live).
+/// 1. Call [attach] once after [SocketService.connect] has been called.
+///    If the socket isn't ready yet, [attach] schedules a self-healing retry
+///    that fires as soon as [SocketService.rawSocket] becomes available.
 ///
 /// 2. Use [joinChat] / [leaveChat] / [emitTyping] etc. as normal.
 ///
-/// 3. Call [detach] when the chat feature is torn down (logout, order ends).
-///    This removes only the chat listeners — order/offer listeners on the
-///    shared socket are completely unaffected.
+/// 3. Call [detach] on logout or when the chat feature is torn down.
+///    Order/offer listeners on the shared socket are completely unaffected.
 ///
-/// ── Pending-room buffering ──────────────────────────────────────────────────
+/// ── Self-healing attach ────────────────────────────────────────────────────
 ///
-/// [attach] may be called before the socket handshake completes (the socket
-/// object exists but [IO.Socket.connected] is still false).  Any [joinChat]
-/// call made while the socket is not yet connected is buffered in
-/// [_pendingRooms] and replayed automatically once the `connect` event fires.
+/// If [attach] is called before [SocketService] has a live socket, it sets a
+/// flag and polls every 500 ms until [rawSocket] is non-null, then completes
+/// the attach automatically.  Any [joinChat] calls made during this window are
+/// buffered in [_pendingRooms] and drained once the socket is ready.
+///
+/// ── Reconnect handling ─────────────────────────────────────────────────────
+///
+/// A persistent `connect` listener re-joins [_activeChatRooms] on every
+/// reconnect so the server always has an up-to-date membership for this client.
 class ChatSocketService {
   static final ChatSocketService _instance = ChatSocketService._internal();
 
@@ -34,40 +39,44 @@ class ChatSocketService {
 
   ChatSocketService._internal();
 
-  // The borrowed socket reference — set by [attach], cleared by [detach].
   IO.Socket? _socket;
 
-  // Rooms that were requested before the socket finished connecting.
-  // Drained inside the onConnect handler registered in [attach].
+  // Self-healing: true while we're waiting for rawSocket to become available.
+  bool _pendingAttach = false;
+  Timer? _attachRetryTimer;
+
+  // Rooms requested before the socket finished connecting.
   final Set<int> _pendingRooms = {};
 
   // ─── Stream Controllers ────────────────────────────────────────────────────
-  // Broadcast streams — never closed; the singleton may be re-attached many
-  // times per session (e.g. user enters and leaves chat multiple times).
   final _newMessageController =
   StreamController<Map<String, dynamic>>.broadcast();
   final _userTypingController =
   StreamController<Map<String, dynamic>>.broadcast();
   final _userStoppedTypingController =
   StreamController<Map<String, dynamic>>.broadcast();
-
   final _messageReadController =
   StreamController<Map<String, dynamic>>.broadcast();
   final _connectionStatusController = StreamController<bool>.broadcast();
 
   // ─── Active Chat Rooms ─────────────────────────────────────────────────────
+  // NOT cleared on disconnect — preserved so we can re-join on reconnect.
   final Set<int> _activeChatRooms = {};
 
   // ─── Public Streams ────────────────────────────────────────────────────────
-  Stream<Map<String, dynamic>> get onMessageRead => _messageReadController.stream;
-
   Stream<Map<String, dynamic>> get onNewMessage => _newMessageController.stream;
   Stream<Map<String, dynamic>> get onUserTyping => _userTypingController.stream;
   Stream<Map<String, dynamic>> get onUserStoppedTyping =>
       _userStoppedTypingController.stream;
+  Stream<Map<String, dynamic>> get onMessageRead =>
+      _messageReadController.stream;
   Stream<bool> get onConnectionStatus => _connectionStatusController.stream;
 
   bool get isConnected => SocketService().isConnected;
+
+  /// True only when the socket is actually borrowed and listeners are active.
+  bool get isAttached => _socket != null;
+
   Set<int> get activeChatRooms => Set.unmodifiable(_activeChatRooms);
 
   // ─── ATTACH ────────────────────────────────────────────────────────────────
@@ -76,170 +85,439 @@ class ChatSocketService {
   /// event listeners on it.
   ///
   /// Safe to call multiple times — if already attached it is a no-op.
-  /// Must be called after [SocketService.connect].
   ///
-  /// If the socket is not yet connected when [attach] is called, a one-time
-  /// `connect` listener is registered to drain [_pendingRooms] as soon as
-  /// the handshake completes.
+  /// **Self-healing**: if [SocketService.rawSocket] is null (i.e. the socket
+  /// hasn't connected yet), this method schedules retries every 500 ms until
+  /// the socket is available, then completes the attach automatically.
   void attach() {
+    dLog(
+      '🔗 [ChatSocket][CLIENT] attach() called — '
+          'alreadyAttached=${_socket != null}, '
+          'pendingAttach=$_pendingAttach, '
+          'SocketService.isConnected=${SocketService().isConnected}, '
+          'rawSocket=${SocketService().rawSocket != null ? "exists" : "null"}',
+    );
+
     if (_socket != null) {
-      dLog('🔗 [ChatSocket] Already attached — skipping');
+      dLog('🔗 [ChatSocket][CLIENT] Already attached — skipping');
       return;
     }
 
     final socket = SocketService().rawSocket;
+
     if (socket == null) {
-      dLog('🚨 [ChatSocket] attach() called before SocketService.connect() — '
-          'chat socket events will not work. Call ChatModule.init() after '
-          'the main socket is connected.');
+      if (_pendingAttach) {
+        dLog(
+          '⏳ [ChatSocket][CLIENT] attach() — rawSocket still null, '
+              'retry already scheduled',
+        );
+        return;
+      }
+      dLog(
+        '⏳ [ChatSocket][CLIENT] attach() — rawSocket is null. '
+            'Scheduling self-healing retry every 500 ms…',
+      );
+      _pendingAttach = true;
+      _scheduleAttachRetry();
       return;
     }
 
+    _pendingAttach = false;
+    _attachRetryTimer?.cancel();
+    _attachRetryTimer = null;
+
+    _completeAttach(socket);
+  }
+
+  void _scheduleAttachRetry() {
+    _attachRetryTimer?.cancel();
+    _attachRetryTimer =
+        Timer.periodic(const Duration(milliseconds: 500), (_) {
+          final socket = SocketService().rawSocket;
+          if (socket == null) {
+            dLog(
+              '⏳ [ChatSocket][CLIENT] Retry: rawSocket still null — waiting…',
+            );
+            return;
+          }
+          dLog(
+            '✅ [ChatSocket][CLIENT] Retry: rawSocket now available '
+                '(connected=${socket.connected}) — completing attach',
+          );
+          _attachRetryTimer?.cancel();
+          _attachRetryTimer = null;
+          _pendingAttach = false;
+          _completeAttach(socket);
+        });
+  }
+
+  void _completeAttach(IO.Socket socket) {
     _socket = socket;
     _registerChatListeners();
+
+    // ── Persistent reconnect handler ──────────────────────────────────────────
+    // Fires on EVERY connect/reconnect (not just the first time), so
+    // _activeChatRooms are always re-joined after a network blip.
+    _socket!.onConnect((_) {
+      dLog(
+        '✅ [ChatSocket][CLIENT] Socket connected/reconnected — '
+            'id=${_socket?.id}, '
+            'activeRooms=$_activeChatRooms, '
+            'pendingRooms=$_pendingRooms',
+      );
+      _connectionStatusController.add(true);
+
+      if (_activeChatRooms.isNotEmpty) {
+        dLog(
+          '🔁 [ChatSocket][CLIENT] Re-joining ${_activeChatRooms.length} '
+              'active room(s) after reconnect: $_activeChatRooms',
+        );
+        for (final chatId in Set<int>.from(_activeChatRooms)) {
+          dLog(
+            '🔗 [ChatSocket][CLIENT] Re-emitting chat:join for room $chatId',
+          );
+          _socket!.emit('chat:join', {'chatId': chatId});
+        }
+      } else {
+        dLog('ℹ️  [ChatSocket][CLIENT] No active rooms to re-join on connect');
+      }
+
+      // Drain rooms buffered while the socket was still connecting.
+      _drainPendingRooms();
+    });
+
+    _socket!.onDisconnect((reason) {
+      dLog(
+        '❌ [ChatSocket][CLIENT] Socket disconnected — reason="$reason", '
+            'activeRooms=$_activeChatRooms '
+            '(preserved for re-join on next reconnect)',
+      );
+      _connectionStatusController.add(false);
+      // Intentionally NOT clearing _activeChatRooms here.
+    });
+
     _connectionStatusController.add(socket.connected);
 
     if (socket.connected) {
-      dLog('🔗 [ChatSocket] Attached to SocketService socket (id: ${socket.id}, '
-          'connected: true)');
+      dLog(
+        '🔗 [ChatSocket][CLIENT] Socket already connected (id=${socket.id}) — '
+            'draining ${_pendingRooms.length} pending room(s)',
+      );
       _drainPendingRooms();
     } else {
-      // Socket exists but hasn't finished the handshake yet (id is null).
-      // Register a one-shot connect callback to drain pending rooms.
-      dLog('🔗 [ChatSocket] Attached to SocketService socket — '
-          'not yet connected, will join pending rooms on connect');
-
-      void onConnect(_) {
-        dLog('🔗 [ChatSocket] Socket connected (id: ${_socket?.id}) — '
-            'draining ${_pendingRooms.length} pending room(s)');
-        _connectionStatusController.add(true);
-        _drainPendingRooms();
-        // Remove this one-shot listener so it doesn't fire again on reconnect.
-        _socket?.off('connect', onConnect);
-      }
-
-      socket.on('connect', onConnect);
+      dLog(
+        '🔗 [ChatSocket][CLIENT] Socket not yet fully connected — '
+            'rooms will be joined once the connect event fires',
+      );
     }
+
+    dLog(
+      '✅ [ChatSocket][CLIENT] _completeAttach done — '
+          'socketId=${socket.id}, connected=${socket.connected}',
+    );
   }
 
   // ─── DETACH ────────────────────────────────────────────────────────────────
 
-  /// Leaves all active chat rooms, removes chat listeners, and releases the
-  /// borrowed socket reference.
-  ///
-  /// The shared socket itself is left completely untouched — order/offer
-  /// listeners registered by [SocketService] continue to work normally.
   void detach() {
-    if (_socket == null) return;
+    dLog(
+      '🔓 [ChatSocket][CLIENT] detach() called — '
+          'socketAttached=${_socket != null}, '
+          'pendingAttach=$_pendingAttach, '
+          'activeRooms=$_activeChatRooms, '
+          'pendingRooms=$_pendingRooms',
+    );
 
-    // Leave every room we joined.
+    // Cancel any pending self-healing retry.
+    _attachRetryTimer?.cancel();
+    _attachRetryTimer = null;
+    _pendingAttach = false;
+
+    if (_socket == null) {
+      dLog(
+        'ℹ️  [ChatSocket][CLIENT] detach() — socket null, just clearing rooms',
+      );
+      _activeChatRooms.clear();
+      _pendingRooms.clear();
+      return;
+    }
+
     for (final chatId in Set<int>.from(_activeChatRooms)) {
+      dLog('🔓 [ChatSocket][CLIENT] Emitting chat:leave for room $chatId');
       _socket!.emit('chat:leave', {'chatId': chatId});
-      dLog('🔓 [ChatSocket] Left chat room $chatId (detach)');
     }
     _activeChatRooms.clear();
     _pendingRooms.clear();
 
-    // Remove ONLY the chat listeners — do NOT call socket.off() globally,
-    // as that would remove the order/offer listeners too.
+    // Remove ONLY the chat listeners — do NOT call socket.offAny() globally
+    // as that would wipe the order/offer listeners registered by SocketService.
+    dLog('🔓 [ChatSocket][CLIENT] Removing chat event listeners');
+    _socket!.off('connect');
+    _socket!.off('disconnect');
     _socket!.off('chat:new_message');
     _socket!.off('chat:user_typing');
     _socket!.off('chat:user_stopped_typing');
     _socket!.off('chat:message_read');
 
     _socket = null;
-    dLog('🔓 [ChatSocket] Detached from SocketService socket');
+    dLog('🔓 [ChatSocket][CLIENT] Detached ✓');
   }
 
   // ─── EVENT LISTENERS ──────────────────────────────────────────────────────
 
   void _registerChatListeners() {
+    dLog('👂 [ChatSocket][CLIENT] Registering chat event listeners…');
+
     _socket!.on('chat:new_message', (data) {
-      dLog('💬 [ChatSocket] chat:new_message → $data');
+      dLog('💬 [ChatSocket][CLIENT] chat:new_message received → $data');
       final map = _toMap(data);
-      if (map != null) _newMessageController.add(map);
+      if (map != null) {
+        dLog(
+          '💬 [ChatSocket][CLIENT] chat:new_message — pushing to stream, '
+              'hasListeners=${_newMessageController.hasListener}',
+        );
+        _newMessageController.add(map);
+      } else {
+        dLog(
+          '⚠️ [ChatSocket][CLIENT] chat:new_message — could not parse '
+              'data (type=${data.runtimeType}): $data',
+        );
+      }
     });
 
     _socket!.on('chat:user_typing', (data) {
-      dLog('✏️  [ChatSocket] chat:user_typing → $data');
+      dLog('✏️  [ChatSocket][CLIENT] chat:user_typing → $data');
       final map = _toMap(data);
       if (map != null) _userTypingController.add(map);
     });
 
+    _socket!.on('chat:user_stopped_typing', (data) {
+      dLog('⏹️  [ChatSocket][CLIENT] chat:user_stopped_typing → $data');
+      final map = _toMap(data);
+      if (map != null) _userStoppedTypingController.add(map);
+    });
 
     _socket!.on('chat:message_read', (data) {
-      dLog('✅ [ChatSocket] chat:message_read → $data');
+      dLog('✅ [ChatSocket][CLIENT] chat:message_read → $data');
       final map = _toMap(data);
       if (map != null) _messageReadController.add(map);
     });
 
-    _socket!.on('chat:user_stopped_typing', (data) {
-      dLog('⏹️  [ChatSocket] chat:user_stopped_typing → $data');
-      final map = _toMap(data);
-      if (map != null) _userStoppedTypingController.add(map);
-    });
+    dLog('👂 [ChatSocket][CLIENT] Chat event listeners registered ✓');
   }
 
   // ─── ROOM MANAGEMENT ──────────────────────────────────────────────────────
 
-  /// Joins a chat room.
-  ///
-  /// If the socket is not yet connected (possible when [attach] is called
-  /// early), the room is buffered in [_pendingRooms] and joined automatically
-  /// once the `connect` event fires.
   void joinChat(int chatId) {
-    if (_activeChatRooms.contains(chatId)) return;
+    dLog(
+      '🔗 [ChatSocket][CLIENT] joinChat($chatId) — '
+          'isConnected=$isConnected, '
+          'isAttached=$isAttached, '
+          'alreadyActive=${_activeChatRooms.contains(chatId)}, '
+          'activeRooms=$_activeChatRooms, '
+          'pendingAttach=$_pendingAttach',
+    );
 
-    if (!isConnected) {
-      // Socket isn't ready yet — buffer and replay on connect.
+    // Socket not attached yet — buffer the room and trigger self-healing attach.
+    if (_socket == null) {
       _pendingRooms.add(chatId);
-      dLog('⏳ [ChatSocket] Socket not connected — buffering join for chat $chatId');
+      _activeChatRooms.add(chatId);
+      dLog(
+        '⏳ [ChatSocket][CLIENT] joinChat($chatId) — socket not attached, '
+            'buffered. pendingRooms=$_pendingRooms. Triggering attach()…',
+      );
+      if (!_pendingAttach) attach();
       return;
     }
 
-    _socket?.emit('chat:join', {'chatId': chatId});
+    // Guard: skip duplicate emits when already in the room and connected.
+    if (_activeChatRooms.contains(chatId) && isConnected) {
+      dLog(
+        'ℹ️  [ChatSocket][CLIENT] joinChat($chatId) — already in room and '
+            'connected, skipping duplicate emit',
+      );
+      return;
+    }
+
+    if (!isConnected) {
+      _pendingRooms.add(chatId);
+      _activeChatRooms.add(chatId);
+      dLog(
+        '⏳ [ChatSocket][CLIENT] joinChat($chatId) — attached but not yet '
+            'connected, buffered. pendingRooms=$_pendingRooms',
+      );
+      return;
+    }
+
+    dLog('📤 [ChatSocket][CLIENT] Emitting chat:join for room $chatId');
+    _socket!.emit('chat:join', {'chatId': chatId});
     _activeChatRooms.add(chatId);
-    dLog('🔗 [ChatSocket] Joined chat room: $chatId');
+    dLog(
+      '✅ [ChatSocket][CLIENT] Joined room $chatId — '
+          'activeRooms=$_activeChatRooms',
+    );
   }
 
   void leaveChat(int chatId) {
-    _pendingRooms.remove(chatId);
-    if (!_activeChatRooms.contains(chatId)) return;
+    dLog(
+      '🔓 [ChatSocket][CLIENT] leaveChat($chatId) — '
+          'inActiveRooms=${_activeChatRooms.contains(chatId)}, '
+          'inPendingRooms=${_pendingRooms.contains(chatId)}, '
+          'isAttached=$isAttached',
+    );
 
-    _socket?.emit('chat:leave', {'chatId': chatId});
+    _pendingRooms.remove(chatId);
+
+    if (!_activeChatRooms.contains(chatId)) {
+      dLog(
+        'ℹ️  [ChatSocket][CLIENT] leaveChat($chatId) — not in active rooms, '
+            'skipping emit',
+      );
+      return;
+    }
+
+    if (_socket != null) {
+      dLog('📤 [ChatSocket][CLIENT] Emitting chat:leave for room $chatId');
+      _socket!.emit('chat:leave', {'chatId': chatId});
+    } else {
+      dLog(
+        '⚠️ [ChatSocket][CLIENT] leaveChat($chatId) — socket null, '
+            'removing from active rooms without emit',
+      );
+    }
+
     _activeChatRooms.remove(chatId);
-    dLog('🔓 [ChatSocket] Left chat room: $chatId');
+    dLog(
+      '✅ [ChatSocket][CLIENT] Left room $chatId — '
+          'activeRooms=$_activeChatRooms',
+    );
   }
 
-  /// Drains [_pendingRooms] by emitting `chat:join` for each room.
-  /// Called once the socket signals `connect`.
   void _drainPendingRooms() {
-    if (_pendingRooms.isEmpty) return;
+    if (_pendingRooms.isEmpty) {
+      dLog('ℹ️  [ChatSocket][CLIENT] _drainPendingRooms — nothing pending');
+      return;
+    }
+
+    dLog(
+      '🔄 [ChatSocket][CLIENT] _drainPendingRooms — draining '
+          '${_pendingRooms.length} room(s): $_pendingRooms',
+    );
+
     final toJoin = Set<int>.from(_pendingRooms);
     _pendingRooms.clear();
+
     for (final chatId in toJoin) {
-      if (_activeChatRooms.contains(chatId)) continue;
+      if (_activeChatRooms.contains(chatId)) {
+        // Already re-joined by the onConnect handler above — skip.
+        dLog(
+          'ℹ️  [ChatSocket][CLIENT] _drainPendingRooms — room $chatId '
+              'already joined via reconnect handler, skipping duplicate',
+        );
+        continue;
+      }
+      dLog(
+        '📤 [ChatSocket][CLIENT] _drainPendingRooms — emitting '
+            'chat:join for room $chatId',
+      );
       _socket!.emit('chat:join', {'chatId': chatId});
       _activeChatRooms.add(chatId);
-      dLog('🔗 [ChatSocket] Joined pending chat room: $chatId');
+      dLog(
+        '✅ [ChatSocket][CLIENT] Joined pending room $chatId — '
+            'activeRooms=$_activeChatRooms',
+      );
     }
+  }
+
+  // ─── SEND MESSAGE ─────────────────────────────────────────────────────────
+
+  void sendMessage({
+    required int chatId,
+    required String content,
+    required String type,
+    void Function(Map<String, dynamic> ack)? onAck,
+    void Function()? onError,
+  }) {
+    dLog(
+      '📤 [ChatSocket][CLIENT] sendMessage() — chatId=$chatId, type=$type, '
+          'isConnected=$isConnected, isAttached=$isAttached, '
+          'inRoom=${_activeChatRooms.contains(chatId)}',
+    );
+
+    if (_socket == null) {
+      dLog('❌ [ChatSocket][CLIENT] sendMessage failed — socket not attached');
+      onError?.call();
+      return;
+    }
+
+    if (!isConnected) {
+      dLog('❌ [ChatSocket][CLIENT] sendMessage failed — not connected');
+      onError?.call();
+      return;
+    }
+
+    if (!_activeChatRooms.contains(chatId)) {
+      dLog(
+        '⚠️ [ChatSocket][CLIENT] sendMessage — NOT in room $chatId! '
+            'Message may not be delivered. Active rooms: $_activeChatRooms',
+      );
+    }
+
+    dLog(
+      '📤 [ChatSocket][CLIENT] Emitting chat:send_message with real ack — '
+          'chatId=$chatId',
+    );
+    _socket!.emitWithAck(
+      'chat:send_message',
+      {'chatId': chatId, 'content': content, 'type': type},
+      ack: (response) {
+        dLog(
+          '✅ [ChatSocket][CLIENT] sendMessage ack from server → $response',
+        );
+        final map = _toMap(response) ?? {'success': true};
+        onAck?.call(map);
+      },
+    );
   }
 
   // ─── TYPING ───────────────────────────────────────────────────────────────
 
   void emitTyping(int chatId) {
-    _socket?.emit('chat:typing', {'chatId': chatId});
+    if (_socket == null) {
+      dLog(
+        '⚠️ [ChatSocket][CLIENT] emitTyping($chatId) — socket null, skipping',
+      );
+      return;
+    }
+    dLog('✏️  [ChatSocket][CLIENT] emitTyping($chatId)');
+    _socket!.emit('chat:typing', {'chatId': chatId});
   }
 
   void emitStopTyping(int chatId) {
-    _socket?.emit('chat:stop_typing', {'chatId': chatId});
+    if (_socket == null) {
+      dLog(
+        '⚠️ [ChatSocket][CLIENT] emitStopTyping($chatId) — socket null, skipping',
+      );
+      return;
+    }
+    dLog('⏹️  [ChatSocket][CLIENT] emitStopTyping($chatId)');
+    _socket!.emit('chat:stop_typing', {'chatId': chatId});
   }
 
   // ─── READ RECEIPTS ────────────────────────────────────────────────────────
 
   void markRead(int chatId) {
-    _socket?.emit('chat:read_messages', {'chatId': chatId});
-    dLog('👁️  [ChatSocket] Marked chat $chatId as read');
+    dLog(
+      '👁️  [ChatSocket][CLIENT] markRead($chatId) — '
+          'isConnected=$isConnected, isAttached=$isAttached',
+    );
+    if (_socket == null) {
+      dLog(
+        '⚠️ [ChatSocket][CLIENT] markRead($chatId) — socket null, skipping',
+      );
+      return;
+    }
+    _socket!.emit('chat:read_messages', {'chatId': chatId});
   }
 
   // ─── HELPERS ──────────────────────────────────────────────────────────────
@@ -252,6 +530,10 @@ class ChatSocketService {
       if (first is Map<String, dynamic>) return first;
       if (first is Map) return Map<String, dynamic>.from(first);
     }
+    dLog(
+      '⚠️ [ChatSocket][CLIENT] _toMap failed — unexpected type: '
+          '${data.runtimeType}, value: $data',
+    );
     return null;
   }
 }
