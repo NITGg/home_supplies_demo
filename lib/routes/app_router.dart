@@ -61,17 +61,43 @@ Future<GoRouter> createAppRouter({
         builder: (context, state) => LoadingScreen(
           isSplash: true,
           onComplete: () async {
-            bool updateShown = await checkForUpdate(context);
-            if (!updateShown) {
-              final storage = SecureStorageService();
-              final token = await storage.getToken();
-              final destination = (token != null && token.isNotEmpty)
-                  ? '/mainHome'
-                  : await storage.shouldShowOnboarding()
-                  ? '/onboarding'
-                  : '/auth/login';
+            try {
+              bool updateShown = await checkForUpdate(context);
+              if (!updateShown) {
+                final storage = SecureStorageService();
+
+                String? token;
+                bool shouldOnboard = true;
+
+                try {
+                  // On Android, a reinstall/update invalidates Keystore keys
+                  // while the encrypted prefs file survives → crypto exception.
+                  // Catch it, wipe the stale data, and continue as a fresh install.
+                  token = await storage.getToken();
+                  shouldOnboard = await storage.shouldShowOnboarding();
+                } catch (e) {
+                  dLog('⚠️ SecureStorage corrupted (Keystore invalidated?), clearing: $e');
+                  try {
+                    await storage.clearAll();
+                  } catch (_) {}
+                  // token stays null → will go to onboarding/login below
+                }
+
+                final destination = (token != null && token.isNotEmpty)
+                    ? '/mainHome'
+                    : shouldOnboard
+                    ? '/onboarding'
+                    : '/auth/login';
+
+                if (context.mounted) {
+                  GoRouter.of(context).go(destination);
+                }
+              }
+            } catch (e) {
+              // Last-resort fallback — never leave the user stuck on splash.
+              dLog('⚠️ Splash onComplete error: $e');
               if (context.mounted) {
-                GoRouter.of(context).go(destination);
+                GoRouter.of(context).go('/auth/login');
               }
             }
           },
