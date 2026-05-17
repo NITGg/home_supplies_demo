@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:tawreedat_go/core/utils/logger.dart';
 import 'api_client.dart';
 
 class AppSettings {
@@ -12,7 +13,7 @@ class AppSettings {
   AppSettings._internal();
 
   static String? android_version;
-  static int kMainSupplierId = 9;
+  static int platform_admin_id = 9;
   static String? ios_url;
   static bool? chat_enable_send_images;
 
@@ -28,6 +29,7 @@ class AppSettings {
 
   static String? delivery_fee_ratio;
   static String? customer_budget_cash_on_delivery_limit;
+  static String? customer_catalog_cod_limit;
 
   /// Fetch settings from API
   Future<void> load() async {
@@ -35,14 +37,18 @@ class AppSettings {
       final response = await http.get(
         Uri.parse("${ApiClient.baseUrl}/app-settings/public"),
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        dLog(data.toString());
         final settings = data['settings'];
         android_version = settings['app_android_version'];
         ios_url = settings['app_ios_url'];
-        kMainSupplierId = (settings['main_supplier_id'] as int?) ?? 9;        chat_enable_send_images = settings['chat_enable_send_images'] as bool?;
+        platform_admin_id = (settings['platform_admin_id'] as int?) ?? 9;
+        chat_enable_send_images = settings['chat_enable_send_images'] as bool?;
         customer_budget_cash_on_delivery_limit =
             settings['customer_budget_cash_on_delivery_limit'];
+        customer_catalog_cod_limit = settings['customer_catalog_cod_limit'];
         ios_version = settings['app_ios_version'];
         android_url = settings['app_android_url'];
         min_delivery_distance = settings['min_delivery_distance'];

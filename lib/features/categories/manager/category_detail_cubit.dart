@@ -47,7 +47,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
           limit: _pageSize,
         ),
         _supplierRepository                                        // [3]
-            .getSupplierById(AppSettings.kMainSupplierId)
+            .getSupplierById(AppSettings.platform_admin_id)
             .then<SupplierModel?>((s) => s)
             .catchError((e) {
           dLog('CategoryDetailCubit: Could not fetch main supplier → $e');

@@ -60,7 +60,7 @@ class _CartScreenState extends State<CartScreen> {
 
   double _codLimit() {
     return (double.tryParse(
-      AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
+      AppSettings.customer_catalog_cod_limit ?? '0',
     ) ??
         0) /
         100;

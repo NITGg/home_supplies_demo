@@ -54,7 +54,7 @@ class SuppliersCubit extends Cubit<SuppliersState> {
       raw = response.suppliers;
       dLog('SuppliersCubit: fetched ${raw.length} suppliers');
       dLog('SuppliersCubit: ids=${raw.map((s) => s.id).toList()}');
-      dLog('SuppliersCubit: kMainSupplierId=${AppSettings.kMainSupplierId}');
+      dLog('SuppliersCubit: kMainSupplierId=${AppSettings.platform_admin_id}');
     } else if (categoryIds.length == 1) {
       final response =
       await _repository.getSuppliers(categoryId: categoryIds.first);
@@ -79,7 +79,7 @@ class SuppliersCubit extends Cubit<SuppliersState> {
 
     // Always exclude the main supplier — their products already fill the
     // catalogue so showing them again in the strip is redundant.
-    final result = raw.where((s) => s.id != AppSettings.kMainSupplierId).toList();
+    final result = raw.where((s) => s.id != AppSettings.platform_admin_id).toList();
     dLog('SuppliersCubit: after filter=${result.length}');
     return result;
   }
