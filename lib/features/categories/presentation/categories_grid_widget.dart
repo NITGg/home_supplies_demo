@@ -12,6 +12,7 @@ import '../../ads/presentation/widgets/home_ads_carousel.dart';
 import '../../ads/presentation/widgets/square_ads_feed.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
+import '../../cart/presentation/widgets/cart_button.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../home/layout/manager/guest_cubit.dart';
 import '../../products/presentation/featured_section.dart';
@@ -232,18 +233,7 @@ class _CategoriesGrid extends StatelessWidget {
                         color: theme.colorScheme.primary,
                       ),
                     ),
-                  BlocSelector<CartCubit, CartState, int>(
-                    selector: (state) {
-                      if (state is CartLoaded) {
-                        final total = state.data.summary.totalItems;
-                        return total < 0 ? 0 : total;
-                      }
-                      return 0;
-                    },
-                    builder: (context, count) => AnimatedCartIcon(
-                      onTap: () => context.push('/cart'),
-                    ),
-                  ),
+                  CartButton(),
                 ],
               ),
             ),

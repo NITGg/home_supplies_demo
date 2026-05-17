@@ -13,6 +13,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../cart/data/models/multiple_supplier_exception.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
+import '../../cart/presentation/widgets/cart_button.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../cart/presentation/widgets/multiple_supplier_dialog.dart';
 import '../../home/layout/manager/guest_cubit.dart';
@@ -25,7 +26,7 @@ class ProductDetailScreen extends StatefulWidget {
   final int? productId;
 
   const ProductDetailScreen({super.key, this.product, this.productId})
-      : assert(product != null || productId != null);
+    : assert(product != null || productId != null);
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -38,6 +39,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _selectedImageIndex = 0;
 
   int get _id => widget.product?.id ?? widget.productId!;
+
   int? get _supplierId => widget.product?.supplierId;
 
   @override
@@ -68,7 +70,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               onRetry: () => _cubit.load(_id, supplierId: _supplierId),
             ),
             ProductDetailLoaded(:final product, :final isSupplierOpen) =>
-                _buildLoaded(product, isSupplierOpen: isSupplierOpen),
+              _buildLoaded(product, isSupplierOpen: isSupplierOpen),
           };
         },
       ),
@@ -149,7 +151,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
 
         // ── Smart bottom bar — driven entirely by CartCubit state ────────────
-        bottomNavigationBar: _AddToCartBar(product: product, isSupplierOpen: isSupplierOpen),
+        bottomNavigationBar: _AddToCartBar(
+          product: product,
+          isSupplierOpen: isSupplierOpen,
+        ),
       ),
     );
   }
@@ -179,8 +184,8 @@ class _BarCartState {
   @override
   bool operator ==(Object other) =>
       other is _BarCartState &&
-          other.inCartQty == inCartQty &&
-          other.isBusy == isBusy;
+      other.inCartQty == inCartQty &&
+      other.isBusy == isBusy;
 
   @override
   int get hashCode => Object.hash(inCartQty, isBusy);
@@ -258,7 +263,10 @@ class _AddToCartBarState extends State<_AddToCartBar>
   // ── Handlers ────────────────────────────────────────────────────────────
 
   Future<void> _handleAdd(BuildContext ctx) async {
-    if (_isGuest(ctx)) { showGuestLoginPrompt(ctx); return; }
+    if (_isGuest(ctx)) {
+      showGuestLoginPrompt(ctx);
+      return;
+    }
     if (_tapLocked) return; // HARD GUARD (instant)
     _tapLocked = true;
 
@@ -285,7 +293,10 @@ class _AddToCartBarState extends State<_AddToCartBar>
   }
 
   Future<void> _handleIncrement(BuildContext ctx) async {
-    if (_isGuest(ctx)) { showGuestLoginPrompt(ctx); return; }  // ← GUARD
+    if (_isGuest(ctx)) {
+      showGuestLoginPrompt(ctx);
+      return;
+    } // ← GUARD
     if (_tapLocked) return;
     _tapLocked = true;
 
@@ -304,7 +315,10 @@ class _AddToCartBarState extends State<_AddToCartBar>
   }
 
   Future<void> _handleDecrement(BuildContext ctx) async {
-    if (_isGuest(ctx)) { showGuestLoginPrompt(ctx); return; }  // ← GUARD
+    if (_isGuest(ctx)) {
+      showGuestLoginPrompt(ctx);
+      return;
+    } // ← GUARD
     if (_tapLocked) return;
     _tapLocked = true;
     HapticFeedback.selectionClick();
@@ -319,7 +333,7 @@ class _AddToCartBarState extends State<_AddToCartBar>
     }
   }
 
-  void _showError(BuildContext ctx , [String? message]) {
+  void _showError(BuildContext ctx, [String? message]) {
     ScaffoldMessenger.of(ctx).showSnackBar(
       SnackBar(
         content: Text(message ?? AppLocalizations.of(ctx)!.cartUpdateFailed),
@@ -364,7 +378,9 @@ class _AddToCartBarState extends State<_AddToCartBar>
             content = _OutOfStockButton(key: const ValueKey('oos'), l10n: l10n);
           } else if (!widget.isSupplierOpen) {
             content = _SupplierClosedButton(
-                key: const ValueKey('closed'), l10n: l10n);
+              key: const ValueKey('closed'),
+              l10n: l10n,
+            );
           } else if (isBusy) {
             content = _BusyBar(
               key: const ValueKey('busy'),
@@ -454,8 +470,9 @@ class _SupplierClosedButton extends StatelessWidget {
       ),
       style: FilledButton.styleFrom(
         minimumSize: const Size.fromHeight(56),
-        disabledBackgroundColor:
-        Theme.of(context).colorScheme.errorContainer.withOpacity(0.55),
+        disabledBackgroundColor: Theme.of(
+          context,
+        ).colorScheme.errorContainer.withOpacity(0.55),
         disabledForegroundColor: Theme.of(context).colorScheme.error,
       ),
     );
@@ -566,15 +583,15 @@ class _QuantityBar extends StatelessWidget {
                 opacity: animation,
                 child: SlideTransition(
                   position:
-                  Tween<Offset>(
-                    begin: const Offset(0, 0.35),
-                    end: Offset.zero,
-                  ).animate(
-                    CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOut,
-                    ),
-                  ),
+                      Tween<Offset>(
+                        begin: const Offset(0, 0.35),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOut,
+                        ),
+                      ),
                   child: child,
                 ),
               ),
@@ -655,35 +672,35 @@ class _ImageGalleryAppBar extends StatelessWidget {
       pinned: true,
       stretch: true,
       leading: CircleBackButton(),
-      actions: [AnimatedCartIcon(onTap: () => context.push('/cart'))],
+      actions: [CartButton()],
       flexibleSpace: FlexibleSpaceBar(
         background: images.isEmpty
             ? _placeholder(theme)
             : Stack(
-          children: [
-            Container(
-              color: theme.colorScheme.surfaceContainerLow,
-              child: ImageWithIconFallback(
-                imageUrl: images[selectedIndex],
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.fitHeight,
-                iconSize: 64,
+                children: [
+                  Container(
+                    color: theme.colorScheme.surfaceContainerLow,
+                    child: ImageWithIconFallback(
+                      imageUrl: images[selectedIndex],
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.fitHeight,
+                      iconSize: 64,
+                    ),
+                  ),
+                  if (images.length > 1)
+                    Positioned(
+                      bottom: 12,
+                      left: 0,
+                      right: 0,
+                      child: _ThumbnailRow(
+                        images: images,
+                        selected: selectedIndex,
+                        onSelect: onImageSelected,
+                      ),
+                    ),
+                ],
               ),
-            ),
-            if (images.length > 1)
-              Positioned(
-                bottom: 12,
-                left: 0,
-                right: 0,
-                child: _ThumbnailRow(
-                  images: images,
-                  selected: selectedIndex,
-                  onSelect: onImageSelected,
-                ),
-              ),
-          ],
-        ),
       ),
     );
   }
@@ -791,7 +808,7 @@ class _NameRow extends StatelessWidget {
             children: [
               ...List.generate(
                 5,
-                    (i) => Icon(
+                (i) => Icon(
                   i < product.rating.round()
                       ? Icons.star_rounded
                       : Icons.star_outline_rounded,
@@ -1177,7 +1194,7 @@ class _LoadingViewState extends State<_LoadingView>
 
                         // ── Description lines ──────────────────────────────────
                         ...[1.0, 1.0, 1.0, 0.6].map(
-                              (fraction) => Padding(
+                          (fraction) => Padding(
                             padding: const EdgeInsets.only(bottom: 9),
                             child: _Skel(
                               color: shimmer,
@@ -1192,7 +1209,12 @@ class _LoadingViewState extends State<_LoadingView>
                         // ── Attributes table skeleton ──────────────────────────
                         _Skel(color: shimmer, h: 13, w: 90),
                         const SizedBox(height: 10),
-                        _Skel(color: shimmer, h: 100, w: double.infinity, r: 10),
+                        _Skel(
+                          color: shimmer,
+                          h: 100,
+                          w: double.infinity,
+                          r: 10,
+                        ),
                       ],
                     ),
                   ),

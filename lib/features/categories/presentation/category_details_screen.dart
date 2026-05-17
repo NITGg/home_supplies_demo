@@ -8,6 +8,7 @@ import 'package:tawreedat_go/features/categories/presentation/sub_cat_section.da
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../core/widgets/image_with_fallback.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../cart/presentation/widgets/cart_button.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../products/data/models/product_model.dart';
 import '../../search/presentation/search_dialog.dart';
@@ -22,7 +23,7 @@ class CategoryDetailScreen extends StatefulWidget {
   final int? categoryId;
 
   const CategoryDetailScreen({super.key, this.category, this.categoryId})
-      : assert(category != null || categoryId != null);
+    : assert(category != null || categoryId != null);
 
   @override
   State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
@@ -55,7 +56,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           builder: (context, state) {
             return switch (state) {
               CategoryDetailInitial() || CategoryDetailLoading() =>
-                  _LoadingView(category: widget.category),
+                _LoadingView(category: widget.category),
               CategoryDetailError(:final message) => _ErrorView(
                 message: message,
                 category: widget.category,
@@ -217,7 +218,7 @@ class _LoadedViewState extends State<_LoadedView> {
   void _rebuildKeys() {
     _sectionKeys = List.generate(
       widget.state.sections.length,
-          (_) => GlobalKey(),
+      (_) => GlobalKey(),
     );
     // Stale offsets are invalid after a rebuild — clear them so we never
     // jump to a wrong position.
@@ -359,7 +360,7 @@ class _LoadedViewState extends State<_LoadedView> {
             SliverList.separated(
               itemCount: state.sections.length,
               separatorBuilder: (_, __) =>
-              const Divider(height: 1, indent: 16, endIndent: 16),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
               itemBuilder: (_, i) {
                 final section = state.sections[i];
                 // Inherit the main supplier's open/closed status so product
@@ -382,18 +383,18 @@ class _LoadedViewState extends State<_LoadedView> {
             SliverToBoxAdapter(
               child: state.directProductsLoading && state.directProducts.isEmpty
                   ? const Padding(
-                padding: EdgeInsets.all(48),
-                child: Center(child: CircularProgressIndicator()),
-              )
+                      padding: EdgeInsets.all(48),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
                   : state.directProducts.isEmpty
                   ? const _EmptyProducts()
                   : DirectProductsGrid(
-                products: state.directProducts,
-                isLoadingMore: state.directProductsLoading,
-                hasMore: state.directProductsHasMore,
-                onProductTap: widget.onProductTap,
-                onLoadMore: widget.onLoadMoreDirect,
-              ),
+                      products: state.directProducts,
+                      isLoadingMore: state.directProductsLoading,
+                      hasMore: state.directProductsHasMore,
+                      onProductTap: widget.onProductTap,
+                      onLoadMore: widget.onLoadMoreDirect,
+                    ),
             ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
@@ -432,10 +433,10 @@ class _PillsHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context,
-      double shrinkOffset,
-      bool overlapsContent,
-      ) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     final elevated = overlapsContent || shrinkOffset > 0;
 
     return Material(
@@ -494,9 +495,9 @@ class _PillChip extends StatelessWidget {
         border: isActive
             ? null
             : Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.35),
-          width: 0.8,
-        ),
+                color: theme.colorScheme.outline.withOpacity(0.35),
+                width: 0.8,
+              ),
       ),
       child: InkWell(
         onTap: onTap,
@@ -554,7 +555,7 @@ class _CategorySliverAppBar extends StatelessWidget {
             padding: EdgeInsets.zero,
           ),
         ),
-        AnimatedCartIcon(onTap: () => context.push('/cart')),
+        CartButton(),
       ],
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: EdgeInsets.zero,
@@ -719,11 +720,11 @@ class _GradientMesh extends StatelessWidget {
               colors: [
                 HSLColor.fromColor(primary)
                     .withLightness(
-                  (HSLColor.fromColor(primary).lightness - 0.12).clamp(
-                    0.0,
-                    1.0,
-                  ),
-                )
+                      (HSLColor.fromColor(primary).lightness - 0.12).clamp(
+                        0.0,
+                        1.0,
+                      ),
+                    )
                     .toColor(),
                 primary,
                 HSLColor.fromColor(secondary).withSaturation(0.9).toColor(),
@@ -868,7 +869,7 @@ class _LoadingViewState extends State<_LoadingView>
                 childAspectRatio: 0.72,
                 children: List.generate(
                   6,
-                      (_) => _SkeletonProductCard(shimmer: shimmer),
+                  (_) => _SkeletonProductCard(shimmer: shimmer),
                 ),
               ),
             ),
@@ -914,7 +915,7 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
           ),
         ),
       ),
-      actions: [AnimatedCartIcon(onTap: () => context.push('/cart'))],
+      actions: [CartButton()],
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: EdgeInsets.zero,
         stretchModes: const [
@@ -930,11 +931,11 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
                   colors: [
                     HSLColor.fromColor(primary)
                         .withLightness(
-                      (HSLColor.fromColor(primary).lightness - 0.12).clamp(
-                        0.0,
-                        1.0,
-                      ),
-                    )
+                          (HSLColor.fromColor(primary).lightness - 0.12).clamp(
+                            0.0,
+                            1.0,
+                          ),
+                        )
                         .toColor(),
                     primary,
                     HSLColor.fromColor(secondary).withSaturation(0.9).toColor(),

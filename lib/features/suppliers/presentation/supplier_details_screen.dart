@@ -5,6 +5,7 @@ import 'package:tawreedat_go/core/widgets/image_with_fallback.dart';
 
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../cart/presentation/widgets/cart_button.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/presentation/product_card.dart';
@@ -59,7 +60,7 @@ class _SupplierDetailScreenState extends State<SupplierDetailScreen> {
           builder: (context, state) {
             return switch (state) {
               SupplierDetailInitial() || SupplierDetailLoading() =>
-                  _SupplierLoadingView(supplier: widget.supplier),
+                _SupplierLoadingView(supplier: widget.supplier),
               SupplierDetailError(:final message) => _SupplierErrorView(
                 message: message,
                 supplier: widget.supplier,
@@ -200,7 +201,7 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
   void _rebuildKeys() {
     _sectionKeys = List.generate(
       widget.state.sections.length,
-          (_) => GlobalKey(),
+      (_) => GlobalKey(),
     );
     _sectionScrollOffsets.clear();
   }
@@ -309,13 +310,12 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
             SliverList.separated(
               itemCount: state.sections.length,
               separatorBuilder: (_, __) =>
-              const Divider(height: 1, indent: 16, endIndent: 16),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
               itemBuilder: (_, i) {
                 final section = state.sections[i];
                 // Compute supplier open status once — null status means the
                 // supplier has no working-hours configured, so default to open.
-                final isOpen =
-                    state.supplier.currentStatus?.isOpen ?? true;
+                final isOpen = state.supplier.currentStatus?.isOpen ?? true;
                 return KeyedSubtree(
                   key: _sectionKeys[i],
                   child: _SupplierCategorySectionWidget(
@@ -355,56 +355,61 @@ class _SupplierCategorySectionWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return section.products.isEmpty ? SizedBox.shrink(): Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-          child: Row(
+    return section.products.isEmpty
+        ? SizedBox.shrink()
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 4,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(2),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        section.category.displayName,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  section.category.displayName,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+              if (section.isLoading && section.products.isEmpty)
+                _ProductListSkeleton()
+              else if (section.products.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
                   ),
+                  child: Text(
+                    AppLocalizations.of(context)!.noProductsInSection,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                )
+              else
+                _SupplierProductList(
+                  products: section.products.cast<ProductModel>(),
+                  isLoadingMore: section.isLoading,
+                  hasMore: section.hasMore,
+                  isSupplierOpen: isSupplierOpen,
+                  onProductTap: onProductTap,
+                  onLoadMore: onLoadMore,
                 ),
-              ),
             ],
-          ),
-        ),
-        if (section.isLoading && section.products.isEmpty)
-          _ProductListSkeleton()
-        else if (section.products.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              AppLocalizations.of(context)!.noProductsInSection,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade500,
-              ),
-            ),
-          )
-        else
-          _SupplierProductList(
-            products: section.products.cast<ProductModel>(),
-            isLoadingMore: section.isLoading,
-            hasMore: section.hasMore,
-            isSupplierOpen: isSupplierOpen,
-            onProductTap: onProductTap,
-            onLoadMore: onLoadMore,
-          ),
-      ],
-    );
+          );
   }
 }
 
@@ -550,10 +555,10 @@ class _SupplierPillsHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context,
-      double shrinkOffset,
-      bool overlapsContent,
-      ) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     final elevated = overlapsContent || shrinkOffset > 0;
     return Material(
       color: theme.colorScheme.surface,
@@ -608,9 +613,9 @@ class _PillChip extends StatelessWidget {
         border: isActive
             ? null
             : Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.35),
-          width: 0.8,
-        ),
+                color: theme.colorScheme.outline.withOpacity(0.35),
+                width: 0.8,
+              ),
       ),
       child: InkWell(
         onTap: onTap,
@@ -667,7 +672,7 @@ class _SupplierSliverAppBar extends StatelessWidget {
             padding: EdgeInsets.zero,
           ),
         ),
-        AnimatedCartIcon(onTap: () => context.push('/cart')),
+        CartButton(),
       ],
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: EdgeInsets.zero,
@@ -711,11 +716,11 @@ class _SupplierHeaderBackground extends StatelessWidget {
               colors: [
                 HSLColor.fromColor(primary)
                     .withLightness(
-                  (HSLColor.fromColor(primary).lightness - 0.12).clamp(
-                    0.0,
-                    1.0,
-                  ),
-                )
+                      (HSLColor.fromColor(primary).lightness - 0.12).clamp(
+                        0.0,
+                        1.0,
+                      ),
+                    )
                     .toColor(),
                 primary,
                 HSLColor.fromColor(secondary).withSaturation(0.9).toColor(),
@@ -784,9 +789,9 @@ class _SupplierHeaderBackground extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             child: hasPhoto
                 ? ImageWithIconFallback(
-              imageUrl: supplier.photoUrl!,
-              fit: BoxFit.cover,
-            )
+                    imageUrl: supplier.photoUrl!,
+                    fit: BoxFit.cover,
+                  )
                 : _avatarFallback(primary),
           ),
         ),
@@ -829,8 +834,8 @@ class _SupplierHeaderBackground extends StatelessWidget {
     return Container(
       color: HSLColor.fromColor(primary)
           .withLightness(
-        (HSLColor.fromColor(primary).lightness - 0.10).clamp(0.0, 1.0),
-      )
+            (HSLColor.fromColor(primary).lightness - 0.10).clamp(0.0, 1.0),
+          )
           .toColor(),
       child: Center(
         child: Text(
@@ -945,7 +950,7 @@ class _SupplierLoadingViewState extends State<_SupplierLoadingView>
                   ),
                 ),
               ),
-              actions: [AnimatedCartIcon(onTap: () => context.push('/cart'))],
+              actions: [CartButton()],
               flexibleSpace: FlexibleSpaceBar(
                 titlePadding: EdgeInsets.zero,
                 background: Stack(
@@ -957,9 +962,9 @@ class _SupplierLoadingViewState extends State<_SupplierLoadingView>
                           colors: [
                             HSLColor.fromColor(primary)
                                 .withLightness(
-                              (HSLColor.fromColor(primary).lightness - 0.12)
-                                  .clamp(0.0, 1.0),
-                            )
+                                  (HSLColor.fromColor(primary).lightness - 0.12)
+                                      .clamp(0.0, 1.0),
+                                )
                                 .toColor(),
                             primary,
                             HSLColor.fromColor(
@@ -1018,7 +1023,7 @@ class _SupplierLoadingViewState extends State<_SupplierLoadingView>
                 childAspectRatio: 0.72,
                 children: List.generate(
                   6,
-                      (_) => Container(
+                  (_) => Container(
                     decoration: BoxDecoration(
                       color: shimmer,
                       borderRadius: BorderRadius.circular(16),
@@ -1085,7 +1090,6 @@ class _SupplierErrorView extends StatelessWidget {
   }
 }
 
-
 // ── Working hours banner ──────────────────────────────────────────────────────
 
 class _WorkingHoursBanner extends StatelessWidget {
@@ -1102,8 +1106,9 @@ class _WorkingHoursBanner extends StatelessWidget {
     final todaySlots = wh.todaySlots();
 
     final isOpen = status.isOpen;
-    final pillColor =
-    isOpen ? const Color(0xFF1DB954) : theme.colorScheme.error;
+    final pillColor = isOpen
+        ? const Color(0xFF1DB954)
+        : theme.colorScheme.error;
     final pillBg = isOpen
         ? const Color(0xFF1DB954).withOpacity(0.12)
         : theme.colorScheme.errorContainer.withOpacity(0.45);
@@ -1117,14 +1122,15 @@ class _WorkingHoursBanner extends StatelessWidget {
           InkWell(
             onTap: () => _showAllHoursSheet(context, wh, theme, l10n),
             child: Padding(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   // ── Open / Closed pill ──────────────────────────────────
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: pillBg,
                       borderRadius: BorderRadius.circular(20),
@@ -1181,7 +1187,6 @@ class _WorkingHoursBanner extends StatelessWidget {
           // rather than scheduled, so this notice is no longer shown.
           // if (status.orderDeliveredTomorrow)
           //   _TomorrowNudge(status: status, theme: theme, l10n: l10n),
-
           Divider(color: Colors.grey.shade200, height: 1),
         ],
       ),
@@ -1189,11 +1194,11 @@ class _WorkingHoursBanner extends StatelessWidget {
   }
 
   void _showAllHoursSheet(
-      BuildContext context,
-      SupplierWorkingHours wh,
-      ThemeData theme,
-      AppLocalizations l10n,
-      ) {
+    BuildContext context,
+    SupplierWorkingHours wh,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -1248,14 +1253,22 @@ String _slotRange(WorkingSlot slot, AppLocalizations l10n) {
 /// Returns the localised day name for a JS-style weekday index (0 = Sunday).
 String _dayName(int jsDayIndex, AppLocalizations l10n) {
   switch (jsDayIndex) {
-    case 0: return l10n.daySunday;
-    case 1: return l10n.dayMonday;
-    case 2: return l10n.dayTuesday;
-    case 3: return l10n.dayWednesday;
-    case 4: return l10n.dayThursday;
-    case 5: return l10n.dayFriday;
-    case 6: return l10n.daySaturday;
-    default: return '';
+    case 0:
+      return l10n.daySunday;
+    case 1:
+      return l10n.dayMonday;
+    case 2:
+      return l10n.dayTuesday;
+    case 3:
+      return l10n.dayWednesday;
+    case 4:
+      return l10n.dayThursday;
+    case 5:
+      return l10n.dayFriday;
+    case 6:
+      return l10n.daySaturday;
+    default:
+      return '';
   }
 }
 
@@ -1282,7 +1295,9 @@ class _StatusMessage extends StatelessWidget {
 
     if (status.isOpen && status.closingHour != null) {
       return Text(
-        l10n.closesAt(_fmtTime(status.closingHour!, status.closingMinute ?? 0, l10n)),
+        l10n.closesAt(
+          _fmtTime(status.closingHour!, status.closingMinute ?? 0, l10n),
+        ),
         style: base,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
@@ -1331,18 +1346,17 @@ class _TomorrowNudge extends StatelessWidget {
     final String whenLabel;
     if (next.isTomorrow) {
       // "tomorrow at 9:00 AM" / "غداً الساعة ٩:٠٠ صباحاً"
-      whenLabel = l10n.opensTomorrowAt(timeStr)
+      whenLabel = l10n
+          .opensTomorrowAt(timeStr)
           .replaceFirst(
-        // Strip the leading verb so only "tomorrow at …" remains
-        RegExp(r'^(يفتح\s|Opens\s)', caseSensitive: false),
-        '',
-      );
+            // Strip the leading verb so only "tomorrow at …" remains
+            RegExp(r'^(يفتح\s|Opens\s)', caseSensitive: false),
+            '',
+          );
     } else {
-      whenLabel = l10n.opensDayAt(_dayName(next.jsDayIndex, l10n), timeStr)
-          .replaceFirst(
-        RegExp(r'^(يفتح\s|Opens\s)', caseSensitive: false),
-        '',
-      );
+      whenLabel = l10n
+          .opensDayAt(_dayName(next.jsDayIndex, l10n), timeStr)
+          .replaceFirst(RegExp(r'^(يفتح\s|Opens\s)', caseSensitive: false), '');
     }
 
     return Container(
@@ -1422,13 +1436,17 @@ class _AllHoursSheet extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  Icon(Icons.access_time_rounded,
-                      size: 18, color: theme.colorScheme.primary),
+                  Icon(
+                    Icons.access_time_rounded,
+                    size: 18,
+                    color: theme.colorScheme.primary,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     l10n.workingHours,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -1440,8 +1458,7 @@ class _AllHoursSheet extends StatelessWidget {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               itemCount: allDays.length,
               separatorBuilder: (_, __) => const SizedBox(height: 2),
               itemBuilder: (_, i) {
@@ -1519,8 +1536,7 @@ class _DayRow extends StatelessWidget {
                   child: Text(
                     dayName,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight:
-                      isToday ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
                       color: isToday
                           ? theme.colorScheme.primary
                           : theme.colorScheme.onSurface,
@@ -1535,25 +1551,25 @@ class _DayRow extends StatelessWidget {
           Expanded(
             child: isClosed || slots.isEmpty
                 ? Text(
-              l10n.closed,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
-                fontWeight: FontWeight.w500,
-              ),
-            )
+                    l10n.closed,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  )
                 : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: slots
-                  .map(
-                    (s) => Text(
-                  _slotRange(s, l10n),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: slots
+                        .map(
+                          (s) => Text(
+                            _slotRange(s, l10n),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ),
-                ),
-              )
-                  .toList(),
-            ),
           ),
         ],
       ),

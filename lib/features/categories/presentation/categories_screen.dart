@@ -7,6 +7,7 @@ import '../../ads/presentation/widgets/popups.dart';
 import '../../addresses/presentation/default_address_chip.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
+import '../../cart/presentation/widgets/cart_button.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../home/layout/manager/guest_cubit.dart';
 import '../../search/presentation/search_dialog.dart';
@@ -88,18 +89,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         ),
                       ),
                         const SizedBox(width: 4),
-                        BlocSelector<CartCubit, CartState, int>(
-                          selector: (state) {
-                            if (state is CartLoaded) {
-                              final total = state.data.summary.totalItems;
-                              return total < 0 ? 0 : total;
-                            }
-                            return 0;
-                          },
-                          builder: (context, count) => AnimatedCartIcon(
-                            onTap: () => context.push('/cart'),
-                          ),
-                        ),     ],
+                      CartButton(),
+                    ],
                   ),
                 ),
               ),
@@ -206,17 +197,7 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
                 // Cart icon — hidden for guests
                 if (!guest) ...[
                   const SizedBox(width: 4),
-                  BlocSelector<CartCubit, CartState, int>(
-                    selector: (state) {
-                      if (state is CartLoaded) {
-                        final total = state.data.summary.totalItems;
-                        return total < 0 ? 0 : total;
-                      }
-                      return 0;
-                    },
-                    builder: (context, count) =>
-                        AnimatedCartIcon(onTap: () => context.push('/cart')),
-                  ),
+                  CartButton(),
                 ],
               ],
             ),

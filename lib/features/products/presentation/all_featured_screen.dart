@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +7,7 @@ import '../../../core/utils/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
+import '../../cart/presentation/widgets/cart_button.dart';
 import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../categories/presentation/sub_cat_section.dart';
 import '../../products/data/models/product_model.dart';
@@ -22,8 +22,7 @@ class AllFeaturedProductsScreen extends StatefulWidget {
       _AllFeaturedProductsScreenState();
 }
 
-class _AllFeaturedProductsScreenState
-    extends State<AllFeaturedProductsScreen> {
+class _AllFeaturedProductsScreenState extends State<AllFeaturedProductsScreen> {
   static const int _pageSize = 10;
 
   final ProductRepository _repo = ProductRepositoryImpl();
@@ -87,54 +86,44 @@ class _AllFeaturedProductsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.featured,          style: const TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          AppLocalizations.of(context)!.featured,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         leading: CircleBackButton(),
         elevation: 0,
-        actions: [BlocSelector<CartCubit, CartState, int>(
-          selector: (state) {
-            if (state is CartLoaded) {
-              final total = state.data.summary.totalItems;
-              return total < 0 ? 0 : total;
-            }
-            return 0;
-          },
-          builder: (context, count) => AnimatedCartIcon(
-            onTap: () => context.push('/cart'),
-          ),
-        ),],
+        actions: [CartButton()],
       ),
       body: !_initialLoadDone
           ? const _GridSkeleton()
           : _products.isEmpty
           ? Center(
-        child: Text(
-          AppLocalizations.of(context)!.noProductsInSection,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-      )
+              child: Text(
+                AppLocalizations.of(context)!.noProductsInSection,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            )
           : NotificationListener<ScrollNotification>(
-        onNotification: (n) {
-          if (n is ScrollEndNotification &&
-              n.metrics.pixels >=
-                  n.metrics.maxScrollExtent - 40 &&
-              _hasMore) {
-            _load();
-          }
-          return false;
-        },
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: DirectProductsGrid(
-            products: _products,
-            isLoadingMore: _isLoading,
-            hasMore: _hasMore,
-            onProductTap: (product) =>
-                context.push('/products/${product.id}', extra: product),
-            onLoadMore: _load,
-          ),
-        ),
-      ),
+              onNotification: (n) {
+                if (n is ScrollEndNotification &&
+                    n.metrics.pixels >= n.metrics.maxScrollExtent - 40 &&
+                    _hasMore) {
+                  _load();
+                }
+                return false;
+              },
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: DirectProductsGrid(
+                  products: _products,
+                  isLoadingMore: _isLoading,
+                  hasMore: _hasMore,
+                  onProductTap: (product) =>
+                      context.push('/products/${product.id}', extra: product),
+                  onLoadMore: _load,
+                ),
+              ),
+            ),
     );
   }
 }
@@ -162,8 +151,10 @@ class _GridSkeletonState extends State<_GridSkeleton>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.3, end: 0.85)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _anim = Tween<double>(
+      begin: 0.3,
+      end: 0.85,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -174,8 +165,7 @@ class _GridSkeletonState extends State<_GridSkeleton>
 
   @override
   Widget build(BuildContext context) {
-    final crossAxisCount =
-    MediaQuery.sizeOf(context).width > 600 ? 3 : 2;
+    final crossAxisCount = MediaQuery.sizeOf(context).width > 600 ? 3 : 2;
     return Padding(
       padding: const EdgeInsets.all(12),
       child: GridView.builder(
