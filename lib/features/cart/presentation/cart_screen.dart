@@ -10,6 +10,7 @@ import 'package:tawreedat_go/features/cart/presentation/widgets/cart_price_helpe
 import 'package:tawreedat_go/features/home/layout/manager/home_cubit.dart';
 
 import '../../../core/style/app_colors.dart';
+import '../../../core/utils/app_dynamic_settings.dart';
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../addresses/manager/address_cubit.dart';
@@ -55,6 +56,20 @@ class _CartScreenState extends State<CartScreen> {
   bool _pillVisible = true;
   late final ScrollController _scrollController = ScrollController();
   double _lastScrollOffset = 0;
+
+
+  double _codLimit() {
+    return (double.tryParse(
+      AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
+    ) ??
+        0) /
+        100;
+  }
+
+  bool _isOverCodLimit(CartLoaded state) {
+    // Use the display total (pre-fee subtotal) to mirror the create-sheet logic.
+    return _computeDisplayTotal(state) > _codLimit();
+  }
 
   void _toggleSummary() {
     _couponFocus.unfocus();
@@ -494,14 +509,26 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildLoaded(BuildContext context, CartLoaded state) {
-    final items = state.data.cartItems;
-    final summary = state.data.summary;
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final hPad = screenWidth < 360 ? 14.0 : 20.0;
-    final displayTotal = _computeDisplayTotal(state);
+      final items = state.data.cartItems;
+      final summary = state.data.summary;
+      final theme = Theme.of(context);
+      final l10n = AppLocalizations.of(context)!;
+      final bottomPadding = MediaQuery.of(context).padding.bottom;
+      final screenWidth = MediaQuery.of(context).size.width;
+      final hPad = screenWidth < 360 ? 14.0 : 20.0;
+      final displayTotal = _computeDisplayTotal(state);
+
+      // ── COD limit ──────────────────────────────────────────────────────────
+      final overCodLimit = _isOverCodLimit(state);
+      // Auto-switch away from CASH the moment the total crosses the limit.
+      if (overCodLimit && _paymentMethod == 'CASH') {
+        // Schedule a post-frame setState to avoid calling setState during build.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _paymentMethod == 'CASH') {
+            setState(() => _paymentMethod = 'WALLET');
+          }
+        });
+      }
 
     return Column(
       key: const ValueKey('loaded'),
@@ -588,6 +615,8 @@ class _CartScreenState extends State<CartScreen> {
                           bottomPadding: bottomPadding,
                           theme: theme,
                           l10n: l10n,
+                          overCodLimit: overCodLimit,           // ← NEW
+                          codLimit: _codLimit(),                // ← NEW
                           paymentMethod: _paymentMethod,
                           onPaymentMethodChanged: (m) =>
                               setState(() => _paymentMethod = m),

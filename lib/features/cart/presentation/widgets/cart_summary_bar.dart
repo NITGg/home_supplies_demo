@@ -30,6 +30,8 @@ class CartSummaryBar extends StatelessWidget {
   final VoidCallback onRemoveCoupon;
 
   final VoidCallback onCheckout;
+  final bool overCodLimit;
+  final double codLimit;
 
   const CartSummaryBar({
     super.key,
@@ -48,48 +50,55 @@ class CartSummaryBar extends StatelessWidget {
     required this.onValidateCoupon,
     required this.onRemoveCoupon,
     required this.onCheckout,
+    this.overCodLimit = false,
+    this.codLimit = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     final bool hasDiscount = toBool(summary.hasDiscount);
     final double originalTotal = toDouble(summary.originalTotal);
-    final double totalDiscount = hasDiscount ? toDouble(summary.totalDiscount) : 0.0;
+    final double totalDiscount = hasDiscount
+        ? toDouble(summary.totalDiscount)
+        : 0.0;
     final double priceBeforeCoupon = originalTotal - totalDiscount;
 
-    final bool isOrderTotalCoupon = appliedCoupon?.isOrderTotalDiscount ?? false;
+    final bool isOrderTotalCoupon =
+        appliedCoupon?.isOrderTotalDiscount ?? false;
 
-    // When a preview has been fetched with the coupon code, prefer the
-    // server-computed discountAmount — it is cap-aware and always correct.
-    // Fall back to local computation only while the preview is still loading.
+    // Prefer server-computed discountAmount (cap-aware) over local estimate.
     final bool hasServerDiscount =
-        preview != null && (preview?.discountAmount??0) > 0 && appliedCoupon != null;
+        preview != null &&
+        (preview?.discountAmount ?? 0) > 0 &&
+        appliedCoupon != null;
 
-    final double? couponDiscount = (appliedCoupon != null && !isOrderTotalCoupon)
+    final double? couponDiscount =
+        (appliedCoupon != null && !isOrderTotalCoupon)
         ? (hasServerDiscount && !appliedCoupon!.isDeliveryFeeDiscount
-        ? preview!.discountAmount
-        : computeCouponCartDiscount(appliedCoupon!, priceBeforeCoupon))
+              ? preview!.discountAmount
+              : computeCouponCartDiscount(appliedCoupon!, priceBeforeCoupon))
         : null;
 
     final double finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
 
     final double rawDeliveryFee = preview?.courierFee ?? 0.0;
-    final double? deliveryFeeRounded =
-    preview != null ? double.parse(rawDeliveryFee.toStringAsFixed(2)) : null;
+    final double? deliveryFeeRounded = preview != null
+        ? double.parse(rawDeliveryFee.toStringAsFixed(2))
+        : null;
     final double? vatAmountRounded = preview?.vatAmount;
 
     final double? deliveryFeeDiscount =
-    (appliedCoupon != null && preview != null && !isOrderTotalCoupon)
+        (appliedCoupon != null && preview != null && !isOrderTotalCoupon)
         ? (hasServerDiscount && appliedCoupon!.isDeliveryFeeDiscount
-    // Server-authoritative: cap-aware delivery discount
-        ? preview?.discountAmount??0
-        : computeDeliveryFeeDiscount(appliedCoupon!, rawDeliveryFee))
+              ? preview?.discountAmount ?? 0
+              : computeDeliveryFeeDiscount(appliedCoupon!, rawDeliveryFee))
         : null;
     final double? discountedDeliveryFee = deliveryFeeDiscount != null
         ? (rawDeliveryFee - deliveryFeeDiscount).clamp(0.0, rawDeliveryFee)
         : null;
 
-    final double effectiveDeliveryFee = discountedDeliveryFee ?? deliveryFeeRounded ?? 0.0;
+    final double effectiveDeliveryFee =
+        discountedDeliveryFee ?? deliveryFeeRounded ?? 0.0;
 
     final double platformFee = preview?.platformFee ?? 0.0;
 
@@ -98,10 +107,10 @@ class CartSummaryBar extends StatelessWidget {
         : null;
 
     final double? orderTotalCouponDiscount =
-    (isOrderTotalCoupon && appliedCoupon != null && grandTotalRaw != null)
+        (isOrderTotalCoupon && appliedCoupon != null && grandTotalRaw != null)
         ? (hasServerDiscount
-        ? preview!.discountAmount
-        : computeCouponCartDiscount(appliedCoupon!, grandTotalRaw))
+              ? preview!.discountAmount
+              : computeCouponCartDiscount(appliedCoupon!, grandTotalRaw))
         : null;
 
     final double? grandTotal = grandTotalRaw != null
@@ -123,6 +132,7 @@ class CartSummaryBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // ── Coupon ───────────────────────────────────────────────────────
           CouponSection(
             couponController: couponController,
             couponFocus: couponFocus,
@@ -134,20 +144,73 @@ class CartSummaryBar extends StatelessWidget {
 
           const SizedBox(height: 12),
 
+          // ── COD limit notice ─────────────────────────────────────────────
+          // Shown when the cart total exceeds the cash-on-delivery cap.
+          // The toggle below remains visible so the user understands the
+          // context, but CASH is greyed out and non-interactive.
+          if (overCodLimit) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: Colors.orange.shade700,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${l10n.walletBalanceHintOverBudget} ${codLimit.toStringAsFixed(2)} ${l10n.walletBalanceHintOverBudget2}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange.shade800,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          // ── Payment toggle ───────────────────────────────────────────────
+          // cashDisabled greys out the CASH tab inside CartPaymentToggle and
+          // prevents tapping it, mirroring the create-order sheet behaviour.
           CartPaymentToggle(
             paymentMethod: paymentMethod,
-            onChanged: onPaymentMethodChanged,
+            onChanged: overCodLimit
+                ? (m) {
+                    if (m != 'CASH') onPaymentMethodChanged(m);
+                  }
+                : onPaymentMethodChanged,
             l10n: l10n,
           ),
 
           const Divider(height: 24),
 
-          CartSummaryRow(label: l10n.numberOfItems, value: '${summary.itemCount}'),
+          // ── Item counts ──────────────────────────────────────────────────
+          CartSummaryRow(
+            label: l10n.numberOfItems,
+            value: '${summary.itemCount}',
+          ),
           const SizedBox(height: 4),
-          CartSummaryRow(label: l10n.totalQuantity, value: '${summary.totalItems}'),
+
+          CartSummaryRow(
+            label: l10n.totalQuantity,
+            value: '${summary.totalItems}',
+          ),
 
           const Divider(height: 20),
 
+          // ── Price breakdown ──────────────────────────────────────────────
           CartSummaryRow(
             label: l10n.cartTotal,
             value: '${fmtPrice(originalTotal)} ${l10n.egp}',
@@ -155,7 +218,11 @@ class CartSummaryBar extends StatelessWidget {
 
           if (hasDiscount) ...[
             const SizedBox(height: 6),
-            CartDiscountRow(discount: totalDiscount, egp: l10n.egp, theme: theme),
+            CartDiscountRow(
+              discount: totalDiscount,
+              egp: l10n.egp,
+              theme: theme,
+            ),
           ],
 
           if (couponDiscount != null) ...[
@@ -189,8 +256,8 @@ class CartSummaryBar extends StatelessWidget {
               theme: theme,
             ),
             CartDeliveryFeeRow(
-              original: preview?.platformFee??0,
-              discounted: preview?.platformFee??0,
+              original: preview?.platformFee ?? 0,
+              discounted: preview?.platformFee ?? 0,
               egp: l10n.egp,
               label: l10n.serviceFee,
               theme: theme,
@@ -222,9 +289,10 @@ class CartSummaryBar extends StatelessWidget {
 
           const SizedBox(height: 16),
 
+          // ── Checkout button ──────────────────────────────────────────────
           BlocBuilder<OrderCubit, OrderState>(
             buildWhen: (_, s) =>
-            s is OrderOperationLoading ||
+                s is OrderOperationLoading ||
                 s is OrderSuccess ||
                 s is OrderError ||
                 s is OrdersLoaded,
@@ -234,16 +302,24 @@ class CartSummaryBar extends StatelessWidget {
                 onPressed: isLoading ? null : onCheckout,
                 icon: isLoading
                     ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Icon(Icons.check_circle_outline_rounded),
                 label: Text(
                   l10n.proceedToCheckout,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
                 ),
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50),
+                ),
               );
             },
           ),
