@@ -96,11 +96,14 @@ class _CartScreenState extends State<CartScreen> {
     final subtotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
     final preview = state.preview;
     if (preview == null) return subtotal;
-
-    return subtotal +
-        preview.totalFee.ceilToDouble() +
-        preview.vatAmount.ceilToDouble() -
-        preview.discountAmount.ceilToDouble();
+    //cart total
+    return subtotal
+    // +
+    // preview.totalFee +
+    // preview.vatAmount
+    // -
+    // preview.discountAmount
+    ;
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -173,9 +176,7 @@ class _CartScreenState extends State<CartScreen> {
     _cubit.fetchCart();
     context.read<WalletCubit>().fetchWalletData();
     await Future.any([
-      _cubit.stream.firstWhere(
-            (s) => s is CartLoaded || s is CartError,
-      ),
+      _cubit.stream.firstWhere((s) => s is CartLoaded || s is CartError),
       Future.delayed(const Duration(seconds: 4)),
     ]);
   }
@@ -313,7 +314,8 @@ class _CartScreenState extends State<CartScreen> {
               listener: (context, state) {
                 if (state is WalletLoaded) {
                   setState(
-                          () => _walletBalance = state.walletData.wallet.balance);
+                    () => _walletBalance = state.walletData.wallet.balance,
+                  );
                 }
               },
               child: BlocListener<OrderCubit, OrderState>(
@@ -342,18 +344,17 @@ class _CartScreenState extends State<CartScreen> {
                       body: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
                         child: switch (state) {
-                          CartInitial() ||
-                          CartLoading() =>
-                          const CartLoadingView(key: ValueKey('loading')),
+                          CartInitial() || CartLoading() =>
+                            const CartLoadingView(key: ValueKey('loading')),
                           CartError(:final message) => CartErrorView(
                             key: const ValueKey('error'),
                             message: message,
                             onRetry: _cubit.fetchCart,
                           ),
-                          CartLoaded(:final data)
-                          when data.cartItems.isEmpty =>
-                              _buildEmptyWithRefresh(
-                                  key: const ValueKey('empty')),
+                          CartLoaded(:final data) when data.cartItems.isEmpty =>
+                            _buildEmptyWithRefresh(
+                              key: const ValueKey('empty'),
+                            ),
                           CartLoaded() => _buildLoaded(context, state),
                         },
                       ),
@@ -369,10 +370,10 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _handleOrderState(
-      BuildContext context,
-      OrderState state,
-      AppLocalizations l10n,
-      ) {
+    BuildContext context,
+    OrderState state,
+    AppLocalizations l10n,
+  ) {
     if (state is CouponValidating) {
       if (!_couponValidating) setState(() => _couponValidating = true);
     } else if (state is CouponRedeemed) {
@@ -581,7 +582,8 @@ class _CartScreenState extends State<CartScreen> {
                             : state; // safe fallback
                         return CartSummaryBar(
                           summary: loadedInner.data.summary,
-                          preview: loadedInner.preview, // ← uses inner state
+                          preview: loadedInner.preview,
+                          // ← uses inner state
                           hPad: hPad,
                           bottomPadding: bottomPadding,
                           theme: theme,
