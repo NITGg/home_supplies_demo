@@ -1,10 +1,14 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/widgets/circel_back_button.dart';
 
 import '../../../core/utils/logger.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../cart/manager/cart_cubit.dart';
+import '../../cart/manager/cart_state.dart';
+import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../categories/presentation/sub_cat_section.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/data/repo/product_repo.dart';
@@ -86,6 +90,18 @@ class _AllBestSellingScreenState
         ),
         leading: CircleBackButton(),
         elevation: 0,
+        actions: [BlocSelector<CartCubit, CartState, int>(
+          selector: (state) {
+            if (state is CartLoaded) {
+              final total = state.data.summary.totalItems;
+              return total < 0 ? 0 : total;
+            }
+            return 0;
+          },
+          builder: (context, count) => AnimatedCartIcon(
+            onTap: () => context.push('/cart'),
+          ),
+        ),],
       ),
       body: !_initialLoadDone
           ? const _GridSkeleton()
