@@ -13,7 +13,7 @@ class AppSettings {
   AppSettings._internal();
 
   static String? android_version;
-  static int platform_admin_id = 9;
+  static int platform_supplier_id = 9;
   static String? ios_url;
   static bool? chat_enable_send_images;
 
@@ -44,7 +44,7 @@ class AppSettings {
         final settings = data['settings'];
         android_version = settings['app_android_version'];
         ios_url = settings['app_ios_url'];
-        platform_admin_id = (settings['platform_admin_id'] as int?) ?? 9;
+        platform_supplier_id = (settings['platform_supplier_id'] as int?) ?? 9;
         chat_enable_send_images = settings['chat_enable_send_images'] as bool?;
         customer_budget_cash_on_delivery_limit =
             settings['customer_budget_cash_on_delivery_limit'];
