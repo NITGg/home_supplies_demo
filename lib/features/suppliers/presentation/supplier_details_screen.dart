@@ -486,7 +486,7 @@ class _SupplierProductListState extends State<_SupplierProductList> {
           }
           final product = widget.products[i];
           return SizedBox(
-            width: 160,
+            width: 180,
             child: Padding(
               padding: const EdgeInsets.only(right: 10, bottom: 20),
               child: ProductCard(
@@ -514,7 +514,7 @@ class _ProductListSkeleton extends StatelessWidget {
         itemBuilder: (_, __) => Padding(
           padding: const EdgeInsets.only(right: 10),
           child: Container(
-            width: 160,
+            width: 180,
             decoration: BoxDecoration(
               color: Colors.grey.shade200,
               borderRadius: BorderRadius.circular(12),
@@ -1001,7 +1001,7 @@ class _SupplierLoadingViewState extends State<_SupplierLoadingView>
                         children: [
                           Container(
                             height: 24,
-                            width: 160,
+                            width: 180,
                             decoration: BoxDecoration(
                               color: shimmer.withOpacity(0.3),
                               borderRadius: BorderRadius.circular(8),

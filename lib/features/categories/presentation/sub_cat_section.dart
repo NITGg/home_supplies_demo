@@ -158,7 +158,7 @@ class _ProductListState extends State<_ProductList> {
 
           final product = widget.products[i];
           return SizedBox(
-            width: 160,
+            width: 180,
             child: Padding(
               padding: const EdgeInsets.only(right: 10,bottom: 20),
               child: ProductCard(
@@ -187,7 +187,7 @@ class _ProductListSkeleton extends StatelessWidget {
         itemCount: 4,
         itemBuilder: (_, __) => const Padding(
           padding: EdgeInsets.only(right: 10),
-          child: SizedBox(width: 160, child: _SkeletonCard()),
+          child: SizedBox(width: 180, child: _SkeletonCard()),
         ),
       ),
     );

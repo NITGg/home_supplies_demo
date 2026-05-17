@@ -17,9 +17,6 @@ import 'categories_grid_widget.dart';
 class CategoriesScreen extends StatefulWidget {
   final void Function(bool isEmpty)? onEmptyChanged;
 
-  /// When provided the screen listens to this notifier and hides the address
-  /// chip and cart icon while the value is [true] (guest session).
-
   const CategoriesScreen({super.key, this.onEmptyChanged});
 
   @override
@@ -54,7 +51,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               automaticallyImplyLeading: false,
               scrolledUnderElevation: 2,
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              // ← title instead of flexibleSpace avoids the layering issue
               titleSpacing: 0,
               title: BlocBuilder<GuestModeCubit, bool>(
                 builder: (context, guest) => Padding(
@@ -88,7 +84,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                           padding: EdgeInsets.zero,
                         ),
                       ),
-                        const SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       CartButton(),
                     ],
                   ),
@@ -96,7 +92,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               ),
             ),
 
-          // Everything else scrolls: ads + featured + grid
+          // Everything else scrolls: ads + product sections + categories grid
           SliverToBoxAdapter(
             child: CategoriesGridWidget(
               key: _categoriesKey,
@@ -112,98 +108,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           const SliverToBoxAdapter(child: SizedBox(height: 300)),
         ],
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Sticky search bar delegate
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
-  /// Optional notifier that controls guest-mode visibility.
-  /// When the value is [true] the address chip and cart icon are hidden.
-  final ValueNotifier<bool>? isGuest;
-
-  const _SearchBarDelegate({this.isGuest});
-
-  @override
-  double get minExtent => 60;
-
-  @override
-  double get maxExtent => 60;
-
-  @override
-  bool shouldRebuild(covariant _SearchBarDelegate oldDelegate) =>
-      oldDelegate.isGuest != isGuest;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    // Use a ListenableBuilder so the inner widget reacts to isGuest changes
-    // even when shouldRebuild returns false (the delegate instance is reused).
-    final listenable = isGuest ?? ValueNotifier(false);
-
-    return ListenableBuilder(
-      listenable: listenable,
-      builder: (context, _) {
-        final guest = isGuest?.value ?? false;
-
-        return Material(
-          elevation: overlapsContent ? 2 : 0,
-          color: Theme.of(context).scaffoldBackgroundColor,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-            child: Row(
-              children: [
-                const SizedBox(width: 8),
-
-                // Accent bar
-                Container(
-                  width: 4,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: AppColors.kPrimaryColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Default address chip — hidden for guests
-                if (!guest) ...[
-                  const DefaultAddressChip(),
-                  const SizedBox(width: 8),
-                ],
-
-                const Spacer(),
-
-                // Search button — always visible
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.grey.shade200,
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.search_rounded,
-                      color: Colors.grey.shade700,
-                    ),
-                    onPressed: () => showSearchDialog(context),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-
-                // Cart icon — hidden for guests
-                if (!guest) ...[
-                  const SizedBox(width: 4),
-                  CartButton(),
-                ],
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }
