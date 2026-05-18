@@ -45,7 +45,6 @@ class AdsCubit extends Cubit<AdsState> {
           ),
         );
       }
-
       dLog('ads popups : ${response2.toString()}');
     } catch (e) {
       dLog('ads error : $e');

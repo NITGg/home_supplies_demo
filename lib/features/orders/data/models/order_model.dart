@@ -6,14 +6,17 @@ class Order {
   String get itemsSummary {
     if (orderItems.isEmpty) return '';
 
-    return orderItems.map((item) {
-      final name = item.product.nameAr.isNotEmpty
-          ? item.product.nameAr
-          : item.product.name;
+    return orderItems
+        .map((item) {
+          final name = item.product.nameAr.isNotEmpty
+              ? item.product.nameAr
+              : item.product.name;
 
-      return '$name (${item.quantity})';
-    }).join(' ');
+          return '$name (${item.quantity})';
+        })
+        .join(' ');
   }
+
   final int? id;
   final int? customerId;
   final int? courierId;
@@ -56,12 +59,13 @@ class Order {
   final DateTime? expiresAt;
   final String? courierName;
   final String? courierPhone;
+  final String? payableAmount; // ✅ new
+
   final String? courierPhoto; // ← NEW: courier avatar URL
   final String?
   priceAdjustmentStatus; // ← NEW: NONE | ACCEPTED | REJECTED | PENDING
 
   final List<OrderItem> orderItems;
-
 
   Order({
     this.courierName,
@@ -100,6 +104,8 @@ class Order {
     this.paymentMethod,
     this.status,
     this.cancelledReason,
+    this.payableAmount,
+
     this.cancellationFee,
     this.cancelledBy,
     this.proposalsCount,
@@ -135,7 +141,11 @@ class Order {
       productImage: json['product_image'] as String?,
       budget: json['budget'] == null
           ? null
-          : ((num.tryParse(json['budget'].toString()) ?? 0) / 100)
+          : ((num.tryParse(json['budget'].toString()) ?? 0) / 100).toString(),
+
+      payableAmount: json['payable_amount'] == null
+          ? null
+          : ((num.tryParse(json['payable_amount'].toString()) ?? 0) / 100)
                 .toString(),
       actualPrice: json['actual_price'] == null
           ? null
