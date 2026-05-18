@@ -278,48 +278,7 @@ class OrderCard extends StatelessWidget {
                         if (order.budget != '0') ...[
                           Builder(
                             builder: (_) {
-                              final productPrice =
-                                  double.tryParse(
-                                    (order.actualPrice == '0' ||
-                                            order.actualPrice == null)
-                                        ? (order.budget ?? '0')
-                                        : (order.actualPrice ?? '0'),
-                                  ) ??
-                                  0.0;
-
-                              final discount =
-                                  (double.tryParse(
-                                        order.discountAmount ?? '',
-                                      ) ??
-                                      0) /
-                                  100;
-
-                              // AFTER
-                              final courierFee =
-                                  (double.tryParse(order.courierFee ?? '') ?? 0) / 100;
-                              final platformFee =
-                                  (double.tryParse(order.platformFee ?? '') ?? 0) / 100;
-                              final fee = courierFee + platformFee;
-
-                              String budgetText;
-
-                              if (order.couponType == 'DELIVERY_FEE') {
-                                final discountedCourierFee = (courierFee - discount).clamp(0.0, double.infinity);
-                                budgetText =
-                                (productPrice + discountedCourierFee + platformFee).toStringAsFixed(2);
-                              } else if (order.couponType == 'PRODUCTS_ONLY' && discount > 0) {
-
-                                final discountedProduct = (productPrice - discount).clamp(0.0, double.infinity);
-                                budgetText =
-                                    (discountedProduct + fee).toStringAsFixed(2);
-                              } else if (order.couponType == 'ORDER_TOTAL' && discount > 0) {
-                                budgetText =
-                                    ((productPrice + fee)- discount).toStringAsFixed(2);
-                              } else {
-                                budgetText =
-                                    ((productPrice + fee)- discount).toStringAsFixed(2);
-                              }
-
+                              String budgetText = order.payableAmount ?? '';
                               return order.status != 'PENDING'  ? OrderBudgetChip(budget: budgetText): SizedBox.shrink();
                             },
                           ),
