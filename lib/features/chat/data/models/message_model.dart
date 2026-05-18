@@ -135,7 +135,7 @@ class MessageModel {
       type: MessageType.fromString(json['type'] as String?),
       status: _statusFromJson(json, senderId: senderId ?? 0, currentUserId: currentUserId),
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
+          ? DateTime.parse(json['created_at'] as String).toLocal()
           : DateTime.now(),
       isMe: (senderId ?? 0) == currentUserId,
     );

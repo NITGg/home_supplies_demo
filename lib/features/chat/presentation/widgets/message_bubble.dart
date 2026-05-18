@@ -254,7 +254,7 @@ class _TimestampRow extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          DateFormat.jm().format(message.createdAt.toLocal()),
+          DateFormat.yMMMd().add_jm().format(message.createdAt.toLocal()),
           style: TextStyle(fontSize: 11, color: color),
         ),
         if (message.isMe) ...[

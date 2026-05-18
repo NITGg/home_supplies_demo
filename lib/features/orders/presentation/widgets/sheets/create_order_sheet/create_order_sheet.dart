@@ -245,45 +245,29 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   // ── Fee calculation ────────────────────────────────────────────────────────
 
-  double? _calculateShippingFee() {
-    if (_distanceResult == null) return null;
-
-    final rawFeePerKm =
-        double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000;
-    final rawMinFee =
-        double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000;
-
-    final double feePerKm = rawFeePerKm / 100;
-    final double minFee = rawMinFee / 100;
-
-    final distanceMeters = _distanceResult!.distanceMeters;
-    final calculatedFee = distanceMeters * feePerKm / 1000;
-    final fee = calculatedFee < minFee ? minFee : calculatedFee;
-    final finalFee = fee.ceilToDouble();
-
-    dLog('🚚 [Shipping] dist=${distanceMeters}m  fee=$finalFee EGP');
-    return finalFee;
-  }
+  // double? _calculateShippingFee() {
+  //   if (_distanceResult == null) return null;
+  //
+  //   final rawFeePerKm =
+  //       double.tryParse(AppSettings.delivery_price_for_each_1km ?? '0') ?? 1000;
+  //   final rawMinFee =
+  //       double.tryParse(AppSettings.min_delivery_fee ?? '0') ?? 3000;
+  //
+  //   final double feePerKm = rawFeePerKm / 100;
+  //   final double minFee = rawMinFee / 100;
+  //
+  //   final distanceMeters = _distanceResult!.distanceMeters;
+  //   final calculatedFee = distanceMeters * feePerKm / 1000;
+  //   final fee = calculatedFee < minFee ? minFee : calculatedFee;
+  //   final finalFee = fee.ceilToDouble();
+  //
+  //   dLog('🚚 [Shipping] dist=${distanceMeters}m  fee=$finalFee EGP');
+  //   return finalFee;
+  // }
 
   double _requiredWalletAmount() {
-    final rawFee = _calculateShippingFee() ?? 0.0;
-
-    double fee = rawFee;
-    // if (_appliedCoupon != null && _appliedCoupon!.isDeliveryFeeDiscount) {
-    //   if (_appliedCoupon!.isPercentDiscount &&
-    //       _appliedCoupon!.discountValue != null) {
-    //     fee = (rawFee - (rawFee * _appliedCoupon!.discountValue! / 100)).clamp(
-    //       0,
-    //       double.infinity,
-    //     );
-    //   } else if (_appliedCoupon!.isFixedDiscount &&
-    //       _appliedCoupon!.discountValue != null) {
-    //     fee = (rawFee - _appliedCoupon!.discountValue!).clamp(
-    //       0,
-    //       double.infinity,
-    //     );
-    //   }
-    // }
+    //todo
+    final fee = 0.0;
 
     if (_isShopping) {
       final budget = double.tryParse(_budgetController.text.trim()) ?? 0.0;
@@ -358,7 +342,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   // ── Route section ──────────────────────────────────────────────────────────
 
   Widget _buildRouteSection(AppLocalizations l10n) {
-    final fee = _calculateShippingFee();
+    // final fee = _calculateShippingFee();
     final effectivePickup = _effectivePickup;
 
     final pickupOutOfBounds =
@@ -668,9 +652,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                         },
                         child: _buildPaymentOption(
                           icon: Icons.payments_outlined,
-                          label: _calculateShippingFee() != null
-                              ? l10n.codN
-                              : l10n.cod,
+                          label: l10n.codN,
                           selected: isCash,
                         ),
                       ),
@@ -993,7 +975,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         deliveryLat: _deliveryAddress!.addressLat,
         deliveryLong: _deliveryAddress!.addressLong,
       ),
-      estimatedDeliveryFee: ((_calculateShippingFee() ?? 0) * 100).toString(),
+      // estimatedDeliveryFee: ((_calculateShippingFee() ?? 0) * 100).toString(),
       _isShopping ? _paymentMethod : 'WALLET',
       // couponCode: _appliedCoupon?.code,
     );
@@ -1160,7 +1142,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           maxChildSize: 0.95,
           expand: false,
           builder: (context, scrollController) {
-            final shippingFee = _calculateShippingFee();
+            //todo
+            final shippingFee = 0.0;
             final budget = double.tryParse(_budgetController.text.trim()) ?? 0;
 
             final limit =
@@ -1304,17 +1287,12 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           const SizedBox(height: 16),
                           _buildRouteSection(l10n),
                           const SizedBox(height: 24),
-                          if (shippingFee != null) ...[
                             _buildFeeAndPaymentRow(
                               l10n,
                               shippingFee,
                               isOverBudget,
                             ),
                             const SizedBox(height: 24),
-                          ] else if (_isShopping && !isOverBudget) ...[
-                            _buildPaymentToggle(),
-                            const SizedBox(height: 24),
-                          ],
                           // CouponSection(
                           //   couponController: _couponController,
                           //   couponFocus: _couponFocus,

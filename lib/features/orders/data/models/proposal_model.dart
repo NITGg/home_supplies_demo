@@ -126,9 +126,9 @@ class Proposal {
             json['estimated_arrival_at_pickup']?.toString() ?? '0',
           ) ??
           0,
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
       confirmedAt: json['confirmed_at'] != null
-          ? DateTime.parse(json['confirmed_at'])
+          ? DateTime.parse(json['confirmed_at']).toLocal()
           : null,
       courier: CourierInfo.fromJson(json['courier'] as Map<String, dynamic>),
       vehicle: VehicleInfo.fromJson(json['vehicle'] as Map<String, dynamic>),

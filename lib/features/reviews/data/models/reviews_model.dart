@@ -25,7 +25,7 @@ class ReviewModel {
     orderId: json['order_id'],
     rating: json['rating'],
     comment: json['comment'],
-    createdAt: DateTime.parse(json['created_at']),
+    createdAt: DateTime.parse(json['created_at']).toLocal(),
   );
 }
 

@@ -47,8 +47,8 @@ class WalletTransactionModel {
       amount: (double.tryParse(json['amount'].toString()) ?? 0) / 100,
       description: json['description'] as String,
       paymobOrderId: json['paymob_order_id']?.toString(),
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+      updatedAt: DateTime.parse(json['updated_at'] as String).toLocal(),
     );
   }
 
@@ -113,14 +113,14 @@ class PenaltyModel {
       reason: json['reason'] as String?,
       isPaid: json['is_paid'] as bool? ?? false,
       paidAt: json['paid_at'] != null
-          ? DateTime.parse(json['paid_at'] as String)
+          ? DateTime.parse(json['paid_at'] as String).toLocal()
           : null,
       isWaived: json['is_waived'] as bool? ?? false,
       waivedAt: json['waived_at'] != null
-          ? DateTime.parse(json['waived_at'] as String)
+          ? DateTime.parse(json['waived_at'] as String).toLocal()
           : null,
       waivedBy: json['waived_by'] as int?,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
       orderId: json['order_id'] as int?,
     );
   }

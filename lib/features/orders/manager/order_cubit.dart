@@ -237,7 +237,7 @@ class OrderCubit extends Cubit<OrderState> {
     Order order,
     String paymentMethod, {
     String? couponCode,
-    required String estimatedDeliveryFee,
+    // required String estimatedDeliveryFee,
   }) async {
     safeEmit(OrderOperationLoading());
     try {
@@ -246,7 +246,7 @@ class OrderCubit extends Cubit<OrderState> {
         order,
         paymentMethod,
         couponCode: couponCode,
-        estimatedDeliveryFee: estimatedDeliveryFee,
+        // estimatedDeliveryFee: estimatedDeliveryFee,
       );
       dLog('OrderCubit: Order created — ${response.order.orderNumber}');
 

@@ -98,7 +98,7 @@ class UpcomingExpiration {
   factory UpcomingExpiration.fromJson(Map<String, dynamic> json) {
     return UpcomingExpiration(
       points: (json['points'] as num).toInt(),
-      expiresAt: DateTime.parse(json['expiryDate'] as String),
+      expiresAt: DateTime.parse(json['expiryDate'] as String).toLocal(),
     );
   }
 }

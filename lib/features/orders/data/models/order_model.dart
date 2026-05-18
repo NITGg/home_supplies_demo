@@ -180,19 +180,19 @@ class Order {
           ? DateTime.parse(json['created_at'])
           : null,
       collectedAt: json['order_collected_at'] != null
-          ? DateTime.parse(json['order_collected_at'])
+          ? DateTime.parse(json['order_collected_at']).toLocal()
           : null,
       offerAcceptedAt: json['offer_accepted_at'] != null
-          ? DateTime.parse(json['offer_accepted_at'])
+          ? DateTime.parse(json['offer_accepted_at']).toLocal()
           : null,
       deliveredAt: json['delivered_at'] != null
-          ? DateTime.parse(json['delivered_at'])
+          ? DateTime.parse(json['delivered_at']).toLocal()
           : null,
       expiresAt: json['expires_at'] != null
-          ? DateTime.parse(json['expires_at'])
+          ? DateTime.parse(json['expires_at']).toLocal()
           : null,
       canceledAt: json['canceled_at'] != null
-          ? DateTime.parse(json['canceled_at'])
+          ? DateTime.parse(json['canceled_at']).toLocal()
           : null,
     );
   }

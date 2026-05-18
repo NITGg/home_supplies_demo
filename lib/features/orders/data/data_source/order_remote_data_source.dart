@@ -26,10 +26,10 @@ class OrderRemoteDataSource {
   Future<OrderResponse> createOrder(
     Order order,
     String paymentMethod, {
-      required String estimatedDeliveryFee,
+      // required String estimatedDeliveryFee,
     String? couponCode,
   }) async {
-    dLog('Creating order: ${order.toJson()} payment method: $paymentMethod coupon code: $couponCode, estimated delivery fee: $estimatedDeliveryFee');
+    dLog('Creating order: ${order.toJson()} payment method: $paymentMethod coupon code: $couponCode,');
     if (order.productImageFile != null) {
       await _validateImage(order.productImageFile!);
     }
@@ -49,7 +49,7 @@ class OrderRemoteDataSource {
         'delivery_lat': order.deliveryLat,
         'delivery_long': order.deliveryLong,
         'payment_method': paymentMethod,
-        'estemated_delivery_fee': estimatedDeliveryFee,
+        // 'estemated_delivery_fee': estimatedDeliveryFee,
 
         if (couponCode != null) 'coupon_code': couponCode,
         'product_image': await MultipartFile.fromFile(
@@ -63,7 +63,7 @@ class OrderRemoteDataSource {
         'type' : 'CUSTOM_PICKUP',
         'payment_method': paymentMethod,
         if (couponCode != null) 'coupon_code': couponCode,
-        'estemated_delivery_fee': estimatedDeliveryFee,
+        // 'estemated_delivery_fee': estimatedDeliveryFee,
       });
     }
     dLog('Form data: ${formData.fields}');

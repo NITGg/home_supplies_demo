@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 
 import '../../../../l10n/app_localizations.dart';
@@ -66,7 +67,15 @@ class _CouponTickerTitleState extends State<CouponTickerTitle>
             ),
           );
         }
-        return const SizedBox.shrink();
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            SvgPicture.asset(
+              'assets/images/appbar/logo.svg',
+              height: 30,
+            ),
+          ],
+        );
       },
     );
   }

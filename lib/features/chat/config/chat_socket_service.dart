@@ -32,6 +32,13 @@ import '../../../core/utils/socket_service.dart';
 ///
 /// A persistent `connect` listener re-joins [_activeChatRooms] on every
 /// reconnect so the server always has an up-to-date membership for this client.
+///
+/// ── Stale-socket detection ─────────────────────────────────────────────────
+///
+/// [attach] compares its stored [_socket] reference to [SocketService.rawSocket]
+/// on every call. If they differ (e.g. the shared socket was reconnected with a
+/// new instance), the old listeners are removed and the service re-attaches to
+/// the fresh socket automatically.
 class ChatSocketService {
   static final ChatSocketService _instance = ChatSocketService._internal();
 
@@ -84,28 +91,43 @@ class ChatSocketService {
   /// Borrows the live socket from [SocketService] and registers chat-specific
   /// event listeners on it.
   ///
-  /// Safe to call multiple times — if already attached it is a no-op.
-  ///
-  /// **Self-healing**: if [SocketService.rawSocket] is null (i.e. the socket
-  /// hasn't connected yet), this method schedules retries every 500 ms until
-  /// the socket is available, then completes the attach automatically.
+  /// Safe to call on every [ChatScreen] open:
+  /// - If already attached to the **same** socket instance → no-op.
+  /// - If the shared socket was replaced (e.g. after a full reconnect) →
+  ///   removes stale listeners and re-attaches to the fresh instance.
+  /// - If [SocketService.rawSocket] is null → schedules a 500 ms retry loop
+  ///   until the socket is available (self-healing attach).
   void attach() {
+    final currentSocket = SocketService().rawSocket;
+
     dLog(
       '🔗 [ChatSocket][CLIENT] attach() called — '
-          'alreadyAttached=${_socket != null}, '
+          'storedSocket=${_socket != null ? "exists" : "null"}, '
+          'currentSocket=${currentSocket != null ? "exists" : "null"}, '
+          'sameInstance=${_socket != null && _socket == currentSocket}, '
           'pendingAttach=$_pendingAttach, '
-          'SocketService.isConnected=${SocketService().isConnected}, '
-          'rawSocket=${SocketService().rawSocket != null ? "exists" : "null"}',
+          'SocketService.isConnected=${SocketService().isConnected}',
     );
 
-    if (_socket != null) {
-      dLog('🔗 [ChatSocket][CLIENT] Already attached — skipping');
+    // ── Already attached to the current socket instance — nothing to do. ──
+    if (_socket != null && _socket == currentSocket) {
+      dLog('🔗 [ChatSocket][CLIENT] Already attached to current socket — skipping');
       return;
     }
 
-    final socket = SocketService().rawSocket;
+    // ── Stale reference: SocketService gave us a new socket object. ──────────
+    // Remove old listeners before re-attaching to the fresh instance.
+    if (_socket != null && _socket != currentSocket) {
+      dLog(
+        '⚠️ [ChatSocket][CLIENT] Socket reference changed — '
+            'detaching stale listeners before re-attaching',
+      );
+      _detachListeners();
+      _socket = null;
+    }
 
-    if (socket == null) {
+    // ── Socket not yet available — schedule self-healing retry. ──────────────
+    if (currentSocket == null) {
       if (_pendingAttach) {
         dLog(
           '⏳ [ChatSocket][CLIENT] attach() — rawSocket still null, '
@@ -122,33 +144,57 @@ class ChatSocketService {
       return;
     }
 
+    // ── Socket is available — complete the attach synchronously. ─────────────
     _pendingAttach = false;
     _attachRetryTimer?.cancel();
     _attachRetryTimer = null;
 
-    _completeAttach(socket);
+    _completeAttach(currentSocket);
+  }
+
+  // ─── DETACH LISTENERS (stale-socket cleanup) ──────────────────────────────
+
+  /// Removes all chat-specific event listeners from [_socket] without leaving
+  /// rooms or nulling the reference — used when the socket instance changes.
+  ///
+  /// Note: [socket_io_client] removes **all** handlers for a given event name
+  /// when [off] is called without a specific callback, so this will also remove
+  /// the `connect` / `disconnect` handlers registered by [_completeAttach].
+  /// That is intentional here — [_completeAttach] will re-register them on the
+  /// fresh socket.
+  void _detachListeners() {
+    if (_socket == null) return;
+    dLog(
+      '🔓 [ChatSocket][CLIENT] _detachListeners — '
+          'removing listeners from stale socket (id=${_socket!.id})',
+    );
+    _socket!.off('connect');
+    _socket!.off('disconnect');
+    _socket!.off('chat:new_message');
+    _socket!.off('chat:user_typing');
+    _socket!.off('chat:user_stopped_typing');
+    _socket!.off('chat:message_read');
   }
 
   void _scheduleAttachRetry() {
     _attachRetryTimer?.cancel();
-    _attachRetryTimer =
-        Timer.periodic(const Duration(milliseconds: 500), (_) {
-          final socket = SocketService().rawSocket;
-          if (socket == null) {
-            dLog(
-              '⏳ [ChatSocket][CLIENT] Retry: rawSocket still null — waiting…',
-            );
-            return;
-          }
-          dLog(
-            '✅ [ChatSocket][CLIENT] Retry: rawSocket now available '
-                '(connected=${socket.connected}) — completing attach',
-          );
-          _attachRetryTimer?.cancel();
-          _attachRetryTimer = null;
-          _pendingAttach = false;
-          _completeAttach(socket);
-        });
+    _attachRetryTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      final socket = SocketService().rawSocket;
+      if (socket == null) {
+        dLog(
+          '⏳ [ChatSocket][CLIENT] Retry: rawSocket still null — waiting…',
+        );
+        return;
+      }
+      dLog(
+        '✅ [ChatSocket][CLIENT] Retry: rawSocket now available '
+            '(connected=${socket.connected}) — completing attach',
+      );
+      _attachRetryTimer?.cancel();
+      _attachRetryTimer = null;
+      _pendingAttach = false;
+      _completeAttach(socket);
+    });
   }
 
   void _completeAttach(IO.Socket socket) {
@@ -251,13 +297,7 @@ class ChatSocketService {
 
     // Remove ONLY the chat listeners — do NOT call socket.offAny() globally
     // as that would wipe the order/offer listeners registered by SocketService.
-    dLog('🔓 [ChatSocket][CLIENT] Removing chat event listeners');
-    _socket!.off('connect');
-    _socket!.off('disconnect');
-    _socket!.off('chat:new_message');
-    _socket!.off('chat:user_typing');
-    _socket!.off('chat:user_stopped_typing');
-    _socket!.off('chat:message_read');
+    _detachListeners();
 
     _socket = null;
     dLog('🔓 [ChatSocket][CLIENT] Detached ✓');

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:tawreedat_go/core/utils/logger.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -75,6 +74,30 @@ class ChatModule {
     'ChatModule.init() must be called before accessing currentUserId.',
     );
     return _currentUserId!;
+  }
+
+  /// Ensures the chat socket is attached every time [ChatScreen] is opened.
+  ///
+  /// Covers two scenarios that [init] alone cannot handle:
+  ///
+  /// 1. **Detached after dispose** — [ChatSocketService] was detached (e.g. on
+  ///    a previous logout/re-login cycle) but [init] was not called again.
+  ///
+  /// 2. **Stale socket reference** — [SocketService] reconnected and produced a
+  ///    new [IO.Socket] instance; [ChatSocketService] is holding the old one.
+  ///    [ChatSocketService.attach] detects the mismatch and re-attaches.
+  ///
+  /// Safe to call on every navigation — it is a no-op when the socket is
+  /// already attached to the current [SocketService] instance.
+  static void ensureAttached() {
+    if (!ChatSocketService().isAttached) {
+      dLog('🔁 [ChatModule] ensureAttached — socket detached, re-attaching');
+      ChatSocketService().attach();
+    } else {
+      // Delegate to attach() anyway so it can detect a stale socket reference.
+      // attach() will no-op if the stored reference matches the current one.
+      ChatSocketService().attach();
+    }
   }
 
   /// Tears down the chat module.
@@ -170,6 +193,12 @@ class ChatNavigator {
         String? chatTitle,
         String? chatAvatarUrl,
       }) async {
+    // Guarantee the chat socket is attached (and pointing at the current
+    // SocketService instance) before the screen mounts. This is the single
+    // choke-point for every ChatScreen navigation, so one call here covers
+    // both openExistingChat and openChatWithUser.
+    ChatModule.ensureAttached();
+
     // We don't know chatId yet for new chats, but ChatCubit will resolve it.
     // We hook into the cubit's state to grab the chatId once loaded.
     final inboxCubit = context.read<InboxCubit>();
