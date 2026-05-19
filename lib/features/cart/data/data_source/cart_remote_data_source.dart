@@ -15,16 +15,18 @@ extension CartUpdateActionX on CartUpdateAction {
 
 abstract class CartRemoteDataSource {
   Future<CartResponseModel> getCart();
+
   Future<CartItemModel> addItem({required int spId, required int quantity});
+
   Future<CartItemModel?> updateItem({
     required int cartItemId,
     required CartUpdateAction action,
     required int quantity,
   });
+
   Future<void> clearCart();
 
   Future<OrderPreviewModel> getOrderPreview(String? code);
-
 }
 
 class CartRemoteDataSourceImpl implements CartRemoteDataSource {
@@ -34,14 +36,23 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
 
   @override
   Future<CartResponseModel> getCart() async {
-    final response = await _dio.get('/cart?lang=${LocaleManager.currentLocale}');
+    final response = await _dio.get(
+      '/cart?lang=${LocaleManager.currentLocale}',
+    );
     dLog('[Cart] GET /cart → ${response.statusCode}');
     return CartResponseModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
   Future<OrderPreviewModel> getOrderPreview(String? code) async {
-    final response = await _dio.post('/orders/preview?lang=${LocaleManager.currentLocale}',data: {if (code != null)'coupon_code': code});
+    final response = await _dio.post(
+      '/orders/preview?lang=${LocaleManager.currentLocale}',
+      data: {
+        if (code != null) 'coupon_code': code,
+        'payment_method': "CASH",
+        'type': "CATALOG_PURCHASE",
+      },
+    );
     dLog('[Cart] GET /orders/preview → ${response.statusCode}');
     return OrderPreviewModel.fromJson(response.data as Map<String, dynamic>);
   }
@@ -60,7 +71,11 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
       final data = response.data as Map<String, dynamic>;
       return CartItemModel.fromJson(data['cartItem'] as Map<String, dynamic>);
     } on DioException catch (e) {
-      _rethrowIfMultipleSuppliers(e, pendingSpId: spId, pendingQuantity: quantity);
+      _rethrowIfMultipleSuppliers(
+        e,
+        pendingSpId: spId,
+        pendingQuantity: quantity,
+      );
       rethrow;
     }
   }
@@ -73,20 +88,14 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   }) async {
     final response = await _dio.put(
       '/cart?lang=${LocaleManager.currentLocale}',
-      data: {
-        'sp_id': cartItemId,
-        'action': action.value,
-        'quantity': quantity,
-      },
+      data: {'sp_id': cartItemId, 'action': action.value, 'quantity': quantity},
     );
 
     dLog('[Cart] PUT /cart → ${response.statusCode}');
     final data = response.data as Map<String, dynamic>;
 
     if (data['cartItem'] != null) {
-      return CartItemModel.fromJson(
-        data['cartItem'] as Map<String, dynamic>,
-      );
+      return CartItemModel.fromJson(data['cartItem'] as Map<String, dynamic>);
     }
 
     // item removed case
@@ -95,7 +104,9 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
 
   @override
   Future<void> clearCart() async {
-    final response = await _dio.delete('/cart?lang=${LocaleManager.currentLocale}');
+    final response = await _dio.delete(
+      '/cart?lang=${LocaleManager.currentLocale}',
+    );
     dLog('[Cart] DELETE /cart → ${response.statusCode}');
   }
 
@@ -105,10 +116,10 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   /// error code. If found, throws a typed [MultipleSupplierException] instead
   /// of the raw Dio error so callers can distinguish this case easily.
   void _rethrowIfMultipleSuppliers(
-      DioException e, {
-        required int pendingSpId,
-        required int pendingQuantity,
-      }) {
+    DioException e, {
+    required int pendingSpId,
+    required int pendingQuantity,
+  }) {
     final body = e.response?.data;
     if (body is! Map<String, dynamic>) return;
     if (body['code'] != 'MULTIPLE_SUPPLIERS') return;

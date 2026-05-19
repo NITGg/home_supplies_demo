@@ -5,6 +5,7 @@ import '../../../../core/utils/api_client.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/data/data_sources/auth_remote_data_source.dart';
+import '../../../cart/data/models/order_preview_model.dart';
 import '../models/order_model.dart';
 import '../models/proposal_model.dart';
 import '../models/qr_model.dart';
@@ -107,6 +108,42 @@ class OrderRemoteDataSource {
     } else {
       throw Exception('Failed to create catalog order');
     }
+  }
+
+
+  Future<OrderPreviewModel> getCustomOrderPreview({
+    required int pickupAreaId,
+    required String pickupAddressDescription,
+    required String pickupLat,
+    required String pickupLong,
+    required int deliveryAreaId,
+    required String deliveryAddressDescription,
+    required String deliveryLat,
+    required String deliveryLong,
+    required double budget,
+    required String paymentMethod,
+    String? couponCode,
+  }) async {
+    final response = await _dio.post(
+      '/orders/preview?lang=${LocaleManager.currentLocale}',
+      data: {
+        'type': 'CUSTOM_PICKUP',
+        "product_description": "product_description",
+        'budget': (budget * 100).round(), // cents
+        'payment_method': paymentMethod,
+        'pickup_area_id': pickupAreaId,
+        'pickup_address_description': pickupAddressDescription,
+        'pickup_lat': double.parse(pickupLat),
+        'pickup_long': double.parse(pickupLong),
+        'delivery_area_id': deliveryAreaId,
+        'delivery_address_description': deliveryAddressDescription,
+        'delivery_lat': double.parse(deliveryLat),
+        'delivery_long': double.parse(deliveryLong),
+        if (couponCode != null) 'coupon_code': couponCode,
+      },
+    );
+    dLog('[Order] POST /orders/preview (CUSTOM) → ${response.statusCode}');
+    return OrderPreviewModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   // Get All Orders

@@ -20,8 +20,10 @@ import '../../../../../addresses/data/models/governorate_model.dart';
 import '../../../../../addresses/manager/address_cubit.dart';
 import '../../../../../addresses/manager/address_states.dart';
 import '../../../../../auth/manager/profile_cubit.dart';
+import '../../../../../cart/data/models/order_preview_model.dart';
 import '../../../../../wallet/manager/wallet_cubit.dart';
 import '../../../../../wallet/manager/wallet_state.dart';
+import '../../../../data/data_source/order_remote_data_source.dart';
 import '../../../../data/models/draft_model.dart';
 import '../../../../data/models/order_model.dart';
 import '../../../../manager/order_cubit.dart';
@@ -71,6 +73,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
   DistanceResult? _distanceResult;
   bool _fetchingDistance = false;
+  OrderPreviewModel? _orderPreview;
+  bool _fetchingPreview = false;
 
   // CouponValid? _appliedCoupon;
   // bool _couponValidating = false;
@@ -115,6 +119,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (_effectivePickup != null && _deliveryAddress != null) {
         // ← DRAFT
         _fetchDistanceIfReady(); // ← DRAFT
+        _fetchPreviewIfReady();
       } // ← DRAFT
 
       if (!mounted) return;
@@ -165,6 +170,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           // ← DRAFT (unchanged logic, but now respects restored draft)
           setState(() => _deliveryAddress = defaultAddr);
           _fetchDistanceIfReady();
+          _fetchPreviewIfReady();
         }
       }
     });
@@ -243,6 +249,52 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     }
   }
 
+  Future<void> _fetchPreviewIfReady() async {
+    final pickup = _effectivePickup;
+    final delivery = _deliveryAddress;
+
+    if (pickup == null || delivery == null) {
+      if (mounted) setState(() => _orderPreview = null);
+      return;
+    }
+
+    if (mounted)
+      setState(() {
+        _fetchingPreview = true;
+        _orderPreview = null;
+      });
+
+    try {
+      // budget defaults to 1 (shipping mode) when not shopping
+      final budget = _isShopping
+          ? (double.tryParse(_budgetController.text.trim()) ?? 0.0)
+          : 0.01; // non-zero placeholder for shipping-only orders
+
+      final preview = await OrderRemoteDataSource().getCustomOrderPreview(
+        pickupAreaId: pickup.areaId,
+        pickupAddressDescription: pickup.detailedAddress,
+        pickupLat: pickup.addressLat,
+        pickupLong: pickup.addressLong,
+        deliveryAreaId: delivery.areaId,
+        deliveryAddressDescription: delivery.detailedAddress,
+        deliveryLat: delivery.addressLat,
+        deliveryLong: delivery.addressLong,
+        budget: budget,
+        paymentMethod: _isShopping ? _paymentMethod : 'WALLET',
+      );
+
+      dLog(
+        '💰 [Preview] totalFee=${preview.totalFee} deliveryFee=${preview.deliveryFee}',
+      );
+      if (mounted) setState(() => _orderPreview = preview);
+    } catch (e) {
+      dLog('❌ [Preview] fetch failed: $e');
+      if (mounted) setState(() => _orderPreview = null);
+    } finally {
+      if (mounted) setState(() => _fetchingPreview = false);
+    }
+  }
+
   // ── Fee calculation ────────────────────────────────────────────────────────
 
   // double? _calculateShippingFee() {
@@ -266,8 +318,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   // }
 
   double _requiredWalletAmount() {
-    //todo
-    final fee = 0.0;
+    final fee = _orderPreview?.totalFee ?? 0.0;
 
     if (_isShopping) {
       final budget = double.tryParse(_budgetController.text.trim()) ?? 0.0;
@@ -309,6 +360,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       setState(() => _pickupAddress = result);
       _syncDraft(); // ← DRAFT
       _fetchDistanceIfReady();
+      _fetchPreviewIfReady();
     }
   }
 
@@ -321,6 +373,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       setState(() => _deliveryAddress = result);
       _syncDraft(); // ← DRAFT
       _fetchDistanceIfReady();
+      _fetchPreviewIfReady();
     }
   }
 
@@ -724,100 +777,60 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     double fee,
     bool isOverBudget,
   ) {
-    // double? discountedFee;
-    // if (_appliedCoupon != null && _appliedCoupon!.isDeliveryFeeDiscount) {
-    //   if (_appliedCoupon!.isPercentDiscount &&
-    //       _appliedCoupon!.discountValue != null) {
-    //     discountedFee = (fee - (fee * _appliedCoupon!.discountValue! / 100))
-    //         .clamp(0, double.infinity);
-    //   } else if (_appliedCoupon!.isFixedDiscount &&
-    //       _appliedCoupon!.discountValue != null) {
-    //     discountedFee = (fee - _appliedCoupon!.discountValue!).clamp(
-    //       0,
-    //       double.infinity,
-    //     );
-    //   }
-    // }
-    //
-    // final bool hasFeeDiscount = discountedFee != null;
+    if (!_isShopping) return const SizedBox.shrink();
 
-    // final feeChip = Container(
-    //   height: 56,
-    //   padding: const EdgeInsets.symmetric(horizontal: 12),
-    //   decoration: BoxDecoration(
-    //     color: hasFeeDiscount
-    //         ? Colors.green.shade50
-    //         : AppColors.kSecondaryColor.withOpacity(0.08),
-    //     borderRadius: BorderRadius.circular(14),
-    //     border: Border.all(
-    //       color: hasFeeDiscount
-    //           ? Colors.green.shade300
-    //           : AppColors.kSecondaryColor.withOpacity(0.25),
-    //     ),
-    //   ),
-    //   child: Column(
-    //     mainAxisAlignment: MainAxisAlignment.center,
-    //     crossAxisAlignment: CrossAxisAlignment.center,
-    //     children: [
-    //       Text(
-    //         l10n.estimatedShippingFee,
-    //         style: TextStyle(
-    //           fontSize: 10,
-    //           color: hasFeeDiscount
-    //               ? Colors.green.shade700
-    //               : AppColors.kSecondaryColor.withOpacity(0.8),
-    //           fontWeight: FontWeight.w500,
-    //         ),
-    //       ),
-    //       const SizedBox(height: 3),
-    //       if (hasFeeDiscount)
-    //         Row(
-    //           mainAxisAlignment: MainAxisAlignment.center,
-    //           mainAxisSize: MainAxisSize.min,
-    //           children: [
-    //             Text(
-    //               '${fee.toInt()} ${l10n.egp}',
-    //               style: TextStyle(
-    //                 fontSize: 11,
-    //                 fontWeight: FontWeight.w500,
-    //                 color: Colors.red.shade400,
-    //                 decoration: TextDecoration.lineThrough,
-    //                 decorationColor: Colors.red.shade400,
-    //               ),
-    //             ),
-    //             const SizedBox(width: 6),
-    //             Text(
-    //               '${discountedFee.toInt()} ${l10n.egp}',
-    //               style: TextStyle(
-    //                 fontSize: 13,
-    //                 fontWeight: FontWeight.bold,
-    //                 color: Colors.green.shade700,
-    //               ),
-    //             ),
-    //           ],
-    //         )
-    //       else
-    //         Text(
-    //           textAlign: TextAlign.center,
-    //           '${fee.toInt()} ${l10n.egp}',
-    //           style: TextStyle(
-    //             fontSize: 13,
-    //             fontWeight: FontWeight.bold,
-    //             color: AppColors.kSecondaryColor,
-    //           ),
-    //         ),
-    //     ],
-    //   ),
-    // );
-
-    if (!_isShopping || isOverBudget) return SizedBox.shrink();
+    // Fee chip — shows a spinner while fetching, then the real server total
+    final feeChip = Container(
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.kSecondaryColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.kSecondaryColor.withOpacity(0.25)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            l10n.estimatedShippingFee,
+            style: TextStyle(
+              fontSize: 10,
+              color: AppColors.kSecondaryColor.withOpacity(0.8),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 3),
+          if (_fetchingPreview)
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation(AppColors.kSecondaryColor),
+              ),
+            )
+          else
+            Text(
+              fee > 0 ? '${fee.toStringAsFixed(0)} ${l10n.egp}' : '—',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppColors.kSecondaryColor,
+              ),
+            ),
+        ],
+      ),
+    );
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // feeChip,
-        // const SizedBox(width: 10),
-        Expanded(child: _buildPaymentToggle()),
+        feeChip,
+        if (!isOverBudget) ...[
+          const SizedBox(width: 10),
+          Expanded(child: _buildPaymentToggle()),
+        ],
       ],
     );
   }
@@ -1025,6 +1038,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         });
         _syncDraft(); // ← DRAFT
         _fetchDistanceIfReady();
+        _fetchPreviewIfReady();
       },
       child: Row(
         children: [
@@ -1044,6 +1058,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                 });
                 _syncDraft(); // ← DRAFT
                 _fetchDistanceIfReady();
+                _fetchPreviewIfReady();
               },
             ),
           ),
@@ -1142,8 +1157,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
           maxChildSize: 0.95,
           expand: false,
           builder: (context, scrollController) {
-            //todo
-            final shippingFee = 0.0;
+            final shippingFee = _orderPreview?.totalFee ?? 0.0;
             final budget = double.tryParse(_budgetController.text.trim()) ?? 0;
 
             final limit =
@@ -1287,12 +1301,12 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           const SizedBox(height: 16),
                           _buildRouteSection(l10n),
                           const SizedBox(height: 24),
-                            _buildFeeAndPaymentRow(
-                              l10n,
-                              shippingFee,
-                              isOverBudget,
-                            ),
-                            const SizedBox(height: 24),
+                          _buildFeeAndPaymentRow(
+                            l10n,
+                            shippingFee,
+                            isOverBudget,
+                          ),
+                          const SizedBox(height: 24),
                           // CouponSection(
                           //   couponController: _couponController,
                           //   couponFocus: _couponFocus,
@@ -1317,11 +1331,12 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                             s is OrderSuccess,
                         builder: (context, state) {
                           return AppCustomButton(
-                            enabled: !(_distanceResult == null || (!_pickupNearMe && _pickupAddress == null)),
+                            enabled:
+                                !(_distanceResult == null ||
+                                    (!_pickupNearMe && _pickupAddress == null)),
                             onPressed: _submit,
                             text: l10n.confirm,
-                            isLoading:
-                                state is OrderOperationLoading,
+                            isLoading: state is OrderOperationLoading,
                           );
                         },
                       ),
