@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../utils/logger.dart';
@@ -14,49 +15,96 @@ class ConnectivityManager {
 
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  Timer? _periodicProbeTimer;
 
-  // Current connectivity status
+  // Probe config — hit multiple hosts so one outage doesn't false-positive
+  static const List<String> _probeHosts = [
+    'google.com',
+    'cloudflare.com',
+    '1.1.1.1',
+  ];
+  static const Duration _probeTimeout = Duration(seconds: 5);
+  static const Duration _probeInterval = Duration(seconds: 30);
+
   bool _isConnected = true;
 
   bool get isConnected => _isConnected;
 
-  // Callbacks for connectivity changes
   final List<Function(bool isConnected)> _listeners = [];
 
   /// Initialize connectivity monitoring
   Future<void> init() async {
-    // Check initial connectivity
-    final result = await _connectivity.checkConnectivity();
-    _updateConnectionStatus(result);
+    // Run an immediate real internet check
+    final hasInternet = await _probeInternet();
+    _applyStatus(hasInternet);
 
-    // Listen to connectivity changes
+    // React to network interface changes (WiFi/mobile on-off)
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
-      _updateConnectionStatus,
-      onError: (error) {
-        dLog('❌ Connectivity error: $error');
-      },
+      _onInterfaceChanged,
+      onError: (error) => dLog('❌ Connectivity stream error: $error'),
     );
 
-    dLog('✅ ConnectivityManager initialized');
+    // Periodically re-probe so we catch the "connected to router, no WAN" case
+    _periodicProbeTimer = Timer.periodic(_probeInterval, (_) async {
+      final connected = await _probeInternet();
+      _applyStatus(connected);
+    });
+
+    dLog('✅ ConnectivityManager initialized (internet=${_isConnected})');
   }
 
-  /// Update connection status
-  void _updateConnectionStatus(List<ConnectivityResult> results) {
-    final hasConnection = results.any(
-      (result) => result != ConnectivityResult.none,
-    );
+  // Called whenever the network interface changes (e.g. WiFi toggled)
+  Future<void> _onInterfaceChanged(List<ConnectivityResult> results) async {
+    final hasInterface = results.any((r) => r != ConnectivityResult.none);
 
-    if (_isConnected != hasConnection) {
-      _isConnected = hasConnection;
-      dLog(
-        '🌐 Connectivity changed: ${_isConnected ? "Connected" : "Disconnected"}',
-      );
+    if (!hasInterface) {
+      // No interface at all → definitely offline, skip the probe
+      _applyStatus(false);
+    } else {
+      // Interface is up, but verify actual internet reachability
+      final hasInternet = await _probeInternet();
+      _applyStatus(hasInternet);
+    }
+  }
 
-      // Notify all listeners
-      for (var listener in _listeners) {
-        listener(_isConnected);
+  /// Attempts a DNS/socket lookup against multiple hosts.
+  /// Returns true if at least one host resolves successfully.
+  Future<bool> _probeInternet() async {
+    for (final host in _probeHosts) {
+      try {
+        final result = await InternetAddress.lookup(host)
+            .timeout(_probeTimeout);
+        if (result.isNotEmpty && result.first.rawAddress.isNotEmpty) {
+          return true; // One success is enough
+        }
+      } on SocketException {
+        // Network unreachable for this host, try the next
+      } on TimeoutException {
+        // Timeout for this host, try the next
+      } catch (e) {
+        dLog('⚠️ Probe error for $host: $e');
       }
     }
+    return false; // All hosts failed
+  }
+
+  /// Apply a new status and notify listeners only on change
+  void _applyStatus(bool hasInternet) {
+    if (_isConnected == hasInternet) return;
+
+    _isConnected = hasInternet;
+    dLog('🌐 Internet ${_isConnected ? "restored ✅" : "lost ❌"}');
+
+    for (final listener in _listeners) {
+      listener(_isConnected);
+    }
+  }
+
+  /// One-shot check — always does a live probe, ignores cached state
+  Future<bool> checkConnection() async {
+    final result = await _probeInternet();
+    _applyStatus(result); // Keep internal state in sync
+    return result;
   }
 
   /// Add connectivity listener
@@ -69,15 +117,10 @@ class ConnectivityManager {
     _listeners.remove(listener);
   }
 
-  /// Check if currently connected
-  Future<bool> checkConnection() async {
-    final result = await _connectivity.checkConnectivity();
-    return result.any((r) => r != ConnectivityResult.none);
-  }
-
   /// Dispose resources
   void dispose() {
     _connectivitySubscription?.cancel();
+    _periodicProbeTimer?.cancel();
     _listeners.clear();
   }
 }

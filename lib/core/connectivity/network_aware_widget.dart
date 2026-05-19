@@ -26,8 +26,14 @@ class _NetworkAwareWidgetState extends State<NetworkAwareWidget> {
   @override
   void initState() {
     super.initState();
+    // checkConnection() runs a live probe; fall back to cached value while it resolves
     _isConnected = ConnectivityManager.instance.isConnected;
     ConnectivityManager.instance.addListener(_onConnectivityChanged);
+
+    // Verify with a real probe on first mount
+    ConnectivityManager.instance.checkConnection().then((isConnected) {
+      if (mounted) setState(() => _isConnected = isConnected);
+    });
   }
 
   @override
