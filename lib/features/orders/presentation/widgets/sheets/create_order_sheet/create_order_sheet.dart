@@ -20,6 +20,7 @@ import '../../../../../addresses/data/models/governorate_model.dart';
 import '../../../../../addresses/manager/address_cubit.dart';
 import '../../../../../addresses/manager/address_states.dart';
 import '../../../../../auth/manager/profile_cubit.dart';
+import '../../../../../auth/manager/profile_states.dart';
 import '../../../../../cart/data/models/order_preview_model.dart';
 import '../../../../../coupons/manager/coupons_cubit.dart';
 import '../../../../../wallet/manager/wallet_cubit.dart';
@@ -146,7 +147,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
       // Only auto-fill coupon when the draft doesn't already have one.         // ← DRAFT
       if (_couponController.text.isEmpty) {
-        // ← DRAFT
+        final profileState = context.read<ProfileCubit>().state;
+        if (profileState is ProfileLoaded && profileState.profile.roleId == 4) {
+          return;
+        }
+
         final code = widget.initialCouponCode?.isNotEmpty == true
             ? widget.initialCouponCode
             : await context.read<CouponCubit>().getOrFetchFirstOrderCoupon();
@@ -167,13 +172,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     // ← DRAFT
     CreateOrderDraft.productDescription = _productDescriptionController.text;
     CreateOrderDraft.budget = _budgetController.text;
-    CreateOrderDraft.couponCode = _couponController.text;
+    // CreateOrderDraft.couponCode = _couponController.text;
     CreateOrderDraft.pickupAddress = _pickupAddress;
     CreateOrderDraft.deliveryAddress = _deliveryAddress;
     CreateOrderDraft.isShopping = _isShopping;
     CreateOrderDraft.paymentMethod = _paymentMethod;
     CreateOrderDraft.pickupNearMe = _pickupNearMe;
-    CreateOrderDraft.appliedCoupon = _appliedCoupon;
+    // CreateOrderDraft.appliedCoupon = _appliedCoupon;
   }
 
   Future<void> _preloadDefaultDelivery() async {
