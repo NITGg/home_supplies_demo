@@ -82,6 +82,20 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   late double _walletBalance;
   late final AddressCubit _initCubit;
 
+  bool get _isFormValid {
+    final description = _productDescriptionController.text.trim();
+    if (description.isEmpty || description.length < 10) return false;
+
+    if (_isShopping) {
+      final budget = _budgetController.text.trim();
+      if (budget.isEmpty || budget == '0' || double.tryParse(budget) == null) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   // ── Life-cycle ─────────────────────────────────────────────────────────────
 
   @override
@@ -104,7 +118,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     // _appliedCoupon = CreateOrderDraft.appliedCoupon; // ← DRAFT
 
     // ── Wire up listeners to keep draft in sync ────────────────────────────── // ← DRAFT
-    _productDescriptionController.addListener(_syncDraft); // ← DRAFT
+    _productDescriptionController.addListener(() {
+      setState(() {});
+      _syncDraft();
+    });
     _budgetController.addListener(() {
       // ← DRAFT
       setState(() {}); // (already existed for rebuild)
@@ -1332,6 +1349,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                         builder: (context, state) {
                           return AppCustomButton(
                             enabled:
+                                _isFormValid &&
                                 !(_distanceResult == null ||
                                     (!_pickupNearMe && _pickupAddress == null)),
                             onPressed: _submit,
