@@ -327,6 +327,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
                       if (!mounted) return;
                       _showPendingNotificationDialog();
+
                     },
                   ),
                 ],
@@ -345,7 +346,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                   floatingActionButtonLocation:
                       FloatingActionButtonLocation.centerDocked,
                   floatingActionButton: FloatingActionButton.large(
-                    onPressed: () {
+                    onPressed: () async {
                       // Guests cannot create orders — show login prompt instead.
                       if (_isGuest) {
                         showGuestLoginPrompt(context);
@@ -363,7 +364,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       final walletCubit = context.read<WalletCubit>();
                       final balance =
                           walletCubit.cachedWalletData?.wallet.balance ?? 0.0;
-
+                      if(!context.mounted) return;
                       showModalBottomSheet<Order>(
                         context: context,
                         isScrollControlled: true,
@@ -373,6 +374,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                           child: CreateOrderBottomSheet(
                             governorates: governorates,
                             walletBalance: balance,
+                            initialCouponCode: '',
                           ),
                         ),
                       ).then((order) {

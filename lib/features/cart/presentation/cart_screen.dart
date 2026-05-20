@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tawreedat_go/core/utils/logger.dart';
 import 'package:tawreedat_go/core/widgets/banners.dart';
 import 'package:tawreedat_go/features/cart/presentation/widgets/cart_item_tile.dart';
 import 'package:tawreedat_go/features/cart/presentation/widgets/cart_price_helpers.dart';
