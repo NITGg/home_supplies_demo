@@ -1678,6 +1678,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseChooseFutureTime => 'Please choose a time in the future';
 
   @override
+  String get scheduledOrderNote => 'The scheduled time is the time the order is placed and the driver search begins, not the final delivery time to the customer.';
+
+  @override
   String get scheduleOrder => 'Schedule order';
 
   @override

@@ -3335,6 +3335,12 @@ abstract class AppLocalizations {
   /// **'Please choose a time in the future'**
   String get pleaseChooseFutureTime;
 
+  /// No description provided for @scheduledOrderNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The scheduled time is the time the order is placed and the driver search begins, not the final delivery time to the customer.'**
+  String get scheduledOrderNote;
+
   /// No description provided for @scheduleOrder.
   ///
   /// In en, this message translates to:

@@ -761,6 +761,8 @@
       "daySaturday": "السبت",
       "@daySaturday": { "description": "Full name of Saturday" },
        "scheduleOrder": "جدولة الطلب",
+         "scheduledOrderNote": "الوقت المحدد في الجدولة هو وقت إضافة الطلب وبدء البحث عن مندوب، وليس وقت التسليم النهائي للعميل.",
+
          "pleaseChooseFutureTime": "يرجى اختيار وقت في المستقبل",
         "tapToChooseDateTime": "اضغط لاختيار التاريخ والوقت"
 

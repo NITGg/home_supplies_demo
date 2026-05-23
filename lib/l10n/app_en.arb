@@ -764,6 +764,7 @@
       "daySaturday": "Saturday",
       "@daySaturday": { "description": "Full name of Saturday" },
   "pleaseChooseFutureTime": "Please choose a time in the future",
+  "scheduledOrderNote": "The scheduled time is the time the order is placed and the driver search begins, not the final delivery time to the customer.",
 
       "scheduleOrder": "Schedule order",
         "tapToChooseDateTime": "Tap to choose date & time"

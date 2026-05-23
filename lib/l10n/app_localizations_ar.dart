@@ -1678,6 +1678,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pleaseChooseFutureTime => 'يرجى اختيار وقت في المستقبل';
 
   @override
+  String get scheduledOrderNote => 'الوقت المحدد في الجدولة هو وقت إضافة الطلب وبدء البحث عن مندوب، وليس وقت التسليم النهائي للعميل.';
+
+  @override
   String get scheduleOrder => 'جدولة الطلب';
 
   @override
