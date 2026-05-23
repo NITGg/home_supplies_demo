@@ -60,6 +60,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   bool _expirationReloadPending = false;
 
   StreamSubscription? _newOfferSubscription;
+  StreamSubscription? _orderScheduledActivatedSubscription;
   StreamSubscription? _newPriceSubscription;
   StreamSubscription? _orderCancelledSubscription;
   StreamSubscription? _orderCollectedSubscription;
@@ -102,10 +103,10 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     final nextExpiry = orders
         .where(
           (o) =>
-      o.status == 'PENDING' &&
-          o.expiresAt != null &&
-          o.expiresAt!.isAfter(now),
-    )
+              o.status == 'PENDING' &&
+              o.expiresAt != null &&
+              o.expiresAt!.isAfter(now),
+        )
         .map((o) => o.expiresAt!)
         .minOrNull;
 
@@ -146,10 +147,18 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       }
     });
     _courierLocationSubscription = socketService.onCourierLocation.listen((
-        data,
-        ) {
+      data,
+    ) {
       if (mounted) _handleCourierLocation(data);
     });
+
+    _orderScheduledActivatedSubscription = socketService
+        .onOrderScheduledActivated
+        .listen((data) {
+          if (mounted && _viewMode == ViewMode.active) {
+            context.read<OrderCubit>().loadActiveOrders(loadMore: false);
+          }
+        });
   }
 
   void _cleanupSocketListeners() {
@@ -158,6 +167,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     _orderCancelledSubscription?.cancel();
     _orderCollectedSubscription?.cancel();
     _courierLocationSubscription?.cancel();
+    _orderScheduledActivatedSubscription?.cancel();
   }
 
   /// Called when the courier marks the order as collected/delivered on their end.
@@ -196,6 +206,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       }
     });
   }
+
   void _handleCourierLocation(Map<String, dynamic> data) {
     final orderId = data['orderId'] as int?;
     final lat = (data['lat'] as num?)?.toDouble();
@@ -285,7 +296,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         _scheduleExpirationReload(state.orders);
         final activeIds = state.orders.map((o) => o.id).toSet();
         setState(
-              () =>
+          () =>
               _ordersWithNewOffers.removeWhere((id) => !activeIds.contains(id)),
         );
       }
@@ -296,7 +307,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       final freshState = cubit.state;
       if (freshState is OrdersLoaded) {
         final order = freshState.orders.firstWhereOrNull(
-              (o) => o.id == orderId,
+          (o) => o.id == orderId,
         );
         if (order != null) _showProposals(order);
       }
@@ -386,12 +397,16 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   ///   - Customer-initiated: triggered by [QRScannerScreen] via [DeliveryConfirmed].
   ///   - Courier-initiated: triggered here via the [SocketService.onOrderCollected]
   ///     socket event when the courier confirms delivery on their end.
-  void _showReviewSheet(int orderId, int courierId,int courierUserId, ) {
+  void _showReviewSheet(int orderId, int courierId, int courierUserId) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ReviewBottomSheet(orderId: orderId, courierId: courierId, courierUserId: courierUserId),
+      builder: (_) => ReviewBottomSheet(
+        orderId: orderId,
+        courierId: courierId,
+        courierUserId: courierUserId,
+      ),
     );
   }
 
@@ -411,8 +426,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
     if (_courierFix == null) return null;
 
     return orders.firstWhereOrNull(
-          (o) =>
-      o.id == _courierFix!.orderId &&
+      (o) =>
+          o.id == _courierFix!.orderId &&
           o.status?.toUpperCase() == 'IN_PROGRESS' &&
           o.collectedAt != null,
     );
@@ -434,14 +449,14 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
               await (_viewMode == ViewMode.active
                   ? cubit.loadActiveOrders(loadMore: false)
                   : cubit.loadHistoryOrders(
-                loadMore: false,
-                filter: _currentFilter,
-              ));
+                      loadMore: false,
+                      filter: _currentFilter,
+                    ));
             },
             color: AppColors.kPrimaryColor,
             child: BlocConsumer<OrderCubit, OrderState>(
               listenWhen: (_, current) =>
-              current is OrdersLoaded ||
+                  current is OrdersLoaded ||
                   current is OrderCancelled ||
                   current is OrderCancelError ||
                   current is DeliveryConfirmed ||
@@ -461,7 +476,11 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
                 if (state is DeliveryConfirmed) {
                   // Show review sheet AND success banner
-                  _showReviewSheet(state.orderId, state.courierId, state.courierUserId);
+                  _showReviewSheet(
+                    state.orderId,
+                    state.courierId,
+                    state.courierUserId,
+                  );
                   showSuccessBanner(
                     context,
                     AppLocalizations.of(context)!.delivered,
@@ -476,7 +495,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                 }
               },
               buildWhen: (_, current) =>
-              current is OrderLoading ||
+                  current is OrderLoading ||
                   current is OrdersLoaded ||
                   current is OrderError,
               builder: (context, orderState) {
@@ -504,13 +523,13 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                             const Spacer(),
                             BlocBuilder<OrderCubit, OrderState>(
                               buildWhen: (_, current) =>
-                              current is OrdersLoaded ||
+                                  current is OrdersLoaded ||
                                   current is OrderLoading,
                               builder: (context, state) {
                                 final hasActiveOrders =
                                     state is OrdersLoaded &&
-                                        state.viewMode == OrderViewMode.active &&
-                                        state.orders.any((o) => o.isInProgress);
+                                    state.viewMode == OrderViewMode.active &&
+                                    state.orders.any((o) => o.isInProgress);
                                 if (!hasActiveOrders) {
                                   return const SizedBox.shrink();
                                 }
@@ -557,8 +576,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       final isCorrectMode =
           (_viewMode == ViewMode.active &&
               state.viewMode == OrderViewMode.active) ||
-              (_viewMode == ViewMode.history &&
-                  state.viewMode == OrderViewMode.history);
+          (_viewMode == ViewMode.history &&
+              state.viewMode == OrderViewMode.history);
 
       if (!isCorrectMode) {
         return [SliverFillRemaining(child: _buildShimmerView())];
@@ -597,7 +616,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             child: Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: CustomerLiveRouteMapWidget(
-                assetFacingOffsetDeg: 70, // ← tweak this until the asset points correctly
+                assetFacingOffsetDeg: 70,
+                // ← tweak this until the asset points correctly
                 key: ValueKey('courier_map_${outForDeliveryOrder.id}'),
                 courierLat: _courierFix!.lat,
                 courierLng: _courierFix!.lng,
@@ -620,7 +640,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           ),
           sliver: SliverList.builder(
             itemCount:
-            orders.length + (_shouldShowPaginationSpinner(state) ? 1 : 0),
+                orders.length + (_shouldShowPaginationSpinner(state) ? 1 : 0),
             itemBuilder: (context, index) {
               // Pagination spinner
               if (index == orders.length) {

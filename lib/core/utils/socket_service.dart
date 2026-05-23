@@ -25,10 +25,16 @@ class SocketService {
   final _courierLocationController =
       StreamController<Map<String, dynamic>>.broadcast();
 
+  final _orderScheduledActivatedController =
+  StreamController<Map<String, dynamic>>.broadcast();
+
   // Track which orders we're currently in rooms for
   final Set<int> _activeOrderRooms = {};
 
   // Public streams
+
+  Stream<Map<String, dynamic>> get onOrderScheduledActivated =>
+      _orderScheduledActivatedController.stream;
   Stream<Map<String, dynamic>> get onNewOffer => _newOfferController.stream;
 
   Stream<Map<String, dynamic>> get onPriceReport =>
@@ -132,6 +138,14 @@ class SocketService {
         _courierLocationController.add(data);
       }
     });
+
+
+    _socket!.on('order:scheduled_activated', (data) {
+      dLog('📅 ORDER SCHEDULED → PENDING: $data');
+      if (data is Map<String, dynamic>) {
+        _orderScheduledActivatedController.add(data);
+      }
+    });
   }
 
   // ================= JOIN ORDER =================
@@ -188,5 +202,6 @@ class SocketService {
     _orderCancelledController.close();
     _orderCollectedController.close();
     _courierLocationController.close();
+    _orderScheduledActivatedController.close();
   }
 }
