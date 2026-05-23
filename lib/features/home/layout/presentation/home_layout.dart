@@ -32,6 +32,7 @@ import '../../../../l10n/manager/locale_cubit.dart';
 import '../../../auth/manager/auth_state.dart';
 import '../../../auth/manager/profile_cubit.dart';
 import '../../../auth/manager/profile_states.dart';
+import '../../../cart/manager/cart_cubit.dart';
 import '../../../categories/presentation/categories_screen.dart';
 import '../../../chat/config/chat_injection.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
@@ -298,6 +299,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       setState(
                         () => _userId = profileState.profile.id.toString(),
                       );
+                      context.read<CartCubit>().fetchCart();
 
                       if (!ChatModule.isInitialized) {
                         ChatModule.init(currentUserId: profileState.profile.id);

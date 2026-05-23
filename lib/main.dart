@@ -394,7 +394,7 @@ class _MyAppState extends State<MyApp> {
 
         BlocProvider<OrderCubit>(create: (_) => OrderCubit()),
         BlocProvider(
-          create: (_) => CartCubit()..fetchCart(),
+          create: (_) => CartCubit(),
         ),
         BlocProvider<AddressCubit>(
           create: (_) => AddressCubit(
