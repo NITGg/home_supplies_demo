@@ -176,9 +176,13 @@ class OrderCard extends StatelessWidget {
 
   Widget _buildScheduledBanner(BuildContext context) {
     final dt = order.orderScheduleAt!;
-    String pad2(int n) => n.toString().padLeft(2, '0');
     final dateStr = '${dt.day}/${dt.month}/${dt.year}';
-    final timeStr = '${pad2(dt.hour)}:${pad2(dt.minute)}';
+
+    // 12h format
+    final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour < 12 ? 'AM' : 'PM';
+    final timeStr = '$hour:$minute $period';
 
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 0),
