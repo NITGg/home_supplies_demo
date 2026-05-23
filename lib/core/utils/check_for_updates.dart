@@ -114,7 +114,13 @@ Future<bool> checkForUpdate(BuildContext context) async {
 }
 
 bool isUpdateAvailable(String currentVersion, String latestVersion) {
-  final current = Version.parse(currentVersion);
-  final latest = Version.parse(latestVersion);
+  final current = Version.parse(_normalizeVersion(currentVersion));
+  final latest = Version.parse(_normalizeVersion(latestVersion));
   return latest > current;
+}
+
+String _normalizeVersion(String version) {
+  final parts = version.trim().split('.');
+  while (parts.length < 3) {parts.add('0');}
+  return parts.take(3).join('.');
 }
