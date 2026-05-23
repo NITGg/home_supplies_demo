@@ -8,12 +8,12 @@ class Order {
 
     return orderItems
         .map((item) {
-          final name = item.product.nameAr.isNotEmpty
-              ? item.product.nameAr
-              : item.product.name;
+      final name = item.product.nameAr.isNotEmpty
+          ? item.product.nameAr
+          : item.product.name;
 
-          return '$name (${item.quantity})';
-        })
+      return '$name (${item.quantity})';
+    })
         .join(' ');
   }
 
@@ -23,18 +23,18 @@ class Order {
   final int? courierUserId;
   final String? orderNumber;
   final String? type;
-  final String? productDescription; // was required String
+  final String? productDescription;
   final String? productImage;
   final File? productImageFile;
-  final String? budget; // was required String
+  final String? budget;
   final String? actualPrice;
-  final int? pickupAreaId; // was required int
-  final String? pickupAddressDescription; // was required String
+  final int? pickupAreaId;
+  final String? pickupAddressDescription;
   final String? pickupLat;
   final String? confirmationOtp;
   final String? pickupLong;
-  final int? deliveryAreaId; // was required int
-  final String? deliveryAddressDescription; // was required String
+  final int? deliveryAreaId;
+  final String? deliveryAddressDescription;
   final String? deliveryLat;
   final String? deliveryLong;
   final String? minDeliveryFee;
@@ -55,15 +55,16 @@ class Order {
   final DateTime? deliveredAt;
   final DateTime? canceledAt;
   final DateTime? collectedAt;
-
   final DateTime? expiresAt;
   final String? courierName;
   final String? courierPhone;
-  final String? payableAmount; // ✅ new
+  final String? payableAmount;
+  final String? courierPhoto;
+  final String? priceAdjustmentStatus;
 
-  final String? courierPhoto; // ← NEW: courier avatar URL
-  final String?
-  priceAdjustmentStatus; // ← NEW: NONE | ACCEPTED | REJECTED | PENDING
+  // ── Schedule ───────────────────────────────────────────────────────────────
+  final bool isOrderScheduled;
+  final DateTime? orderScheduleAt;
 
   final List<OrderItem> orderItems;
 
@@ -80,18 +81,18 @@ class Order {
     this.courierId,
     this.courierUserId,
     this.orderNumber,
-    this.productDescription, // no longer required
+    this.productDescription,
     this.productImage,
     this.productImageFile,
-    this.budget, // no longer required
+    this.budget,
     this.actualPrice,
     this.collectedAt,
-    this.pickupAreaId, // no longer required
-    this.pickupAddressDescription, // no longer required
+    this.pickupAreaId,
+    this.pickupAddressDescription,
     this.pickupLat,
     this.pickupLong,
-    this.deliveryAreaId, // no longer required
-    this.deliveryAddressDescription, // no longer required
+    this.deliveryAreaId,
+    this.deliveryAddressDescription,
     required this.deliveryLat,
     required this.deliveryLong,
     required this.orderItems,
@@ -105,7 +106,6 @@ class Order {
     this.status,
     this.cancelledReason,
     this.payableAmount,
-
     this.cancellationFee,
     this.cancelledBy,
     this.proposalsCount,
@@ -114,6 +114,8 @@ class Order {
     this.deliveredAt,
     this.canceledAt,
     this.expiresAt,
+    this.isOrderScheduled = false,
+    this.orderScheduleAt,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -137,31 +139,25 @@ class Order {
       courierId: json['courier_id'] as int?,
       orderNumber: json['order_number'] as String?,
       productDescription: json['product_description'] as String?,
-      // nullable
       productImage: json['product_image'] as String?,
       budget: json['budget'] == null
           ? null
           : ((num.tryParse(json['budget'].toString()) ?? 0) / 100).toString(),
-
       payableAmount: json['payable_amount'] == null
           ? null
           : ((num.tryParse(json['payable_amount'].toString()) ?? 0) / 100)
-                .toString(),
+          .toString(),
       actualPrice: json['actual_price'] == null
           ? null
           : ((num.tryParse(json['actual_price'].toString()) ?? 0) / 100)
-                .toString(),
+          .toString(),
       pickupAreaId: json['pickup_area_id'] as int?,
-      // nullable
       pickupAddressDescription: json['pickup_address_description'] as String?,
-      // nullable
       pickupLat: json['pickup_lat']?.toString(),
       pickupLong: json['pickup_long']?.toString(),
       deliveryAreaId: json['delivery_area_id'] as int?,
-      // nullable
       deliveryAddressDescription:
-          json['delivery_address_description'] as String?,
-      // nullable
+      json['delivery_address_description'] as String?,
       deliveryLat: json['delivery_lat']?.toString(),
       deliveryLong: json['delivery_long']?.toString(),
       minDeliveryFee: json['min_delivery_fee']?.toString(),
@@ -194,6 +190,11 @@ class Order {
       canceledAt: json['canceled_at'] != null
           ? DateTime.parse(json['canceled_at']).toLocal()
           : null,
+      // ── Schedule ────────────────────────────────────────────────────────
+      isOrderScheduled: json['is_order_scheduled'] == true,
+      orderScheduleAt: json['order_schedule_at'] != null
+          ? DateTime.parse(json['order_schedule_at']).toLocal()
+          : null,
     );
   }
 
@@ -214,15 +215,11 @@ class Order {
   }
 
   bool get isPending => status == 'PENDING';
-
   bool get isAccepted => status == 'ACCEPTED';
-
   bool get isInProgress => status == 'IN_PROGRESS';
-
   bool get isDelivered => status == 'DELIVERED';
-
   bool get isCancelled => status == 'CANCELLED';
-
+  bool get isScheduled => status == 'SCHEDULED';
   bool get hasProposals => (proposalsCount ?? 0) > 0;
 
   /// True when the courier proposed a new price and we're waiting for customer response

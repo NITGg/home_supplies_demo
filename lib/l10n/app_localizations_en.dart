@@ -36,6 +36,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lang => 'Language';
 
   @override
+  String get scheduled => 'Scheduled';
+
+  @override
+  String get asap => 'NOW';
+
+  @override
   String get settings => 'Settings';
 
   @override
@@ -1667,4 +1673,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get daySaturday => 'Saturday';
+
+  @override
+  String get pleaseChooseFutureTime => 'Please choose a time in the future';
+
+  @override
+  String get scheduleOrder => 'Schedule order';
+
+  @override
+  String get tapToChooseDateTime => 'Tap to choose date & time';
 }

@@ -23,17 +23,23 @@ class OrderRemoteDataSource {
       );
     }
   }
+
   // Create Order
   Future<OrderResponse> createOrder(
-    Order order,
-    String paymentMethod, {
-      // required String estimatedDeliveryFee,
-    String? couponCode,
-  }) async {
-    dLog('Creating order: ${order.toJson()} payment method: $paymentMethod coupon code: $couponCode,');
+      Order order,
+      String paymentMethod, {
+        // required String estimatedDeliveryFee,
+        String? couponCode,
+        DateTime? scheduleAt,
+      }) async {
+    dLog('Creating order: ${order.toJson()} payment method: $paymentMethod coupon code: $couponCode, scheduleAt: $scheduleAt');
     if (order.productImageFile != null) {
       await _validateImage(order.productImageFile!);
     }
+
+    final bool isScheduled = scheduleAt != null;
+    final String? scheduleAtUtc = scheduleAt?.toUtc().toIso8601String();
+
     FormData formData;
 
     if (order.productImageFile != null) {
@@ -51,7 +57,8 @@ class OrderRemoteDataSource {
         'delivery_long': order.deliveryLong,
         'payment_method': paymentMethod,
         // 'estemated_delivery_fee': estimatedDeliveryFee,
-
+        if (isScheduled) 'is_order_scheduled': true,
+        if (scheduleAtUtc != null) 'order_schedule_at': scheduleAtUtc,
         if (couponCode != null) 'coupon_code': couponCode,
         'product_image': await MultipartFile.fromFile(
           order.productImageFile!.path,
@@ -63,6 +70,8 @@ class OrderRemoteDataSource {
         ...order.toJson(),
         'type' : 'CUSTOM_PICKUP',
         'payment_method': paymentMethod,
+        if (isScheduled) 'is_order_scheduled': true,
+        if (scheduleAtUtc != null) 'order_schedule_at': scheduleAtUtc,
         if (couponCode != null) 'coupon_code': couponCode,
         // 'estemated_delivery_fee': estimatedDeliveryFee,
       });
@@ -91,14 +100,14 @@ class OrderRemoteDataSource {
     dLog('Creating catalog order — payment: $paymentMethod, coupon: $couponCode');
 
     final response = await _dio.post(
-      '/orders?lang=${LocaleManager.currentLocale}',
-      data: {
-        'type': 'CATALOG_PURCHASE',
-        'payment_method': paymentMethod,
-        if (couponCode != null && couponCode.isNotEmpty)
-          'coupon_code': couponCode,
-      },
-      options: Options()
+        '/orders?lang=${LocaleManager.currentLocale}',
+        data: {
+          'type': 'CATALOG_PURCHASE',
+          'payment_method': paymentMethod,
+          if (couponCode != null && couponCode.isNotEmpty)
+            'coupon_code': couponCode,
+        },
+        options: Options()
     );
 
     dLog('Create catalog order response: ${response.data}');

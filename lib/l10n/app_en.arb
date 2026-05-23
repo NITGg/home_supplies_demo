@@ -9,6 +9,8 @@
   "welcome": "Welcome",
   "tawreedatIsYourBestChoice": "Tawreedat Is Your Best Choice",
   "lang": "Language",
+    "scheduled": "Scheduled",
+      "asap": "NOW",
   "settings": "Settings",
   "support": "Support",
   "browseAsGuest": "Browse As Guest",
@@ -760,6 +762,10 @@
       "@dayFriday": { "description": "Full name of Friday" },
 
       "daySaturday": "Saturday",
-      "@daySaturday": { "description": "Full name of Saturday" }
+      "@daySaturday": { "description": "Full name of Saturday" },
+  "pleaseChooseFutureTime": "Please choose a time in the future",
+
+      "scheduleOrder": "Schedule order",
+        "tapToChooseDateTime": "Tap to choose date & time"
 
 }

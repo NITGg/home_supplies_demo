@@ -6,19 +6,21 @@ class OrderRepository {
   final OrderRemoteDataSource _remoteDataSource;
 
   OrderRepository({OrderRemoteDataSource? remoteDataSource})
-    : _remoteDataSource = remoteDataSource ?? OrderRemoteDataSource();
+      : _remoteDataSource = remoteDataSource ?? OrderRemoteDataSource();
 
   // Create Order
   Future<OrderResponse> createOrder(
-    Order order,
-    String paymentMethod, {
-    String? couponCode,
-    // required String estimatedDeliveryFee,
-  }) async {
+      Order order,
+      String paymentMethod, {
+        String? couponCode,
+        DateTime? scheduleAt,
+        // required String estimatedDeliveryFee,
+      }) async {
     return await _remoteDataSource.createOrder(
       order,
       paymentMethod,
       couponCode: couponCode,
+      scheduleAt: scheduleAt,
       // estimatedDeliveryFee: estimatedDeliveryFee,
     );
   }

@@ -28,8 +28,8 @@ class OrderCubit extends Cubit<OrderState> {
   bool _historyLoading = false;
 
   OrderCubit({OrderRepository? repository})
-    : _repository = repository ?? OrderRepository(),
-      super(OrderInitial());
+      : _repository = repository ?? OrderRepository(),
+        super(OrderInitial());
 
   // ── Load Active Orders ─────────────────────────────────────────────────────
 
@@ -54,6 +54,14 @@ class OrderCubit extends Cubit<OrderState> {
         'OrderCubit: Loading active orders — skip: $_activeSkip, limit: $_activeLimit',
       );
 
+      // First fetch SCHEDULED orders
+      final SchedualedResponse = await _repository.getOrders(
+        skip: _activeSkip,
+        limit: _activeLimit,
+        status: 'SCHEDULED',
+        filterByExpiry: true,
+      );
+
       // First fetch PENDING orders
       final pendingResponse = await _repository.getOrders(
         skip: _activeSkip,
@@ -71,13 +79,14 @@ class OrderCubit extends Cubit<OrderState> {
 
       // Combine both lists
       final combinedOrders = [
+        ...SchedualedResponse.orders,
         ...pendingResponse.orders,
         ...inProgressResponse.orders,
       ];
 
       // Sort by created date (newest first)
       combinedOrders.sort(
-        (a, b) => (b.createdAt ?? DateTime.now()).compareTo(
+            (a, b) => (b.createdAt ?? DateTime.now()).compareTo(
           a.createdAt ?? DateTime.now(),
         ),
       );
@@ -187,8 +196,8 @@ class OrderCubit extends Cubit<OrderState> {
         ];
         _historyTotalCount =
             deliveredResponse.totalOrders +
-            cancelledResponse.totalOrders +
-            cancelledResponse.totalOrders;
+                cancelledResponse.totalOrders +
+                cancelledResponse.totalOrders;
       }
 
       // Sort by completion date (newest first)
@@ -234,18 +243,20 @@ class OrderCubit extends Cubit<OrderState> {
   // ── Create Order ───────────────────────────────────────────────────────────
 
   Future<void> createOrder(
-    Order order,
-    String paymentMethod, {
-    String? couponCode,
-    // required String estimatedDeliveryFee,
-  }) async {
+      Order order,
+      String paymentMethod, {
+        String? couponCode,
+        DateTime? scheduleAt,
+        // required String estimatedDeliveryFee,
+      }) async {
     safeEmit(OrderOperationLoading());
     try {
-      dLog('OrderCubit: Creating order');
+      dLog('OrderCubit: Creating order — scheduleAt: $scheduleAt');
       final response = await _repository.createOrder(
         order,
         paymentMethod,
         couponCode: couponCode,
+        scheduleAt: scheduleAt,
         // estimatedDeliveryFee: estimatedDeliveryFee,
       );
       dLog('OrderCubit: Order created — ${response.order.orderNumber}');
@@ -379,7 +390,7 @@ class OrderCubit extends Cubit<OrderState> {
     } on DioException catch (e) {
       final body = e.response?.data as Map<String, dynamic>?;
       final inner =
-          body?['data'] as Map<String, dynamic>?; // ← was body?['meta']
+      body?['data'] as Map<String, dynamic>?; // ← was body?['meta']
 
       if (e.response?.statusCode == 400 &&
           inner != null &&
@@ -536,4 +547,3 @@ class OrderCubit extends Cubit<OrderState> {
     if (!isClosed) emit(state);
   }
 }
-

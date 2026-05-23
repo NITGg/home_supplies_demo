@@ -8,6 +8,8 @@
   "categories": "التصنيفات",
   "subCategory": "تصنيف فرعي",
   "searchingFailed": "فشل البحث",
+  "scheduled": "مجدول",
+  "asap": "الآن",
   "skip": "تخطي",
   "profile": "الملف الشخصي",
   "menu": "القائمة",
@@ -757,7 +759,10 @@
       "@dayFriday": { "description": "Full name of Friday" },
 
       "daySaturday": "السبت",
-      "@daySaturday": { "description": "Full name of Saturday" }
+      "@daySaturday": { "description": "Full name of Saturday" },
+       "scheduleOrder": "جدولة الطلب",
+         "pleaseChooseFutureTime": "يرجى اختيار وقت في المستقبل",
+        "tapToChooseDateTime": "اضغط لاختيار التاريخ والوقت"
 
 
 }

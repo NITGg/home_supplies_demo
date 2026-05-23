@@ -1,4 +1,3 @@
-
 import '../../../addresses/data/models/address_model.dart';
 import '../../manager/order_states.dart';
 
@@ -25,6 +24,10 @@ class CreateOrderDraft {
   // ── Applied coupon ─────────────────────────────────────────────────────────
   static CouponValid? appliedCoupon;
 
+  // ── Schedule ───────────────────────────────────────────────────────────────
+  static bool isScheduled = false;
+  static DateTime? scheduleAt;
+
   // ── Reset ──────────────────────────────────────────────────────────────────
   static void clear() {
     productDescription = '';
@@ -36,5 +39,7 @@ class CreateOrderDraft {
     paymentMethod = 'CASH';
     pickupNearMe = false;
     appliedCoupon = null;
+    isScheduled = false;
+    scheduleAt = null;
   }
 }

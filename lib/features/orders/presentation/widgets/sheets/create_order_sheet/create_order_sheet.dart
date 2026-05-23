@@ -82,6 +82,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   CouponValid? _appliedCoupon;
   bool _couponValidating = false;
 
+  // ── Schedule ───────────────────────────────────────────────────────────────
+  bool _isScheduled = false;
+  DateTime? _scheduleAt;
+
   late double _walletBalance;
   late final AddressCubit _initCubit;
 
@@ -119,6 +123,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     _paymentMethod = CreateOrderDraft.paymentMethod; // ← DRAFT
     _pickupNearMe = CreateOrderDraft.pickupNearMe; // ← DRAFT
     _appliedCoupon = CreateOrderDraft.appliedCoupon; // ← DRAFT
+    _isScheduled = CreateOrderDraft.isScheduled; // ← DRAFT
+    _scheduleAt = CreateOrderDraft.scheduleAt; // ← DRAFT
 
     // ── Wire up listeners to keep draft in sync ────────────────────────────── // ← DRAFT
     _productDescriptionController.addListener(() {
@@ -179,6 +185,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     CreateOrderDraft.paymentMethod = _paymentMethod;
     CreateOrderDraft.pickupNearMe = _pickupNearMe;
     // CreateOrderDraft.appliedCoupon = _appliedCoupon;
+    CreateOrderDraft.isScheduled = _isScheduled; // ← DRAFT
+    CreateOrderDraft.scheduleAt = _scheduleAt; // ← DRAFT
   }
 
   Future<void> _preloadDefaultDelivery() async {
@@ -186,7 +194,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (!mounted) return;
       if (state is AddressesLoaded && state.addresses.isNotEmpty) {
         final defaultAddr = state.addresses.firstWhere(
-          (a) => a.isDefault,
+              (a) => a.isDefault,
           orElse: () => state.addresses.first,
         );
         // Only use the preloaded default when the draft has no delivery address. // ← DRAFT
@@ -260,8 +268,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
       dLog(
         '📏 [Distance] ${result.distanceMeters} m  '
-        '⏱ ${result.durationSeconds} s  '
-        '(${result.provider})',
+            '⏱ ${result.durationSeconds} s  '
+            '(${result.provider})',
       );
 
       if (mounted) setState(() => _distanceResult = result);
@@ -788,9 +796,9 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
             style: selected
                 ? AppTextStyles.bold14.copyWith(fontSize: 9)
                 : AppTextStyles.regular14.copyWith(
-                    color: Colors.grey,
-                    fontSize: 9,
-                  ),
+              color: Colors.grey,
+              fontSize: 9,
+            ),
           ),
         ],
       ),
@@ -798,10 +806,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   }
 
   Widget _buildFeeAndPaymentRow(
-    AppLocalizations l10n,
-    double fee,
-    bool isOverBudget,
-  ) {
+      AppLocalizations l10n,
+      double fee,
+      bool isOverBudget,
+      ) {
     if (!_isShopping) return const SizedBox.shrink();
 
     // Fee chip — shows a spinner while fetching, then the real server total
@@ -974,10 +982,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     final budget = double.tryParse(_budgetController.text.trim()) ?? 0;
     final limit =
         (double.tryParse(
-              AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
-            ) ??
+          AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
+        ) ??
             0) /
-        100;
+            100;
     final isOverBudget = _isShopping && budget > limit;
 
     final bool usesWallet =
@@ -1000,8 +1008,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         productImageFile: _productImage,
         budget: _isShopping
             ? (double.parse(_budgetController.text.trim()) * 100)
-                  .round()
-                  .toString()
+            .round()
+            .toString()
             : '1',
         //1 means shipping
         pickupAreaId: effectivePickup.areaId,
@@ -1016,6 +1024,310 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       // estimatedDeliveryFee: ((_calculateShippingFee() ?? 0) * 100).toString(),
       _isShopping ? _paymentMethod : 'WALLET',
       couponCode: _appliedCoupon?.code,
+      scheduleAt: _isScheduled ? _scheduleAt : null,
+    );
+  }
+
+  // ── Schedule section ───────────────────────────────────────────────────────
+
+  /// Opens a date-then-time picker starting from now and stores the result.
+  Future<void> _pickScheduleDateTime() async {
+    final now = DateTime.now();
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 30)),
+    );
+    if (pickedDate == null || !mounted) return;
+
+    // Clamp firstTime: if the user picked today, time must be >= now.
+    final isToday = pickedDate.year == now.year &&
+        pickedDate.month == now.month &&
+        pickedDate.day == now.day;
+    final initialTime = TimeOfDay.fromDateTime(
+      isToday ? now.add(const Duration(minutes: 5)) : pickedDate,
+    );
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+    );
+    if (pickedTime == null || !mounted) return;
+
+    final scheduled = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    // Ensure the chosen time is strictly in the future.
+    if (scheduled.isBefore(now)) {
+      Fluttertoast.showToast(
+        msg: AppLocalizations.of(context)!.pleaseChooseFutureTime,
+        gravity: ToastGravity.BOTTOM,
+      );
+      return;
+    }
+
+    setState(() => _scheduleAt = scheduled);
+    _syncDraft(); // ← DRAFT
+  }
+
+
+  String _formatScheduleDate(DateTime dt) =>
+      '${dt.day}/${dt.month}/${dt.year}';
+
+  String _formatScheduleTime(DateTime dt) {
+    final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour < 12 ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
+
+  Widget _buildScheduleOption({
+    required IconData icon,
+    required String label,
+    required bool selected,
+  }) {
+    return Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              icon,
+              key: ValueKey('$icon-$selected'),
+              size: 20,
+              color: selected ? AppColors.kSecondaryColor : Colors.grey.shade400,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: selected
+                ? AppTextStyles.bold14.copyWith(fontSize: 13)
+                : AppTextStyles.regular14
+                .copyWith(color: Colors.grey, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleSection(AppLocalizations l10n) {
+    final accent = AppColors.kSecondaryColor;
+    final isAsap = !_isScheduled;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── ASAP / Schedule toggle ───────────────────────────────────────────
+        Container(
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Stack(
+            children: [
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  alignment:
+                  isAsap ? Alignment.centerLeft : Alignment.centerRight,
+                  child: FractionallySizedBox(
+                    widthFactor: 0.5,
+                    child: Container(
+                      margin: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(11),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.10),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          setState(() {
+                            _isScheduled = false;
+                            _scheduleAt = null;
+                          });
+                          _syncDraft();
+                        },
+                        child: _buildScheduleOption(
+                          icon: Icons.bolt_rounded,
+                          label: l10n.asap,
+                          selected: isAsap,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          setState(() => _isScheduled = true);
+                          _syncDraft();
+                          if (_scheduleAt == null) _pickScheduleDateTime();
+                        },
+                        child: _buildScheduleOption(
+                          icon: Icons.schedule_rounded,
+                          label: l10n.scheduleOrder,
+                          selected: !isAsap,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Picker tile — shown only when Schedule is active ─────────────────
+        ClipRect(
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            clipBehavior: Clip.hardEdge,
+            child: _isScheduled
+                ? Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: _pickScheduleDateTime,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _scheduleAt != null
+                              ? accent.withOpacity(0.4)
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 18,
+                            color: _scheduleAt != null
+                                ? accent
+                                : Colors.grey.shade400,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _scheduleAt == null
+                                ? Text(
+                              l10n.tapToChooseDateTime,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade500,
+                              ),
+                            )
+                                : Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _formatScheduleDate(_scheduleAt!),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade800,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _formatScheduleTime(_scheduleAt!),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: accent,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_scheduleAt != null)
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _scheduleAt = null);
+                                _syncDraft();
+                              },
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 18,
+                                color: Colors.grey.shade500,
+                              ),
+                            )
+                          else
+                            Icon(
+                              Icons.edit_rounded,
+                              size: 16,
+                              color: Colors.grey.shade400,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ── Validation hint ──────────────────────────────────
+                  if (_scheduleAt == null) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          size: 13,
+                          color: Colors.red.shade400,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          l10n.pleaseChooseFutureTime,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.red.shade400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            )
+                : const SizedBox.shrink(),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1187,10 +1499,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
 
             final limit =
                 (double.tryParse(
-                      AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
-                    ) ??
+                  AppSettings.customer_budget_cash_on_delivery_limit ?? '0',
+                ) ??
                     0) /
-                100;
+                    100;
 
             final isOverBudget = budget > limit;
             return Container(
@@ -1246,8 +1558,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                           child: Text(
                             _isShopping
                                 ? (isOverBudget
-                                      ? '${l10n.walletBalanceHintOverBudget} $limit ${l10n.walletBalanceHintOverBudget2}'
-                                      : l10n.walletBalanceHintShopping)
+                                ? '${l10n.walletBalanceHintOverBudget} $limit ${l10n.walletBalanceHintOverBudget2}'
+                                : l10n.walletBalanceHintShopping)
                                 : l10n.walletBalanceHintShipping,
                             style: TextStyle(
                               fontSize: 12,
@@ -1342,6 +1654,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                             onRemove: _removeCoupon,
                           ),
                           const SizedBox(height: 16),
+                          _buildScheduleSection(l10n),
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ),
@@ -1351,16 +1665,16 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       padding: const EdgeInsets.all(16),
                       child: BlocBuilder<OrderCubit, OrderState>(
                         buildWhen: (_, s) =>
-                            s is OrderOperationLoading ||
+                        s is OrderOperationLoading ||
                             s is OrdersLoaded ||
                             s is OrderError ||
                             s is OrderSuccess,
                         builder: (context, state) {
                           return AppCustomButton(
-                            enabled:
-                                _isFormValid &&
+                            enabled: _isFormValid &&
                                 !(_distanceResult == null ||
-                                    (!_pickupNearMe && _pickupAddress == null)),
+                                    (!_pickupNearMe && _pickupAddress == null)) &&
+                                !(_isScheduled && _scheduleAt == null),
                             onPressed: _submit,
                             text: l10n.confirm,
                             isLoading: state is OrderOperationLoading,

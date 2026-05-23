@@ -149,6 +149,18 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get lang;
 
+  /// No description provided for @scheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled'**
+  String get scheduled;
+
+  /// No description provided for @asap.
+  ///
+  /// In en, this message translates to:
+  /// **'NOW'**
+  String get asap;
+
   /// No description provided for @settings.
   ///
   /// In en, this message translates to:
@@ -3316,6 +3328,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saturday'**
   String get daySaturday;
+
+  /// No description provided for @pleaseChooseFutureTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a time in the future'**
+  String get pleaseChooseFutureTime;
+
+  /// No description provided for @scheduleOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule order'**
+  String get scheduleOrder;
+
+  /// No description provided for @tapToChooseDateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to choose date & time'**
+  String get tapToChooseDateTime;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

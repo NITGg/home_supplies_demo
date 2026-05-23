@@ -36,6 +36,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get lang => 'اللغة';
 
   @override
+  String get scheduled => 'مجدول';
+
+  @override
+  String get asap => 'الآن';
+
+  @override
   String get settings => 'الإعدادات';
 
   @override
@@ -1667,4 +1673,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get daySaturday => 'السبت';
+
+  @override
+  String get pleaseChooseFutureTime => 'يرجى اختيار وقت في المستقبل';
+
+  @override
+  String get scheduleOrder => 'جدولة الطلب';
+
+  @override
+  String get tapToChooseDateTime => 'اضغط لاختيار التاريخ والوقت';
 }

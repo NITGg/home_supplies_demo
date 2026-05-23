@@ -33,9 +33,6 @@ class OrderCard extends StatelessWidget {
   final bool hasNewOffer;
   final int? roleId;
 
-  /// Required to lazy-init [ChatModule] on first chat tap.
-  /// Pass the currently logged-in user's ID (same value you use everywhere
-  /// else in the app for the current user).
   final int currentUserId;
 
   const OrderCard({
@@ -49,10 +46,14 @@ class OrderCard extends StatelessWidget {
     this.roleId,
   });
 
+  // ── Status helpers ─────────────────────────────────────────────────────────
+
   Color _statusColor() {
     switch (order.status) {
       case 'PENDING':
         return Colors.orange;
+      case 'SCHEDULED':
+        return const Color(0xFF5C6BC0); // indigo
       case 'IN_PROGRESS':
         return Colors.blue;
       case 'DELIVERED':
@@ -68,6 +69,8 @@ class OrderCard extends StatelessWidget {
     switch (order.status) {
       case 'PENDING':
         return Icons.schedule;
+      case 'SCHEDULED':
+        return Icons.event_available_rounded;
       case 'IN_PROGRESS':
         return Icons.local_shipping;
       case 'DELIVERED':
@@ -84,6 +87,8 @@ class OrderCard extends StatelessWidget {
     switch (order.status) {
       case 'PENDING':
         return l10n?.pending ?? 'Pending';
+      case 'SCHEDULED':
+        return l10n?.scheduled ?? 'Scheduled';
       case 'IN_PROGRESS':
         return l10n?.inProgress ?? 'In Progress';
       case 'DELIVERED':
@@ -122,6 +127,9 @@ class OrderCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(statusColor, context),
+            // ── Scheduled banner ────────────────────────────────────────────
+            if (order.isOrderScheduled && order.orderScheduleAt != null && order.status == 'SCHEDULED')
+              _buildScheduledBanner(context),
             _buildProductInfo(),
             _OrderItemsSection(order: order),
             _buildResultInfo(context),
@@ -153,13 +161,52 @@ class OrderCard extends StatelessWidget {
                         if (!context.mounted) return;
                         showInfoBanner(context, l10n.copiedToClipboard);
                       },
-                      icon: Icon(Icons.copy,color: Color(0xFF1E87E3),),
+                      icon: Icon(Icons.copy, color: Color(0xFF1E87E3)),
                     ),
                   ],
                 ),
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── Scheduled banner ───────────────────────────────────────────────────────
+
+  Widget _buildScheduledBanner(BuildContext context) {
+    final dt = order.orderScheduleAt!;
+    String pad2(int n) => n.toString().padLeft(2, '0');
+    final dateStr = '${dt.day}/${dt.month}/${dt.year}';
+    final timeStr = '${pad2(dt.hour)}:${pad2(dt.minute)}';
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.event_available_rounded,
+            size: 16,
+            color: Color(0xFF7C3AED),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '$dateStr - $timeStr',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -248,7 +295,8 @@ class OrderCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (order.productDescription != null && order.orderItems.isNotEmpty)
+                        if (order.productDescription != null &&
+                            order.orderItems.isNotEmpty)
                           Expanded(
                             child: Text(
                               order.productDescription!,
@@ -279,7 +327,9 @@ class OrderCard extends StatelessWidget {
                           Builder(
                             builder: (_) {
                               String budgetText = order.payableAmount ?? '';
-                              return order.status != 'PENDING'  ? OrderBudgetChip(budget: budgetText): SizedBox.shrink();
+                              return order.status != 'PENDING'
+                                  ? OrderBudgetChip(budget: budgetText)
+                                  : SizedBox.shrink();
                             },
                           ),
                         ],
@@ -393,8 +443,6 @@ class OrderCard extends StatelessWidget {
         order.courierPhone != null && order.courierPhone!.isNotEmpty;
     final hasPhoto =
         order.courierPhoto != null && order.courierPhoto!.isNotEmpty;
-    // Show the chat button as long as we have a courier ID to talk to.
-    // ChatModule is initialised lazily on first tap if not already running.
     final canChat = order.courierId != null;
 
     return Container(
@@ -407,28 +455,24 @@ class OrderCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // ── Avatar ──────────────────────────────────────────────────────
           CircleAvatar(
             radius: 20,
             backgroundColor: Colors.blue.shade100,
-            backgroundImage: hasPhoto
-                ? NetworkImage(order.courierPhoto!)
-                : null,
+            backgroundImage:
+            hasPhoto ? NetworkImage(order.courierPhoto!) : null,
             onBackgroundImageError: hasPhoto ? (_, __) {} : null,
             child: hasPhoto
                 ? null
                 : Text(
-                    _initials(order.courierName ?? ''),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade700,
-                    ),
-                  ),
+              _initials(order.courierName ?? ''),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade700,
+              ),
+            ),
           ),
           const SizedBox(width: 10),
-
-          // ── Name + phone number ──────────────────────────────────────────
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,17 +490,15 @@ class OrderCard extends StatelessWidget {
                   Text(
                     textDirection: ui.TextDirection.ltr,
                     order.courierPhone!,
-                    style: TextStyle(fontSize: 12, color: Colors.blue.shade600),
+                    style:
+                    TextStyle(fontSize: 12, color: Colors.blue.shade600),
                   ),
               ],
             ),
           ),
-
-          // ── Action buttons ───────────────────────────────────────────────
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Chat button — module is lazily initialised on first tap.
               if (canChat) ...[
                 Material(
                   color: Colors.blue.shade600,
@@ -483,8 +525,6 @@ class OrderCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-
-              // Phone button
               if (hasPhone)
                 Material(
                   color: Colors.blue.shade600,
@@ -494,7 +534,8 @@ class OrderCard extends StatelessWidget {
                     onTap: () => openPhoneApp(order.courierPhone!),
                     child: const Padding(
                       padding: EdgeInsets.all(8),
-                      child: Icon(Icons.phone, color: Colors.white, size: 18),
+                      child:
+                      Icon(Icons.phone, color: Colors.white, size: 18),
                     ),
                   ),
                 ),
@@ -510,7 +551,7 @@ class OrderCard extends StatelessWidget {
 
     return BlocConsumer<OrderCubit, OrderState>(
       listenWhen: (_, current) =>
-          current is DeliveryConfirmed || current is OrderError,
+      current is DeliveryConfirmed || current is OrderError,
       listener: (context, state) {
         if (state is DeliveryConfirmed) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -521,12 +562,13 @@ class OrderCard extends StatelessWidget {
           );
         } else if (state is OrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(
+                content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
       buildWhen: (_, current) =>
-          current is DeliveryConfirming ||
+      current is DeliveryConfirming ||
           current is DeliveryConfirmed ||
           current is OrderError ||
           current is OrdersLoaded,
@@ -540,34 +582,37 @@ class OrderCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
               child: isLoading
                   ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 6),
-                        child: CircularProgressIndicator(
-                          color: AppColors.kSecondaryColor,
-                          strokeWidth: 2.5,
-                        ),
-                      ),
-                    )
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6),
+                  child: CircularProgressIndicator(
+                    color: AppColors.kSecondaryColor,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              )
                   : SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _showConfirmDialog(context, l10n),
-                        icon: const Icon(Icons.check_circle_outline, size: 18),
-                        label: Text(
-                          l10n.confirmDelivery,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade600,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showConfirmDialog(context, l10n),
+                  icon:
+                  const Icon(Icons.check_circle_outline, size: 18),
+                  label: Text(
+                    l10n.confirmDelivery,
+                    style:
+                    const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade600,
+                    foregroundColor: Colors.white,
+                    padding:
+                    const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
             ),
           ],
         );
@@ -579,9 +624,11 @@ class OrderCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(l10n.confirmDelivery),
-        content: Text('${l10n.confirmDeliveryMessage} \n ${order.orderNumber}'),
+        content:
+        Text('${l10n.confirmDeliveryMessage} \n ${order.orderNumber}'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
@@ -599,7 +646,8 @@ class OrderCard extends StatelessWidget {
               Navigator.pop(dialogCtx);
               context.read<OrderCubit>().confirmDelivery(
                 orderId: order.id!,
-                courierId: order.courierId!, courierUserId: order.courierUserId!,
+                courierId: order.courierId!,
+                courierUserId: order.courierUserId!,
               );
             },
             child: Text(l10n.confirm),
@@ -639,12 +687,14 @@ class OrderCard extends StatelessWidget {
                           icon: const Icon(Icons.payments_outlined, size: 18),
                           label: Text(
                             l10n.viewProposals,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.kPrimaryColor,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding:
+                            const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -692,18 +742,19 @@ class OrderCard extends StatelessWidget {
 
     return BlocConsumer<OrderCubit, OrderState>(
       listenWhen: (_, current) =>
-          current is OrderRetried || current is OrderRetryError,
+      current is OrderRetried || current is OrderRetryError,
       listener: (context, state) {
         if (state is OrderRetried) {
           onRetrySuccess?.call();
         } else if (state is OrderRetryError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(
+                content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
       buildWhen: (_, current) =>
-          current is RetryingOrder ||
+      current is RetryingOrder ||
           current is OrderRetried ||
           current is OrderRetryError ||
           current is OrdersLoaded,
@@ -717,26 +768,27 @@ class OrderCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
               child: isLoading
                   ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 6),
-                        child: CircularProgressIndicator(
-                          color: AppColors.kSecondaryColor,
-                          strokeWidth: 2.5,
-                        ),
-                      ),
-                    )
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6),
+                  child: CircularProgressIndicator(
+                    color: AppColors.kSecondaryColor,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              )
                   : SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () =>
-                            context.read<OrderCubit>().retryOrder(orderId),
-                        icon: const Icon(Icons.refresh, size: 18),
-                        label: Text(
-                          l10n.retry,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () =>
+                      context.read<OrderCubit>().retryOrder(orderId),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: Text(
+                    l10n.retry,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
             ),
           ],
         );
@@ -813,10 +865,10 @@ class _PriceAdjustmentFooter extends StatelessWidget {
 
     return BlocConsumer<OrderCubit, OrderState>(
       listenWhen: (_, current) =>
-          current is PriceAdjustmentResponded || current is OrderError,
+      current is PriceAdjustmentResponded || current is OrderError,
       listener: (context, state) {},
       buildWhen: (_, current) =>
-          current is PriceAdjustmentResponding ||
+      current is PriceAdjustmentResponding ||
           current is PriceAdjustmentResponded ||
           current is OrderError ||
           current is OrdersLoaded,
@@ -840,7 +892,8 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                 ),
                 decoration: const BoxDecoration(
                   color: Color(0xFFFFECB3),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius:
+                  BorderRadius.vertical(top: Radius.circular(12)),
                 ),
                 child: Row(
                   children: [
@@ -933,73 +986,73 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                 child: isLoading
                     ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 6),
-                          child: CircularProgressIndicator(
-                            color: AppColors.kPrimaryColor,
-                            strokeWidth: 2.5,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6),
+                    child: CircularProgressIndicator(
+                      color: AppColors.kPrimaryColor,
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+                )
+                    : Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _respond(context, 'REJECTED'),
+                        icon: Icon(
+                          Icons.close,
+                          size: 16,
+                          color: Colors.red.shade600,
+                        ),
+                        label: Text(
+                          l10n.reject,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red.shade600,
                           ),
                         ),
-                      )
-                    : Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _respond(context, 'REJECTED'),
-                              icon: Icon(
-                                Icons.close,
-                                size: 16,
-                                color: Colors.red.shade600,
-                              ),
-                              label: Text(
-                                l10n.reject,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.red.shade600,
-                                ),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
-                                side: BorderSide(
-                                  color: Colors.red.shade300,
-                                  width: 1.5,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _respond(context, 'ACCEPTED'),
-                              icon: const Icon(Icons.check, size: 16),
-                              label: Text(
-                                l10n.accept,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.kPrimaryColor,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
+                          side: BorderSide(
+                            color: Colors.red.shade300,
+                            width: 1.5,
                           ),
-                        ],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _respond(context, 'ACCEPTED'),
+                        icon: const Icon(Icons.check, size: 16),
+                        label: Text(
+                          l10n.accept,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.kPrimaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                          ),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -1112,7 +1165,6 @@ class _PulsingDotState extends State<_PulsingDot>
   }
 }
 
-
 class _OrderItemsSection extends StatefulWidget {
   final Order order;
 
@@ -1136,8 +1188,10 @@ class _OrderItemsSectionState extends State<_OrderItemsSection>
       vsync: this,
       duration: const Duration(milliseconds: 280),
     );
-    _expandAnim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
-    _rotateAnim = Tween<double>(begin: 0, end: 0.5).animate(_expandAnim);
+    _expandAnim =
+        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+    _rotateAnim =
+        Tween<double>(begin: 0, end: 0.5).animate(_expandAnim);
   }
 
   @override
@@ -1158,8 +1212,9 @@ class _OrderItemsSectionState extends State<_OrderItemsSection>
     final l10n = AppLocalizations.of(context)!;
     final order = widget.order;
 
-    // Nothing to show
-    if (!_isCatalog && (order.productDescription == null || order.productDescription!.isEmpty)) {
+    if (!_isCatalog &&
+        (order.productDescription == null ||
+            order.productDescription!.isEmpty)) {
       return const SizedBox.shrink();
     }
 
@@ -1175,16 +1230,18 @@ class _OrderItemsSectionState extends State<_OrderItemsSection>
         ),
         child: Column(
           children: [
-            // ── Header (always visible) ──────────────────────────────────
             InkWell(
               onTap: _toggle,
               borderRadius: BorderRadius.circular(12),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10),
                 child: Row(
                   children: [
                     Icon(
-                      _isCatalog ? Icons.receipt_long_outlined : Icons.notes_outlined,
+                      _isCatalog
+                          ? Icons.receipt_long_outlined
+                          : Icons.notes_outlined,
                       size: 16,
                       color: Colors.grey.shade600,
                     ),
@@ -1212,8 +1269,6 @@ class _OrderItemsSectionState extends State<_OrderItemsSection>
                 ),
               ),
             ),
-
-            // ── Collapsible body ─────────────────────────────────────────
             SizeTransition(
               sizeFactor: _expandAnim,
               child: Column(
@@ -1236,14 +1291,16 @@ class _OrderItemsSectionState extends State<_OrderItemsSection>
                             ? item.product.nameAr
                             : item.product.name;
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 7),
+                          padding:
+                          const EdgeInsets.symmetric(vertical: 7),
                           child: Row(
                             children: [
                               Container(
                                 width: 24,
                                 height: 24,
                                 decoration: BoxDecoration(
-                                  color: AppColors.kPrimaryColor.withOpacity(0.1),
+                                  color: AppColors.kPrimaryColor
+                                      .withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Center(
@@ -1276,7 +1333,8 @@ class _OrderItemsSectionState extends State<_OrderItemsSection>
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.kPrimaryColor.withOpacity(0.1),
+                                  color: AppColors.kPrimaryColor
+                                      .withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
