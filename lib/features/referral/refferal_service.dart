@@ -1,4 +1,6 @@
 
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:play_install_referrer/play_install_referrer.dart';
@@ -19,7 +21,9 @@ class ReferralCaptureService {
     'utm_source=google-play&utm_medium=organic',
   };
 
-  static Future<String?> captureOnFirstLaunch({required String userId}) async {
+  static Future<String?> captureOnFirstLaunch({
+    required String userId,
+  }) async {
     final storage = SecureStorageService();
 
     final alreadyChecked = await storage.readValue(_checkedKey);
@@ -31,31 +35,68 @@ class ReferralCaptureService {
     await storage.writeValue(_checkedKey, 'true');
 
     try {
-      final referrerDetails = await PlayInstallReferrer.installReferrer;
-      final referrerString = referrerDetails.installReferrer;
+      String? code;
 
-      dLog('ReferralCapture: raw referrer = $referrerString');
+      if (Platform.isAndroid) {
+        final referrerDetails = await PlayInstallReferrer.installReferrer;
+        final referrerString = referrerDetails.installReferrer;
 
-      if (referrerString == null ||
-          referrerString.isEmpty ||
-          _ignoredReferrers.contains(referrerString.toLowerCase().trim())) {
-        dLog('ReferralCapture: ignored referrer value, skipping');
-        return null;
+        dLog('ReferralCapture: raw referrer = $referrerString');
+
+        if (referrerString != null &&
+            referrerString.isNotEmpty &&
+            !_ignoredReferrers.contains(
+              referrerString.toLowerCase().trim(),
+            )) {
+          code = _parseCode(referrerString);
+        }
       }
 
-      final code = _parseCode(referrerString);
+      // iOS clipboard fallback
+      if (Platform.isIOS && code == null) {
+        final clipboardData = await Clipboard.getData('text/plain');
+        final clipboardText = clipboardData?.text?.trim();
+        dLog('ReferralCapture: clipboard text = $clipboardText');
+        if (clipboardText != null && clipboardText.isNotEmpty) {
+          if (clipboardText.contains('ref_code')) {
+            // HTML page copies "ref_code%3{code}" where %3 is a broken literal
+            // We extract everything after "ref_code%3" directly
+            final prefix = 'ref_code%3';
+            if (clipboardText.startsWith(prefix)) {
+              code = clipboardText.substring(prefix.length).trim();
+            } else {
+              // Fallback: normalize any variation of %3 / %3D / = and parse
+              final normalized = clipboardText
+                  .replaceAll(RegExp(r'ref_code%3[Dd]?'), 'ref_code=');
+              code = _parseCode(normalized);
+            }
+          } else {
+            // Plain code copied directly
+            code = clipboardText;
+          }
+        }
+      }
+
       dLog('ReferralCapture: parsed code = $code');
 
-      if (code != null) {
-        await _sendCodeToBackend(userId: userId, code: code);
+      if (code != null && code.isNotEmpty) {
+        await _sendCodeToBackend(
+          userId: userId,
+          code: code,
+        );
+
+        // Optional: clear clipboard after consuming
+        if (Platform.isIOS) {
+          await Clipboard.setData(const ClipboardData(text: ''));
+        }
       }
 
       return code;
     } on PlatformException catch (e) {
-      dLog('ReferralCapture: PlatformException (not a Play install): ${e.message}');
+      dLog('ReferralCapture: PlatformException: ${e.message}');
       return null;
     } catch (e) {
-      dLog('ReferralCapture: error reading referrer: $e');
+      dLog('ReferralCapture: error: $e');
       return null;
     }
   }
