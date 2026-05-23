@@ -129,7 +129,10 @@ class OrderCard extends StatelessWidget {
             _buildHeader(statusColor, context),
             // ── Scheduled banner ────────────────────────────────────────────
             if (order.isOrderScheduled && order.orderScheduleAt != null && order.status == 'SCHEDULED')
-              _buildScheduledBanner(context),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: _buildScheduledBanner(context),
+              ),
             _buildProductInfo(),
             _OrderItemsSection(order: order),
             _buildResultInfo(context),
