@@ -64,6 +64,8 @@ class Order {
 
   // ── Schedule ───────────────────────────────────────────────────────────────
   final bool isOrderScheduled;
+  final bool isTakeTime;
+  final bool isReadyForPickUp;
   final DateTime? orderScheduleAt;
 
   final List<OrderItem> orderItems;
@@ -115,6 +117,8 @@ class Order {
     this.canceledAt,
     this.expiresAt,
     this.isOrderScheduled = false,
+    this.isTakeTime = false,
+    this.isReadyForPickUp = false,
     this.orderScheduleAt,
   });
 
@@ -192,6 +196,8 @@ class Order {
           : null,
       // ── Schedule ────────────────────────────────────────────────────────
       isOrderScheduled: json['is_order_scheduled'] == true,
+      isReadyForPickUp: json['is_ready_for_pickup'] == true,
+      isTakeTime: json['is_scheduled'] == true,
       orderScheduleAt: json['order_schedule_at'] != null
           ? DateTime.parse(json['order_schedule_at']).toLocal()
           : null,
@@ -224,6 +230,11 @@ class Order {
 
   /// True when the courier proposed a new price and we're waiting for customer response
   bool get hasPendingPriceAdjustment => priceAdjustmentStatus == 'PENDING';
+
+  /// The status shown in the UI.
+  /// When isTakeTime and not ready for pickup, treat as SCHEDULED visually.
+  String? get displayStatus =>
+      (isTakeTime && !isReadyForPickUp) ? 'SCHEDULED' : status;
 }
 
 class OrderResponse {

@@ -3,11 +3,6 @@ import 'package:lottie/lottie.dart';
 import 'package:tawreedat_go/l10n/app_localizations.dart';
 import '../../data/models/order_model.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Status descriptor — add new statuses here and nowhere else.
-// Priority: lower number = shown first when multiple statuses are present.
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _StatusDescriptor {
   final String assetPath;
   final String Function(BuildContext) label;
@@ -23,7 +18,7 @@ class _StatusDescriptor {
 const Map<String, ({int priority, _StatusDescriptor descriptor})>
 _kStatusMap = {
   'IN_PROGRESS': (
-  priority: 2,                          // ← bumped down; out-for-delivery wins
+  priority: 2,
   descriptor: _StatusDescriptor(
     assetPath: 'assets/animation_json/Packaging_in_Progress.json',
     label: _labelInProgress,
@@ -38,7 +33,6 @@ _kStatusMap = {
     accent: Color(0xFFFF9800),
   ),
   ),
-  // Virtual status — same API value as IN_PROGRESS but collectedAt is set
   'OUT_FOR_DELIVERY': (
   priority: 1,
   descriptor: _StatusDescriptor(
@@ -49,7 +43,6 @@ _kStatusMap = {
   ),
 };
 
-// Label functions — extracted so they can be const-referenced above.
 String _labelInProgress(BuildContext ctx) =>
     AppLocalizations.of(ctx)!.preparingOrder;
 
@@ -57,22 +50,8 @@ String _labelPending(BuildContext ctx) =>
     AppLocalizations.of(ctx)!.findingCourier;
 
 String _labelOutForDelivery(BuildContext ctx) =>
-    AppLocalizations.of(ctx)!.outForDelivery; // add to .arb files
-// ─────────────────────────────────────────────────────────────────────────────
-// Public widget
-// ─────────────────────────────────────────────────────────────────────────────
+    AppLocalizations.of(ctx)!.outForDelivery;
 
-/// Displays an animated status hint at the top of the active-orders list.
-///
-/// Pass the current [orders] list. The widget selects the highest-priority
-/// status present and renders the matching Lottie + label. It returns
-/// [SizedBox.shrink] when no recognisable status is found, so it is always
-/// safe to include unconditionally.
-///
-/// **Performance notes**
-/// - Wrapped in [RepaintBoundary] → isolated from list repaints.
-/// - [AnimationController] lives inside [LottieBuilder]; no extra controller.
-/// - [_resolveStatus] runs in O(n) over the order list — negligible.
 class OrderStatusBanner extends StatelessWidget {
   final List<Order> orders;
 
@@ -91,8 +70,6 @@ class OrderStatusBanner extends StatelessWidget {
     );
   }
 
-  /// Returns the descriptor for the highest-priority status found in [orders],
-  /// or null if none of the orders have a recognised status.
   static _StatusDescriptor? _resolveStatus(List<Order> orders) {
     ({int priority, _StatusDescriptor descriptor})? best;
 
@@ -100,9 +77,13 @@ class OrderStatusBanner extends StatelessWidget {
       var key = order.status?.toUpperCase();
       if (key == null) continue;
 
-      // Treat IN_PROGRESS + collectedAt set as a virtual OUT_FOR_DELIVERY status
       if (key == 'IN_PROGRESS' && order.collectedAt != null) {
         key = 'OUT_FOR_DELIVERY';
+      }
+
+      // Waiting for scheduled time — skip the pending banner entirely
+      if (key == 'PENDING' && order.isTakeTime && !order.isReadyForPickUp) {
+        continue;
       }
 
       final entry = _kStatusMap[key];
@@ -115,10 +96,6 @@ class OrderStatusBanner extends StatelessWidget {
     return best?.descriptor;
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Private animated card
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _BannerContent extends StatefulWidget {
   final _StatusDescriptor descriptor;
@@ -157,7 +134,6 @@ class _BannerContentState extends State<_BannerContent>
   @override
   void didUpdateWidget(_BannerContent old) {
     super.didUpdateWidget(old);
-    // Animate out → swap asset → animate in only when the asset actually changes.
     if (old.descriptor.assetPath != widget.descriptor.assetPath) {
       _fadeController.reverse().then((_) {
         if (!mounted) return;
@@ -198,21 +174,18 @@ class _BannerContentState extends State<_BannerContent>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
-                  // Lottie — fixed square so layout never jumps.
                   SizedBox(
                     width: 80,
                     height: 80,
                     child: _currentAsset != null
                         ? Lottie.asset(
-                            _currentAsset!,
-                            repeat: true,
-                            frameRate: FrameRate(30),
-                            // Decode at 2× logical pixels for crispness on
-                            // high-density screens without wasting memory.
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.fitWidth,
-                          )
+                      _currentAsset!,
+                      repeat: true,
+                      frameRate: FrameRate(30),
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.fitWidth,
+                    )
                         : const SizedBox.shrink(),
                   ),
                   const SizedBox(width: 14),

@@ -32,7 +32,6 @@ class OrderCard extends StatelessWidget {
   final VoidCallback? onRetrySuccess;
   final bool hasNewOffer;
   final int? roleId;
-
   final int currentUserId;
 
   const OrderCard({
@@ -49,11 +48,11 @@ class OrderCard extends StatelessWidget {
   // ── Status helpers ─────────────────────────────────────────────────────────
 
   Color _statusColor() {
-    switch (order.status) {
+    switch (order.displayStatus) {
       case 'PENDING':
         return Colors.orange;
       case 'SCHEDULED':
-        return const Color(0xFF5C6BC0); // indigo
+        return const Color(0xFF5C6BC0);
       case 'IN_PROGRESS':
         return Colors.blue;
       case 'DELIVERED':
@@ -66,7 +65,7 @@ class OrderCard extends StatelessWidget {
   }
 
   IconData _statusIcon() {
-    switch (order.status) {
+    switch (order.displayStatus) {
       case 'PENDING':
         return Icons.schedule;
       case 'SCHEDULED':
@@ -84,7 +83,7 @@ class OrderCard extends StatelessWidget {
 
   String _statusLabel(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    switch (order.status) {
+    switch (order.displayStatus) {
       case 'PENDING':
         return l10n?.pending ?? 'Pending';
       case 'SCHEDULED':
@@ -100,7 +99,7 @@ class OrderCard extends StatelessWidget {
       case 'SEARCHING_FAILED':
         return l10n?.searchingFailed ?? 'Searching Failed';
       default:
-        return order.status ?? '';
+        return order.displayStatus ?? '';
     }
   }
 
@@ -127,11 +126,19 @@ class OrderCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(statusColor, context),
-            // ── Scheduled banner ────────────────────────────────────────────
-            if (order.isOrderScheduled && order.orderScheduleAt != null && order.status == 'SCHEDULED')
+            // ── Scheduled banner (real SCHEDULED status with date) ──────────
+            if (order.isOrderScheduled &&
+                order.orderScheduleAt != null &&
+                order.status == 'SCHEDULED')
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: _buildScheduledBanner(context),
+              ),
+            // ── Not ready for pickup banner (no date) ───────────────────────
+            if (order.isTakeTime && !order.isReadyForPickUp)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: _buildNotReadyBanner(context),
               ),
             _buildProductInfo(),
             _OrderItemsSection(order: order),
@@ -139,7 +146,7 @@ class OrderCard extends StatelessWidget {
             if (order.status == "IN_PROGRESS") _buildCourierFooter(context),
             if (order.hasPendingPriceAdjustment)
               _PriceAdjustmentFooter(order: order),
-            if (order.isPending) _buildActionButtons(l10n),
+            if (order.isPending || order.isOrderScheduled) _buildActionButtons(l10n),
             if (order.status == 'EXPIRED') _buildRetryFooter(context, order.id),
             if (order.status == "IN_PROGRESS" && roleId == 4)
               _buildConfirmDeliveryFooter(context),
@@ -149,13 +156,13 @@ class OrderCard extends StatelessWidget {
                 child: Row(
                   spacing: 10,
                   children: [
-                    Icon(Icons.qr_code_rounded),
+                    const Icon(Icons.qr_code_rounded),
                     Text(
                       style: AppTextStyles.bold14.copyWith(fontSize: 12),
                       "${l10n.confirmDeliveryCode}: ${order.confirmationOtp}",
                       textAlign: TextAlign.center,
                     ),
-                    Spacer(),
+                    const Spacer(),
                     IconButton(
                       onPressed: () async {
                         await Clipboard.setData(
@@ -164,7 +171,7 @@ class OrderCard extends StatelessWidget {
                         if (!context.mounted) return;
                         showInfoBanner(context, l10n.copiedToClipboard);
                       },
-                      icon: Icon(Icons.copy, color: Color(0xFF1E87E3)),
+                      icon: const Icon(Icons.copy, color: Color(0xFF1E87E3)),
                     ),
                   ],
                 ),
@@ -175,13 +182,11 @@ class OrderCard extends StatelessWidget {
     );
   }
 
-  // ── Scheduled banner ───────────────────────────────────────────────────────
+  // ── Scheduled banner (with date/time) ─────────────────────────────────────
 
   Widget _buildScheduledBanner(BuildContext context) {
     final dt = order.orderScheduleAt!;
     final dateStr = '${dt.day}/${dt.month}/${dt.year}';
-
-    // 12h format
     final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
     final minute = dt.minute.toString().padLeft(2, '0');
     final period = dt.hour < 12 ? 'AM' : 'PM';
@@ -206,6 +211,42 @@ class OrderCard extends StatelessWidget {
           Expanded(
             child: Text(
               '$dateStr - $timeStr',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Not ready for pickup banner (no date/time) ────────────────────────────
+
+  Widget _buildNotReadyBanner(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.event_available_rounded,
+            size: 16,
+            color: Color(0xFF7C3AED),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              l10n.scheduled,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -336,7 +377,7 @@ class OrderCard extends StatelessWidget {
                               String budgetText = order.payableAmount ?? '';
                               return order.status != 'PENDING'
                                   ? OrderBudgetChip(budget: budgetText)
-                                  : SizedBox.shrink();
+                                  : const SizedBox.shrink();
                             },
                           ),
                         ],
@@ -361,7 +402,7 @@ class OrderCard extends StatelessWidget {
     );
   }
 
-  // ── Result info (delivered / cancelled) ───────────────────────────────────
+  // ── Result info ───────────────────────────────────────────────────────────
 
   Widget _buildResultInfo(BuildContext context) {
     return Padding(
@@ -379,11 +420,7 @@ class OrderCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.red.shade700,
-                    size: 20,
-                  ),
+                  Icon(Icons.info_outline, color: Colors.red.shade700, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -422,11 +459,7 @@ class OrderCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.check_circle,
-                    color: Colors.green.shade700,
-                    size: 20,
-                  ),
+                  Icon(Icons.check_circle, color: Colors.green.shade700, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     '${AppLocalizations.of(context)!.delivered}: ${formatDate(context, order.deliveredAt!)}',
@@ -446,10 +479,8 @@ class OrderCard extends StatelessWidget {
   // ── Courier footer ─────────────────────────────────────────────────────────
 
   Widget _buildCourierFooter(BuildContext context) {
-    final hasPhone =
-        order.courierPhone != null && order.courierPhone!.isNotEmpty;
-    final hasPhoto =
-        order.courierPhoto != null && order.courierPhoto!.isNotEmpty;
+    final hasPhone = order.courierPhone != null && order.courierPhone!.isNotEmpty;
+    final hasPhoto = order.courierPhoto != null && order.courierPhoto!.isNotEmpty;
     final canChat = order.courierId != null;
 
     return Container(
@@ -465,8 +496,7 @@ class OrderCard extends StatelessWidget {
           CircleAvatar(
             radius: 20,
             backgroundColor: Colors.blue.shade100,
-            backgroundImage:
-            hasPhoto ? NetworkImage(order.courierPhoto!) : null,
+            backgroundImage: hasPhoto ? NetworkImage(order.courierPhoto!) : null,
             onBackgroundImageError: hasPhoto ? (_, __) {} : null,
             child: hasPhoto
                 ? null
@@ -497,8 +527,7 @@ class OrderCard extends StatelessWidget {
                   Text(
                     textDirection: ui.TextDirection.ltr,
                     order.courierPhone!,
-                    style:
-                    TextStyle(fontSize: 12, color: Colors.blue.shade600),
+                    style: TextStyle(fontSize: 12, color: Colors.blue.shade600),
                   ),
               ],
             ),
@@ -522,11 +551,7 @@ class OrderCard extends StatelessWidget {
                     },
                     child: const Padding(
                       padding: EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.chat_outlined,
-                        color: Colors.white,
-                        size: 18,
-                      ),
+                      child: Icon(Icons.chat_outlined, color: Colors.white, size: 18),
                     ),
                   ),
                 ),
@@ -541,8 +566,7 @@ class OrderCard extends StatelessWidget {
                     onTap: () => openPhoneApp(order.courierPhone!),
                     child: const Padding(
                       padding: EdgeInsets.all(8),
-                      child:
-                      Icon(Icons.phone, color: Colors.white, size: 18),
+                      child: Icon(Icons.phone, color: Colors.white, size: 18),
                     ),
                   ),
                 ),
@@ -569,8 +593,7 @@ class OrderCard extends StatelessWidget {
           );
         } else if (state is OrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
@@ -601,18 +624,15 @@ class OrderCard extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () => _showConfirmDialog(context, l10n),
-                  icon:
-                  const Icon(Icons.check_circle_outline, size: 18),
+                  icon: const Icon(Icons.check_circle_outline, size: 18),
                   label: Text(
                     l10n.confirmDelivery,
-                    style:
-                    const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade600,
                     foregroundColor: Colors.white,
-                    padding:
-                    const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -631,11 +651,9 @@ class OrderCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(l10n.confirmDelivery),
-        content:
-        Text('${l10n.confirmDeliveryMessage} \n ${order.orderNumber}'),
+        content: Text('${l10n.confirmDeliveryMessage} \n ${order.orderNumber}'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
@@ -672,7 +690,7 @@ class OrderCard extends StatelessWidget {
     return name.isNotEmpty ? name[0].toUpperCase() : '?';
   }
 
-  // ── Action buttons (PENDING order) ────────────────────────────────────────
+  // ── Action buttons ────────────────────────────────────────────────────────
 
   Widget _buildActionButtons(AppLocalizations l10n) {
     return Column(
@@ -682,7 +700,7 @@ class OrderCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
           child: Row(
             children: [
-              if (order.type != 'CATALOG_PURCHASE') ...[
+              if (order.type != 'CATALOG_PURCHASE' && !order.isOrderScheduled) ...[
                 Expanded(
                   child: Stack(
                     clipBehavior: Clip.none,
@@ -694,14 +712,12 @@ class OrderCard extends StatelessWidget {
                           icon: const Icon(Icons.payments_outlined, size: 18),
                           label: Text(
                             l10n.viewProposals,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.kPrimaryColor,
                             foregroundColor: Colors.white,
-                            padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -755,8 +771,7 @@ class OrderCard extends StatelessWidget {
           onRetrySuccess?.call();
         } else if (state is OrderRetryError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
@@ -791,8 +806,7 @@ class OrderCard extends StatelessWidget {
                   icon: const Icon(Icons.refresh, size: 18),
                   label: Text(
                     l10n.retry,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -821,10 +835,9 @@ class _PulsingNewOfferDotState extends State<_PulsingNewOfferDot>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     )..repeat(reverse: true);
-    _scale = Tween<double>(
-      begin: 0.75,
-      end: 1.1,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _scale = Tween<double>(begin: 0.75, end: 1.1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -893,14 +906,10 @@ class _PriceAdjustmentFooter extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: const BoxDecoration(
                   color: Color(0xFFFFECB3),
-                  borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
                 ),
                 child: Row(
                   children: [
@@ -924,10 +933,7 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 child: Row(
                   children: [
                     Expanded(
@@ -976,9 +982,9 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             '${order.actualPrice} ${l10n.egp}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 16,
-                              color: const Color(0xFFE65100),
+                              color: Color(0xFFE65100),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -988,7 +994,7 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                   ],
                 ),
               ),
-              Divider(height: 1, color: const Color(0xFFFFE082)),
+              const Divider(height: 1, color: Color(0xFFFFE082)),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                 child: isLoading
@@ -1006,11 +1012,7 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _respond(context, 'REJECTED'),
-                        icon: Icon(
-                          Icons.close,
-                          size: 16,
-                          color: Colors.red.shade600,
-                        ),
+                        icon: Icon(Icons.close, size: 16, color: Colors.red.shade600),
                         label: Text(
                           l10n.reject,
                           style: TextStyle(
@@ -1020,13 +1022,8 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                          ),
-                          side: BorderSide(
-                            color: Colors.red.shade300,
-                            width: 1.5,
-                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          side: BorderSide(color: Colors.red.shade300, width: 1.5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -1048,9 +1045,7 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.kPrimaryColor,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -1093,7 +1088,7 @@ class _PaymentMethodChip extends StatelessWidget {
     final IconData icon = isCash
         ? Icons.payments_outlined
         : Icons.account_balance_wallet_outlined;
-    final String label = isCash ? (l10n.cod) : (l10n.wallet);
+    final String label = isCash ? l10n.cod : l10n.wallet;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -1144,10 +1139,9 @@ class _PulsingDotState extends State<_PulsingDot>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _scale = Tween<double>(
-      begin: 0.6,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _scale = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -1195,10 +1189,8 @@ class _OrderItemsSectionState extends State<_OrderItemsSection>
       vsync: this,
       duration: const Duration(milliseconds: 280),
     );
-    _expandAnim =
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
-    _rotateAnim =
-        Tween<double>(begin: 0, end: 0.5).animate(_expandAnim);
+    _expandAnim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+    _rotateAnim = Tween<double>(begin: 0, end: 0.5).animate(_expandAnim);
   }
 
   @override
@@ -1241,8 +1233,7 @@ class _OrderItemsSectionState extends State<_OrderItemsSection>
               onTap: _toggle,
               borderRadius: BorderRadius.circular(12),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Row(
                   children: [
                     Icon(
@@ -1298,16 +1289,14 @@ class _OrderItemsSectionState extends State<_OrderItemsSection>
                             ? item.product.nameAr
                             : item.product.name;
                         return Padding(
-                          padding:
-                          const EdgeInsets.symmetric(vertical: 7),
+                          padding: const EdgeInsets.symmetric(vertical: 7),
                           child: Row(
                             children: [
                               Container(
                                 width: 24,
                                 height: 24,
                                 decoration: BoxDecoration(
-                                  color: AppColors.kPrimaryColor
-                                      .withOpacity(0.1),
+                                  color: AppColors.kPrimaryColor.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Center(
@@ -1340,8 +1329,7 @@ class _OrderItemsSectionState extends State<_OrderItemsSection>
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.kPrimaryColor
-                                      .withOpacity(0.1),
+                                  color: AppColors.kPrimaryColor.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
