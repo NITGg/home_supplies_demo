@@ -10,7 +10,6 @@ import '../data/repo/refund_repo.dart';
 import '../manager/refund_cubit.dart';
 import '../manager/refund_states.dart';
 
-
 /// Standalone screen that lists all refund requests for the current customer.
 /// Open from the drawer with:
 /// ```dart
@@ -91,11 +90,16 @@ class _RefundsViewState extends State<_RefundsView> {
 
             return RefreshIndicator(
               color: AppColors.kPrimaryColor,
-              onRefresh: () => context.read<RefundCubit>().loadRefunds(),
+              onRefresh: () async {
+                await context.read<RefundCubit>().loadRefunds();
+              },
               child: ListView.builder(
                 controller: _scrollCtrl,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 20,
+                ),
                 itemCount: state.refunds.length + (state.hasMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == state.refunds.length) {
@@ -104,6 +108,7 @@ class _RefundsViewState extends State<_RefundsView> {
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
+
                   return _RefundCard(refund: state.refunds[index]);
                 },
               ),
@@ -175,8 +180,7 @@ class _RefundCard extends StatelessWidget {
                       color: statusColor.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(_statusIcon(),
-                        color: statusColor, size: 20),
+                    child: Icon(_statusIcon(), color: statusColor, size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -189,7 +193,7 @@ class _RefundCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          formatDate(context,refund.createdAt),
+                          formatDate(context, refund.createdAt),
                           style: AppTextStyles.regular14.copyWith(
                             fontSize: 12,
                             color: Colors.grey.shade500,
@@ -201,12 +205,16 @@ class _RefundCard extends StatelessWidget {
                   // Status badge
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                          color: statusColor.withOpacity(0.4), width: 1),
+                        color: statusColor.withOpacity(0.4),
+                        width: 1,
+                      ),
                     ),
                     child: Text(
                       _statusLabel(l10n),
@@ -226,8 +234,11 @@ class _RefundCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: Row(
                 children: [
-                  Icon(Icons.monetization_on_outlined,
-                      size: 15, color: Colors.grey.shade500),
+                  Icon(
+                    Icons.monetization_on_outlined,
+                    size: 15,
+                    color: Colors.grey.shade500,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     l10n.refundAmount,
@@ -238,7 +249,7 @@ class _RefundCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '${refund.amount.toStringAsFixed(2)} ${refund.currency}',
+                    '${refund.amount.toStringAsFixed(2)} ${l10n.egp}',
                     style: AppTextStyles.bold14.copyWith(
                       color: AppColors.kPrimaryColor,
                     ),
@@ -252,8 +263,11 @@ class _RefundCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.notes_outlined,
-                      size: 15, color: Colors.grey.shade500),
+                  Icon(
+                    Icons.notes_outlined,
+                    size: 15,
+                    color: Colors.grey.shade500,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -282,8 +296,11 @@ class _RefundCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.rate_review_outlined,
-                        size: 14, color: Colors.grey.shade500),
+                    Icon(
+                      Icons.rate_review_outlined,
+                      size: 14,
+                      color: Colors.grey.shade500,
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -322,8 +339,10 @@ class _RefundCard extends StatelessWidget {
                             width: 64,
                             height: 64,
                             color: Colors.grey.shade200,
-                            child: const Icon(Icons.broken_image_outlined,
-                                size: 24),
+                            child: const Icon(
+                              Icons.broken_image_outlined,
+                              size: 24,
+                            ),
                           ),
                         ),
                       );
@@ -354,20 +373,23 @@ class _EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.assignment_return_outlined,
-                size: 72, color: Colors.grey.shade300),
+            Icon(
+              Icons.assignment_return_outlined,
+              size: 72,
+              color: Colors.grey.shade300,
+            ),
             const SizedBox(height: 20),
             Text(
               l10n.noRefundsYet,
-              style: AppTextStyles.bold18.copyWith(
-                  color: Colors.grey.shade500),
+              style: AppTextStyles.bold18.copyWith(color: Colors.grey.shade500),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               l10n.noRefundsYetSubtitle,
               style: AppTextStyles.regular14.copyWith(
-                  color: Colors.grey.shade400),
+                color: Colors.grey.shade400,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -394,13 +416,13 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.wifi_off_rounded,
-                size: 60, color: Colors.grey.shade300),
+            Icon(Icons.wifi_off_rounded, size: 60, color: Colors.grey.shade300),
             const SizedBox(height: 20),
             Text(
               message,
               style: AppTextStyles.regular14.copyWith(
-                  color: Colors.grey.shade600),
+                color: Colors.grey.shade600,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
