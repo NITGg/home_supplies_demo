@@ -67,6 +67,7 @@ class Order {
   final bool isTakeTime;
   final bool isReadyForPickUp;
   final DateTime? orderScheduleAt;
+  final String? refundStatus;
 
   final List<OrderItem> orderItems;
 
@@ -86,6 +87,7 @@ class Order {
     this.productDescription,
     this.productImage,
     this.productImageFile,
+    this.refundStatus,
     this.budget,
     this.actualPrice,
     this.collectedAt,
@@ -139,6 +141,7 @@ class Order {
       courierPhoto: user?['personal_photo'] as String?,
       priceAdjustmentStatus: json['price_adjustment_status'] as String?,
       id: json['id'] as int?,
+      refundStatus: json['refund_status'] as String?,
       customerId: json['customer_id'] as int?,
       courierId: json['courier_id'] as int?,
       orderNumber: json['order_number'] as String?,
@@ -230,6 +233,8 @@ class Order {
 
   /// True when the courier proposed a new price and we're waiting for customer response
   bool get hasPendingPriceAdjustment => priceAdjustmentStatus == 'PENDING';
+
+  bool get isRefundable => refundStatus == 'NONE' || refundStatus == null;
 
   /// The status shown in the UI.
   /// When isTakeTime and not ready for pickup, treat as SCHEDULED visually.
