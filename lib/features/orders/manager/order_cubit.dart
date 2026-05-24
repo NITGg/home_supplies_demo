@@ -284,20 +284,20 @@ class OrderCubit extends Cubit<OrderState> {
   Future<void> createCatalogOrder({
     required String paymentMethod,
     String? couponCode,
+    DateTime? scheduleAt,                          // ← NEW
   }) async {
     safeEmit(OrderOperationLoading());
     try {
-      dLog('OrderCubit: Creating catalog order — payment: $paymentMethod');
+      dLog('OrderCubit: Creating catalog order — payment: $paymentMethod, scheduleAt: $scheduleAt');
 
       final response = await _repository.createCatalogOrder(
         paymentMethod: paymentMethod,
         couponCode: couponCode,
+        scheduleAt: scheduleAt,                    // ← NEW
       );
 
       dLog('OrderCubit: Catalog order created — ${response.order.orderNumber}');
       safeEmit(OrderSuccess(message: response.message, order: response.order));
-
-      // Reload active orders so the new PENDING order appears immediately.
       await loadActiveOrders(loadMore: false);
     } catch (e) {
       dLog('OrderCubit: Error creating catalog order: $e');

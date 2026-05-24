@@ -47,6 +47,11 @@ class _CartScreenState extends State<CartScreen> {
   int? _currentDefaultAddressId;
 
   String _paymentMethod = 'CASH';
+
+  // ── Schedule ───────────────────────────────────────────────────────────────
+  bool _isScheduled = false;
+  DateTime? _scheduleAt;
+
   CouponValid? _appliedCoupon;
   bool _couponValidating = false;
   final _couponController = TextEditingController();
@@ -58,7 +63,6 @@ class _CartScreenState extends State<CartScreen> {
   late final ScrollController _scrollController = ScrollController();
   double _lastScrollOffset = 0;
 
-
   double _codLimit() {
     return (double.tryParse(
       AppSettings.customer_catalog_cod_limit ?? '0',
@@ -68,7 +72,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   bool _isOverCodLimit(CartLoaded state) {
-    // Use the display total (pre-fee subtotal) to mirror the create-sheet logic.
     return _computeDisplayTotal(state) > _codLimit();
   }
 
@@ -77,9 +80,8 @@ class _CartScreenState extends State<CartScreen> {
     setState(() => _summaryExpanded = !_summaryExpanded);
   }
 
-  // ── Price helpers ─────────────────────────────────────────────────────────
+  // ── Price helpers ──────────────────────────────────────────────────────────
 
-  // ✅ Fix #5: extracted shared computation to avoid duplication.
   double _priceBeforeCoupon(CartLoaded state) {
     final summary = state.data.summary;
     final originalTotal = toDouble(summary.originalTotal);
@@ -112,31 +114,22 @@ class _CartScreenState extends State<CartScreen> {
     final subtotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
     final preview = state.preview;
     if (preview == null) return subtotal;
-    //cart total
-    return subtotal
-    // +
-    // preview.totalFee +
-    // preview.vatAmount
-    // -
-    // preview.discountAmount
-    ;
+    return subtotal;
   }
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
+
   void _onScroll() {
     final offset = _scrollController.offset;
     final delta = offset - _lastScrollOffset;
     _lastScrollOffset = offset;
 
-    // Scrolling down → hide pill (and collapse summary)
     if (delta > 4 && _pillVisible) {
       setState(() {
         _pillVisible = false;
         _summaryExpanded = false;
       });
-    }
-    // Scrolling up or near top → show pill
-    else if (delta < -4 && !_pillVisible) {
+    } else if (delta < -4 && !_pillVisible) {
       setState(() => _pillVisible = true);
     }
   }
@@ -146,17 +139,8 @@ class _CartScreenState extends State<CartScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
 
-    // ✅ Reset to CartLoading synchronously before the first frame so the
-    // screen never flashes stale cached data. The cubit may already hold a
-    // CartLoaded from a previous visit; reset() clears it immediately so
-    // frame 1 always renders the skeleton, not old data.
     context.read<CartCubit>().reset();
 
-    // ✅ The cubit starts in CartLoading so the skeleton is shown on frame 1.
-    // fetchCart() is still called via postFrameCallback because context.read<>
-    // for BlocProvider ancestors is only safe after the first frame.
-    // The key point: there is only ONE loading state — the cubit's initial
-    // CartLoading — not CartInitial → CartLoading (which caused the double flash).
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       context.read<CartCubit>().fetchCart();
@@ -187,7 +171,6 @@ class _CartScreenState extends State<CartScreen> {
 
   CartCubit get _cubit => context.read<CartCubit>();
 
-  // ✅ Fix #3: use _cubit consistently; stream listening is safe via Future.any.
   Future<void> _onRefresh() async {
     _cubit.fetchCart();
     context.read<WalletCubit>().fetchWalletData();
@@ -212,11 +195,12 @@ class _CartScreenState extends State<CartScreen> {
       _appliedCoupon = null;
       _couponController.clear();
     });
-    // Re-fetch preview without coupon so fees reset to undiscounted values.
     _cubit.refreshPreview();
   }
 
   Future<void> _checkout() async {
+    if (_isScheduled && _scheduleAt == null) return;
+
     if (_paymentMethod == 'WALLET') {
       final cartState = _cubit.state;
       if (cartState is CartLoaded) {
@@ -233,6 +217,7 @@ class _CartScreenState extends State<CartScreen> {
     await context.read<OrderCubit>().createCatalogOrder(
       paymentMethod: _paymentMethod,
       couponCode: _appliedCoupon?.code,
+      scheduleAt: _isScheduled ? _scheduleAt : null,
     );
   }
 
@@ -260,13 +245,330 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+  // ── Schedule helpers ───────────────────────────────────────────────────────
+
+  Future<void> _pickScheduleDateTime() async {
+    final now = DateTime.now();
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 30)),
+    );
+    if (pickedDate == null || !mounted) return;
+
+    final isToday = pickedDate.year == now.year &&
+        pickedDate.month == now.month &&
+        pickedDate.day == now.day;
+    final initialTime = TimeOfDay.fromDateTime(
+      isToday ? now.add(const Duration(minutes: 5)) : pickedDate,
+    );
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+    );
+    if (pickedTime == null || !mounted) return;
+
+    final scheduled = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    if (scheduled.isBefore(now)) {
+      Fluttertoast.showToast(
+        msg: AppLocalizations.of(context)!.pleaseChooseFutureTime,
+        gravity: ToastGravity.BOTTOM,
+      );
+      return;
+    }
+
+    setState(() => _scheduleAt = scheduled);
+  }
+
+  String _formatScheduleDate(DateTime dt) =>
+      '${dt.day}/${dt.month}/${dt.year}';
+
+  String _formatScheduleTime(DateTime dt) {
+    final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour < 12 ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
+
+  Widget _buildScheduleOption({
+    required IconData icon,
+    required String label,
+    required bool selected,
+  }) {
+    return Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              icon,
+              key: ValueKey('$icon-$selected'),
+              size: 20,
+              color:
+              selected ? AppColors.kSecondaryColor : Colors.grey.shade400,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: selected
+                ? TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.kSecondaryColor,
+            )
+                : TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleSection(AppLocalizations l10n) {
+    final accent = AppColors.kSecondaryColor;
+    final isAsap = !_isScheduled;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── ASAP / Schedule toggle ───────────────────────────────────────
+        Container(
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Stack(
+            children: [
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  alignment:
+                  isAsap ? Alignment.centerLeft : Alignment.centerRight,
+                  child: FractionallySizedBox(
+                    widthFactor: 0.5,
+                    child: Container(
+                      margin: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(11),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.10),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => setState(() {
+                          _isScheduled = false;
+                          _scheduleAt = null;
+                        }),
+                        child: _buildScheduleOption(
+                          icon: Icons.bolt_rounded,
+                          label: l10n.asap,
+                          selected: isAsap,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          setState(() => _isScheduled = true);
+                          if (_scheduleAt == null) _pickScheduleDateTime();
+                        },
+                        child: _buildScheduleOption(
+                          icon: Icons.schedule_rounded,
+                          label: l10n.scheduleOrder,
+                          selected: !isAsap,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Date/time picker tile ────────────────────────────────────────
+        ClipRect(
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            clipBehavior: Clip.hardEdge,
+            child: _isScheduled
+                ? Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: _pickScheduleDateTime,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _scheduleAt != null
+                              ? accent.withOpacity(0.4)
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 18,
+                            color: _scheduleAt != null
+                                ? accent
+                                : Colors.grey.shade400,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _scheduleAt == null
+                                ? Text(
+                              l10n.tapToChooseDateTime,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade500,
+                              ),
+                            )
+                                : Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _formatScheduleDate(_scheduleAt!),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade800,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _formatScheduleTime(_scheduleAt!),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: accent,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_scheduleAt != null)
+                            GestureDetector(
+                              onTap: () =>
+                                  setState(() => _scheduleAt = null),
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 18,
+                                color: Colors.grey.shade500,
+                              ),
+                            )
+                          else
+                            Icon(
+                              Icons.edit_rounded,
+                              size: 16,
+                              color: Colors.grey.shade400,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 14,
+                          color: Colors.grey.shade500,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            l10n.scheduledOrderNote,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_scheduleAt == null) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          size: 13,
+                          color: Colors.red.shade400,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          l10n.pleaseChooseFutureTime,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.red.shade400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            )
+                : const SizedBox.shrink(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    // ✅ Fix #4: use BlocBuilder so the guest screen reacts to auth changes.
     return BlocBuilder<GuestModeCubit, bool>(
       builder: (context, isGuest) {
         if (isGuest) {
@@ -315,10 +617,8 @@ class _CartScreenState extends State<CartScreen> {
             listenWhen: (_, curr) => curr is AddressesLoaded,
             listener: (context, state) {
               if (state is AddressesLoaded) {
-                final newDefaultId = state.addresses
-                    .where((a) => a.isDefault)
-                    .firstOrNull
-                    ?.id;
+                final newDefaultId =
+                    state.addresses.where((a) => a.isDefault).firstOrNull?.id;
                 if (newDefaultId != _currentDefaultAddressId) {
                   _currentDefaultAddressId = newDefaultId;
                   if (newDefaultId != null) _cubit.refreshCart();
@@ -330,7 +630,7 @@ class _CartScreenState extends State<CartScreen> {
               listener: (context, state) {
                 if (state is WalletLoaded) {
                   setState(
-                    () => _walletBalance = state.walletData.wallet.balance,
+                        () => _walletBalance = state.walletData.wallet.balance,
                   );
                 }
               },
@@ -344,13 +644,11 @@ class _CartScreenState extends State<CartScreen> {
                       showErrorBanner(context, state.message);
                     }
                   },
-                  // ✅ Fix #1: include preview changes so the pill total
-                  // updates when the order preview arrives.
                   buildWhen: (prev, curr) {
                     if (prev is CartLoaded && curr is CartLoaded) {
                       return prev.data != curr.data ||
                           prev.busyItemIds != curr.busyItemIds ||
-                          prev.preview != curr.preview; // ← was missing
+                          prev.preview != curr.preview;
                     }
                     return true;
                   },
@@ -360,17 +658,19 @@ class _CartScreenState extends State<CartScreen> {
                       body: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
                         child: switch (state) {
-                          CartInitial() || CartLoading() =>
-                            const CartLoadingView(key: ValueKey('loading')),
+                          CartInitial() ||
+                          CartLoading() =>
+                          const CartLoadingView(key: ValueKey('loading')),
                           CartError(:final message) => CartErrorView(
                             key: const ValueKey('error'),
                             message: message,
                             onRetry: _cubit.fetchCart,
                           ),
-                          CartLoaded(:final data) when data.cartItems.isEmpty =>
-                            _buildEmptyWithRefresh(
-                              key: const ValueKey('empty'),
-                            ),
+                          CartLoaded(:final data)
+                          when data.cartItems.isEmpty =>
+                              _buildEmptyWithRefresh(
+                                key: const ValueKey('empty'),
+                              ),
                           CartLoaded() => _buildLoaded(context, state),
                         },
                       ),
@@ -386,10 +686,10 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _handleOrderState(
-    BuildContext context,
-    OrderState state,
-    AppLocalizations l10n,
-  ) {
+      BuildContext context,
+      OrderState state,
+      AppLocalizations l10n,
+      ) {
     if (state is CouponValidating) {
       if (!_couponValidating) setState(() => _couponValidating = true);
     } else if (state is CouponRedeemed) {
@@ -397,8 +697,6 @@ class _CartScreenState extends State<CartScreen> {
         _couponValidating = false;
         if (state.coupon != null) _appliedCoupon = state.coupon;
       });
-      // Re-fetch preview with the coupon code so preview.discountAmount
-      // is server-computed (cap-aware) rather than estimated locally.
       if (state.coupon != null) {
         _cubit.refreshPreview(couponCode: state.coupon!.code);
       }
@@ -468,9 +766,7 @@ class _CartScreenState extends State<CartScreen> {
             backgroundColor: Colors.grey.shade200,
             child: IconButton(
               icon: Icon(Icons.search_rounded, color: Colors.grey.shade700),
-              onPressed: () {
-                showSearchDialog(context);
-              },
+              onPressed: () => showSearchDialog(context),
               padding: EdgeInsets.zero,
             ),
           ),
@@ -510,26 +806,23 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildLoaded(BuildContext context, CartLoaded state) {
-      final items = state.data.cartItems;
-      final summary = state.data.summary;
-      final theme = Theme.of(context);
-      final l10n = AppLocalizations.of(context)!;
-      final bottomPadding = MediaQuery.of(context).padding.bottom;
-      final screenWidth = MediaQuery.of(context).size.width;
-      final hPad = screenWidth < 360 ? 14.0 : 20.0;
-      final displayTotal = _computeDisplayTotal(state);
+    final items = state.data.cartItems;
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final hPad = screenWidth < 360 ? 14.0 : 20.0;
+    final displayTotal = _computeDisplayTotal(state);
 
-      // ── COD limit ──────────────────────────────────────────────────────────
-      final overCodLimit = _isOverCodLimit(state);
-      // Auto-switch away from CASH the moment the total crosses the limit.
-      if (overCodLimit && _paymentMethod == 'CASH') {
-        // Schedule a post-frame setState to avoid calling setState during build.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && _paymentMethod == 'CASH') {
-            setState(() => _paymentMethod = 'WALLET');
-          }
-        });
-      }
+    // ── COD limit ──────────────────────────────────────────────────────────
+    final overCodLimit = _isOverCodLimit(state);
+    if (overCodLimit && _paymentMethod == 'CASH') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _paymentMethod == 'CASH') {
+          setState(() => _paymentMethod = 'WALLET');
+        }
+      });
+    }
 
     return Column(
       key: const ValueKey('loaded'),
@@ -542,7 +835,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
 
-        // ── Items list ────────────────────────────────────────────────
+        // ── Items list ─────────────────────────────────────────────────
         Expanded(
           child: RefreshIndicator(
             onRefresh: _onRefresh,
@@ -566,7 +859,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
 
-        // ── Animated bottom section ───────────────────────────────────────
+        // ── Animated bottom section ────────────────────────────────────
         AnimatedSlide(
           offset: _pillVisible ? Offset.zero : const Offset(0, 1),
           duration: const Duration(milliseconds: 280),
@@ -577,9 +870,7 @@ class _CartScreenState extends State<CartScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Pill ───────────────────────────────────────────────
-                // ✅ Fix #1: displayTotal is computed from the outer state
-                // which now rebuilds on preview changes — pill stays fresh.
+                // ── Pill ──────────────────────────────────────────────
                 _CheckoutPill(
                   total: displayTotal,
                   expanded: _summaryExpanded,
@@ -593,9 +884,6 @@ class _CartScreenState extends State<CartScreen> {
                     curve: Curves.easeInOut,
                     alignment: Alignment.bottomCenter,
                     heightFactor: _summaryExpanded ? 1.0 : 0.0,
-                    // ✅ Fix #2: nested BlocBuilder only needed to scope
-                    // summary rebuilds. Use the inner builder's state
-                    // explicitly so CartSummaryBar always gets current preview.
                     child: BlocBuilder<CartCubit, CartState>(
                       buildWhen: (prev, curr) {
                         if (prev is CartLoaded && curr is CartLoaded) {
@@ -607,27 +895,42 @@ class _CartScreenState extends State<CartScreen> {
                       builder: (context, innerState) {
                         final loadedInner = innerState is CartLoaded
                             ? innerState
-                            : state; // safe fallback
-                        return CartSummaryBar(
-                          summary: loadedInner.data.summary,
-                          preview: loadedInner.preview,
-                          // ← uses inner state
-                          hPad: hPad,
-                          bottomPadding: bottomPadding,
-                          theme: theme,
-                          l10n: l10n,
-                          overCodLimit: overCodLimit,           // ← NEW
-                          codLimit: _codLimit(),                // ← NEW
-                          paymentMethod: _paymentMethod,
-                          onPaymentMethodChanged: (m) =>
-                              setState(() => _paymentMethod = m),
-                          couponController: _couponController,
-                          couponFocus: _couponFocus,
-                          appliedCoupon: _appliedCoupon,
-                          couponValidating: _couponValidating,
-                          onValidateCoupon: _validateCoupon,
-                          onRemoveCoupon: _removeCoupon,
-                          onCheckout: _checkout,
+                            : state;
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // ── Schedule section ─────────────────────
+                            Container(
+                              color: Colors.white,
+                              child: Padding(
+                                padding:
+                                EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
+                                child: _buildScheduleSection(l10n),
+                              ),
+                            ),
+
+                            // ── Price / payment / checkout ───────────
+                            CartSummaryBar(
+                              summary: loadedInner.data.summary,
+                              preview: loadedInner.preview,
+                              hPad: hPad,
+                              bottomPadding: bottomPadding,
+                              theme: theme,
+                              l10n: l10n,
+                              overCodLimit: overCodLimit,
+                              codLimit: _codLimit(),
+                              paymentMethod: _paymentMethod,
+                              onPaymentMethodChanged: (m) =>
+                                  setState(() => _paymentMethod = m),
+                              couponController: _couponController,
+                              couponFocus: _couponFocus,
+                              appliedCoupon: _appliedCoupon,
+                              couponValidating: _couponValidating,
+                              onValidateCoupon: _validateCoupon,
+                              onRemoveCoupon: _removeCoupon,
+                              onCheckout: _checkout,
+                            ),
+                          ],
                         );
                       },
                     ),
@@ -690,7 +993,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 }
 
-// ── Checkout pill ─────────────────────────────────────────────────────────────
+// ── Checkout pill ──────────────────────────────────────────────────────────────
 
 /// A slim persistent bar that shows the running total and a chevron.
 /// Tapping it expands / collapses the full [CartSummaryBar].
@@ -711,8 +1014,6 @@ class _CheckoutPill extends StatelessWidget {
     final safePad = MediaQuery.of(context).padding.bottom;
 
     return Material(
-      // Remove the resting shadow when the panel is open so the two
-      // surfaces read as one continuous sheet.
       elevation: expanded ? 0 : 6,
       shadowColor: Colors.black12,
       color: Colors.white,
@@ -727,7 +1028,7 @@ class _CheckoutPill extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // ── Total badge ──────────────────────────────────────────
+              // ── Total badge ────────────────────────────────────────────
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
@@ -749,7 +1050,7 @@ class _CheckoutPill extends StatelessWidget {
 
               const Spacer(),
 
-              // ── Label ────────────────────────────────────────────────
+              // ── Label ──────────────────────────────────────────────────
               Text(
                 l10n.checkout,
                 style: const TextStyle(
@@ -759,7 +1060,7 @@ class _CheckoutPill extends StatelessWidget {
               ),
               const SizedBox(width: 4),
 
-              // ── Chevron — rotates 180° when panel is open ────────────
+              // ── Chevron ────────────────────────────────────────────────
               AnimatedRotation(
                 turns: expanded ? 0.5 : 0.0,
                 duration: const Duration(milliseconds: 300),

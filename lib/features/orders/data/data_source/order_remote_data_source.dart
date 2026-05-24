@@ -96,18 +96,25 @@ class OrderRemoteDataSource {
   Future<OrderResponse> createCatalogOrder({
     required String paymentMethod,
     String? couponCode,
+    DateTime? scheduleAt,                          // ← NEW
   }) async {
-    dLog('Creating catalog order — payment: $paymentMethod, coupon: $couponCode');
+    dLog('Creating catalog order — payment: $paymentMethod, coupon: $couponCode, scheduleAt: $scheduleAt');
+
+    final bool isScheduled = scheduleAt != null;
+    final String? scheduleAtUtc = scheduleAt?.toUtc().toIso8601String();
 
     final response = await _dio.post(
-        '/orders?lang=${LocaleManager.currentLocale}',
-        data: {
-          'type': 'CATALOG_PURCHASE',
-          'payment_method': paymentMethod,
-          if (couponCode != null && couponCode.isNotEmpty)
-            'coupon_code': couponCode,
-        },
-        options: Options()
+      '/orders?lang=${LocaleManager.currentLocale}',
+      data: {
+        'type': 'CATALOG_PURCHASE',
+        'payment_method': paymentMethod,
+        'supplier_store_address_id': 1,            // ← NEW (hardcoded)
+        if (isScheduled) 'is_order_scheduled': true,          // ← NEW
+        if (scheduleAtUtc != null) 'order_schedule_at': scheduleAtUtc, // ← NEW
+        if (couponCode != null && couponCode.isNotEmpty)
+          'coupon_code': couponCode,
+      },
+      options: Options(),
     );
 
     dLog('Create catalog order response: ${response.data}');
