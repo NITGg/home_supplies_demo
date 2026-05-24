@@ -901,7 +901,7 @@ class _CartScreenState extends State<CartScreen> {
                           children: [
                             // ── Schedule section ─────────────────────
                             Container(
-                              color: Colors.white,
+                              color: theme.colorScheme.surface,
                               child: Padding(
                                 padding:
                                 EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
