@@ -1745,4 +1745,38 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noRefundsYetSubtitle => 'ستظهر هنا طلبات الاسترداد الخاصة بك بعد تقديمها من شاشة الطلبات (السجل)';
+
+  @override
+  String get pickDeliverySlot => 'اختر موعد التوصيل';
+
+  @override
+  String get couldNotLoadSlots => 'تعذّر تحميل المواعيد.\nيرجى التحقق من اتصالك.';
+
+  @override
+  String get noOpenDaysInPeriod => 'لا توجد أيام مفتوحة في الفترة القادمة.';
+
+  @override
+  String openHours(String hours) {
+    return 'مفتوح $hours';
+  }
+
+  @override
+  String get noSlotsConfiguredForDay => 'لا توجد مواعيد لهذا اليوم.';
+
+  @override
+  String get tomorrow => 'غداً';
+
+  @override
+  String get selectASlot => 'اختر موعداً';
+
+  @override
+  String confirmSlotTime(String from, String to) {
+    return 'تأكيد $from–$to';
+  }
+
+  @override
+  String get slotFull => 'ممتلئ';
+
+  @override
+  String get slotAvailable => 'متاح';
 }

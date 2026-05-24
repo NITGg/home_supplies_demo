@@ -1745,4 +1745,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noRefundsYetSubtitle => 'Your refund requests will appear here once submitted in the orders screen (history)';
+
+  @override
+  String get pickDeliverySlot => 'Pick a delivery slot';
+
+  @override
+  String get couldNotLoadSlots => 'Could not load slots.\nPlease check your connection.';
+
+  @override
+  String get noOpenDaysInPeriod => 'No open days in the coming period.';
+
+  @override
+  String openHours(String hours) {
+    return 'Open $hours';
+  }
+
+  @override
+  String get noSlotsConfiguredForDay => 'No slots configured for this day.';
+
+  @override
+  String get tomorrow => 'Tomorrow';
+
+  @override
+  String get selectASlot => 'Select a slot';
+
+  @override
+  String confirmSlotTime(String from, String to) {
+    return 'Confirm $from–$to';
+  }
+
+  @override
+  String get slotFull => 'Full';
+
+  @override
+  String get slotAvailable => 'Available';
 }

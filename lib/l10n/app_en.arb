@@ -788,6 +788,44 @@
   "refundRequested": "Requested",
   "refundAmount": "Refund Amount",
   "noRefundsYet": "No refund requests yet",
-  "noRefundsYetSubtitle": "Your refund requests will appear here once submitted in the orders screen (history)"
+  "noRefundsYetSubtitle": "Your refund requests will appear here once submitted in the orders screen (history)",
 
+  "pickDeliverySlot": "Pick a delivery slot",
+  "@pickDeliverySlot": { "description": "Title of the slot-picker bottom sheet" },
+
+  "couldNotLoadSlots": "Could not load slots.\nPlease check your connection.",
+  "@couldNotLoadSlots": { "description": "Error message shown when fetching delivery slots fails" },
+
+  "noOpenDaysInPeriod": "No open days in the coming period.",
+  "@noOpenDaysInPeriod": { "description": "Empty-state message when no days are open for delivery" },
+
+  "openHours": "Open {hours}",
+  "@openHours": {
+    "description": "Working-hours subtitle, e.g. 'Open 09:00–18:00'",
+    "placeholders": { "hours": { "type": "String" } }
+  },
+
+  "noSlotsConfiguredForDay": "No slots configured for this day.",
+  "@noSlotsConfiguredForDay": { "description": "Shown when a day has no delivery slots defined" },
+
+  "tomorrow": "Tomorrow",
+  "@tomorrow": { "description": "Day label used in the slot-picker day chips" },
+
+  "selectASlot": "Select a slot",
+  "@selectASlot": { "description": "Placeholder text on the confirm button when nothing is selected" },
+
+  "confirmSlotTime": "Confirm {from}–{to}",
+  "@confirmSlotTime": {
+    "description": "Confirm button label showing the chosen time range, e.g. 'Confirm 10:00–11:00'",
+    "placeholders": {
+      "from": { "type": "String" },
+      "to":   { "type": "String" }
+    }
+  },
+
+  "slotFull": "Full",
+  "@slotFull": { "description": "Badge shown on a fully-booked delivery slot" },
+
+  "slotAvailable": "Available",
+  "@slotAvailable": { "description": "Badge shown on an open delivery slot" }
 }

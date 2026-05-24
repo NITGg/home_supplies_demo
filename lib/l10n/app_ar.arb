@@ -785,7 +785,44 @@
   "refundRequested": "تم الطلب",
   "refundAmount": "مبلغ الاسترداد",
   "noRefundsYet": "لا توجد طلبات استرداد بعد",
-  "noRefundsYetSubtitle": "ستظهر هنا طلبات الاسترداد الخاصة بك بعد تقديمها من شاشة الطلبات (السجل)"
+  "noRefundsYetSubtitle": "ستظهر هنا طلبات الاسترداد الخاصة بك بعد تقديمها من شاشة الطلبات (السجل)",
 
+  "pickDeliverySlot": "اختر موعد التوصيل",
+  "@pickDeliverySlot": { "description": "Title of the slot-picker bottom sheet" },
 
+  "couldNotLoadSlots": "تعذّر تحميل المواعيد.\nيرجى التحقق من اتصالك.",
+  "@couldNotLoadSlots": { "description": "Error message shown when fetching delivery slots fails" },
+
+  "noOpenDaysInPeriod": "لا توجد أيام مفتوحة في الفترة القادمة.",
+  "@noOpenDaysInPeriod": { "description": "Empty-state message when no days are open for delivery" },
+
+  "openHours": "مفتوح {hours}",
+  "@openHours": {
+    "description": "Working-hours subtitle",
+    "placeholders": { "hours": { "type": "String" } }
+  },
+
+  "noSlotsConfiguredForDay": "لا توجد مواعيد لهذا اليوم.",
+  "@noSlotsConfiguredForDay": { "description": "Shown when a day has no delivery slots defined" },
+
+  "tomorrow": "غداً",
+  "@tomorrow": { "description": "Day label used in the slot-picker day chips" },
+
+  "selectASlot": "اختر موعداً",
+  "@selectASlot": { "description": "Placeholder text on the confirm button when nothing is selected" },
+
+  "confirmSlotTime": "تأكيد {from}–{to}",
+  "@confirmSlotTime": {
+    "description": "Confirm button label showing the chosen time range",
+    "placeholders": {
+      "from": { "type": "String" },
+      "to":   { "type": "String" }
+    }
+  },
+
+  "slotFull": "ممتلئ",
+  "@slotFull": { "description": "Badge shown on a fully-booked delivery slot" },
+
+  "slotAvailable": "متاح",
+  "@slotAvailable": { "description": "Badge shown on an open delivery slot" }
 }

@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tawreedat_go/core/utils/logger.dart';
 import 'package:tawreedat_go/core/widgets/banners.dart';
+import 'package:tawreedat_go/features/cart/presentation/slot_picker_sheet.dart';
 import 'package:tawreedat_go/features/cart/presentation/widgets/cart_item_tile.dart';
 import 'package:tawreedat_go/features/cart/presentation/widgets/cart_price_helpers.dart';
 import 'package:tawreedat_go/features/home/layout/manager/home_cubit.dart';
@@ -27,6 +27,8 @@ import '../../orders/presentation/widgets/sheets/create_order_sheet/insufficient
 import '../../search/presentation/search_dialog.dart';
 import '../../wallet/manager/wallet_cubit.dart';
 import '../../wallet/manager/wallet_state.dart';
+import '../data/models/slot_model.dart';
+import '../data/repo/slot_repo.dart';
 import '../manager/cart_cubit.dart';
 import '../manager/cart_state.dart';
 import 'widgets/cart_count_badge.dart';
@@ -52,6 +54,8 @@ class _CartScreenState extends State<CartScreen> {
   bool _isScheduled = false;
   DateTime? _scheduleAt;
 
+  /// The slot the user selected from the picker (null if none yet or ASAP).
+  SlotModel? _selectedSlot;
   CouponValid? _appliedCoupon;
   bool _couponValidating = false;
   final _couponController = TextEditingController();
@@ -64,10 +68,8 @@ class _CartScreenState extends State<CartScreen> {
   double _lastScrollOffset = 0;
 
   double _codLimit() {
-    return (double.tryParse(
-      AppSettings.customer_catalog_cod_limit ?? '0',
-    ) ??
-        0) /
+    return (double.tryParse(AppSettings.customer_catalog_cod_limit ?? '0') ??
+            0) /
         100;
   }
 
@@ -245,9 +247,35 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  // ── Schedule helpers ───────────────────────────────────────────────────────
+  // ── Schedule / slot helpers ────────────────────────────────────────────────
 
-  Future<void> _pickScheduleDateTime() async {
+  /// Opens the slot picker sheet. On confirmation sets [_scheduleAt] and
+  /// [_selectedSlot]. Falls back to the free date/time picker if no
+  /// [_storeAddressId] is available.
+  /// Opens the slot picker sheet.
+  ///
+  /// If the network call inside the sheet fails, the sheet silently dismisses
+  /// itself and [_pickScheduleDateTimeFallback] is invoked so the user can
+  /// still pick a date/time manually.
+  Future<void> _pickSlot() async {
+    final result = await showSlotPickerSheet(
+      context: context,
+      initialSelection: _scheduleAt,
+      initialSlot: _selectedSlot,
+      fetchSlots: () => SlotRepository().fetchSlots(),
+      onFetchError: _pickScheduleDateTimeFallback, // ← fallback wired here
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _scheduleAt = result.dateTime;
+        _selectedSlot = result.slot; // null for free windows
+      });
+    }
+  }
+
+  /// Fallback free date/time picker used when no storeAddressId is known.
+  Future<void> _pickScheduleDateTimeFallback() async {
     final now = DateTime.now();
 
     final pickedDate = await showDatePicker(
@@ -258,7 +286,8 @@ class _CartScreenState extends State<CartScreen> {
     );
     if (pickedDate == null || !mounted) return;
 
-    final isToday = pickedDate.year == now.year &&
+    final isToday =
+        pickedDate.year == now.year &&
         pickedDate.month == now.month &&
         pickedDate.day == now.day;
     final initialTime = TimeOfDay.fromDateTime(
@@ -287,11 +316,21 @@ class _CartScreenState extends State<CartScreen> {
       return;
     }
 
-    setState(() => _scheduleAt = scheduled);
+    setState(() {
+      _scheduleAt = scheduled;
+      _selectedSlot = null;
+    });
   }
 
-  String _formatScheduleDate(DateTime dt) =>
-      '${dt.day}/${dt.month}/${dt.year}';
+  /// Clears the scheduled time and selected slot.
+  void _clearSchedule() {
+    setState(() {
+      _scheduleAt = null;
+      _selectedSlot = null;
+    });
+  }
+
+  String _formatScheduleDate(DateTime dt) => '${dt.day}/${dt.month}/${dt.year}';
 
   String _formatScheduleTime(DateTime dt) {
     final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
@@ -315,8 +354,9 @@ class _CartScreenState extends State<CartScreen> {
               icon,
               key: ValueKey('$icon-$selected'),
               size: 20,
-              color:
-              selected ? AppColors.kSecondaryColor : Colors.grey.shade400,
+              color: selected
+                  ? AppColors.kSecondaryColor
+                  : Colors.grey.shade400,
             ),
           ),
           const SizedBox(width: 6),
@@ -326,10 +366,10 @@ class _CartScreenState extends State<CartScreen> {
             overflow: TextOverflow.ellipsis,
             style: selected
                 ? TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: AppColors.kSecondaryColor,
-            )
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.kSecondaryColor,
+                  )
                 : TextStyle(fontSize: 13, color: Colors.grey),
           ),
         ],
@@ -344,7 +384,7 @@ class _CartScreenState extends State<CartScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── ASAP / Schedule toggle ───────────────────────────────────────
+        // ── ASAP / Schedule toggle ─────────────────────────────────────────
         Container(
           height: 56,
           decoration: BoxDecoration(
@@ -359,8 +399,9 @@ class _CartScreenState extends State<CartScreen> {
                 child: AnimatedAlign(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOut,
-                  alignment:
-                  isAsap ? Alignment.centerLeft : Alignment.centerRight,
+                  alignment: isAsap
+                      ? Alignment.centerLeft
+                      : Alignment.centerRight,
                   child: FractionallySizedBox(
                     widthFactor: 0.5,
                     child: Container(
@@ -389,7 +430,7 @@ class _CartScreenState extends State<CartScreen> {
                         behavior: HitTestBehavior.opaque,
                         onTap: () => setState(() {
                           _isScheduled = false;
-                          _scheduleAt = null;
+                          _clearSchedule();
                         }),
                         child: _buildScheduleOption(
                           icon: Icons.bolt_rounded,
@@ -403,7 +444,7 @@ class _CartScreenState extends State<CartScreen> {
                         behavior: HitTestBehavior.opaque,
                         onTap: () {
                           setState(() => _isScheduled = true);
-                          if (_scheduleAt == null) _pickScheduleDateTime();
+                          if (_scheduleAt == null) _pickSlot();
                         },
                         child: _buildScheduleOption(
                           icon: Icons.schedule_rounded,
@@ -419,7 +460,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
 
-        // ── Date/time picker tile ────────────────────────────────────────
+        // ── Slot / date picker tile ────────────────────────────────────────
         ClipRect(
           child: AnimatedSize(
             duration: const Duration(milliseconds: 220),
@@ -427,136 +468,181 @@ class _CartScreenState extends State<CartScreen> {
             clipBehavior: Clip.hardEdge,
             child: _isScheduled
                 ? Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: _pickScheduleDateTime,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _scheduleAt != null
-                              ? accent.withOpacity(0.4)
-                              : Colors.grey.shade300,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today_rounded,
-                            size: 18,
-                            color: _scheduleAt != null
-                                ? accent
-                                : Colors.grey.shade400,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _scheduleAt == null
-                                ? Text(
-                              l10n.tapToChooseDateTime,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade500,
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ── Picker tile ──────────────────────────────────
+                        InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: _pickSlot,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _scheduleAt != null
+                                    ? accent.withOpacity(0.4)
+                                    : Colors.grey.shade300,
                               ),
-                            )
-                                : Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                            ),
+                            child: Row(
                               children: [
-                                Text(
-                                  _formatScheduleDate(_scheduleAt!),
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade800,
-                                  ),
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 18,
+                                  color: _scheduleAt != null
+                                      ? accent
+                                      : Colors.grey.shade400,
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  _formatScheduleTime(_scheduleAt!),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: accent,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: _scheduleAt == null
+                                      ? Text(
+                                          l10n.tapToChooseDateTime,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey.shade500,
+                                          ),
+                                        )
+                                      : _buildSelectedSlotContent(accent),
                                 ),
+                                if (_scheduleAt != null)
+                                  GestureDetector(
+                                    onTap: _clearSchedule,
+                                    child: Icon(
+                                      Icons.close_rounded,
+                                      size: 18,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  )
+                                else
+                                  Icon(
+                                    Icons.edit_rounded,
+                                    size: 16,
+                                    color: Colors.grey.shade400,
+                                  ),
                               ],
                             ),
                           ),
-                          if (_scheduleAt != null)
-                            GestureDetector(
-                              onTap: () =>
-                                  setState(() => _scheduleAt = null),
-                              child: Icon(
-                                Icons.close_rounded,
-                                size: 18,
+                        ),
+
+                        // ── Info note ─────────────────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                size: 14,
                                 color: Colors.grey.shade500,
                               ),
-                            )
-                          else
-                            Icon(
-                              Icons.edit_rounded,
-                              size: 16,
-                              color: Colors.grey.shade400,
-                            ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  l10n.scheduledOrderNote,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // ── Validation error ──────────────────────────────
+                        if (_scheduleAt == null) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline_rounded,
+                                size: 13,
+                                color: Colors.red.shade400,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                l10n.pleaseChooseFutureTime,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red.shade400,
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline_rounded,
-                          size: 14,
-                          color: Colors.grey.shade500,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            l10n.scheduledOrderNote,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
-                  ),
-                  if (_scheduleAt == null) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.error_outline_rounded,
-                          size: 13,
-                          color: Colors.red.shade400,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          l10n.pleaseChooseFutureTime,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.red.shade400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            )
+                  )
                 : const SizedBox.shrink(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The content shown inside the picker tile when a time is selected.
+  ///
+  /// - If the user picked a slot from the sheet → show the slot window
+  ///   (e.g. "08:00 – 14:00") so they know which capacity block they're in.
+  /// - If they used the fallback free picker → show raw date + time.
+  Widget _buildSelectedSlotContent(Color accent) {
+    if (_selectedSlot != null) {
+      // Slot-based selection
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _formatScheduleDate(_scheduleAt!),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              Icon(Icons.access_time_rounded, size: 13, color: accent),
+              const SizedBox(width: 4),
+              Text(
+                '${_selectedSlot!.timeFrom} – ${_selectedSlot!.timeTo}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: accent,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    // Fallback: free date/time selection
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _formatScheduleDate(_scheduleAt!),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade800,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          _formatScheduleTime(_scheduleAt!),
+          style: TextStyle(
+            fontSize: 12,
+            color: accent,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -617,8 +703,10 @@ class _CartScreenState extends State<CartScreen> {
             listenWhen: (_, curr) => curr is AddressesLoaded,
             listener: (context, state) {
               if (state is AddressesLoaded) {
-                final newDefaultId =
-                    state.addresses.where((a) => a.isDefault).firstOrNull?.id;
+                final newDefaultId = state.addresses
+                    .where((a) => a.isDefault)
+                    .firstOrNull
+                    ?.id;
                 if (newDefaultId != _currentDefaultAddressId) {
                   _currentDefaultAddressId = newDefaultId;
                   if (newDefaultId != null) _cubit.refreshCart();
@@ -630,7 +718,7 @@ class _CartScreenState extends State<CartScreen> {
               listener: (context, state) {
                 if (state is WalletLoaded) {
                   setState(
-                        () => _walletBalance = state.walletData.wallet.balance,
+                    () => _walletBalance = state.walletData.wallet.balance,
                   );
                 }
               },
@@ -658,19 +746,17 @@ class _CartScreenState extends State<CartScreen> {
                       body: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
                         child: switch (state) {
-                          CartInitial() ||
-                          CartLoading() =>
-                          const CartLoadingView(key: ValueKey('loading')),
+                          CartInitial() || CartLoading() =>
+                            const CartLoadingView(key: ValueKey('loading')),
                           CartError(:final message) => CartErrorView(
                             key: const ValueKey('error'),
                             message: message,
                             onRetry: _cubit.fetchCart,
                           ),
-                          CartLoaded(:final data)
-                          when data.cartItems.isEmpty =>
-                              _buildEmptyWithRefresh(
-                                key: const ValueKey('empty'),
-                              ),
+                          CartLoaded(:final data) when data.cartItems.isEmpty =>
+                            _buildEmptyWithRefresh(
+                              key: const ValueKey('empty'),
+                            ),
                           CartLoaded() => _buildLoaded(context, state),
                         },
                       ),
@@ -686,10 +772,10 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _handleOrderState(
-      BuildContext context,
-      OrderState state,
-      AppLocalizations l10n,
-      ) {
+    BuildContext context,
+    OrderState state,
+    AppLocalizations l10n,
+  ) {
     if (state is CouponValidating) {
       if (!_couponValidating) setState(() => _couponValidating = true);
     } else if (state is CouponRedeemed) {
@@ -814,7 +900,7 @@ class _CartScreenState extends State<CartScreen> {
     final hPad = screenWidth < 360 ? 14.0 : 20.0;
     final displayTotal = _computeDisplayTotal(state);
 
-    // ── COD limit ──────────────────────────────────────────────────────────
+    // ── COD limit ────────────────────────────────────────────────────────────
     final overCodLimit = _isOverCodLimit(state);
     if (overCodLimit && _paymentMethod == 'CASH') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -835,7 +921,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
 
-        // ── Items list ─────────────────────────────────────────────────
+        // ── Items list ───────────────────────────────────────────────────────
         Expanded(
           child: RefreshIndicator(
             onRefresh: _onRefresh,
@@ -859,7 +945,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
 
-        // ── Animated bottom section ────────────────────────────────────
+        // ── Animated bottom section ──────────────────────────────────────────
         AnimatedSlide(
           offset: _pillVisible ? Offset.zero : const Offset(0, 1),
           duration: const Duration(milliseconds: 280),
@@ -870,14 +956,14 @@ class _CartScreenState extends State<CartScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Pill ──────────────────────────────────────────────
+                // ── Pill ────────────────────────────────────────────────────
                 _CheckoutPill(
                   total: displayTotal,
                   expanded: _summaryExpanded,
                   onTap: _toggleSummary,
                 ),
 
-                // ── Full summary panel ─────────────────────────────────
+                // ── Full summary panel ───────────────────────────────────────
                 ClipRect(
                   child: AnimatedAlign(
                     duration: const Duration(milliseconds: 320),
@@ -899,17 +985,21 @@ class _CartScreenState extends State<CartScreen> {
                         return Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // ── Schedule section ─────────────────────
+                            // ── Schedule section ─────────────────────────
                             Container(
-                              color: theme.colorScheme.surface,
+                              color: Colors.white,
                               child: Padding(
-                                padding:
-                                EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
+                                padding: EdgeInsets.fromLTRB(
+                                  hPad,
+                                  12,
+                                  hPad,
+                                  12,
+                                ),
                                 child: _buildScheduleSection(l10n),
                               ),
                             ),
 
-                            // ── Price / payment / checkout ───────────
+                            // ── Price / payment / checkout ───────────────
                             CartSummaryBar(
                               summary: loadedInner.data.summary,
                               preview: loadedInner.preview,
@@ -1028,7 +1118,7 @@ class _CheckoutPill extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // ── Total badge ────────────────────────────────────────────
+              // ── Total badge ──────────────────────────────────────────────
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
@@ -1050,7 +1140,7 @@ class _CheckoutPill extends StatelessWidget {
 
               const Spacer(),
 
-              // ── Label ──────────────────────────────────────────────────
+              // ── Label ────────────────────────────────────────────────────
               Text(
                 l10n.checkout,
                 style: const TextStyle(
@@ -1060,7 +1150,7 @@ class _CheckoutPill extends StatelessWidget {
               ),
               const SizedBox(width: 4),
 
-              // ── Chevron ────────────────────────────────────────────────
+              // ── Chevron ──────────────────────────────────────────────────
               AnimatedRotation(
                 turns: expanded ? 0.5 : 0.0,
                 duration: const Duration(milliseconds: 300),

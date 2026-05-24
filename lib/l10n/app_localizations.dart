@@ -3472,6 +3472,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your refund requests will appear here once submitted in the orders screen (history)'**
   String get noRefundsYetSubtitle;
+
+  /// Title of the slot-picker bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a delivery slot'**
+  String get pickDeliverySlot;
+
+  /// Error message shown when fetching delivery slots fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load slots.\nPlease check your connection.'**
+  String get couldNotLoadSlots;
+
+  /// Empty-state message when no days are open for delivery
+  ///
+  /// In en, this message translates to:
+  /// **'No open days in the coming period.'**
+  String get noOpenDaysInPeriod;
+
+  /// Working-hours subtitle, e.g. 'Open 09:00–18:00'
+  ///
+  /// In en, this message translates to:
+  /// **'Open {hours}'**
+  String openHours(String hours);
+
+  /// Shown when a day has no delivery slots defined
+  ///
+  /// In en, this message translates to:
+  /// **'No slots configured for this day.'**
+  String get noSlotsConfiguredForDay;
+
+  /// Day label used in the slot-picker day chips
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get tomorrow;
+
+  /// Placeholder text on the confirm button when nothing is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Select a slot'**
+  String get selectASlot;
+
+  /// Confirm button label showing the chosen time range, e.g. 'Confirm 10:00–11:00'
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm {from}–{to}'**
+  String confirmSlotTime(String from, String to);
+
+  /// Badge shown on a fully-booked delivery slot
+  ///
+  /// In en, this message translates to:
+  /// **'Full'**
+  String get slotFull;
+
+  /// Badge shown on an open delivery slot
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get slotAvailable;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
