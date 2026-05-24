@@ -27,18 +27,21 @@ class OrderItem {
 class Product {
   final String name;
   final String nameAr;
+  final bool isRefundable;
   final List<String> images;
 
   Product({
     required this.name,
     required this.nameAr,
     required this.images,
+    this.isRefundable = true,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       name: json['name'] ?? '',
       nameAr: json['name_ar'] ?? '',
+      isRefundable: json['refundable'] == true,
       images: List<String>.from(json['images'] ?? []),
     );
   }

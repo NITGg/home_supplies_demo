@@ -59,13 +59,14 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
 
   // ── helpers ───────────────────────────────────────────────────────────────
 
-  bool get _hasItems => widget.order.orderItems.isNotEmpty;
+  bool get _hasItems =>
+      widget.order.orderItems.any((i) => i.product.isRefundable);
 
-  bool get _anyItemSelected =>
-      _selectedQuantities.values.any((q) => q > 0);
+  bool get _anyItemSelected => _selectedQuantities.values.any((q) => q > 0);
 
-  bool get _reasonSelected =>
-      _isOtherReason ? _otherReasonCtrl.text.trim().length >= 5 : _selectedReason != null;
+  bool get _reasonSelected => _isOtherReason
+      ? _otherReasonCtrl.text.trim().length >= 5
+      : _selectedReason != null;
 
   bool get _canSubmit => _anyItemSelected && _reasonSelected;
 
@@ -223,8 +224,11 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded,
-              color: Colors.blue.shade700, size: 20),
+          Icon(
+            Icons.info_outline_rounded,
+            color: Colors.blue.shade700,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -260,22 +264,21 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
         ),
         const SizedBox(height: 12),
         ...widget.order.orderItems
-            .map((item) => _RefundItemRow(
-          item: item,
-          selectedQty: _selectedQuantities[item.id] ?? 0,
-          onChanged: (qty) =>
-              setState(() => _selectedQuantities[item.id] = qty),
-        ))
-            .toList(),
+            .where((item) => item.product.isRefundable)
+            .map(
+              (item) => _RefundItemRow(
+                item: item,
+                selectedQty: _selectedQuantities[item.id] ?? 0,
+                onChanged: (qty) =>
+                    setState(() => _selectedQuantities[item.id] = qty),
+              ),
+            ),
         if (!_anyItemSelected)
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
               l10n.pleaseSelectAtLeastOneItem,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.red.shade600,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.red.shade600),
             ),
           ),
       ],
@@ -287,7 +290,7 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
   Widget _buildReasonsSection(AppLocalizations l10n) {
     return BlocBuilder<RefundCubit, RefundState>(
       buildWhen: (prev, curr) =>
-      curr is RefundReasonsLoading ||
+          curr is RefundReasonsLoading ||
           curr is RefundReasonsLoaded ||
           curr is RefundReasonsError,
       builder: (context, state) {
@@ -317,8 +320,9 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
           );
         }
 
-        final reasons =
-        state is RefundReasonsLoaded ? state.reasons : <RefundReason>[];
+        final reasons = state is RefundReasonsLoaded
+            ? state.reasons
+            : <RefundReason>[];
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,9 +337,10 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
               runSpacing: 8,
               children: [
                 ...reasons.map(
-                      (r) => _ReasonChip(
+                  (r) => _ReasonChip(
                     label: r.localizedReason(
-                        Localizations.localeOf(context).languageCode),
+                      Localizations.localeOf(context).languageCode,
+                    ),
                     isSelected: !_isOtherReason && _selectedReason?.id == r.id,
                     color: Colors.orange,
                     onTap: () => setState(() {
@@ -367,8 +372,10 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
     );
   }
 
-  Widget _buildOtherReasonField(AppLocalizations l10n,
-      {bool forceShow = false}) {
+  Widget _buildOtherReasonField(
+    AppLocalizations l10n, {
+    bool forceShow = false,
+  }) {
     return TextFormField(
       controller: _otherReasonCtrl,
       maxLines: 3,
@@ -385,7 +392,8 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
       ),
       validator: (value) {
         if (!_isOtherReason && !forceShow) return null;
-        if (value == null || value.trim().isEmpty) return l10n.pleaseEnterReason;
+        if (value == null || value.trim().isEmpty)
+          return l10n.pleaseEnterReason;
         if (value.trim().length < 5) return l10n.tooShort;
         return null;
       },
@@ -408,7 +416,8 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
             child: Text(
               message,
               style: AppTextStyles.regular14.copyWith(
-                  color: Colors.red.shade900),
+                color: Colors.red.shade900,
+              ),
             ),
           ),
         ],
@@ -426,20 +435,23 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
           children: [
             Text(
               l10n.evidencePhotos,
-              style:
-              AppTextStyles.bold14.copyWith(color: Colors.grey.shade800),
+              style: AppTextStyles.bold14.copyWith(color: Colors.grey.shade800),
             ),
             const SizedBox(width: 6),
             Text(
               l10n.optional,
               style: AppTextStyles.regular14.copyWith(
-                  fontSize: 12, color: Colors.grey.shade500),
+                fontSize: 12,
+                color: Colors.grey.shade500,
+              ),
             ),
             const Spacer(),
             Text(
               '${_evidenceImages.length}/5',
               style: AppTextStyles.regular14.copyWith(
-                  fontSize: 12, color: Colors.grey.shade500),
+                fontSize: 12,
+                color: Colors.grey.shade500,
+              ),
             ),
           ],
         ),
@@ -447,7 +459,9 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
         Text(
           l10n.evidencePhotosHint,
           style: AppTextStyles.regular14.copyWith(
-              fontSize: 12, color: Colors.grey.shade500),
+            fontSize: 12,
+            color: Colors.grey.shade500,
+          ),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -456,13 +470,12 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
             scrollDirection: Axis.horizontal,
             children: [
               ..._evidenceImages.asMap().entries.map(
-                    (e) => _ImageThumb(
+                (e) => _ImageThumb(
                   file: e.value,
                   onRemove: () => _removeImage(e.key),
                 ),
               ),
-              if (_evidenceImages.length < 5)
-                _AddImageButton(onTap: _addImage),
+              if (_evidenceImages.length < 5) _AddImageButton(onTap: _addImage),
             ],
           ),
         ),
@@ -475,7 +488,7 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
   Widget _buildButtons(AppLocalizations l10n) {
     return BlocBuilder<RefundCubit, RefundState>(
       buildWhen: (_, curr) =>
-      curr is RefundSubmitting ||
+          curr is RefundSubmitting ||
           curr is RefundSubmitted ||
           curr is RefundSubmitError,
       builder: (context, state) {
@@ -546,12 +559,12 @@ class _RefundItemRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: item.product.images.isNotEmpty
                 ? Image.network(
-              item.product.images.first,
-              width: 44,
-              height: 44,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _placeholder(),
-            )
+                    item.product.images.first,
+                    width: 44,
+                    height: 44,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _placeholder(),
+                  )
                 : _placeholder(),
           ),
           const SizedBox(width: 12),
@@ -563,8 +576,9 @@ class _RefundItemRow extends StatelessWidget {
                 Text(
                   name,
                   style: AppTextStyles.regular14.copyWith(
-                    fontWeight:
-                    isSelected ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -591,8 +605,11 @@ class _RefundItemRow extends StatelessWidget {
       color: Colors.grey.shade200,
       borderRadius: BorderRadius.circular(8),
     ),
-    child: const Icon(Icons.image_not_supported_outlined,
-        size: 20, color: Colors.grey),
+    child: const Icon(
+      Icons.image_not_supported_outlined,
+      size: 20,
+      color: Colors.grey,
+    ),
   );
 }
 
@@ -667,8 +684,11 @@ class _StepBtn extends StatelessWidget {
           color: active ? Colors.orange.shade600 : Colors.grey.shade200,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon,
-            size: 16, color: active ? Colors.white : Colors.grey.shade400),
+        child: Icon(
+          icon,
+          size: 16,
+          color: active ? Colors.white : Colors.grey.shade400,
+        ),
       ),
     );
   }
@@ -697,8 +717,7 @@ class _ReasonChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding:
-        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? color.withOpacity(0.1) : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(24),
@@ -722,8 +741,7 @@ class _ReasonChip extends StatelessWidget {
               label,
               style: AppTextStyles.regular14.copyWith(
                 color: isSelected ? color : Colors.grey.shade700,
-                fontWeight:
-                isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ],
@@ -752,10 +770,7 @@ class _ImageThumb extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.grey.shade300),
-            image: DecorationImage(
-              image: FileImage(file),
-              fit: BoxFit.cover,
-            ),
+            image: DecorationImage(image: FileImage(file), fit: BoxFit.cover),
           ),
         ),
         Positioned(
@@ -795,20 +810,24 @@ class _AddImageButton extends StatelessWidget {
         margin: const EdgeInsets.only(right: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border:
-          Border.all(color: Colors.orange.shade300, style: BorderStyle.solid),
+          border: Border.all(
+            color: Colors.orange.shade300,
+            style: BorderStyle.solid,
+          ),
           color: Colors.orange.shade50,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_a_photo_outlined,
-                color: Colors.orange.shade600, size: 24),
+            Icon(
+              Icons.add_a_photo_outlined,
+              color: Colors.orange.shade600,
+              size: 24,
+            ),
             const SizedBox(height: 4),
             Text(
               AppLocalizations.of(context)!.addPhoto,
-              style: TextStyle(
-                  fontSize: 10, color: Colors.orange.shade700),
+              style: TextStyle(fontSize: 10, color: Colors.orange.shade700),
               textAlign: TextAlign.center,
             ),
           ],

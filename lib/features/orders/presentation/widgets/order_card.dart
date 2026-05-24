@@ -180,7 +180,8 @@ class OrderCard extends StatelessWidget {
               ),
             if (order.isDelivered &&
                 order.orderItems.isNotEmpty &&
-                order.isRefundable)
+                order.isRefundable &&
+                (order.orderItems.any((i) => i.product.isRefundable)))
               _buildRefundButton(context),
           ],
         ),
