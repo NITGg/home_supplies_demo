@@ -818,13 +818,13 @@ class _CartScreenState extends State<CartScreen> {
       _cubit.refreshCart();
       showSuccessBanner(context, '${l10n.created}: ${state.order.orderNumber}');
     } else if (state is OrderError) {
-      Fluttertoast.showToast(
-        msg: state.message,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+      // Fluttertoast.showToast(
+      //   msg: state.message,
+      //   toastLength: Toast.LENGTH_LONG,
+      //   gravity: ToastGravity.BOTTOM,
+      //   backgroundColor: Colors.red,
+      //   textColor: Colors.white,
+      // );
     }
   }
 
