@@ -3352,6 +3352,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap to choose date & time'**
   String get tapToChooseDateTime;
+
+  /// No description provided for @requestRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Refund'**
+  String get requestRefund;
+
+  /// No description provided for @myRefunds.
+  ///
+  /// In en, this message translates to:
+  /// **'My Refunds'**
+  String get myRefunds;
+
+  /// No description provided for @refundInfoBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the items you\'d like to return and choose a reason. Our team will review your request and get back to you shortly.'**
+  String get refundInfoBanner;
+
+  /// No description provided for @selectItemsToRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Items to Refund'**
+  String get selectItemsToRefund;
+
+  /// No description provided for @selectItemsToRefundHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the items and quantities you wish to refund'**
+  String get selectItemsToRefundHint;
+
+  /// No description provided for @pleaseSelectAtLeastOneItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select at least one item'**
+  String get pleaseSelectAtLeastOneItem;
+
+  /// No description provided for @evidencePhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence Photos'**
+  String get evidencePhotos;
+
+  /// No description provided for @optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optional;
+
+  /// No description provided for @evidencePhotosHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload up to 5 photos showing the issue (e.g. damaged or wrong items)'**
+  String get evidencePhotosHint;
+
+  /// No description provided for @addPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photo'**
+  String get addPhoto;
+
+  /// No description provided for @submitRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Request'**
+  String get submitRefund;
+
+  /// No description provided for @refundRequestSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Your refund request has been submitted successfully'**
+  String get refundRequestSubmitted;
+
+  /// No description provided for @describeYourRefundReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe your reason for the refund…'**
+  String get describeYourRefundReason;
+
+  /// No description provided for @refundApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get refundApproved;
+
+  /// No description provided for @refundRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get refundRejected;
+
+  /// No description provided for @refundPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Under Review'**
+  String get refundPending;
+
+  /// No description provided for @refundRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested'**
+  String get refundRequested;
+
+  /// No description provided for @refundAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund Amount'**
+  String get refundAmount;
+
+  /// No description provided for @noRefundsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No refund requests yet'**
+  String get noRefundsYet;
+
+  /// No description provided for @noRefundsYetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your refund requests will appear here once submitted in the orders screen (history)'**
+  String get noRefundsYetSubtitle;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -764,7 +764,28 @@
          "scheduledOrderNote": "الوقت المحدد في الجدولة هو وقت إضافة الطلب وبدء البحث عن مندوب، وليس وقت التسليم النهائي للعميل.",
 
          "pleaseChooseFutureTime": "يرجى اختيار وقت في المستقبل",
-        "tapToChooseDateTime": "اضغط لاختيار التاريخ والوقت"
+        "tapToChooseDateTime": "اضغط لاختيار التاريخ والوقت",
+
+  "requestRefund": "طلب استرداد",
+  "myRefunds": "طلبات الاسترداد",
+  "refundInfoBanner": "اختر المنتجات التي تريد إرجاعها وحدد سبب الطلب. سيراجع فريقنا طلبك ويرد عليك في أقرب وقت.",
+  "selectItemsToRefund": "اختر المنتجات للاسترداد",
+  "selectItemsToRefundHint": "اختر المنتجات والكميات التي تريد استردادها",
+  "pleaseSelectAtLeastOneItem": "يرجى اختيار منتج واحد على الأقل",
+  "evidencePhotos": "صور إثبات",
+  "optional": "اختياري",
+  "evidencePhotosHint": "ارفع حتى 5 صور توضح المشكلة (مثل منتج تالف أو خاطئ)",
+  "addPhoto": "إضافة صورة",
+  "submitRefund": "تقديم الطلب",
+  "refundRequestSubmitted": "تم تقديم طلب الاسترداد بنجاح",
+  "describeYourRefundReason": "اشرح سبب طلبك للاسترداد…",
+  "refundApproved": "تمت الموافقة",
+  "refundRejected": "مرفوض",
+  "refundPending": "قيد المراجعة",
+  "refundRequested": "تم الطلب",
+  "refundAmount": "مبلغ الاسترداد",
+  "noRefundsYet": "لا توجد طلبات استرداد بعد",
+  "noRefundsYetSubtitle": "ستظهر هنا طلبات الاسترداد الخاصة بك بعد تقديمها من شاشة الطلبات (السجل)"
 
 
 }

@@ -610,6 +610,12 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                             ),
                                             const Divider(),
                                             ListTile(
+                                              onTap: () => context.push('/refunds'),
+                                              leading: const Icon(Icons.assignment_return_outlined),
+                                              title: Text(localizations.myRefunds, style: AppTextStyles.bold16),
+                                            ),
+                                            const Divider(),
+                                            ListTile(
                                               onTap: () {
                                                 context.pop();
                                                 showModalBottomSheet(

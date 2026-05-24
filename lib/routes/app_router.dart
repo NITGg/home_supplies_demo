@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -33,6 +32,7 @@ import '../features/products/presentation/all_featured_screen.dart';
 import '../features/products/presentation/all_last_purchased_screen.dart';
 import '../features/products/presentation/product_details_screen.dart';
 import '../features/referral/referral_screen.dart';
+import '../features/refunds/presentation/refunds_screen.dart';
 import '../features/reviews/data/data_source/reviews_remote_data_source.dart';
 import '../features/reviews/data/repositories/reviews_repo.dart';
 import '../features/reviews/manager/reviews_cubit.dart';
@@ -76,7 +76,9 @@ Future<GoRouter> createAppRouter({
                   token = await storage.getToken();
                   shouldOnboard = await storage.shouldShowOnboarding();
                 } catch (e) {
-                  dLog('⚠️ SecureStorage corrupted (Keystore invalidated?), clearing: $e');
+                  dLog(
+                    '⚠️ SecureStorage corrupted (Keystore invalidated?), clearing: $e',
+                  );
                   try {
                     await storage.clearAll();
                   } catch (_) {}
@@ -197,6 +199,11 @@ Future<GoRouter> createAppRouter({
           //   ),
           // ),
         ],
+      ),
+
+      GoRoute(
+        path: '/refunds',
+        builder: (context, state) => const RefundsScreen(),
       ),
       GoRoute(
         path: '/FaqPage',

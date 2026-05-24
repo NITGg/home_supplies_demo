@@ -1685,4 +1685,64 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tapToChooseDateTime => 'اضغط لاختيار التاريخ والوقت';
+
+  @override
+  String get requestRefund => 'طلب استرداد';
+
+  @override
+  String get myRefunds => 'طلبات الاسترداد';
+
+  @override
+  String get refundInfoBanner => 'اختر المنتجات التي تريد إرجاعها وحدد سبب الطلب. سيراجع فريقنا طلبك ويرد عليك في أقرب وقت.';
+
+  @override
+  String get selectItemsToRefund => 'اختر المنتجات للاسترداد';
+
+  @override
+  String get selectItemsToRefundHint => 'اختر المنتجات والكميات التي تريد استردادها';
+
+  @override
+  String get pleaseSelectAtLeastOneItem => 'يرجى اختيار منتج واحد على الأقل';
+
+  @override
+  String get evidencePhotos => 'صور إثبات';
+
+  @override
+  String get optional => 'اختياري';
+
+  @override
+  String get evidencePhotosHint => 'ارفع حتى 5 صور توضح المشكلة (مثل منتج تالف أو خاطئ)';
+
+  @override
+  String get addPhoto => 'إضافة صورة';
+
+  @override
+  String get submitRefund => 'تقديم الطلب';
+
+  @override
+  String get refundRequestSubmitted => 'تم تقديم طلب الاسترداد بنجاح';
+
+  @override
+  String get describeYourRefundReason => 'اشرح سبب طلبك للاسترداد…';
+
+  @override
+  String get refundApproved => 'تمت الموافقة';
+
+  @override
+  String get refundRejected => 'مرفوض';
+
+  @override
+  String get refundPending => 'قيد المراجعة';
+
+  @override
+  String get refundRequested => 'تم الطلب';
+
+  @override
+  String get refundAmount => 'مبلغ الاسترداد';
+
+  @override
+  String get noRefundsYet => 'لا توجد طلبات استرداد بعد';
+
+  @override
+  String get noRefundsYetSubtitle => 'ستظهر هنا طلبات الاسترداد الخاصة بك بعد تقديمها من شاشة الطلبات (السجل)';
 }

@@ -234,7 +234,7 @@ class Order {
   /// The status shown in the UI.
   /// When isTakeTime and not ready for pickup, treat as SCHEDULED visually.
   String? get displayStatus =>
-      (isTakeTime && !isReadyForPickUp) ? 'SCHEDULED' : status;
+      (isTakeTime && !isReadyForPickUp && !isCancelled) ? 'SCHEDULED' : status;
 }
 
 class OrderResponse {

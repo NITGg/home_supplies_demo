@@ -9,6 +9,8 @@ import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../core/utils/formatDate.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../refunds/manager/refund_cubit.dart';
+import '../../../refunds/presentation/refund_request_sheet.dart';
 import '../../data/models/order_model.dart';
 import '../../manager/order_cubit.dart';
 import '../../manager/order_states.dart';
@@ -146,7 +148,7 @@ class OrderCard extends StatelessWidget {
             if (order.status == "IN_PROGRESS") _buildCourierFooter(context),
             if (order.hasPendingPriceAdjustment)
               _PriceAdjustmentFooter(order: order),
-            if (order.isPending || order.isOrderScheduled) _buildActionButtons(l10n),
+            if (order.isPending || order.isScheduled) _buildActionButtons(l10n),
             if (order.status == 'EXPIRED') _buildRetryFooter(context, order.id),
             if (order.status == "IN_PROGRESS" && roleId == 4)
               _buildConfirmDeliveryFooter(context),
@@ -176,8 +178,42 @@ class OrderCard extends StatelessWidget {
                   ],
                 ),
               ),
+            if (order.isDelivered && order.orderItems.isNotEmpty)
+    _buildRefundButton(context),
+
           ],
         ),
+      ),
+    );
+  }
+
+
+  Widget _buildRefundButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => _openRefundSheet(context),
+            icon: const Icon(Icons.assignment_return_outlined, size: 18),
+            label: Text(
+              l10n.requestRefund,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          )),
+    );
+  }
+
+  void _openRefundSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => BlocProvider(
+        create: (_) => RefundCubit()..loadReasons(),
+        child: RefundRequestSheet(order: order),
       ),
     );
   }

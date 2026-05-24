@@ -767,6 +767,27 @@
   "scheduledOrderNote": "The scheduled time is the time the order is placed and the driver search begins, not the final delivery time to the customer.",
 
       "scheduleOrder": "Schedule order",
-        "tapToChooseDateTime": "Tap to choose date & time"
+        "tapToChooseDateTime": "Tap to choose date & time",
+
+  "requestRefund": "Request Refund",
+  "myRefunds": "My Refunds",
+  "refundInfoBanner": "Select the items you'd like to return and choose a reason. Our team will review your request and get back to you shortly.",
+  "selectItemsToRefund": "Select Items to Refund",
+  "selectItemsToRefundHint": "Choose the items and quantities you wish to refund",
+  "pleaseSelectAtLeastOneItem": "Please select at least one item",
+  "evidencePhotos": "Evidence Photos",
+  "optional": "Optional",
+  "evidencePhotosHint": "Upload up to 5 photos showing the issue (e.g. damaged or wrong items)",
+  "addPhoto": "Add Photo",
+  "submitRefund": "Submit Request",
+  "refundRequestSubmitted": "Your refund request has been submitted successfully",
+  "describeYourRefundReason": "Describe your reason for the refund…",
+  "refundApproved": "Approved",
+  "refundRejected": "Rejected",
+  "refundPending": "Under Review",
+  "refundRequested": "Requested",
+  "refundAmount": "Refund Amount",
+  "noRefundsYet": "No refund requests yet",
+  "noRefundsYetSubtitle": "Your refund requests will appear here once submitted in the orders screen (history)"
 
 }

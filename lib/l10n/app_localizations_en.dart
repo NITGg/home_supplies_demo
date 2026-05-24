@@ -1685,4 +1685,64 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tapToChooseDateTime => 'Tap to choose date & time';
+
+  @override
+  String get requestRefund => 'Request Refund';
+
+  @override
+  String get myRefunds => 'My Refunds';
+
+  @override
+  String get refundInfoBanner => 'Select the items you\'d like to return and choose a reason. Our team will review your request and get back to you shortly.';
+
+  @override
+  String get selectItemsToRefund => 'Select Items to Refund';
+
+  @override
+  String get selectItemsToRefundHint => 'Choose the items and quantities you wish to refund';
+
+  @override
+  String get pleaseSelectAtLeastOneItem => 'Please select at least one item';
+
+  @override
+  String get evidencePhotos => 'Evidence Photos';
+
+  @override
+  String get optional => 'Optional';
+
+  @override
+  String get evidencePhotosHint => 'Upload up to 5 photos showing the issue (e.g. damaged or wrong items)';
+
+  @override
+  String get addPhoto => 'Add Photo';
+
+  @override
+  String get submitRefund => 'Submit Request';
+
+  @override
+  String get refundRequestSubmitted => 'Your refund request has been submitted successfully';
+
+  @override
+  String get describeYourRefundReason => 'Describe your reason for the refund…';
+
+  @override
+  String get refundApproved => 'Approved';
+
+  @override
+  String get refundRejected => 'Rejected';
+
+  @override
+  String get refundPending => 'Under Review';
+
+  @override
+  String get refundRequested => 'Requested';
+
+  @override
+  String get refundAmount => 'Refund Amount';
+
+  @override
+  String get noRefundsYet => 'No refund requests yet';
+
+  @override
+  String get noRefundsYetSubtitle => 'Your refund requests will appear here once submitted in the orders screen (history)';
 }
