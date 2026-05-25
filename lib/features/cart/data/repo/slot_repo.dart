@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:tawreedat_go/core/utils/api_client.dart';
+import 'package:tawreedat_go/core/utils/logger.dart';
 
 import '../models/slot_model.dart';
 
@@ -17,10 +19,22 @@ class SlotRepository {
   /// interceptor has already replaced raw server errors/HTML with readable
   /// Arabic strings, so callers can surface [e.message] directly in the UI.
   Future<SlotStatusData> fetchSlots() async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      'https://tawreedatsupplierapis.nitg-eg.com/api/v1/supplier/profile/supplier-slot-max-order-status/1',
-    );
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        'https://tawreedatsupplierapis.nitg-eg.com/api/v1/supplier/profile/supplier-slot-max-order-status/1',
+      );
 
-    return SlotStatusData.fromJson(response.data!);
+      return SlotStatusData.fromJson(response.data!);
+    } on DioException catch (e, stackTrace) {
+      dLog('[SlotRepository] DioException: ${e.message}');
+      dLog('[SlotRepository] Status code: ${e.response?.statusCode}');
+      dLog('[SlotRepository] Response data: ${e.response?.data}');
+      dLog('[SlotRepository] Stack trace: $stackTrace');
+      rethrow;
+    } catch (e, stackTrace) {
+      dLog('[SlotRepository] Unexpected error: $e');
+      dLog('[SlotRepository] Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 }
