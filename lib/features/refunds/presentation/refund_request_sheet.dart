@@ -58,8 +58,8 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
 
   // ── helpers ───────────────────────────────────────────────────────────────
 
-  bool get _hasItems =>
-      widget.order.orderItems.any((i) => i.product.isRefundable);
+  bool get _hasItems => widget.order.orderItems
+      .any((i) => i.product.isStillRefundable(widget.order.createdAt));
 
   bool get _anyItemSelected => _selectedQuantities.values.any((q) => q > 0);
 
@@ -263,7 +263,7 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
         ),
         const SizedBox(height: 12),
         ...widget.order.orderItems
-            .where((item) => item.product.isRefundable)
+            .where((item) => item.product.isStillRefundable(widget.order.createdAt))
             .map(
               (item) => _RefundItemRow(
                 item: item,

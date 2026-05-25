@@ -29,12 +29,14 @@ class Product {
   final String nameAr;
   final bool isRefundable;
   final List<String> images;
+  final int? refundablePeriod; // hours, null = no time limit
 
   Product({
     required this.name,
     required this.nameAr,
     required this.images,
     this.isRefundable = true,
+    this.refundablePeriod,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,15 @@ class Product {
       nameAr: json['name_ar'] ?? '',
       isRefundable: json['refundable'] == true,
       images: List<String>.from(json['images'] ?? []),
+      refundablePeriod: int.tryParse(json['refundable_period']?.toString() ?? ''),
     );
+  }
+
+  bool isStillRefundable(DateTime? orderCreatedAt) {
+    if (!isRefundable) return false;
+    if (refundablePeriod == null) return true;
+    if (orderCreatedAt == null) return false; // can't verify, treat as expired
+    final deadline = orderCreatedAt.add(Duration(hours: refundablePeriod!));
+    return DateTime.now().isBefore(deadline);
   }
 }
