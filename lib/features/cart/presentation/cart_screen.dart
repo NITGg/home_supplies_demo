@@ -983,45 +983,52 @@ class _CartScreenState extends State<CartScreen> {
                         final loadedInner = innerState is CartLoaded
                             ? innerState
                             : state;
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // ── Schedule section ─────────────────────────
-                            Container(
-                              color: Colors.white,
-                              child: Padding(
-                                padding: EdgeInsets.fromLTRB(
-                                  hPad,
-                                  12,
-                                  hPad,
-                                  12,
+                        return ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.55, // ← cap it
+                          ),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // ── Schedule section ─────────────────────────
+                                Container(
+                                  color: Colors.white,
+                                  child: Padding(
+                                    padding: EdgeInsets.fromLTRB(
+                                      hPad,
+                                      12,
+                                      hPad,
+                                      12,
+                                    ),
+                                    child: _buildScheduleSection(l10n),
+                                  ),
                                 ),
-                                child: _buildScheduleSection(l10n),
-                              ),
-                            ),
 
-                            // ── Price / payment / checkout ───────────────
-                            CartSummaryBar(
-                              summary: loadedInner.data.summary,
-                              preview: loadedInner.preview,
-                              hPad: hPad,
-                              bottomPadding: bottomPadding,
-                              theme: theme,
-                              l10n: l10n,
-                              overCodLimit: overCodLimit,
-                              codLimit: _codLimit(),
-                              paymentMethod: _paymentMethod,
-                              onPaymentMethodChanged: (m) =>
-                                  setState(() => _paymentMethod = m),
-                              couponController: _couponController,
-                              couponFocus: _couponFocus,
-                              appliedCoupon: _appliedCoupon,
-                              couponValidating: _couponValidating,
-                              onValidateCoupon: _validateCoupon,
-                              onRemoveCoupon: _removeCoupon,
-                              onCheckout: _checkout,
+                                // ── Price / payment / checkout ───────────────
+                                CartSummaryBar(
+                                  summary: loadedInner.data.summary,
+                                  preview: loadedInner.preview,
+                                  hPad: hPad,
+                                  bottomPadding: bottomPadding,
+                                  theme: theme,
+                                  l10n: l10n,
+                                  overCodLimit: overCodLimit,
+                                  codLimit: _codLimit(),
+                                  paymentMethod: _paymentMethod,
+                                  onPaymentMethodChanged: (m) =>
+                                      setState(() => _paymentMethod = m),
+                                  couponController: _couponController,
+                                  couponFocus: _couponFocus,
+                                  appliedCoupon: _appliedCoupon,
+                                  couponValidating: _couponValidating,
+                                  onValidateCoupon: _validateCoupon,
+                                  onRemoveCoupon: _removeCoupon,
+                                  onCheckout: _checkout,
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         );
                       },
                     ),
