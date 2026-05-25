@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../data/models/slot_model.dart';
@@ -270,7 +271,7 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
     if (snapshot.connectionState == ConnectionState.waiting) {
       return const Padding(
         padding: EdgeInsets.all(48),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: LoadingScreen(asWidget: true,isOne: true,)),
       );
     }
 

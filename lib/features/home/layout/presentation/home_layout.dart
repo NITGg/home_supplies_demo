@@ -791,7 +791,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                       ConnectionState.waiting) {
                                     return const Expanded(
                                       child: Center(
-                                        child: LoadingScreen(asWidget: true),
+                                        child: LoadingScreen(asWidget: true, isOne: true,),
                                       ),
                                     );
                                   } else if (snapshot.hasData &&

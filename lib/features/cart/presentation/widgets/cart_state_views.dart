@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:tawreedat_go/l10n/app_localizations.dart';
 
+import '../../../../core/widgets/loading_screen.dart';
+
 class CartLoadingView extends StatelessWidget {
   const CartLoadingView({super.key});
 
   @override
   Widget build(BuildContext context) =>
-      const Center(child: CircularProgressIndicator());
+      Center(child: LoadingScreen(asWidget: true,isOne: true,));
 }
 
 class CartEmptyView extends StatelessWidget {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
@@ -73,7 +74,7 @@ class _RefundsViewState extends State<_RefundsView> {
       body: BlocBuilder<RefundCubit, RefundState>(
         builder: (context, state) {
           if (state is RefundsLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: LoadingScreen(asWidget: true,isOne: true,));
           }
 
           if (state is RefundsError) {
@@ -105,7 +106,7 @@ class _RefundsViewState extends State<_RefundsView> {
                   if (index == state.refunds.length) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(child: LoadingScreen(asWidget: true,isOne: true,)),
                     );
                   }
 
