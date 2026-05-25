@@ -445,11 +445,7 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
     if (result == null) {
       buttonLabel = l10n.selectASlot;
     } else {
-      // FIX: result.timeTo is now always populated (sourced from DisplaySlot),
-      // so the confirm label is always complete for both free and partial slots.
-      final from = result.slot?.timeFrom ?? _timeLabel(result.dateTime);
-      final to = result.timeTo;
-      buttonLabel = l10n.confirmSlotTime(from, to);
+      buttonLabel = l10n.confirm;
     }
 
     return Padding(
