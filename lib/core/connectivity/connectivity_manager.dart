@@ -50,7 +50,7 @@ class ConnectivityManager {
       _applyStatus(connected);
     });
 
-    dLog('✅ ConnectivityManager initialized (internet=${_isConnected})');
+    dLog('✅ ConnectivityManager initialized (internet=$_isConnected)');
   }
 
   // Called whenever the network interface changes (e.g. WiFi toggled)

@@ -1,15 +1,11 @@
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/widgets/circel_back_button.dart';
 
 import '../../../core/utils/logger.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../cart/manager/cart_cubit.dart';
-import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
-import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../categories/presentation/sub_cat_section.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/data/repo/product_repo.dart';

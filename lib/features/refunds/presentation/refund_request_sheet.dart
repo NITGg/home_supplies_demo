@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import '../../../../../core/style/app_colors.dart';
 import '../../../../../core/style/text_styles.dart';
 import '../../../../../core/widgets/banners.dart';
 import '../../../../../core/widgets/custom_button.dart';
@@ -392,8 +391,9 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
       ),
       validator: (value) {
         if (!_isOtherReason && !forceShow) return null;
-        if (value == null || value.trim().isEmpty)
+        if (value == null || value.trim().isEmpty) {
           return l10n.pleaseEnterReason;
+        }
         if (value.trim().length < 5) return l10n.tooShort;
         return null;
       },

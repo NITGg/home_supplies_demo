@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/formatDate.dart';
@@ -14,7 +13,6 @@ import '../../cart/data/models/multiple_supplier_exception.dart';
 import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
-import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../cart/presentation/widgets/multiple_supplier_dialog.dart';
 import '../../home/layout/manager/guest_cubit.dart';
 import '../data/models/product_model.dart';

@@ -57,14 +57,22 @@ class _SlotPickerSheet extends StatefulWidget {
 
 class _SlotPickerSheetState extends State<_SlotPickerSheet> {
   late Future<SlotStatusData> _future;
-  int _selectedDayIndex = 0;
 
-  /// Id of the selected [SlotModel], or null for a free working-hour window.
+  /// The currently selected date string ("2026-05-25"), or null.
+  String? _selectedDate;
+
+  /// Id of the selected [SlotModel] (partial-capacity window), or null.
   int? _selectedSlotId;
 
-  /// For free working-hour windows (no configured slot) we track by
-  /// timeFrom string instead.
+  /// For fully-free windows (no booking yet) we track by timeFrom string.
   String? _selectedFreeTimeFrom;
+
+  // ── FIX: Cache open-days to avoid calling daysInRange() twice per rebuild
+  // with slightly different DateTime.now() values (once in _buildContent,
+  // once in _buildConfirmButton).  Reset whenever the data changes.
+  SlotStatusData? _cachedData;
+  List<DaySlotModel>? _cachedOpenDays;
+  int? _cachedSlotDuration;
 
   @override
   void initState() {
@@ -72,7 +80,32 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
     _future = widget.fetchSlots();
   }
 
-  void _retry() => setState(() => _future = widget.fetchSlots());
+  void _retry() => setState(() {
+    _future = widget.fetchSlots();
+    // Clear the cache so the new fetch result is processed fresh.
+    _cachedData = null;
+    _cachedOpenDays = null;
+    _cachedSlotDuration = null;
+  });
+
+  /// FIX: Single source of truth for open days and slot duration.
+  /// Computed once per [SlotStatusData] instance, then reused.
+  ({List<DaySlotModel> openDays, int slotDuration}) _resolveData(
+      SlotStatusData data) {
+    if (_cachedData == data &&
+        _cachedOpenDays != null &&
+        _cachedSlotDuration != null) {
+      return (openDays: _cachedOpenDays!, slotDuration: _cachedSlotDuration!);
+    }
+    final now = DateTime.now();
+    _cachedData = data;
+    _cachedSlotDuration = data.inferredSlotDurationMinutes;
+    _cachedOpenDays = data.daysInRange(
+      from: now,
+      to: now.add(const Duration(days: 13)), // 2-week window
+    );
+    return (openDays: _cachedOpenDays!, slotDuration: _cachedSlotDuration!);
+  }
 
   // ── Selection helpers ──────────────────────────────────────────────────────
 
@@ -93,17 +126,33 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
     });
   }
 
-  void _clearSelection() {
+  void _clearSlotSelection() {
     _selectedSlotId = null;
     _selectedFreeTimeFrom = null;
   }
 
   /// Builds the [SlotPickerResult] to return, or null if nothing is selected.
-  SlotPickerResult? _buildResult(List<DaySlotModel> openDays) {
-    if (openDays.isEmpty) return null;
+  ///
+  /// FIX: [SlotPickerResult.timeTo] is now sourced from [DisplaySlot.timeTo]
+  /// so it is always populated — previously it was `slot?.timeTo ?? ''` which
+  /// left it as an empty string for fully-free windows.
+  SlotPickerResult? _buildResult(
+      List<DaySlotModel> openDays,
+      int slotDurationMinutes,
+      ) {
+    if (_selectedDate == null) return null;
 
-    final day = openDays[_selectedDayIndex.clamp(0, openDays.length - 1)];
-    final rows = DisplaySlot.forDay(day);
+    DaySlotModel? day;
+    for (final d in openDays) {
+      if (d.date == _selectedDate) {
+        day = d;
+        break;
+      }
+    }
+    if (day == null) return null;
+
+    final rows =
+    DisplaySlot.forDay(day, slotDurationMinutes: slotDurationMinutes);
 
     DisplaySlot? selectedRow;
     for (final row in rows) {
@@ -119,7 +168,11 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
         ? selectedRow.source!.toDateTime(day.dateTime)
         : _freeWindowDateTime(day.dateTime, selectedRow.timeFrom);
 
-    return SlotPickerResult(dateTime: dt, slot: selectedRow.source);
+    return SlotPickerResult(
+      dateTime: dt,
+      timeTo: selectedRow.timeTo, // FIX: always from DisplaySlot, never empty
+      slot: selectedRow.source,
+    );
   }
 
   DateTime _freeWindowDateTime(DateTime date, String timeFrom) {
@@ -135,16 +188,11 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
 
   // ── Fallback: dismiss sheet then open the free picker ─────────────────────
 
-  /// Called when [onFetchError] is set and the fetch threw.
-  ///
-  /// Waits until the current frame finishes (so the sheet is fully mounted),
-  /// pops itself, then invokes the callback — all without leaving the user
-  /// staring at a broken sheet.
   void _triggerFallback() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      Navigator.of(context).pop(); // dismiss the sheet
-      await widget.onFetchError!(); // open the fallback picker
+      Navigator.of(context).pop();
+      await widget.onFetchError!();
     });
   }
 
@@ -154,7 +202,7 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bottomPad = MediaQuery.of(context).padding.bottom;
-    final maxHeight = MediaQuery.of(context).size.height * 0.75;
+    final maxHeight = MediaQuery.of(context).size.height * 0.85;
 
     return Container(
       decoration: const BoxDecoration(
@@ -173,13 +221,12 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
               builder: _buildContent,
             ),
           ),
+          // FIX: Share the same FutureBuilder result instead of creating a
+          // second one that races with a fresh DateTime.now() call.
           FutureBuilder<SlotStatusData>(
             future: _future,
-            builder: (context, snap) => _buildConfirmButton(
-              context,
-              snap.data,
-              bottomPad,
-            ),
+            builder: (context, snap) =>
+                _buildConfirmButton(context, snap.data, bottomPad),
           ),
         ],
       ),
@@ -219,7 +266,7 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
       ) {
     final l10n = AppLocalizations.of(context)!;
 
-    // ── Loading ────────────────────────────────────────────────────────────
+    // ── Loading ──────────────────────────────────────────────────────────────
     if (snapshot.connectionState == ConnectionState.waiting) {
       return const Padding(
         padding: EdgeInsets.all(48),
@@ -227,16 +274,13 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
       );
     }
 
-    // ── Error ──────────────────────────────────────────────────────────────
+    // ── Error ────────────────────────────────────────────────────────────────
     if (snapshot.hasError) {
-      // If a fallback handler is wired up, silently close and hand off.
       if (widget.onFetchError != null) {
         _triggerFallback();
-        // Return a blank placeholder while the dismiss animation plays.
         return const SizedBox.shrink();
       }
 
-      // No fallback → show the standard in-sheet error UI with retry.
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
         child: Column(
@@ -262,10 +306,11 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
 
     final data = snapshot.data!;
 
-    // Days that are open (not closed).
-    final openDays = data.days.where((d) => !d.isClosed).toList();
+    // FIX: Use cached resolver — single DateTime.now() snapshot for this build.
+    final (:openDays, :slotDuration) = _resolveData(data);
+    final openDateSet = {for (final d in openDays) d.date};
 
-    // ── No open days ───────────────────────────────────────────────────────
+    // ── No open days ──────────────────────────────────────────────────────────
     if (openDays.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
@@ -285,56 +330,48 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
       );
     }
 
-    final clampedDay = _selectedDayIndex.clamp(0, openDays.length - 1);
-    final selectedDay = openDays[clampedDay];
-    final rows = DisplaySlot.forDay(selectedDay);
+    // Initialise selection to the first open day when nothing is selected yet.
+    if (_selectedDate == null || !openDateSet.contains(_selectedDate)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted &&
+            (_selectedDate == null || !openDateSet.contains(_selectedDate))) {
+          setState(() => _selectedDate = openDays.first.date);
+        }
+      });
+    }
+
+    final selectedDay = openDays.firstWhere(
+          (d) => d.date == _selectedDate,
+      orElse: () => openDays.first,
+    );
+
+    // FIX: Past-slot filtering is now handled inside DisplaySlot.forDay via
+    // the filterPastSlots flag (enabled by default, uses day.isToday).
+    final rows = DisplaySlot.forDay(
+      selectedDay,
+      slotDurationMinutes: slotDuration,
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Day chips ────────────────────────────────────────────────────
-        SizedBox(
-          height: 44,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: openDays.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (_, i) {
-              final day = openDays[i];
-              final isSelected = clampedDay == i;
-              final allFull = day.allSlotsFull;
-
-              return ChoiceChip(
-                label: Text(_dayLabel(day, l10n)),
-                selected: isSelected,
-                avatar: allFull
-                    ? Icon(
-                  Icons.block_rounded,
-                  size: 14,
-                  color: isSelected
-                      ? Colors.white70
-                      : Colors.grey.shade400,
-                )
-                    : null,
-                labelStyle: TextStyle(
-                  color: allFull && !isSelected ? Colors.grey.shade400 : null,
-                ),
-                onSelected: (_) {
-                  setState(() {
-                    _selectedDayIndex = i;
-                    _clearSelection();
-                  });
-                },
-              );
-            },
-          ),
+        // ── 2-week calendar grid ───────────────────────────────────────────
+        _CalendarGrid(
+          openDays: openDays,
+          selectedDate: _selectedDate,
+          slotDurationMinutes: slotDuration,
+          onDateSelected: (date) {
+            setState(() {
+              _selectedDate = date;
+              _clearSlotSelection();
+            });
+          },
         ),
 
         const SizedBox(height: 4),
 
-        // ── Working hours subtitle ───────────────────────────────────────
+        // ── Working hours subtitle ─────────────────────────────────────────
         if (selectedDay.workingHours.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
@@ -360,7 +397,7 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
 
         const SizedBox(height: 12),
 
-        // ── Slot rows ────────────────────────────────────────────────────
+        // ── Slot rows ──────────────────────────────────────────────────────
         if (rows.isEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -398,15 +435,19 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
     if (data == null) return const SizedBox.shrink();
 
     final l10n = AppLocalizations.of(context)!;
-    final openDays = data.days.where((d) => !d.isClosed).toList();
-    final result = _buildResult(openDays);
+
+    // FIX: Reuse the cached open days — no second DateTime.now() call.
+    final (:openDays, :slotDuration) = _resolveData(data);
+    final result = _buildResult(openDays, slotDuration);
 
     final String buttonLabel;
     if (result == null) {
       buttonLabel = l10n.selectASlot;
     } else {
+      // FIX: result.timeTo is now always populated (sourced from DisplaySlot),
+      // so the confirm label is always complete for both free and partial slots.
       final from = result.slot?.timeFrom ?? _timeLabel(result.dateTime);
-      final to = result.slot?.timeTo ?? '';
+      final to = result.timeTo;
       buttonLabel = l10n.confirmSlotTime(from, to);
     }
 
@@ -430,23 +471,219 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
 
   // ── Formatting ─────────────────────────────────────────────────────────────
 
-  String _dayLabel(DaySlotModel day, AppLocalizations l10n) {
-    if (day.isToday) return l10n.today;
-    final tomorrow = DateTime.now().add(const Duration(days: 1));
-    final dt = day.dateTime;
-    if (dt.year == tomorrow.year &&
-        dt.month == tomorrow.month &&
-        dt.day == tomorrow.day) {
-      return l10n.tomorrow;
-    }
-    return '${day.dayName.substring(0, 3)} ${dt.day}';
-  }
-
   String _timeLabel(DateTime dt) {
     final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
     final m = dt.minute.toString().padLeft(2, '0');
     final period = dt.hour < 12 ? 'AM' : 'PM';
     return '$h:$m $period';
+  }
+}
+
+// ── Calendar grid ─────────────────────────────────────────────────────────────
+
+/// A static 2-week (14-day) calendar grid that shows Mon–Sun column headers.
+///
+/// Only dates present in [openDays] are tappable; the rest are rendered as
+/// dimmed/disabled cells.  The grid always starts from today and shows exactly
+/// 14 days laid out in complete Mon–Sun rows, padding with disabled cells at
+/// the start and end as needed.
+class _CalendarGrid extends StatelessWidget {
+  final List<DaySlotModel> openDays;
+  final String? selectedDate;
+  final int slotDurationMinutes;
+  final ValueChanged<String> onDateSelected;
+
+  const _CalendarGrid({
+    required this.openDays,
+    required this.selectedDate,
+    required this.slotDurationMinutes,
+    required this.onDateSelected,
+  });
+
+  static const _headers = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = Theme.of(context).colorScheme.primary;
+
+    // Build a date-string → DaySlotModel map for quick lookup.
+    final openMap = <String, DaySlotModel>{
+      for (final d in openDays) d.date: d,
+    };
+
+    // Determine the calendar grid start: the Monday on or before today.
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    // DateTime.weekday: 1=Mon … 7=Sun
+    final gridStart = todayDate.subtract(Duration(days: todayDate.weekday - 1));
+
+    // We always render exactly 4 rows (4 × 7 = 28 cells), anchored so that
+    // today's week is the first row and we show 2 full weeks from today.
+    // To keep it simple: 2 complete weeks = 14 cells, padded to full rows.
+    // Rows needed: ceil((leadingBlanks + 14) / 7).
+    final leadingBlanks = todayDate.weekday - 1; // days before today in row 0
+    final totalCells = leadingBlanks + 14;
+    final rows = (totalCells / 7).ceil();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Day-of-week headers ────────────────────────────────────────
+          Row(
+            children: _headers
+                .map(
+                  (h) => Expanded(
+                child: Center(
+                  child: Text(
+                    h,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ),
+              ),
+            )
+                .toList(),
+          ),
+          const SizedBox(height: 4),
+
+          // ── Date rows ──────────────────────────────────────────────────
+          for (int row = 0; row < rows; row++)
+            Row(
+              children: List.generate(7, (col) {
+                final cellIndex = row * 7 + col;
+                final cellDate = gridStart.add(Duration(days: cellIndex));
+                final dateStr = _fmt(cellDate);
+
+                final isBeforeToday = cellDate.isBefore(todayDate);
+                final dayModel = openMap[dateStr];
+                final isOpen = dayModel != null;
+                final isDisabled = isBeforeToday || !isOpen;
+                final isSelected = dateStr == selectedDate;
+                final isToday = cellDate.isAtSameMomentAs(todayDate);
+                final allFull =
+                isOpen ? dayModel!.allSlotsFull(slotDurationMinutes) : false;
+
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(3),
+                    child: _CalendarCell(
+                      day: cellDate.day,
+                      isDisabled: isDisabled,
+                      isSelected: isSelected,
+                      isToday: isToday,
+                      allFull: allFull,
+                      accent: accent,
+                      onTap: isDisabled
+                          ? null
+                          : () => onDateSelected(dateStr),
+                    ),
+                  ),
+                );
+              }),
+            ),
+        ],
+      ),
+    );
+  }
+
+  static String _fmt(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+}
+
+// ── Calendar cell ─────────────────────────────────────────────────────────────
+
+class _CalendarCell extends StatelessWidget {
+  final int day;
+  final bool isDisabled;
+  final bool isSelected;
+  final bool isToday;
+  final bool allFull;
+  final Color accent;
+  final VoidCallback? onTap;
+
+  const _CalendarCell({
+    required this.day,
+    required this.isDisabled,
+    required this.isSelected,
+    required this.isToday,
+    required this.allFull,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color bgColor;
+    final Color textColor;
+    final BoxBorder? border;
+
+    if (isSelected) {
+      bgColor = accent;
+      textColor = Colors.white;
+      border = null;
+    } else if (isToday && !isDisabled) {
+      bgColor = accent.withOpacity(0.10);
+      textColor = accent;
+      border = Border.all(color: accent.withOpacity(0.4));
+    } else if (isDisabled) {
+      bgColor = Colors.transparent;
+      textColor = Colors.grey.shade300;
+      border = null;
+    } else if (allFull) {
+      bgColor = Colors.grey.shade100;
+      textColor = Colors.grey.shade400;
+      border = Border.all(color: Colors.grey.shade200);
+    } else {
+      bgColor = Colors.transparent;
+      textColor = Colors.grey.shade800;
+      border = Border.all(color: Colors.grey.shade200);
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        height: 40,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(10),
+          border: border,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Text(
+              '$day',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected || isToday
+                    ? FontWeight.w700
+                    : FontWeight.w500,
+                color: textColor,
+              ),
+            ),
+            // Full-capacity dot at the bottom of the cell
+            if (allFull && !isSelected)
+              Positioned(
+                bottom: 4,
+                child: Container(
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade300,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -503,7 +740,7 @@ class _SlotCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // ── Time range ───────────────────────────────────────────────
+            // ── Time range ─────────────────────────────────────────────────
             Icon(Icons.access_time_rounded, size: 18, color: timeColor),
             const SizedBox(width: 10),
             Text(
@@ -517,7 +754,7 @@ class _SlotCard extends StatelessWidget {
 
             const Spacer(),
 
-            // ── Availability indicator ───────────────────────────────────
+            // ── Availability indicator ─────────────────────────────────────
             _buildTrailing(accent, l10n),
           ],
         ),

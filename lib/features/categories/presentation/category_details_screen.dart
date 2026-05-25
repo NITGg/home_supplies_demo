@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,7 +8,6 @@ import '../../../core/widgets/circel_back_button.dart';
 import '../../../core/widgets/image_with_fallback.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
-import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../products/data/models/product_model.dart';
 import '../../search/presentation/search_dialog.dart';
 import '../../suppliers/presentation/main_supplier_hours_banner.dart';

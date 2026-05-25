@@ -6,7 +6,6 @@ import 'package:tawreedat_go/core/widgets/image_with_fallback.dart';
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
-import '../../cart/presentation/widgets/cart_icon.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/presentation/product_card.dart';
 import '../../search/presentation/search_dialog.dart';

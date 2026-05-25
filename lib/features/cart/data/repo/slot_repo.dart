@@ -12,16 +12,17 @@ class SlotRepository {
   ///   • 30-day session-age enforcement
   final _dio = ApiClient.instance.dio;
 
-  /// Fetches upcoming slot availability for [storeAddressId].
+  /// Fetches upcoming slot availability.
   ///
-  /// [days] controls how many calendar days ahead to include (default: 7).
+  /// [days] controls how many calendar days ahead to include (default: 14).
   /// Throws a [DioException] with a user-friendly message on failure — the
   /// interceptor has already replaced raw server errors/HTML with readable
   /// Arabic strings, so callers can surface [e.message] directly in the UI.
-  Future<SlotStatusData> fetchSlots() async {
+  Future<SlotStatusData> fetchSlots({int days = 30}) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         'https://tawreedatsupplierapis.nitg-eg.com/api/v1/supplier/profile/supplier-slot-max-order-status/1',
+        queryParameters: {'days': days},
       );
 
       return SlotStatusData.fromJson(response.data!);
