@@ -26,13 +26,15 @@ class OrderRemoteDataSource {
 
   // Create Order
   Future<OrderResponse> createOrder(
-      Order order,
-      String paymentMethod, {
-        // required String estimatedDeliveryFee,
-        String? couponCode,
-        DateTime? scheduleAt,
-      }) async {
-    dLog('Creating order: ${order.toJson()} payment method: $paymentMethod coupon code: $couponCode, scheduleAt: $scheduleAt');
+    Order order,
+    String paymentMethod, {
+    // required String estimatedDeliveryFee,
+    String? couponCode,
+    DateTime? scheduleAt,
+  }) async {
+    dLog(
+      'Creating order: ${order.toJson()} payment method: $paymentMethod coupon code: $couponCode, scheduleAt: $scheduleAt',
+    );
     if (order.productImageFile != null) {
       await _validateImage(order.productImageFile!);
     }
@@ -44,7 +46,7 @@ class OrderRemoteDataSource {
 
     if (order.productImageFile != null) {
       formData = FormData.fromMap({
-        'type' : 'CUSTOM_PICKUP',
+        'type': 'CUSTOM_PICKUP',
         'product_description': order.productDescription,
         'budget': order.budget,
         'pickup_area_id': order.pickupAreaId,
@@ -68,7 +70,7 @@ class OrderRemoteDataSource {
     } else {
       formData = FormData.fromMap({
         ...order.toJson(),
-        'type' : 'CUSTOM_PICKUP',
+        'type': 'CUSTOM_PICKUP',
         'payment_method': paymentMethod,
         if (isScheduled) 'is_order_scheduled': true,
         if (scheduleAtUtc != null) 'order_schedule_at': scheduleAtUtc,
@@ -92,13 +94,14 @@ class OrderRemoteDataSource {
     }
   }
 
-
   Future<OrderResponse> createCatalogOrder({
     required String paymentMethod,
     String? couponCode,
-    DateTime? scheduleAt,                          // ← NEW
+    DateTime? scheduleAt, // ← NEW
   }) async {
-    dLog('Creating catalog order — payment: $paymentMethod, coupon: $couponCode, scheduleAt: $scheduleAt');
+    dLog(
+      'Creating catalog order — payment: $paymentMethod, coupon: $couponCode, scheduleAt: $scheduleAt',
+    );
 
     final bool isScheduled = scheduleAt != null;
     final String? scheduleAtUtc = scheduleAt?.toUtc().toIso8601String();
@@ -108,8 +111,8 @@ class OrderRemoteDataSource {
       data: {
         'type': 'CATALOG_PURCHASE',
         'payment_method': paymentMethod,
-        'supplier_store_address_id': 1,            // ← NEW (hardcoded)
-        if (isScheduled) 'is_order_scheduled': true,          // ← NEW
+        'supplier_store_address_id': 1, // ← NEW (hardcoded)
+        if (isScheduled) 'is_order_scheduled': true, // ← NEW
         if (scheduleAtUtc != null) 'order_schedule_at': scheduleAtUtc, // ← NEW
         if (couponCode != null && couponCode.isNotEmpty)
           'coupon_code': couponCode,
@@ -125,7 +128,6 @@ class OrderRemoteDataSource {
       throw Exception('Failed to create catalog order');
     }
   }
-
 
   Future<OrderPreviewModel> getCustomOrderPreview({
     required int pickupAreaId,
@@ -169,7 +171,9 @@ class OrderRemoteDataSource {
     String? status,
     bool filterByExpiry = true,
   }) async {
-    dLog('Fetching orders - skip: $skip, limit: $limit, status: $status, filterByExpiry: $filterByExpiry');
+    dLog(
+      'Fetching orders - skip: $skip, limit: $limit, status: $status, filterByExpiry: $filterByExpiry',
+    );
 
     final queryParams = {
       'skip': skip,
@@ -177,14 +181,10 @@ class OrderRemoteDataSource {
       'includes': 'courier=user',
       'lang': LocaleManager.currentLocale,
       if (status != null) 'status': status,
-      if (filterByExpiry)
-        'expires_at[gte]': DateTime.now().toUtc(),
+      if (filterByExpiry) 'expires_at[gte]': DateTime.now().toUtc(),
     };
 
-    final response = await _dio.get(
-      '/orders',
-      queryParameters: queryParams,
-    );
+    final response = await _dio.get('/orders', queryParameters: queryParams);
 
     dLog('Get orders response: ${response.data}');
 
@@ -278,10 +278,16 @@ class OrderRemoteDataSource {
   }
 
   // Validate coupon
-  Future<Map<String, dynamic>> validateCoupon(String code,bool customOrder) async {
+  Future<Map<String, dynamic>> validateCoupon(
+    String code,
+    bool customOrder,
+  ) async {
     final response = await _dio.post(
       '/customer-coupons/validate?lang=${LocaleManager.currentLocale}',
-      data: {'code': code,'orderType' : customOrder ? 'CUSTOM_PICKUP' : 'CATALOG_PURCHASE'},
+      data: {
+        'code': code,
+        'orderType': customOrder ? 'CUSTOM_PICKUP' : 'CATALOG_PURCHASE',
+      },
     );
     if (response.statusCode == 200) {
       return response.data;

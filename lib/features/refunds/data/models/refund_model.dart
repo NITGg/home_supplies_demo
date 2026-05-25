@@ -97,9 +97,9 @@ class Refund {
     );
   }
 
-  bool get isPending => status == 'PENDING';
-  bool get isApproved => status == 'APPROVED';
-  bool get isRejected => status == 'REJECTED';
+  bool get isPending => status == 'REQUESTED' || status == 'PROCESSING';
+  bool get isApproved => status == 'APPROVED' || status == 'COMPLETED';
+  bool get isRejected => status == 'REJECTED' || status == 'CANCELLED' || status == 'FAILED';
 }
 
 class RefundsListResponse {
