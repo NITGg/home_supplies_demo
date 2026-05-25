@@ -262,7 +262,8 @@ class _CartScreenState extends State<CartScreen> {
       context: context,
       initialSelection: _scheduleAt,
       initialSlot: _selectedSlot,
-      fetchSlots: () => SlotRepository().fetchSlots(),
+      // fetchSlots: () => SlotRepository().fetchSlots(),
+      fetchSlots: () => Future.error('fallback'),
       onFetchError: _pickScheduleDateTimeFallback, // ← fallback wired here
     );
 

@@ -232,17 +232,39 @@ class SlotStatusData {
   /// This prevents a single anomalous short slot (e.g. a 19-min Friday window)
   /// from poisoning the entire UI's slot grid.  Falls back to 60 minutes when
   /// no bookings exist yet.
+  // In SlotStatusData, replace inferredSlotDurationMinutes with:
+// In SlotStatusData
   int get inferredSlotDurationMinutes {
+    // If backend sends slot_duration_minutes, use it directly
+    // (add this field to the model when backend supports it)
+
+    // For wide windows (> 2 hours), break into 2-hour sub-slots
+    const subSlotDuration = 120; // 2 hours
+
+    if (weeklySchedule != null) {
+      for (final daySched in weeklySchedule!.days.values) {
+        if (!daySched.isClosed && daySched.slots.isNotEmpty) {
+          final wh = daySched.slots.first;
+          final span = _timeToMinutes(wh.close) - _timeToMinutes(wh.open);
+          if (span > subSlotDuration) return subSlotDuration;
+          if (span > 0) return span;
+        }
+      }
+    }
+
+    // Fallback: mode of booked slot durations
     final counts = <int, int>{};
     for (final day in days) {
       for (final slot in day.slots) {
-        final diff =
-            _timeToMinutes(slot.timeTo) - _timeToMinutes(slot.timeFrom);
+        final diff = _timeToMinutes(slot.timeTo) - _timeToMinutes(slot.timeFrom);
         if (diff > 0) counts[diff] = (counts[diff] ?? 0) + 1;
       }
     }
-    if (counts.isEmpty) return 60;
-    return counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+    if (counts.isNotEmpty) {
+      return counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+    }
+
+    return 120;
   }
 
   /// Returns a continuous list of open days from [from] to [to] (inclusive).
@@ -413,8 +435,6 @@ class DisplaySlot {
         bool filterPastSlots = true,
       }) {
     final result = <DisplaySlot>[];
-
-    // FIX: Compute current time once for today-filtering.
     final now = DateTime.now();
     final nowMinutes = now.hour * 60 + now.minute;
 
@@ -422,19 +442,27 @@ class DisplaySlot {
       int cursor = _timeToMinutes(wh.open);
       final end = _timeToMinutes(wh.close);
 
-      while (cursor + slotDurationMinutes <= end) {
-        // FIX: Skip windows that have already started today.
-        if (filterPastSlots && day.isToday && cursor <= nowMinutes) {
-          cursor += slotDurationMinutes;
+      // If the working hour window is itself a single large block
+      // (like 08:00–22:00), treat the whole window as one slot row
+      // rather than chopping it into slotDurationMinutes chunks.
+      final windowDuration = end - cursor;
+      final effectiveDuration =
+      windowDuration <= slotDurationMinutes ? windowDuration : slotDurationMinutes;
+
+      while (cursor + effectiveDuration <= end) {
+        if (filterPastSlots && day.isToday && cursor + effectiveDuration <= nowMinutes) {
+          cursor += effectiveDuration;
           continue;
         }
 
         final from = _minutesToTime(cursor);
-        final to = _minutesToTime(cursor + slotDurationMinutes);
+        final to = _minutesToTime(cursor + effectiveDuration);
 
-        // API only returns booked slots — a missing window means it's free.
+        // Match booked slot by overlap, not exact string match
         final SlotModel? bookedSlot = day.slots.cast<SlotModel?>().firstWhere(
-              (s) => s!.timeFrom == from && s.timeTo == to,
+              (s) =>
+          _timeToMinutes(s!.timeFrom) < cursor + effectiveDuration &&
+              _timeToMinutes(s.timeTo) > cursor,
           orElse: () => null,
         );
 
@@ -446,12 +474,12 @@ class DisplaySlot {
 
         result.add(DisplaySlot(
           source: bookedSlot,
-          timeFrom: from,
-          timeTo: to,
+          timeFrom: bookedSlot?.timeFrom ?? from,
+          timeTo: bookedSlot?.timeTo ?? to,
           availability: availability,
         ));
 
-        cursor += slotDurationMinutes;
+        cursor += effectiveDuration;
       }
     }
 
