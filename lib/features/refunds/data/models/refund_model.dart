@@ -114,10 +114,13 @@ class RefundsListResponse {
   });
 
   factory RefundsListResponse.fromJson(Map<String, dynamic> json) {
+    final refunds = (json['refunds'] as List<dynamic>)
+        .map((e) => Refund.fromJson(e as Map<String, dynamic>))
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
     return RefundsListResponse(
-      refunds: (json['refunds'] as List<dynamic>)
-          .map((e) => Refund.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      refunds: refunds,
       total: json['totalRefunds'] as int,
       totalPages: json['totalPages'] as int,
     );
