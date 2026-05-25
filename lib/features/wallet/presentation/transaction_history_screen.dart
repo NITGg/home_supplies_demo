@@ -316,7 +316,7 @@ class _TransactionCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       textAlign: TextAlign.start,
-                      transaction.description,
+                      transaction.description??'',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,

@@ -11,7 +11,7 @@ class WalletTransactionModel {
   final String status;
   final String? rejectReason;
   final double amount;
-  final String description;
+  final String? description;
   final String? paymobOrderId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -45,7 +45,7 @@ class WalletTransactionModel {
       status: json['status'] as String,
       rejectReason: json['reject_reason'] as String?,
       amount: (double.tryParse(json['amount'].toString()) ?? 0) / 100,
-      description: json['description'] as String,
+      description: json['description'] as String?,
       paymobOrderId: json['paymob_order_id']?.toString(),
       createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
       updatedAt: DateTime.parse(json['updated_at'] as String).toLocal(),
