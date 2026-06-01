@@ -148,8 +148,10 @@ Future<void> main() async {
       ApiClient.instance.init();
       await ConnectivityManager.instance.init();
       if (ConnectivityManager.instance.isConnected) {
-        await AppSettings().load();
-        await AppInfoManager().loadAppInfo();
+        await Future.wait([
+          AppSettings().load(),
+          AppInfoManager().loadAppInfo(),
+        ]);
       }
     },
   );
