@@ -51,34 +51,43 @@ Future<DeliveryWindowPickerResult?> showDeliveryWindowPicker({
   );
 }
 
-// ── Internal hour-option ──────────────────────────────────────────────────────
+// ── Internal time-option (30-min granularity) ────────────────────────────────
 
-/// A single selectable hour within a [CartDeliverySlot] window.
+/// A single selectable 30-minute slot within a [CartDeliverySlot] window.
 class _HourOption {
   final CartDeliverySlot slot; // parent window (carries remaining count)
-  final int hour;              // 10, 11, 12 …
+  final int hour;              // 10, 10, 11, 11 …
+  final int minute;            // 0 or 30
 
-  const _HourOption({required this.slot, required this.hour});
+  const _HourOption({required this.slot, required this.hour, required this.minute});
 
-  /// "10:00"
-  String get label => '${hour.toString().padLeft(2, '0')}:00';
+  /// "10:00" / "10:30"
+  String get label =>
+      '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
 
   /// Builds the exact schedule DateTime for [date].
   DateTime toScheduledAt(DateTime date) =>
-      DateTime(date.year, date.month, date.day, hour, 0);
+      DateTime(date.year, date.month, date.day, hour, minute);
 
   bool get isAvailable => slot.isAvailable; // remaining > 0
 }
 
-/// Expands a list of slot windows into per-hour options.
-/// e.g. slot 10:00–18:00 → hours 10, 11, 12, 13, 14, 15, 16, 17
+/// Expands slot windows into 30-minute options, exclusive of [timeTo].
+/// e.g. slot 10:00–15:00 → 10:00 10:30 11:00 … 14:00 14:30
 List<_HourOption> _expandToHours(List<CartDeliverySlot> slots) {
   final result = <_HourOption>[];
   for (final slot in slots) {
-    final fromHour = int.parse(slot.timeFrom.split(':')[0]);
-    final toHour   = int.parse(slot.timeTo.split(':')[0]);
-    for (int h = fromHour; h < toHour; h++) {
-      result.add(_HourOption(slot: slot, hour: h));
+    final fp = slot.timeFrom.split(':');
+    final tp = slot.timeTo.split(':');
+    int cursor = int.parse(fp[0]) * 60 + int.parse(fp[1]);
+    final end  = int.parse(tp[0]) * 60 + int.parse(tp[1]);
+    while (cursor < end) {
+      result.add(_HourOption(
+        slot: slot,
+        hour: cursor ~/ 60,
+        minute: cursor % 60,
+      ));
+      cursor += 30;
     }
   }
   return result;
@@ -213,8 +222,8 @@ class _DeliveryWindowPickerSheetState
             builder: (context, snap) {
               // Loading
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.all(48),
+                return const SizedBox(
+                  height: 120,
                   child: Center(child: CircularProgressIndicator()),
                 );
               }
@@ -223,7 +232,7 @@ class _DeliveryWindowPickerSheetState
               if (snap.hasError) {
                 final l10n = AppLocalizations.of(context)!;
                 return Padding(
-                  padding: const EdgeInsets.all(32),
+                  padding: const EdgeInsets.fromLTRB(32, 24, 32, 24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -253,7 +262,7 @@ class _DeliveryWindowPickerSheetState
               if (hours.isEmpty) {
                 final l10n = AppLocalizations.of(context)!;
                 return Padding(
-                  padding: const EdgeInsets.all(32),
+                  padding: const EdgeInsets.fromLTRB(32, 24, 32, 24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -285,6 +294,7 @@ class _DeliveryWindowPickerSheetState
                       runSpacing: 10,
                       children: hours.map((opt) {
                         final isSelected = _selectedOption?.hour == opt.hour &&
+                            _selectedOption?.minute == opt.minute &&
                             _selectedOption?.slot == opt.slot;
                         return _HourChip(
                           option: opt,
@@ -310,7 +320,7 @@ class _DeliveryWindowPickerSheetState
     final l10n   = AppLocalizations.of(context)!;
     final label = result == null
         ? l10n.selectATime
-        : l10n.confirmAtHour(result.scheduleAt.hour.toString().padLeft(2, '0'));
+        : l10n.confirmAtHour(_selectedOption!.label);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 8, 16, 12 + bottomPad),

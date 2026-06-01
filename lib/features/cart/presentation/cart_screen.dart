@@ -540,7 +540,7 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '${_scheduleAt!.hour.toString().padLeft(2, '0')}:00',
+                                '${_scheduleAt!.hour.toString().padLeft(2, '0')}:${_scheduleAt!.minute.toString().padLeft(2, '0')}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: accent,
