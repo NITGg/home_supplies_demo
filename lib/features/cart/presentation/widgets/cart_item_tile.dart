@@ -7,12 +7,15 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../products/presentation/quantity_selector.dart';
 import '../../data/models/cart_item_model.dart';
 
-// ── Price formatting helper ───────────────────────────────────────────────────
 String _fmt(double v) => v.toStringAsFixed(2);
 
-class CartItemTile extends StatefulWidget {
+class CartItemTile extends StatelessWidget {
   final CartItemModel item;
+
+  /// True only during a blocking server op (first-add).
+  /// Increment / decrement are optimistic and never set this.
   final bool isBusy;
+
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
   final VoidCallback onRemove;
@@ -27,140 +30,97 @@ class CartItemTile extends StatefulWidget {
   });
 
   @override
-  State<CartItemTile> createState() => _CartItemTileState();
-}
-
-class _CartItemTileState extends State<CartItemTile> {
-  bool _localBusy = false;
-
-  @override
-  void didUpdateWidget(CartItemTile old) {
-    super.didUpdateWidget(old);
-    if (old.isBusy && !widget.isBusy) {
-      setState(() => _localBusy = false);
-    }
-  }
-
-  bool get _busy => _localBusy || widget.isBusy;
-
-  void _handleIncrement() {
-    if (_busy) return;
-    setState(() => _localBusy = true);
-    widget.onIncrement();
-  }
-
-  void _handleDecrement() {
-    if (_busy) return;
-    setState(() => _localBusy = true);
-    widget.onDecrement();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final product = widget.item.product;
+    final product = item.product;
     final l10n = AppLocalizations.of(context)!;
     final hMargin = MediaQuery.of(context).size.width < 360 ? 10.0 : 16.0;
 
-    return Dismissible(
-      key: ValueKey(widget.item.id),
-      direction: DismissDirection.endToStart,
-      background: _SwipeDeleteBackground(theme: theme, hMargin: hMargin),
-      confirmDismiss: (_) async {
-        widget.onRemove();
-        return false;
-      },
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: hMargin, vertical: 6),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: InkWell(
-          onTap: () =>
-              context.push('/products/${product.id}', extra: product),
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ── Main content row ──────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _ProductThumb(imageUrl: product.primaryImage),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  product.displayName,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.3,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 250),
-                                child: _busy
-                                    ? _BusySpinner(
-                                  key: const ValueKey('spinner'),
-                                  color: theme.colorScheme.primary,
-                                )
-                                    : QuantitySelector(
-                                  key: const ValueKey('selector'),
-                                  quantity: widget.item.quantity,
-                                  onIncrement: _handleIncrement,
-                                  onDecrement: _handleDecrement,
-                                  minQuantity: 0,
-                                  maxQuantity:
-                                  product.maxAmountForOneOrder,
-                                  size: 32,
-                                  compact: true,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 7),
-                          _PriceBlock(
-                              item: widget.item, l10n: l10n, theme: theme),
-                          const SizedBox(height: 9),
-                          _LineTotalBlock(
-                              item: widget.item, theme: theme, l10n: l10n),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ── Ready-time footer ─────────────────────────────────────────
-              if (widget.item.readyInFrom > 0 || widget.item.readyInTo > 0)
-                _ReadyTimeFooter(
-                  from: widget.item.readyInFrom,
-                  to: widget.item.readyInTo,
-                  l10n: l10n,
-                  theme: theme,
-                ),
-            ],
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: hMargin, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => context.push('/products/${product.id}', extra: product),
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ProductThumb(imageUrl: product.primaryImage),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                product.displayName,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.3,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 250),
+                              child: isBusy
+                                  ? _BusySpinner(
+                                key: const ValueKey('spinner'),
+                                color: theme.colorScheme.primary,
+                              )
+                                  : QuantitySelector(
+                                key: const ValueKey('selector'),
+                                quantity: item.quantity,
+                                onIncrement: onIncrement,
+                                onDecrement: onDecrement,
+                                minQuantity: 0,
+                                maxQuantity:
+                                product.maxAmountForOneOrder,
+                                size: 32,
+                                compact: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 7),
+                        _PriceBlock(item: item, l10n: l10n, theme: theme),
+                        const SizedBox(height: 9),
+                        _LineTotalBlock(item: item, theme: theme, l10n: l10n),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            if (item.readyInFrom > 0 || item.readyInTo > 0)
+              _ReadyTimeFooter(
+                from: item.readyInFrom,
+                to: item.readyInTo,
+                l10n: l10n,
+                theme: theme,
+              ),
+          ],
         ),
       ),
     );
@@ -168,8 +128,6 @@ class _CartItemTileState extends State<CartItemTile> {
 }
 
 // ── Ready-time footer ─────────────────────────────────────────────────────────
-// Sits at the bottom of the card, separated by a hairline divider.
-// Full card width so any duration string fits without wrapping tricks.
 
 class _ReadyTimeFooter extends StatelessWidget {
   final int from;
@@ -204,17 +162,13 @@ class _ReadyTimeFooter extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
-              Icon(
-                Icons.schedule_rounded,
-                size: 14,
-                color: const Color(0xFFF59E0B),
-              ),
+              const Icon(Icons.schedule_rounded,
+                  size: 14, color: Color(0xFFF59E0B)),
               const SizedBox(width: 6),
               Text(
                 l10n.readyIn,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade500,
-                ),
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: Colors.grey.shade500),
               ),
               const SizedBox(width: 4),
               Text(
@@ -239,11 +193,8 @@ class _PriceBlock extends StatelessWidget {
   final AppLocalizations l10n;
   final ThemeData theme;
 
-  const _PriceBlock({
-    required this.item,
-    required this.l10n,
-    required this.theme,
-  });
+  const _PriceBlock(
+      {required this.item, required this.l10n, required this.theme});
 
   @override
   Widget build(BuildContext context) {
@@ -275,9 +226,8 @@ class _PriceBlock extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             l10n.perUnit,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.grey.shade500,
-            ),
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: Colors.grey.shade500),
           ),
         ],
       );
@@ -297,11 +247,8 @@ class _LineTotalBlock extends StatelessWidget {
   final ThemeData theme;
   final AppLocalizations l10n;
 
-  const _LineTotalBlock({
-    required this.item,
-    required this.theme,
-    required this.l10n,
-  });
+  const _LineTotalBlock(
+      {required this.item, required this.theme, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -316,9 +263,8 @@ class _LineTotalBlock extends StatelessWidget {
               position: Tween<Offset>(
                 begin: const Offset(0, 0.3),
                 end: Offset.zero,
-              ).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOut),
-              ),
+              ).animate(CurvedAnimation(
+                  parent: animation, curve: Curves.easeOut)),
               child: child,
             ),
           ),
@@ -401,38 +347,8 @@ class _ProductThumb extends StatelessWidget {
     return Container(
       color: Colors.grey.shade100,
       child: Center(
-        child: Icon(
-          Icons.inventory_2_outlined,
-          color: Colors.grey.shade400,
-          size: 28,
-        ),
-      ),
-    );
-  }
-}
-
-// ── Swipe-to-delete background ────────────────────────────────────────────────
-
-class _SwipeDeleteBackground extends StatelessWidget {
-  final ThemeData theme;
-  final double hMargin;
-
-  const _SwipeDeleteBackground({required this.theme, required this.hMargin});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: hMargin, vertical: 6),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.error,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      alignment: AlignmentDirectional.centerEnd,
-      padding: const EdgeInsetsDirectional.only(end: 20),
-      child: const Icon(
-        Icons.delete_outline_rounded,
-        color: Colors.white,
-        size: 26,
+        child: Icon(Icons.inventory_2_outlined,
+            color: Colors.grey.shade400, size: 28),
       ),
     );
   }

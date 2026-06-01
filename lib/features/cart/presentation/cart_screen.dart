@@ -69,7 +69,7 @@ class _CartScreenState extends State<CartScreen> {
 
   double _codLimit() {
     return (double.tryParse(AppSettings.customer_catalog_cod_limit ?? '0') ??
-            0) /
+        0) /
         100;
   }
 
@@ -289,10 +289,11 @@ class _CartScreenState extends State<CartScreen> {
 
     final isToday =
         pickedDate.year == now.year &&
-        pickedDate.month == now.month &&
-        pickedDate.day == now.day;
+            pickedDate.month == now.month &&
+            pickedDate.day == now.day;
+    final earliest = now.add(const Duration(minutes: 30));
     final initialTime = TimeOfDay.fromDateTime(
-      isToday ? now.add(const Duration(minutes: 5)) : pickedDate,
+      isToday ? earliest : pickedDate,
     );
 
     final pickedTime = await showTimePicker(
@@ -309,7 +310,7 @@ class _CartScreenState extends State<CartScreen> {
       pickedTime.minute,
     );
 
-    if (scheduled.isBefore(now)) {
+    if (scheduled.isBefore(earliest)) {
       Fluttertoast.showToast(
         msg: AppLocalizations.of(context)!.pleaseChooseFutureTime,
         gravity: ToastGravity.BOTTOM,
@@ -367,10 +368,10 @@ class _CartScreenState extends State<CartScreen> {
             overflow: TextOverflow.ellipsis,
             style: selected
                 ? TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.kSecondaryColor,
-                  )
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.kSecondaryColor,
+            )
                 : TextStyle(fontSize: 13, color: Colors.grey),
           ),
         ],
@@ -469,117 +470,117 @@ class _CartScreenState extends State<CartScreen> {
             clipBehavior: Clip.hardEdge,
             child: _isScheduled
                 ? Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ── Picker tile ──────────────────────────────────
-                        InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: _pickSlot,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _scheduleAt != null
-                                    ? accent.withOpacity(0.4)
-                                    : Colors.grey.shade300,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  size: 18,
-                                  color: _scheduleAt != null
-                                      ? accent
-                                      : Colors.grey.shade400,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: _scheduleAt == null
-                                      ? Text(
-                                          l10n.tapToChooseDateTime,
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.grey.shade500,
-                                          ),
-                                        )
-                                      : _buildSelectedSlotContent(accent),
-                                ),
-                                if (_scheduleAt != null)
-                                  GestureDetector(
-                                    onTap: _clearSchedule,
-                                    child: Icon(
-                                      Icons.close_rounded,
-                                      size: 18,
-                                      color: Colors.grey.shade500,
-                                    ),
-                                  )
-                                else
-                                  Icon(
-                                    Icons.edit_rounded,
-                                    size: 16,
-                                    color: Colors.grey.shade400,
-                                  ),
-                              ],
-                            ),
-                          ),
+              padding: const EdgeInsets.only(top: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Picker tile ──────────────────────────────────
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: _pickSlot,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _scheduleAt != null
+                              ? accent.withOpacity(0.4)
+                              : Colors.grey.shade300,
                         ),
-
-                        // ── Info note ─────────────────────────────────────
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline_rounded,
-                                size: 14,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 18,
+                            color: _scheduleAt != null
+                                ? accent
+                                : Colors.grey.shade400,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _scheduleAt == null
+                                ? Text(
+                              l10n.tapToChooseDateTime,
+                              style: TextStyle(
+                                fontSize: 13,
                                 color: Colors.grey.shade500,
                               ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  l10n.scheduledOrderNote,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
+                            )
+                                : _buildSelectedSlotContent(accent),
+                          ),
+                          if (_scheduleAt != null)
+                            GestureDetector(
+                              onTap: _clearSchedule,
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 18,
+                                color: Colors.grey.shade500,
                               ),
-                            ],
+                            )
+                          else
+                            Icon(
+                              Icons.edit_rounded,
+                              size: 16,
+                              color: Colors.grey.shade400,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ── Info note ─────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 14,
+                          color: Colors.grey.shade500,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            l10n.scheduledOrderNote,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                            ),
                           ),
                         ),
-
-                        // ── Validation error ──────────────────────────────
-                        if (_scheduleAt == null) ...[
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline_rounded,
-                                size: 13,
-                                color: Colors.red.shade400,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                l10n.pleaseChooseFutureTime,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.red.shade400,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
                       ],
                     ),
-                  )
+                  ),
+
+                  // ── Validation error ──────────────────────────────
+                  if (_scheduleAt == null) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          size: 13,
+                          color: Colors.red.shade400,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          l10n.pleaseChooseFutureTime,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.red.shade400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            )
                 : const SizedBox.shrink(),
           ),
         ),
@@ -719,7 +720,7 @@ class _CartScreenState extends State<CartScreen> {
               listener: (context, state) {
                 if (state is WalletLoaded) {
                   setState(
-                    () => _walletBalance = state.walletData.wallet.balance,
+                        () => _walletBalance = state.walletData.wallet.balance,
                   );
                 }
               },
@@ -748,16 +749,16 @@ class _CartScreenState extends State<CartScreen> {
                         duration: const Duration(milliseconds: 300),
                         child: switch (state) {
                           CartInitial() || CartLoading() =>
-                            const CartLoadingView(key: ValueKey('loading')),
+                          const CartLoadingView(key: ValueKey('loading')),
                           CartError(:final message) => CartErrorView(
                             key: const ValueKey('error'),
                             message: message,
                             onRetry: _cubit.fetchCart,
                           ),
                           CartLoaded(:final data) when data.cartItems.isEmpty =>
-                            _buildEmptyWithRefresh(
-                              key: const ValueKey('empty'),
-                            ),
+                              _buildEmptyWithRefresh(
+                                key: const ValueKey('empty'),
+                              ),
                           CartLoaded() => _buildLoaded(context, state),
                         },
                       ),
@@ -773,10 +774,10 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _handleOrderState(
-    BuildContext context,
-    OrderState state,
-    AppLocalizations l10n,
-  ) {
+      BuildContext context,
+      OrderState state,
+      AppLocalizations l10n,
+      ) {
     if (state is CouponValidating) {
       if (!_couponValidating) setState(() => _couponValidating = true);
     } else if (state is CouponRedeemed) {

@@ -1033,21 +1033,21 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   /// Opens a date-then-time picker starting from now and stores the result.
   Future<void> _pickScheduleDateTime() async {
     final now = DateTime.now();
+    final earliest = now.add(const Duration(minutes: 30));
 
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: now,
+      initialDate: earliest,
       firstDate: now,
       lastDate: now.add(const Duration(days: 30)),
     );
     if (pickedDate == null || !mounted) return;
 
-    // Clamp firstTime: if the user picked today, time must be >= now.
     final isToday = pickedDate.year == now.year &&
         pickedDate.month == now.month &&
         pickedDate.day == now.day;
     final initialTime = TimeOfDay.fromDateTime(
-      isToday ? now.add(const Duration(minutes: 5)) : pickedDate,
+      isToday ? earliest : pickedDate,
     );
 
     final pickedTime = await showTimePicker(
@@ -1064,8 +1064,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       pickedTime.minute,
     );
 
-    // Ensure the chosen time is strictly in the future.
-    if (scheduled.isBefore(now)) {
+    if (scheduled.isBefore(earliest)) {
       Fluttertoast.showToast(
         msg: AppLocalizations.of(context)!.pleaseChooseFutureTime,
         gravity: ToastGravity.BOTTOM,
@@ -1074,7 +1073,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     }
 
     setState(() => _scheduleAt = scheduled);
-    _syncDraft(); // ← DRAFT
+    _syncDraft();
   }
 
 
