@@ -100,6 +100,7 @@ class _ProductHorizontalSectionState extends State<ProductHorizontalSection> {
   bool _hasMore = true;
   int _skip = 0;
   bool _initialLoadDone = false;
+  bool _scrollDebounce = false;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -138,9 +139,13 @@ class _ProductHorizontalSectionState extends State<ProductHorizontalSection> {
   // ── Pagination ────────────────────────────────────────────────────────────
 
   void _onScroll() {
+    if (_scrollDebounce) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 80) {
-      _load();
+      _scrollDebounce = true;
+      _load().whenComplete(() {
+        if (mounted) setState(() => _scrollDebounce = false);
+      });
     }
   }
 

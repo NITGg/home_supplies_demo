@@ -61,8 +61,8 @@ class _CartScreenState extends State<CartScreen> {
   final FocusNode _couponFocus = FocusNode();
 
   // false = pill only visible; true = full summary visible
-  bool _summaryExpanded = false;
-  bool _pillVisible = true;
+  final _summaryExpanded = ValueNotifier<bool>(false);
+  final _pillVisible = ValueNotifier<bool>(true);
   late final ScrollController _scrollController = ScrollController();
   double _lastScrollOffset = 0;
 
@@ -78,7 +78,7 @@ class _CartScreenState extends State<CartScreen> {
 
   void _toggleSummary() {
     _couponFocus.unfocus();
-    setState(() => _summaryExpanded = !_summaryExpanded);
+    _summaryExpanded.value = !_summaryExpanded.value;
   }
 
   // ── Price helpers ──────────────────────────────────────────────────────────
@@ -125,13 +125,11 @@ class _CartScreenState extends State<CartScreen> {
     final delta = offset - _lastScrollOffset;
     _lastScrollOffset = offset;
 
-    if (delta > 4 && _pillVisible) {
-      setState(() {
-        _pillVisible = false;
-        _summaryExpanded = false;
-      });
-    } else if (delta < -4 && !_pillVisible) {
-      setState(() => _pillVisible = true);
+    if (delta > 4 && _pillVisible.value) {
+      _pillVisible.value = false;
+      _summaryExpanded.value = false;
+    } else if (delta < -4 && !_pillVisible.value) {
+      _pillVisible.value = true;
     }
   }
 
@@ -167,6 +165,8 @@ class _CartScreenState extends State<CartScreen> {
     _couponCubit.close();
     _couponController.dispose();
     _couponFocus.dispose();
+    _pillVisible.dispose();
+    _summaryExpanded.dispose();
     super.dispose();
   }
 
@@ -655,9 +655,7 @@ class _CartScreenState extends State<CartScreen> {
               listenWhen: (_, curr) => curr is WalletLoaded,
               listener: (context, state) {
                 if (state is WalletLoaded) {
-                  setState(
-                        () => _walletBalance = state.walletData.wallet.balance,
-                  );
+                  _walletBalance = state.walletData.wallet.balance;
                 }
               },
               child: BlocListener<OrderCubit, OrderState>(
@@ -884,12 +882,14 @@ class _CartScreenState extends State<CartScreen> {
         ),
 
         // ── Animated bottom section ──────────────────────────────────────────
-        AnimatedSlide(
-          offset: _pillVisible ? Offset.zero : const Offset(0, 1),
+        AnimatedBuilder(
+          animation: Listenable.merge([_pillVisible, _summaryExpanded]),
+          builder: (context, _) => AnimatedSlide(
+          offset: _pillVisible.value ? Offset.zero : const Offset(0, 1),
           duration: const Duration(milliseconds: 280),
           curve: Curves.easeInOut,
           child: AnimatedOpacity(
-            opacity: _pillVisible ? 1.0 : 0.0,
+            opacity: _pillVisible.value ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 200),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -897,7 +897,7 @@ class _CartScreenState extends State<CartScreen> {
                 // ── Pill ────────────────────────────────────────────────────
                 _CheckoutPill(
                   total: displayTotal,
-                  expanded: _summaryExpanded,
+                  expanded: _summaryExpanded.value,
                   onTap: _toggleSummary,
                 ),
 
@@ -907,7 +907,7 @@ class _CartScreenState extends State<CartScreen> {
                     duration: const Duration(milliseconds: 320),
                     curve: Curves.easeInOut,
                     alignment: Alignment.bottomCenter,
-                    heightFactor: _summaryExpanded ? 1.0 : 0.0,
+                    heightFactor: _summaryExpanded.value ? 1.0 : 0.0,
                     child: BlocBuilder<CartCubit, CartState>(
                       buildWhen: (prev, curr) {
                         if (prev is CartLoaded && curr is CartLoaded) {
@@ -975,6 +975,7 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ),
         ),
+          ),
       ],
     );
   }

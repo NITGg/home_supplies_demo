@@ -22,6 +22,14 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
+  late bool _isArabic;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _isArabic = Localizations.localeOf(context).languageCode == 'ar';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -43,13 +51,11 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: Text(
-          isArabic ? 'المحفظة' : 'Wallet',
+          _isArabic ? 'المحفظة' : 'Wallet',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         leading: CircleBackButton(
@@ -143,7 +149,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     Expanded(
                       child: _QuickActionButton(
                         icon: Icons.add_card_rounded,
-                        label: isArabic ? 'شحن' : 'TopUp',
+                        label: _isArabic ? 'شحن' : 'TopUp',
                         color: Colors.green.shade600,
                         onTap: () => context.push('/wallet/topup'),
                       ),
@@ -158,7 +164,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           final isReady = points != null;
                           return _QuickActionButton(
                             icon: isReady ? Icons.stars_rounded : Icons.hourglass_empty_rounded,
-                            label: isArabic ? 'النقاط' : 'Points',
+                            label: _isArabic ? 'النقاط' : 'Points',
                             color: isReady ? Colors.amber.shade700 : Colors.grey.shade400,
                             onTap: isReady
                                 ? () => context.push('/wallet/points')
@@ -174,7 +180,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
               // Recent Transactions Section
               SectionHeader(
-                title: isArabic ? 'أحدث المعاملات' : 'Recent Transactions',
+                title: _isArabic ? 'أحدث المعاملات' : 'Recent Transactions',
                 onViewAll: () => context.push('/wallet/transactions'),
               ),
               const SizedBox(height: 12),
@@ -194,7 +200,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     if (state.transactions.isEmpty) {
                       return EmptySection(
                         icon: Icons.receipt_long_outlined,
-                        message: isArabic
+                        message: _isArabic
                             ? 'لا توجد معاملات بعد'
                             : 'No transactions yet',
                       );
@@ -213,7 +219,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
               // Penalties Section
               SectionHeader(
-                title: isArabic ? 'الغرامات' : 'Penalties',
+                title: _isArabic ? 'الغرامات' : 'Penalties',
                 onViewAll: () => context.push('/wallet/penalties'),
               ),
               const SizedBox(height: 12),
@@ -233,7 +239,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     if (state.penalties.isEmpty) {
                       return EmptySection(
                         icon: Icons.verified_outlined,
-                        message: isArabic ? 'لا توجد غرامات' : 'No penalties',
+                        message: _isArabic ? 'لا توجد غرامات' : 'No penalties',
                         isPositive: true,
                       );
                     }

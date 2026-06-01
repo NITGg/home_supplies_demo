@@ -54,28 +54,26 @@ class OrderCubit extends Cubit<OrderState> {
         'OrderCubit: Loading active orders — skip: $_activeSkip, limit: $_activeLimit',
       );
 
-      // First fetch SCHEDULED orders
-      final SchedualedResponse = await _repository.getOrders(
-        skip: _activeSkip,
-        limit: _activeLimit,
-        status: 'SCHEDULED',
-        filterByExpiry: true,
-      );
-
-      // First fetch PENDING orders
-      final pendingResponse = await _repository.getOrders(
-        skip: _activeSkip,
-        limit: _activeLimit,
-        status: 'PENDING',
-        filterByExpiry: true,
-      );
-
-      // Then fetch IN_PROGRESS orders
-      final inProgressResponse = await _repository.getOrders(
-        skip: _activeSkip,
-        limit: _activeLimit,
-        status: 'IN_PROGRESS',
-      );
+      final [SchedualedResponse, pendingResponse, inProgressResponse] =
+          await Future.wait([
+        _repository.getOrders(
+          skip: _activeSkip,
+          limit: _activeLimit,
+          status: 'SCHEDULED',
+          filterByExpiry: true,
+        ),
+        _repository.getOrders(
+          skip: _activeSkip,
+          limit: _activeLimit,
+          status: 'PENDING',
+          filterByExpiry: true,
+        ),
+        _repository.getOrders(
+          skip: _activeSkip,
+          limit: _activeLimit,
+          status: 'IN_PROGRESS',
+        ),
+      ]);
 
       // Combine both lists
       final combinedOrders = [
@@ -173,22 +171,25 @@ class OrderCubit extends Cubit<OrderState> {
         combinedOrders = cancelledResponse.orders;
         _historyTotalCount = cancelledResponse.totalOrders;
       } else {
-        // 'all' — fetch both
-        final deliveredResponse = await _repository.getOrders(
-          skip: _historySkip,
-          limit: _historyLimit,
-          status: 'DELIVERED',
-        );
-        final cancelledResponse = await _repository.getOrders(
-          skip: _historySkip,
-          limit: _historyLimit,
-          status: 'CANCELLED',
-        );
-        final expiredResponse = await _repository.getOrders(
-          skip: _historySkip,
-          limit: _historyLimit,
-          status: 'EXPIRED',
-        );
+        // 'all' — fetch all three in parallel
+        final [deliveredResponse, cancelledResponse, expiredResponse] =
+            await Future.wait([
+          _repository.getOrders(
+            skip: _historySkip,
+            limit: _historyLimit,
+            status: 'DELIVERED',
+          ),
+          _repository.getOrders(
+            skip: _historySkip,
+            limit: _historyLimit,
+            status: 'CANCELLED',
+          ),
+          _repository.getOrders(
+            skip: _historySkip,
+            limit: _historyLimit,
+            status: 'EXPIRED',
+          ),
+        ]);
         combinedOrders = [
           ...deliveredResponse.orders,
           ...cancelledResponse.orders,

@@ -19,6 +19,13 @@ class ReviewsScreen extends StatefulWidget {
 class _ReviewsScreenState extends State<ReviewsScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isFetchingMore = false;
+  late bool _isArabic;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _isArabic = Localizations.localeOf(context).languageCode == 'ar';
+  }
 
   @override
   void initState() {
@@ -51,10 +58,9 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Directionality(
-      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      textDirection: _isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: AppColors.kBackgroundColor,
         appBar: AppBar(
