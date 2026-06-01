@@ -922,7 +922,7 @@ class _CartScreenState extends State<CartScreen> {
                             : state;
                         return ConstrainedBox(
                           constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 0.55, // ← cap it
+                            maxHeight: MediaQuery.sizeOf(context).height
                           ),
                           child: SingleChildScrollView(
                             child: Column(
