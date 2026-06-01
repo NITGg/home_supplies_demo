@@ -251,9 +251,7 @@ class _RefundCard extends StatelessWidget {
                   const Spacer(),
                   Text(
                     '${refund.amount.toStringAsFixed(2)} ${l10n.egp}',
-                    style: AppTextStyles.bold14.copyWith(
-                      color: AppColors.kPrimaryColor,
-                    ),
+                    style: AppTextStyles.bold14
                   ),
                 ],
               ),
