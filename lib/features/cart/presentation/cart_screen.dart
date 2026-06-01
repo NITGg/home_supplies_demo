@@ -55,7 +55,6 @@ class _CartScreenState extends State<CartScreen> {
   DateTime? _scheduleAt;
 
   /// The slot the user selected from the picker (null if none yet or ASAP).
-  SlotModel? _selectedSlot;
   CouponValid? _appliedCoupon;
   bool _couponValidating = false;
   final _couponController = TextEditingController();
@@ -247,34 +246,6 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  // ── Schedule / slot helpers ────────────────────────────────────────────────
-
-  /// Opens the slot picker sheet. On confirmation sets [_scheduleAt] and
-  /// [_selectedSlot]. Falls back to the free date/time picker if no
-  /// [_storeAddressId] is available.
-  /// Opens the slot picker sheet.
-  ///
-  /// If the network call inside the sheet fails, the sheet silently dismisses
-  /// itself and [_pickScheduleDateTimeFallback] is invoked so the user can
-  /// still pick a date/time manually.
-  Future<void> _pickSlot() async {
-    final result = await showSlotPickerSheet(
-      context: context,
-      initialSelection: _scheduleAt,
-      initialSlot: _selectedSlot,
-      // fetchSlots: () => SlotRepository().fetchSlots(),
-      fetchSlots: () => Future.error('fallback'),
-      onFetchError: _pickScheduleDateTimeFallback, // ← fallback wired here
-    );
-
-    if (result != null && mounted) {
-      setState(() {
-        _scheduleAt = result.dateTime;
-        _selectedSlot = result.slot; // null for free windows
-      });
-    }
-  }
-
   /// Fallback free date/time picker used when no storeAddressId is known.
   Future<void> _pickScheduleDateTimeFallback() async {
     final now = DateTime.now();
@@ -320,7 +291,6 @@ class _CartScreenState extends State<CartScreen> {
 
     setState(() {
       _scheduleAt = scheduled;
-      _selectedSlot = null;
     });
   }
 
@@ -328,7 +298,6 @@ class _CartScreenState extends State<CartScreen> {
   void _clearSchedule() {
     setState(() {
       _scheduleAt = null;
-      _selectedSlot = null;
     });
   }
 
@@ -446,7 +415,7 @@ class _CartScreenState extends State<CartScreen> {
                         behavior: HitTestBehavior.opaque,
                         onTap: () {
                           setState(() => _isScheduled = true);
-                          if (_scheduleAt == null) _pickSlot();
+                          if (_scheduleAt == null) _pickScheduleDateTimeFallback();
                         },
                         child: _buildScheduleOption(
                           icon: Icons.schedule_rounded,
@@ -477,7 +446,7 @@ class _CartScreenState extends State<CartScreen> {
                   // ── Picker tile ──────────────────────────────────
                   InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    onTap: _pickSlot,
+                    onTap: _pickScheduleDateTimeFallback,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -594,39 +563,6 @@ class _CartScreenState extends State<CartScreen> {
   ///   (e.g. "08:00 – 14:00") so they know which capacity block they're in.
   /// - If they used the fallback free picker → show raw date + time.
   Widget _buildSelectedSlotContent(Color accent) {
-    if (_selectedSlot != null) {
-      // Slot-based selection
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _formatScheduleDate(_scheduleAt!),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Row(
-            children: [
-              Icon(Icons.access_time_rounded, size: 13, color: accent),
-              const SizedBox(width: 4),
-              Text(
-                '${_selectedSlot!.timeFrom} – ${_selectedSlot!.timeTo}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: accent,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
-    }
-
-    // Fallback: free date/time selection
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
