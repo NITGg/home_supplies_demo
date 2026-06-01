@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/widgets/banners.dart';
-import 'package:tawreedat_go/features/cart/presentation/slot_picker_sheet.dart';
 import 'package:tawreedat_go/features/cart/presentation/widgets/cart_item_tile.dart';
 import 'package:tawreedat_go/features/cart/presentation/widgets/cart_price_helpers.dart';
 import 'package:tawreedat_go/features/home/layout/manager/home_cubit.dart';
@@ -27,8 +26,6 @@ import '../../orders/presentation/widgets/sheets/create_order_sheet/insufficient
 import '../../search/presentation/search_dialog.dart';
 import '../../wallet/manager/wallet_cubit.dart';
 import '../../wallet/manager/wallet_state.dart';
-import '../data/models/slot_model.dart';
-import '../data/repo/slot_repo.dart';
 import '../manager/cart_cubit.dart';
 import '../manager/cart_state.dart';
 import 'widgets/cart_count_badge.dart';
