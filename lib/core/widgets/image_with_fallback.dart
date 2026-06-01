@@ -8,6 +8,7 @@ class ImageWithIconFallback extends StatelessWidget {
   final double? height;
   final BoxFit? fit;
   final double? iconSize;
+  final bool isCircle;
 
   const ImageWithIconFallback({
     super.key,
@@ -16,6 +17,7 @@ class ImageWithIconFallback extends StatelessWidget {
     this.iconSize,
     this.height,
     this.fit,
+    this.isCircle = false,
   });
 
   @override
@@ -31,7 +33,16 @@ class ImageWithIconFallback extends StatelessWidget {
       fit: fit,
       placeholder: (context, url) => Skeletonizer(
         enabled: true,
-        child: Container(color: Colors.white, width: width, height: height),
+        child: isCircle
+            ? Container(
+          width: width,
+          height: height,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+        )
+            : Container(color: Colors.white, width: width, height: height),
       ),
       errorWidget: (context, url, error) {
         return Icon(Icons.image, size: iconSize ?? 28, color: Colors.grey);

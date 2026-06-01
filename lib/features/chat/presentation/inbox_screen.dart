@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tawreedat_go/core/widgets/image_with_fallback.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
@@ -109,17 +110,22 @@ class _ChatTile extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundColor:
-                Theme.of(context).colorScheme.primaryContainer,
-            backgroundImage:
-                avatarUrl != null ? NetworkImage(avatarUrl) : null,
-            child: avatarUrl == null
-                ? Text(
+            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            child: avatarUrl != null
+                ? ClipOval(
+                    child: ImageWithIconFallback(
+                      imageUrl: avatarUrl,
+                      width: 52,
+                      height: 52,
+                      fit: BoxFit.cover,
+                      isCircle: true,
+                    ),
+                  )
+                : Text(
                     name.isNotEmpty ? name[0].toUpperCase() : '?',
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 16),
-                  )
-                : null,
+                  ),
           ),
           if (isClosed)
             Positioned(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tawreedat_go/core/widgets/image_with_fallback.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/features/chat/presentation/widgets/chat_input.dart';
 import 'package:tawreedat_go/features/chat/presentation/widgets/message_bubble.dart';
@@ -107,13 +108,20 @@ class _ChatScreenState extends State<ChatScreen> {
           CircleAvatar(
             radius: 18,
             backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-            child: avatarUrl == null
-                ? Text(
+            child: avatarUrl != null
+                ? ClipOval(
+                    child: ImageWithIconFallback(
+                      imageUrl: avatarUrl,
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.cover,
+                      isCircle: true,
+                    ),
+                  )
+                : Text(
                     title.isNotEmpty ? title[0].toUpperCase() : '?',
                     style: const TextStyle(fontSize: 14),
-                  )
-                : null,
+                  ),
           ),
           const SizedBox(width: 10),
           Expanded(
