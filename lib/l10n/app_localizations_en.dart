@@ -1775,8 +1775,86 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get preOrder => 'Pre-Order';
+
+  @override
   String get slotFull => 'Full';
 
   @override
   String get slotAvailable => 'Available';
+
+  @override
+  String get deliveryScheduleTitle => 'Delivery Schedule';
+
+  @override
+  String get deliveryScheduleSubtitle => 'This product requires advance scheduling. Place your order during an ORDER window and receive delivery in a DELIVERY window.';
+
+  @override
+  String get orderWindowLabel => 'Order window';
+
+  @override
+  String get deliveryWindowLabel => 'Delivery window';
+
+  @override
+  String get dayNameSunday => 'Sunday';
+
+  @override
+  String get dayNameMonday => 'Monday';
+
+  @override
+  String get dayNameTuesday => 'Tuesday';
+
+  @override
+  String get dayNameWednesday => 'Wednesday';
+
+  @override
+  String get dayNameThursday => 'Thursday';
+
+  @override
+  String get dayNameFriday => 'Friday';
+
+  @override
+  String get dayNameSaturday => 'Saturday';
+
+  @override
+  String get chooseDeliveryDateTime => 'Choose Delivery Date & Time';
+
+  @override
+  String get couldNotLoadTimeSlots => 'Could not load time slots.';
+
+  @override
+  String get noDeliveryTimesForDate => 'No delivery times available for this date.\nPlease choose another day.';
+
+  @override
+  String get selectATime => 'Select a time';
+
+  @override
+  String confirmAtHour(String hour) {
+    return 'Confirm — $hour:00';
+  }
+
+  @override
+  String deliveryWindowRange(String range) {
+    return 'Delivery window: $range';
+  }
+
+  @override
+  String spotsLeft(int count) {
+    return '$count spots left';
+  }
+
+  @override
+  String get cartRequiresWindowScheduling => 'This order requires a scheduled delivery window.';
+
+  @override
+  String get tapToChooseDeliveryDateTime => 'Tap to choose delivery date & time';
+
+  @override
+  String get pleaseSelectDeliverySlot => 'Please select a delivery slot to continue.';
+
+  @override
+  String get noDeliveryDatesAvailable => 'No delivery dates available for this product.';
+
+  @override
+  String get pleaseSelectDeliveryDateAndSlot => 'Please select a delivery date and time slot first.';
 }

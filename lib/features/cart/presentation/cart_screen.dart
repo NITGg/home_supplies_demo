@@ -26,8 +26,11 @@ import '../../orders/presentation/widgets/sheets/create_order_sheet/insufficient
 import '../../search/presentation/search_dialog.dart';
 import '../../wallet/manager/wallet_cubit.dart';
 import '../../wallet/manager/wallet_state.dart';
+import '../data/models/slot_model.dart';
+import '../data/repo/slot_repo.dart';
 import '../manager/cart_cubit.dart';
 import '../manager/cart_state.dart';
+import 'slot_picker_sheet.dart';
 import 'widgets/cart_count_badge.dart';
 import 'widgets/cart_state_views.dart';
 import 'widgets/cart_summary_bar.dart';
@@ -50,6 +53,19 @@ class _CartScreenState extends State<CartScreen> {
   // ── Schedule ───────────────────────────────────────────────────────────────
   bool _isScheduled = false;
   DateTime? _scheduleAt;
+
+  // ── Delivery-window scheduling (requires_delivery_windows products) ─────────
+  /// True when the cart contains at least one product that requires window
+  /// scheduling. Determined by checking CartItem.product.requiresDeliveryWindows.
+  bool _requiresWindowScheduling = false;
+
+  /// Delivery windows fetched for the matching product's spId.
+  ProductDeliveryWindowsData? _productDeliveryWindows;
+
+  /// The selected delivery slot (set after the picker is confirmed).
+  CartDeliverySlot? _selectedDeliverySlot;
+
+  final _deliveryWindowsRepo = DeliveryWindowsRepository();
 
   /// The slot the user selected from the picker (null if none yet or ASAP).
   CouponValid? _appliedCoupon;
@@ -169,6 +185,95 @@ class _CartScreenState extends State<CartScreen> {
 
   CartCubit get _cubit => context.read<CartCubit>();
 
+  // ── Window scheduling detection ────────────────────────────────────────────
+
+  /// Called whenever the cart state changes to CartLoaded.
+  /// Finds the first cart item with requires_delivery_windows == true and
+  /// fetches its product delivery windows so we know which dates to show.
+  Future<void> _detectWindowScheduling(CartLoaded state) async {
+    final windowProduct = state.data.cartItems
+        .where((i) => i.product.requiresDeliveryWindows)
+        .firstOrNull;
+
+    final needsWindows = windowProduct != null;
+
+    if (!needsWindows) {
+      // Cart has no window products — reset to normal scheduling
+      if (_requiresWindowScheduling) {
+        setState(() {
+          _requiresWindowScheduling = false;
+          _productDeliveryWindows = null;
+          _selectedDeliverySlot = null;
+          _scheduleAt = null;
+        });
+      }
+      return;
+    }
+
+    // Already fetched for the same product
+    if (_requiresWindowScheduling && _productDeliveryWindows != null) return;
+
+    setState(() => _requiresWindowScheduling = true);
+
+    try {
+      final spId = windowProduct.spId;
+      final data = await _deliveryWindowsRepo.fetchWindows(spId);
+      if (mounted) {
+        setState(() => _productDeliveryWindows = data);
+      }
+    } catch (_) {
+      // On failure, fall back to normal scheduling
+      if (mounted) {
+        setState(() {
+          _requiresWindowScheduling = false;
+          _productDeliveryWindows = null;
+        });
+      }
+    }
+  }
+
+  /// Opens the delivery-window date+slot picker.
+  Future<void> _openDeliveryWindowPicker() async {
+    final windows = _productDeliveryWindows;
+    if (windows == null) return;
+
+    final dates = windows.nextDeliveryDates(
+      from: DateTime.now().add(const Duration(days: 1)),
+      count: 30,
+    );
+
+    if (dates.isEmpty) {
+      Fluttertoast.showToast(
+        msg: AppLocalizations.of(context)!.noDeliveryDatesAvailable,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.orange,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    final result = await showDeliveryWindowPicker(
+      context: context,
+      deliveryDates: dates,
+    );
+
+    if (!mounted || result == null) return;
+    setState(() {
+      _selectedDeliverySlot = result.slot;
+      _scheduleAt = result.scheduleAt;
+      _isScheduled = true;
+    });
+  }
+
+  String _formatWindowDate(DateTime dt) =>
+      '${_weekdayName(dt.weekday == 7 ? 0 : dt.weekday)}, '
+      '${dt.day}/${dt.month}/${dt.year}';
+
+  static const _weekdays = [
+    'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat',
+  ];
+  static String _weekdayName(int jsDay) => _weekdays[jsDay];
+
   Future<void> _onRefresh() async {
     _cubit.fetchCart();
     context.read<WalletCubit>().fetchWalletData();
@@ -197,6 +302,16 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _checkout() async {
+    // Window-scheduling products MUST have a delivery slot selected
+    if (_requiresWindowScheduling && _scheduleAt == null) {
+      Fluttertoast.showToast(
+        msg: AppLocalizations.of(context)!.pleaseSelectDeliveryDateAndSlot,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
     if (_isScheduled && _scheduleAt == null) return;
 
     if (_paymentMethod == 'WALLET') {
@@ -212,10 +327,15 @@ class _CartScreenState extends State<CartScreen> {
         }
       }
     }
+    // Window-scheduling always sends scheduleAt; normal flow only when _isScheduled
+    final effectiveScheduleAt = _requiresWindowScheduling
+        ? _scheduleAt
+        : (_isScheduled ? _scheduleAt : null);
+
     await context.read<OrderCubit>().createCatalogOrder(
       paymentMethod: _paymentMethod,
       couponCode: _appliedCoupon?.code,
-      scheduleAt: _isScheduled ? _scheduleAt : null,
+      scheduleAt: effectiveScheduleAt,
     );
   }
 
@@ -342,6 +462,126 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // ── Window schedule section (for requires_delivery_windows products) ──────
+
+  Widget _buildWindowScheduleSection() {
+    final accent  = Colors.indigo.shade700;
+    final hasSlot = _selectedDeliverySlot != null && _scheduleAt != null;
+    final isLoading = _requiresWindowScheduling && _productDeliveryWindows == null;
+    final l10n    = AppLocalizations.of(context)!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Info banner ─────────────────────────────────────────────────────
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.indigo.shade50,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.indigo.shade100),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline_rounded, size: 14, color: accent),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  l10n.cartRequiresWindowScheduling,
+                  style: TextStyle(fontSize: 12, color: accent, height: 1.4),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // ── Pick / change slot button ────────────────────────────────────────
+        if (isLoading)
+          const Center(child: CircularProgressIndicator(strokeWidth: 2))
+        else
+          InkWell(
+            onTap: _openDeliveryWindowPicker,
+            borderRadius: BorderRadius.circular(12),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              decoration: BoxDecoration(
+                color: hasSlot ? Colors.indigo.shade50 : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: hasSlot ? accent.withOpacity(0.5) : Colors.grey.shade300,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_month_rounded,
+                    size: 18,
+                    color: hasSlot ? accent : Colors.grey.shade400,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: hasSlot
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _formatWindowDate(_scheduleAt!),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade800,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${_scheduleAt!.hour.toString().padLeft(2, '0')}:00',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: accent,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            l10n.tapToChooseDeliveryDateTime,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                  ),
+                  Icon(
+                    hasSlot ? Icons.edit_rounded : Icons.chevron_right_rounded,
+                    size: 18,
+                    color: Colors.grey.shade400,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // ── Validation error ─────────────────────────────────────────────────
+        if (!hasSlot) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.error_outline_rounded, size: 13, color: Colors.red.shade400),
+              const SizedBox(width: 5),
+              Text(
+                l10n.pleaseSelectDeliverySlot,
+                style: TextStyle(fontSize: 12, color: Colors.red.shade400),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 
@@ -500,28 +740,28 @@ class _CartScreenState extends State<CartScreen> {
                   ),
 
                   // ── Info note ─────────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline_rounded,
-                          size: 14,
-                          color: Colors.grey.shade500,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            l10n.scheduledOrderNote,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Padding(
+                  //   padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  //   child: Row(
+                  //     children: [
+                  //       Icon(
+                  //         Icons.info_outline_rounded,
+                  //         size: 14,
+                  //         color: Colors.grey.shade500,
+                  //       ),
+                  //       const SizedBox(width: 6),
+                  //       Expanded(
+                  //         child: Text(
+                  //           l10n.scheduledOrderNote,
+                  //           style: TextStyle(
+                  //             fontSize: 12,
+                  //             color: Colors.grey.shade500,
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
 
                   // ── Validation error ──────────────────────────────
                   if (_scheduleAt == null) ...[
@@ -659,10 +899,13 @@ class _CartScreenState extends State<CartScreen> {
                 listener: (context, state) =>
                     _handleOrderState(context, state, l10n),
                 child: BlocConsumer<CartCubit, CartState>(
-                  listenWhen: (_, curr) => curr is CartError,
+                  listenWhen: (_, curr) => curr is CartError || curr is CartLoaded,
                   listener: (context, state) {
                     if (state is CartError) {
                       showErrorBanner(context, state.message);
+                    } else if (state is CartLoaded) {
+                      // Detect if this cart requires delivery-window scheduling
+                      _detectWindowScheduling(state);
                     }
                   },
                   buildWhen: (prev, curr) {
@@ -935,7 +1178,9 @@ class _CartScreenState extends State<CartScreen> {
                                       hPad,
                                       12,
                                     ),
-                                    child: _buildScheduleSection(l10n),
+                                    child: _requiresWindowScheduling
+                                        ? _buildWindowScheduleSection()
+                                        : _buildScheduleSection(l10n),
                                   ),
                                 ),
 

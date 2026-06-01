@@ -15,6 +15,8 @@ import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
 import '../../cart/presentation/widgets/multiple_supplier_dialog.dart';
 import '../../home/layout/manager/guest_cubit.dart';
+import '../../cart/data/models/slot_model.dart';
+import '../../cart/data/repo/slot_repo.dart';
 import '../data/models/product_model.dart';
 import '../manager/product_detail_cubit.dart';
 import '../manager/product_details_states.dart';
@@ -32,9 +34,13 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late final ProductDetailCubit _cubit;
+  final _windowsRepo = DeliveryWindowsRepository();
 
   // Only tracks the selected image thumbnail — cart state is owned by CartCubit.
   int _selectedImageIndex = 0;
+
+  ProductDeliveryWindowsData? _deliveryWindows;
+  bool _loadingWindows = false;
 
   int get _id => widget.product?.id ?? widget.productId!;
 
@@ -53,6 +59,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     super.dispose();
   }
 
+  /// Lazily fetches delivery windows once we know the product's spId.
+  Future<void> _loadDeliveryWindows(int spId) async {
+    if (_deliveryWindows != null || _loadingWindows) return;
+    setState(() => _loadingWindows = true);
+    try {
+      final data = await _windowsRepo.fetchWindows(spId);
+      if (mounted) setState(() => _deliveryWindows = data);
+    } catch (_) {
+      // silently ignore — the section simply won't show
+    } finally {
+      if (mounted) setState(() => _loadingWindows = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
@@ -67,8 +87,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               product: widget.product,
               onRetry: () => _cubit.load(_id, supplierId: _supplierId),
             ),
-            ProductDetailLoaded(:final product, :final isSupplierOpen) =>
-              _buildLoaded(product, isSupplierOpen: isSupplierOpen),
+            ProductDetailLoaded(:final product, :final isSupplierOpen) => () {
+                // Defer the fetch so it never runs during a build frame.
+                if (product.requiresDeliveryWindows && product.spId != null) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _loadDeliveryWindows(product.spId!);
+                  });
+                }
+                return _buildLoaded(product, isSupplierOpen: isSupplierOpen);
+              }(),
           };
         },
       ),
@@ -104,13 +131,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _StockChip(product: product),
-                        if (product.pickupReadyDurationFrom != null)
+                        if (product.pickupReadyDurationFrom != null &&
+                            !product.requiresDeliveryWindows)
                           Text(
                             '${l10n.readyIn} : ${formatDuration(product.pickupReadyDurationFrom ?? 0, l10n)} ${l10n.to} ${formatDuration(product.pickupReadyDurationTo ?? 0, l10n)}',
                           ),
                       ],
                     ),
                     const SizedBox(height: 20),
+
+                    // ── Delivery windows section ───────────────────────────
+                    if (product.requiresDeliveryWindows) ...[
+                      _DeliveryWindowsSection(
+                        isLoading: _loadingWindows,
+                        data: _deliveryWindows,
+                      ),
+                      const SizedBox(height: 20),
+                    ],
 
                     if (product.displayDescription.isNotEmpty) ...[
                       _SectionTitle(title: l10n.description),
@@ -1320,6 +1357,183 @@ class _ErrorView extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Delivery windows section ──────────────────────────────────────────────────
+
+/// Shown in product details when [ProductModel.requiresDeliveryWindows] is true.
+/// Displays ORDER windows (when the customer can place orders) and DELIVERY
+/// windows (when the product will be delivered), grouped by day of week.
+class _DeliveryWindowsSection extends StatelessWidget {
+  final bool isLoading;
+  final ProductDeliveryWindowsData? data;
+
+  const _DeliveryWindowsSection({required this.isLoading, this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = Colors.indigo.shade700;
+    final l10n   = AppLocalizations.of(context)!;
+
+    // Day names indexed 0 (Sun) … 6 (Sat) — pulled from localizations
+    final dayNames = [
+      l10n.dayNameSunday,
+      l10n.dayNameMonday,
+      l10n.dayNameTuesday,
+      l10n.dayNameWednesday,
+      l10n.dayNameThursday,
+      l10n.dayNameFriday,
+      l10n.dayNameSaturday,
+    ];
+
+    if (isLoading) {
+      return _buildCard(
+        accent: accent,
+        child: const Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (data == null || !data!.requiresDeliveryWindows) return const SizedBox.shrink();
+
+    final orderByDay    = data!.orderWindowsByDay;
+    final deliveryByDay = data!.deliveryWindowsByDay;
+    final allDays       = {...orderByDay.keys, ...deliveryByDay.keys}.toList()..sort();
+
+    return _buildCard(
+      accent: accent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header ───────────────────────────────────────────────────────
+          Row(
+            children: [
+              Icon(Icons.calendar_month_rounded, size: 16, color: accent),
+              const SizedBox(width: 6),
+              Text(
+                l10n.deliveryScheduleTitle,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: accent),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.deliveryScheduleSubtitle,
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Day rows ──────────────────────────────────────────────────────
+          ...allDays.map((dow) {
+            final dayLabel   = dayNames[dow];
+            final orders     = orderByDay[dow] ?? [];
+            final deliveries = deliveryByDay[dow] ?? [];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 80,
+                    child: Text(
+                      dayLabel,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        ...orders.map((w) => _WindowChip(
+                              label: w.timeRange,
+                              type: 'ORDER',
+                              color: Colors.blue.shade700,
+                            )),
+                        ...deliveries.map((w) => _WindowChip(
+                              label: w.timeRange,
+                              type: 'DELIVERY',
+                              color: Colors.green.shade700,
+                            )),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+
+          // ── Legend ────────────────────────────────────────────────────────
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              _WindowChip(label: l10n.orderWindowLabel,    type: 'ORDER',    color: Colors.blue.shade700),
+              const SizedBox(width: 8),
+              _WindowChip(label: l10n.deliveryWindowLabel, type: 'DELIVERY', color: Colors.green.shade700),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCard({required Color accent, required Widget child}) =>
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.indigo.shade50,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.indigo.shade100),
+        ),
+        child: child,
+      );
+}
+
+class _WindowChip extends StatelessWidget {
+  final String label;
+  final String type;
+  final Color color;
+
+  const _WindowChip({required this.label, required this.type, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            type == 'ORDER'
+                ? Icons.edit_calendar_rounded
+                : Icons.local_shipping_rounded,
+            size: 10,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
+          ),
+        ],
       ),
     );
   }

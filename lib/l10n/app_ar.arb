@@ -764,6 +764,7 @@
          "scheduledOrderNote": "الوقت المحدد في الجدولة هو وقت إضافة الطلب وبدء البحث عن مندوب، وليس وقت التسليم النهائي للعميل.",
 
          "pleaseChooseFutureTime": "يرجى اختيار وقت في المستقبل",
+         "preOrder": "يعد بالطلب",
         "tapToChooseDateTime": "اضغط لاختيار التاريخ والوقت",
 
   "requestRefund": "طلب استرداد",
@@ -824,5 +825,70 @@
   "@slotFull": { "description": "Badge shown on a fully-booked delivery slot" },
 
   "slotAvailable": "متاح",
-  "@slotAvailable": { "description": "Badge shown on an open delivery slot" }
+  "@slotAvailable": { "description": "Badge shown on an open delivery slot" },
+
+  "deliveryScheduleTitle": "جدول التوصيل",
+  "@deliveryScheduleTitle": { "description": "Section heading in product details for delivery-window products" },
+
+  "deliveryScheduleSubtitle": "هذا المنتج يتطلب جدولة مسبقة. قدّم طلبك خلال نافذة الطلب وستستلمه خلال نافذة التوصيل.",
+  "@deliveryScheduleSubtitle": { "description": "Explanation under the delivery schedule heading" },
+
+  "orderWindowLabel": "نافذة الطلب",
+  "@orderWindowLabel": { "description": "Legend chip label for ORDER windows" },
+
+  "deliveryWindowLabel": "نافذة التوصيل",
+  "@deliveryWindowLabel": { "description": "Legend chip label for DELIVERY windows" },
+
+  "dayNameSunday": "الأحد",
+  "dayNameMonday": "الاثنين",
+  "dayNameTuesday": "الثلاثاء",
+  "dayNameWednesday": "الأربعاء",
+  "dayNameThursday": "الخميس",
+  "dayNameFriday": "الجمعة",
+  "dayNameSaturday": "السبت",
+
+  "chooseDeliveryDateTime": "اختر تاريخ ووقت التوصيل",
+  "@chooseDeliveryDateTime": { "description": "Picker sheet header" },
+
+  "couldNotLoadTimeSlots": "تعذّر تحميل مواعيد التوصيل.",
+  "@couldNotLoadTimeSlots": { "description": "Error message in slot picker when API fails" },
+
+  "noDeliveryTimesForDate": "لا تتوفر مواعيد توصيل لهذا التاريخ.\nيرجى اختيار يوم آخر.",
+  "@noDeliveryTimesForDate": { "description": "Shown when no slots exist for the selected date" },
+
+  "selectATime": "اختر وقتاً",
+  "@selectATime": { "description": "Placeholder on confirm button when no hour is selected" },
+
+  "confirmAtHour": "تأكيد — {hour}:00",
+  "@confirmAtHour": {
+    "description": "Confirm button label showing the selected hour",
+    "placeholders": { "hour": { "type": "String" } }
+  },
+
+  "deliveryWindowRange": "نافذة التوصيل: {range}",
+  "@deliveryWindowRange": {
+    "description": "Label showing the full window range above hour chips",
+    "placeholders": { "range": { "type": "String" } }
+  },
+
+  "spotsLeft": "تبقى {count} أماكن",
+  "@spotsLeft": {
+    "description": "Badge showing remaining capacity in a slot",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "cartRequiresWindowScheduling": "هذا الطلب يتطلب تحديد نافذة توصيل مجدولة.",
+  "@cartRequiresWindowScheduling": { "description": "Info banner in cart for window-scheduling products" },
+
+  "tapToChooseDeliveryDateTime": "اضغط لاختيار تاريخ ووقت التوصيل",
+  "@tapToChooseDeliveryDateTime": { "description": "Placeholder text in cart schedule tile before selection" },
+
+  "pleaseSelectDeliverySlot": "يرجى اختيار موعد التوصيل للمتابعة.",
+  "@pleaseSelectDeliverySlot": { "description": "Validation error in cart when no slot is chosen" },
+
+  "noDeliveryDatesAvailable": "لا تتوفر مواعيد توصيل لهذا المنتج.",
+  "@noDeliveryDatesAvailable": { "description": "Toast when product windows yield no future dates" },
+
+  "pleaseSelectDeliveryDateAndSlot": "يرجى اختيار تاريخ ووقت التوصيل أولاً.",
+  "@pleaseSelectDeliveryDateAndSlot": { "description": "Toast when user taps checkout without selecting a slot" }
 }

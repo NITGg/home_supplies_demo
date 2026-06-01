@@ -1775,8 +1775,86 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get preOrder => 'يعد بالطلب';
+
+  @override
   String get slotFull => 'ممتلئ';
 
   @override
   String get slotAvailable => 'متاح';
+
+  @override
+  String get deliveryScheduleTitle => 'جدول التوصيل';
+
+  @override
+  String get deliveryScheduleSubtitle => 'هذا المنتج يتطلب جدولة مسبقة. قدّم طلبك خلال نافذة الطلب وستستلمه خلال نافذة التوصيل.';
+
+  @override
+  String get orderWindowLabel => 'نافذة الطلب';
+
+  @override
+  String get deliveryWindowLabel => 'نافذة التوصيل';
+
+  @override
+  String get dayNameSunday => 'الأحد';
+
+  @override
+  String get dayNameMonday => 'الاثنين';
+
+  @override
+  String get dayNameTuesday => 'الثلاثاء';
+
+  @override
+  String get dayNameWednesday => 'الأربعاء';
+
+  @override
+  String get dayNameThursday => 'الخميس';
+
+  @override
+  String get dayNameFriday => 'الجمعة';
+
+  @override
+  String get dayNameSaturday => 'السبت';
+
+  @override
+  String get chooseDeliveryDateTime => 'اختر تاريخ ووقت التوصيل';
+
+  @override
+  String get couldNotLoadTimeSlots => 'تعذّر تحميل مواعيد التوصيل.';
+
+  @override
+  String get noDeliveryTimesForDate => 'لا تتوفر مواعيد توصيل لهذا التاريخ.\nيرجى اختيار يوم آخر.';
+
+  @override
+  String get selectATime => 'اختر وقتاً';
+
+  @override
+  String confirmAtHour(String hour) {
+    return 'تأكيد — $hour:00';
+  }
+
+  @override
+  String deliveryWindowRange(String range) {
+    return 'نافذة التوصيل: $range';
+  }
+
+  @override
+  String spotsLeft(int count) {
+    return 'تبقى $count أماكن';
+  }
+
+  @override
+  String get cartRequiresWindowScheduling => 'هذا الطلب يتطلب تحديد نافذة توصيل مجدولة.';
+
+  @override
+  String get tapToChooseDeliveryDateTime => 'اضغط لاختيار تاريخ ووقت التوصيل';
+
+  @override
+  String get pleaseSelectDeliverySlot => 'يرجى اختيار موعد التوصيل للمتابعة.';
+
+  @override
+  String get noDeliveryDatesAvailable => 'لا تتوفر مواعيد توصيل لهذا المنتج.';
+
+  @override
+  String get pleaseSelectDeliveryDateAndSlot => 'يرجى اختيار تاريخ ووقت التوصيل أولاً.';
 }

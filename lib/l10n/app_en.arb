@@ -822,10 +822,75 @@
       "to":   { "type": "String" }
     }
   },
-
+         "preOrder": "Pre-Order",
   "slotFull": "Full",
   "@slotFull": { "description": "Badge shown on a fully-booked delivery slot" },
 
   "slotAvailable": "Available",
-  "@slotAvailable": { "description": "Badge shown on an open delivery slot" }
+  "@slotAvailable": { "description": "Badge shown on an open delivery slot" },
+
+  "deliveryScheduleTitle": "Delivery Schedule",
+  "@deliveryScheduleTitle": { "description": "Section heading in product details for delivery-window products" },
+
+  "deliveryScheduleSubtitle": "This product requires advance scheduling. Place your order during an ORDER window and receive delivery in a DELIVERY window.",
+  "@deliveryScheduleSubtitle": { "description": "Explanation under the delivery schedule heading" },
+
+  "orderWindowLabel": "Order window",
+  "@orderWindowLabel": { "description": "Legend chip label for ORDER windows" },
+
+  "deliveryWindowLabel": "Delivery window",
+  "@deliveryWindowLabel": { "description": "Legend chip label for DELIVERY windows" },
+
+  "dayNameSunday": "Sunday",
+  "dayNameMonday": "Monday",
+  "dayNameTuesday": "Tuesday",
+  "dayNameWednesday": "Wednesday",
+  "dayNameThursday": "Thursday",
+  "dayNameFriday": "Friday",
+  "dayNameSaturday": "Saturday",
+
+  "chooseDeliveryDateTime": "Choose Delivery Date & Time",
+  "@chooseDeliveryDateTime": { "description": "Picker sheet header" },
+
+  "couldNotLoadTimeSlots": "Could not load time slots.",
+  "@couldNotLoadTimeSlots": { "description": "Error message in slot picker when API fails" },
+
+  "noDeliveryTimesForDate": "No delivery times available for this date.\nPlease choose another day.",
+  "@noDeliveryTimesForDate": { "description": "Shown when no slots exist for the selected date" },
+
+  "selectATime": "Select a time",
+  "@selectATime": { "description": "Placeholder on confirm button when no hour is selected" },
+
+  "confirmAtHour": "Confirm — {hour}:00",
+  "@confirmAtHour": {
+    "description": "Confirm button label showing the selected hour",
+    "placeholders": { "hour": { "type": "String" } }
+  },
+
+  "deliveryWindowRange": "Delivery window: {range}",
+  "@deliveryWindowRange": {
+    "description": "Label showing the full window range above hour chips",
+    "placeholders": { "range": { "type": "String" } }
+  },
+
+  "spotsLeft": "{count} spots left",
+  "@spotsLeft": {
+    "description": "Badge showing remaining capacity in a slot",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "cartRequiresWindowScheduling": "This order requires a scheduled delivery window.",
+  "@cartRequiresWindowScheduling": { "description": "Info banner in cart for window-scheduling products" },
+
+  "tapToChooseDeliveryDateTime": "Tap to choose delivery date & time",
+  "@tapToChooseDeliveryDateTime": { "description": "Placeholder text in cart schedule tile before selection" },
+
+  "pleaseSelectDeliverySlot": "Please select a delivery slot to continue.",
+  "@pleaseSelectDeliverySlot": { "description": "Validation error in cart when no slot is chosen" },
+
+  "noDeliveryDatesAvailable": "No delivery dates available for this product.",
+  "@noDeliveryDatesAvailable": { "description": "Toast when product windows yield no future dates" },
+
+  "pleaseSelectDeliveryDateAndSlot": "Please select a delivery date and time slot first.",
+  "@pleaseSelectDeliveryDateAndSlot": { "description": "Toast when user taps checkout without selecting a slot" }
 }

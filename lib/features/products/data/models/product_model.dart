@@ -56,6 +56,11 @@ class ProductModel {
   final int? pickupReadyDurationFrom;
   final int? pickupReadyDurationTo;
 
+  /// When true this product requires delivery-window scheduling.
+  /// The supplier has defined specific ORDER and DELIVERY windows via
+  /// /supplier/product/get-supplier-product-delivery-windows/:spId.
+  final bool requiresDeliveryWindows;
+
   const ProductModel({
     required this.id,
     required this.name,
@@ -105,6 +110,7 @@ class ProductModel {
     this.reservedInCartsAmount,
     this.pickupReadyDurationFrom,
     this.pickupReadyDurationTo,
+    this.requiresDeliveryWindows = false,
   });
 
   // ── Type-coercion helpers ─────────────────────────────────────────────────
@@ -250,6 +256,7 @@ class ProductModel {
       reservedInCartsAmount: _parseInt(sp?['reserved_in_carts_amount']),
       pickupReadyDurationFrom:   _parseInt(sp?['estimated_time_from']),
       pickupReadyDurationTo:   _parseInt(sp?['estimated_time_to']),
+      requiresDeliveryWindows: _parseBool(sp?['requires_delivery_windows']),
 
       // ── Offer: unit_price < original_price means an active discount ───────
       offer:        offerPrice,
@@ -337,6 +344,7 @@ class ProductModel {
       reservedInCartsAmount: _parseInt(sp['reserved_in_carts_amount']),
       pickupReadyDurationFrom:   _parseInt(sp['estimated_time_from']),
       pickupReadyDurationTo:   _parseInt(sp['estimated_time_to']),
+      requiresDeliveryWindows: _parseBool(sp['requires_delivery_windows']),
 
       // ── Offer ─────────────────────────────────────────────────────────────
       offer:             offerPrice,

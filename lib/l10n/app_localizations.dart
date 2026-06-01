@@ -3521,6 +3521,12 @@ abstract class AppLocalizations {
   /// **'Confirm {from}–{to}'**
   String confirmSlotTime(String from, String to);
 
+  /// No description provided for @preOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-Order'**
+  String get preOrder;
+
   /// Badge shown on a fully-booked delivery slot
   ///
   /// In en, this message translates to:
@@ -3532,6 +3538,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Available'**
   String get slotAvailable;
+
+  /// Section heading in product details for delivery-window products
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Schedule'**
+  String get deliveryScheduleTitle;
+
+  /// Explanation under the delivery schedule heading
+  ///
+  /// In en, this message translates to:
+  /// **'This product requires advance scheduling. Place your order during an ORDER window and receive delivery in a DELIVERY window.'**
+  String get deliveryScheduleSubtitle;
+
+  /// Legend chip label for ORDER windows
+  ///
+  /// In en, this message translates to:
+  /// **'Order window'**
+  String get orderWindowLabel;
+
+  /// Legend chip label for DELIVERY windows
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery window'**
+  String get deliveryWindowLabel;
+
+  /// No description provided for @dayNameSunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get dayNameSunday;
+
+  /// No description provided for @dayNameMonday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get dayNameMonday;
+
+  /// No description provided for @dayNameTuesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get dayNameTuesday;
+
+  /// No description provided for @dayNameWednesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get dayNameWednesday;
+
+  /// No description provided for @dayNameThursday.
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get dayNameThursday;
+
+  /// No description provided for @dayNameFriday.
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get dayNameFriday;
+
+  /// No description provided for @dayNameSaturday.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get dayNameSaturday;
+
+  /// Picker sheet header
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Delivery Date & Time'**
+  String get chooseDeliveryDateTime;
+
+  /// Error message in slot picker when API fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load time slots.'**
+  String get couldNotLoadTimeSlots;
+
+  /// Shown when no slots exist for the selected date
+  ///
+  /// In en, this message translates to:
+  /// **'No delivery times available for this date.\nPlease choose another day.'**
+  String get noDeliveryTimesForDate;
+
+  /// Placeholder on confirm button when no hour is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Select a time'**
+  String get selectATime;
+
+  /// Confirm button label showing the selected hour
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm — {hour}:00'**
+  String confirmAtHour(String hour);
+
+  /// Label showing the full window range above hour chips
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery window: {range}'**
+  String deliveryWindowRange(String range);
+
+  /// Badge showing remaining capacity in a slot
+  ///
+  /// In en, this message translates to:
+  /// **'{count} spots left'**
+  String spotsLeft(int count);
+
+  /// Info banner in cart for window-scheduling products
+  ///
+  /// In en, this message translates to:
+  /// **'This order requires a scheduled delivery window.'**
+  String get cartRequiresWindowScheduling;
+
+  /// Placeholder text in cart schedule tile before selection
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to choose delivery date & time'**
+  String get tapToChooseDeliveryDateTime;
+
+  /// Validation error in cart when no slot is chosen
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a delivery slot to continue.'**
+  String get pleaseSelectDeliverySlot;
+
+  /// Toast when product windows yield no future dates
+  ///
+  /// In en, this message translates to:
+  /// **'No delivery dates available for this product.'**
+  String get noDeliveryDatesAvailable;
+
+  /// Toast when user taps checkout without selecting a slot
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a delivery date and time slot first.'**
+  String get pleaseSelectDeliveryDateAndSlot;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

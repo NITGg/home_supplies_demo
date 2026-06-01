@@ -1298,28 +1298,28 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline_rounded,
-                          size: 14,
-                          color: Colors.grey.shade500,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            l10n.scheduledOrderNote,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Padding(
+                  //   padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  //   child: Row(
+                  //     children: [
+                  //       Icon(
+                  //         Icons.info_outline_rounded,
+                  //         size: 14,
+                  //         color: Colors.grey.shade500,
+                  //       ),
+                  //       const SizedBox(width: 6),
+                  //       Expanded(
+                  //         child: Text(
+                  //           l10n.scheduledOrderNote,
+                  //           style: TextStyle(
+                  //             fontSize: 12,
+                  //             color: Colors.grey.shade500,
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
 
                   // ── Validation hint ──────────────────────────────────
                   if (_scheduleAt == null) ...[

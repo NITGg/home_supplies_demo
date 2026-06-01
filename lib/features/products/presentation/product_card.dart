@@ -228,13 +228,19 @@ class _ProductCardState extends State<ProductCard>
                     fit: StackFit.expand,
                     children: [
                       _ProductImage(imageUrl: product.primaryImage),
-                      if (product.pickupReadyDurationFrom != null)
+                      if (product.requiresDeliveryWindows)
+                        const Positioned(
+                          bottom: 8,
+                          left: 8,
+                          child: _DeliveryWindowBadge(),
+                        )
+                      else if (product.pickupReadyDurationFrom != null)
                         Positioned(
                           bottom: 8,
                           left: 8,
                           child: _ReadyTimePill(
                             minutes: product.pickupReadyDurationFrom!,
-                            minutesTo: product.pickupReadyDurationTo,   // ← ADD
+                            minutesTo: product.pickupReadyDurationTo,
                           ),
                         ),
                       Positioned(
@@ -777,6 +783,43 @@ class _PriceRow extends StatelessWidget {
         color: primaryColor,
         fontWeight: FontWeight.bold,
         fontSize: 13,
+      ),
+    );
+  }
+}
+
+// ── Delivery window badge ─────────────────────────────────────────────────────
+
+/// Shown on product cards when [ProductModel.requiresDeliveryWindows] is true.
+/// A simple pill indicating the product needs scheduled-window delivery so the
+/// user knows before tapping that ordering requires a delivery slot.
+class _DeliveryWindowBadge extends StatelessWidget {
+  const _DeliveryWindowBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.indigo.shade700.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.calendar_month_rounded, size: 10, color: Colors.white),
+          SizedBox(width: 3),
+          Text(
+            l10n.preOrder,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -105,7 +105,6 @@ class OrderRemoteDataSource {
 
     final bool isScheduled = scheduleAt != null;
     final String? scheduleAtUtc = scheduleAt?.toUtc().toIso8601String();
-
     final response = await _dio.post(
       '/orders?lang=${LocaleManager.currentLocale}',
       data: {

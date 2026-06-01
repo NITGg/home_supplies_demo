@@ -1,41 +1,65 @@
-// import 'package:dio/dio.dart';
-// import 'package:tawreedat_go/core/utils/api_client.dart';
-// import 'package:tawreedat_go/core/utils/logger.dart';
-//
-// import '../models/slot_model.dart';
-//
-// class SlotRepository {
-//   /// Uses the shared [ApiClient] singleton which already handles:
-//   ///   • Bearer token injection
-//   ///   • 401 → session clear + redirect to login
-//   ///   • Timeout / connectivity friendly Arabic error messages
-//   ///   • 30-day session-age enforcement
-//   final _dio = ApiClient.instance.dio;
-//
-//   /// Fetches upcoming slot availability.
-//   ///
-//   /// [days] controls how many calendar days ahead to include (default: 14).
-//   /// Throws a [DioException] with a user-friendly message on failure — the
-//   /// interceptor has already replaced raw server errors/HTML with readable
-//   /// Arabic strings, so callers can surface [e.message] directly in the UI.
-//   Future<SlotStatusData> fetchSlots({int days = 30}) async {
-//     try {
-//       final response = await _dio.get<Map<String, dynamic>>(
-//         'https://tawreedatsupplierapis.nitg-eg.com/api/v1/supplier/profile/supplier-slot-max-order-status/1',
-//         queryParameters: {'days': days},
-//       );
-//
-//       return SlotStatusData.fromJson(response.data!);
-//     } on DioException catch (e, stackTrace) {
-//       dLog('[SlotRepository] DioException: ${e.message}');
-//       dLog('[SlotRepository] Status code: ${e.response?.statusCode}');
-//       dLog('[SlotRepository] Response data: ${e.response?.data}');
-//       dLog('[SlotRepository] Stack trace: $stackTrace');
-//       rethrow;
-//     } catch (e, stackTrace) {
-//       dLog('[SlotRepository] Unexpected error: $e');
-//       dLog('[SlotRepository] Stack trace: $stackTrace');
-//       rethrow;
-//     }
-//   }
-// }
+import 'package:dio/dio.dart';
+import 'package:tawreedat_go/core/utils/api_client.dart';
+import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
+import 'package:tawreedat_go/core/utils/logger.dart';
+
+import '../models/slot_model.dart';
+
+// ── Product delivery windows repo ─────────────────────────────────────────────
+
+class DeliveryWindowsRepository {
+  /// Uses the supplier API (external base URL) — NOT the standard app base URL.
+  static const _supplierBase =
+      'https://tawreedatsupplierapis.nitg-eg.com/api/v1';
+
+  final Dio _dio = ApiClient.instance.dio;
+
+  /// Fetches ORDER and DELIVERY windows for [supplierProductId].
+  ///
+  /// The endpoint is on the supplier API host so we build the full URL
+  /// explicitly rather than relying on the app's configured baseUrl.
+  Future<ProductDeliveryWindowsData> fetchWindows(
+      int supplierProductId) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '$_supplierBase/supplier/product/get-supplier-product-delivery-windows/$supplierProductId/${AppSettings.platform_supplier_id}',
+      );
+      return ProductDeliveryWindowsData.fromJson(response.data!);
+    } on DioException catch (e) {
+      dLog('[DeliveryWindowsRepo] DioException: ${e.message}');
+      rethrow;
+    } catch (e) {
+      dLog('[DeliveryWindowsRepo] Unexpected error: $e');
+      rethrow;
+    }
+  }
+}
+
+// ── Cart delivery slots repo ──────────────────────────────────────────────────
+
+class CartDeliverySlotsRepository {
+  final Dio _dio = ApiClient.instance.dio;
+
+  /// Fetches available delivery time slots for [date].
+  ///
+  /// Pass the intended delivery date. The backend returns:
+  ///   • is_scheduled_windows: bool — if false this cart is a normal cart
+  ///   • slots: [{time_from, time_to, remaining}] — remaining = 0 means full
+  Future<CartDeliverySlotsResponse> fetchSlots(DateTime date) async {
+    final dateStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/orders/cart/delivery-slots',
+        queryParameters: {'date': dateStr},
+      );
+      return CartDeliverySlotsResponse.fromJson(response.data!);
+    } on DioException catch (e) {
+      dLog('[CartDeliverySlotsRepo] DioException: ${e.message}');
+      rethrow;
+    } catch (e) {
+      dLog('[CartDeliverySlotsRepo] Unexpected error: $e');
+      rethrow;
+    }
+  }
+}
