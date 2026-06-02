@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 
+import '../../../core/utils/time_format.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/models/slot_model.dart';
 import '../data/repo/slot_repo.dart';
@@ -61,9 +62,12 @@ class _HourOption {
 
   const _HourOption({required this.slot, required this.hour, required this.minute});
 
-  /// "10:00" / "10:30"
-  String get label =>
+  /// Raw "HH:mm" string (used for scheduling logic).
+  String get raw =>
       '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+
+  /// 12-hour display label, e.g. "10:00 AM" / "10:00 ص".
+  String label({bool isArabic = false}) => format12h(raw, isArabic: isArabic);
 
   /// Builds the exact schedule DateTime for [date].
   DateTime toScheduledAt(DateTime date) =>
@@ -317,10 +321,11 @@ class _DeliveryWindowPickerSheetState
 
   Widget _buildConfirmButton(double bottomPad) {
     final result = _buildResult();
-    final l10n   = AppLocalizations.of(context)!;
+    final l10n     = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final label = result == null
         ? l10n.selectATime
-        : l10n.confirmAtHour(_selectedOption!.label);
+        : l10n.confirmAtHour(_selectedOption!.label(isArabic: isArabic));
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 8, 16, 12 + bottomPad),
@@ -349,7 +354,12 @@ class _WindowRangeLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n     = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final rangeLabel = format12hRange(
+      slot.timeFrom, slot.timeTo,
+      isArabic: isArabic,
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -357,7 +367,7 @@ class _WindowRangeLabel extends StatelessWidget {
           Icon(Icons.schedule_rounded, size: 13, color: Colors.grey.shade500),
           const SizedBox(width: 5),
           Text(
-            l10n.deliveryWindowRange(slot.timeRange),
+            l10n.deliveryWindowRange(rangeLabel),
             style: TextStyle(
               fontSize: 12,
               color: Colors.grey.shade500,
@@ -447,7 +457,9 @@ class _HourChip extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              option.label,
+              option.label(
+                isArabic: Localizations.localeOf(context).languageCode == 'ar',
+              ),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/formatDate.dart';
+import '../../../core/utils/time_format.dart';
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
@@ -1544,6 +1545,7 @@ class _WindowPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final days = windowsByDay.keys.toList()..sort();
 
     return Container(
@@ -1607,7 +1609,10 @@ class _WindowPanel extends StatelessWidget {
                       spacing: 4,
                       runSpacing: 4,
                       children: windows.map((w) => _TimeChip(
-                        label: w.timeRange,
+                        label: format12hRange(
+                          w.timeFrom, w.timeTo,
+                          isArabic: isArabic,
+                        ),
                         color: color,
                       )).toList(),
                     ),
