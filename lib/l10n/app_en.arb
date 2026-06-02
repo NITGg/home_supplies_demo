@@ -861,7 +861,7 @@
   "selectATime": "Select a time",
   "@selectATime": { "description": "Placeholder on confirm button when no hour is selected" },
 
-  "confirmAtHour": "Confirm — {hour}:00",
+  "confirmAtHour": "Confirm — {hour}",
   "@confirmAtHour": {
     "description": "Confirm button label showing the selected hour",
     "placeholders": { "hour": { "type": "String" } }

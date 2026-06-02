@@ -3632,7 +3632,7 @@ abstract class AppLocalizations {
   /// Confirm button label showing the selected hour
   ///
   /// In en, this message translates to:
-  /// **'Confirm — {hour}:00'**
+  /// **'Confirm — {hour}'**
   String confirmAtHour(String hour);
 
   /// Label showing the full window range above hour chips

@@ -1830,7 +1830,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String confirmAtHour(String hour) {
-    return 'Confirm — $hour:00';
+    return 'Confirm — $hour';
   }
 
   @override
