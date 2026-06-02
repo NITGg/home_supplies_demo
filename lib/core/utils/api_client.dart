@@ -51,7 +51,7 @@ class ApiClient {
 
         final token = await SecureStorageService().getToken();
         if (token != null && token.isNotEmpty) {
-          dLog('🔒 $token');
+          // dLog('🔒 $token');
           options.headers['Authorization'] = 'Bearer $token';
         }
         handler.next(options);
