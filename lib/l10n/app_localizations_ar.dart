@@ -1857,4 +1857,22 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pleaseSelectDeliveryDateAndSlot => 'يرجى اختيار تاريخ ووقت التوصيل أولاً.';
+
+  @override
+  String get orderTimesTitle => 'مواعيد الطلب';
+
+  @override
+  String get deliveryTimesTitle => 'مواعيد التوصيل';
+
+  @override
+  String get orderTimesHint => 'قدّم طلبك خلال هذه المواعيد';
+
+  @override
+  String get deliveryTimesHint => 'ستستلم طلبك في إحدى هذه المواعيد';
+
+  @override
+  String get outsideOrderWindowBanner => 'الطلب غير متاح حالياً — قدّم طلبك خلال مواعيد الطلب';
+
+  @override
+  String get outsideOrderWindowButton => 'خارج وقت الطلب';
 }

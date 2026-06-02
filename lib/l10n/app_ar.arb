@@ -890,5 +890,23 @@
   "@noDeliveryDatesAvailable": { "description": "Toast when product windows yield no future dates" },
 
   "pleaseSelectDeliveryDateAndSlot": "يرجى اختيار تاريخ ووقت التوصيل أولاً.",
-  "@pleaseSelectDeliveryDateAndSlot": { "description": "Toast when user taps checkout without selecting a slot" }
+  "@pleaseSelectDeliveryDateAndSlot": { "description": "Toast when user taps checkout without selecting a slot" },
+
+  "orderTimesTitle": "مواعيد الطلب",
+  "@orderTimesTitle": { "description": "Section title for order windows in product details" },
+
+  "deliveryTimesTitle": "مواعيد التوصيل",
+  "@deliveryTimesTitle": { "description": "Section title for delivery windows in product details" },
+
+  "orderTimesHint": "قدّم طلبك خلال هذه المواعيد",
+  "@orderTimesHint": { "description": "Subtitle under order times section" },
+
+  "deliveryTimesHint": "ستستلم طلبك في إحدى هذه المواعيد",
+  "@deliveryTimesHint": { "description": "Subtitle under delivery times section" },
+
+  "outsideOrderWindowBanner": "الطلب غير متاح حالياً — قدّم طلبك خلال مواعيد الطلب",
+  "@outsideOrderWindowBanner": { "description": "Warning banner shown when outside order window" },
+
+  "outsideOrderWindowButton": "خارج وقت الطلب",
+  "@outsideOrderWindowButton": { "description": "Disabled add-to-cart button label when outside order window" }
 }

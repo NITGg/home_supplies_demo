@@ -1857,4 +1857,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pleaseSelectDeliveryDateAndSlot => 'Please select a delivery date and time slot first.';
+
+  @override
+  String get orderTimesTitle => 'Order Times';
+
+  @override
+  String get deliveryTimesTitle => 'Delivery Times';
+
+  @override
+  String get orderTimesHint => 'Place your order during these times';
+
+  @override
+  String get deliveryTimesHint => 'Your order will arrive during one of these times';
+
+  @override
+  String get outsideOrderWindowBanner => 'Ordering unavailable now — place your order during the listed order times';
+
+  @override
+  String get outsideOrderWindowButton => 'Outside Order Time';
 }

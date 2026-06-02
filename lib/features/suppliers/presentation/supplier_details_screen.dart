@@ -1521,16 +1521,6 @@ class _DayRow extends StatelessWidget {
             width: 100,
             child: Row(
               children: [
-                if (isToday)
-                  Container(
-                    width: 4,
-                    height: 14,
-                    margin: const EdgeInsets.only(right: 6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
                 Expanded(
                   child: Text(
                     dayName,

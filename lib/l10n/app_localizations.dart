@@ -3676,6 +3676,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please select a delivery date and time slot first.'**
   String get pleaseSelectDeliveryDateAndSlot;
+
+  /// Section title for order windows in product details
+  ///
+  /// In en, this message translates to:
+  /// **'Order Times'**
+  String get orderTimesTitle;
+
+  /// Section title for delivery windows in product details
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Times'**
+  String get deliveryTimesTitle;
+
+  /// Subtitle under order times section
+  ///
+  /// In en, this message translates to:
+  /// **'Place your order during these times'**
+  String get orderTimesHint;
+
+  /// Subtitle under delivery times section
+  ///
+  /// In en, this message translates to:
+  /// **'Your order will arrive during one of these times'**
+  String get deliveryTimesHint;
+
+  /// Warning banner shown when outside order window
+  ///
+  /// In en, this message translates to:
+  /// **'Ordering unavailable now — place your order during the listed order times'**
+  String get outsideOrderWindowBanner;
+
+  /// Disabled add-to-cart button label when outside order window
+  ///
+  /// In en, this message translates to:
+  /// **'Outside Order Time'**
+  String get outsideOrderWindowButton;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

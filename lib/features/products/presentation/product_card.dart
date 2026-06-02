@@ -59,12 +59,17 @@ class ProductCard extends StatefulWidget {
   /// disabled so the user cannot place an order outside opening hours.
   final bool isSupplierOpen;
 
+  /// When false and the product requires delivery windows, the add-to-cart
+  /// button is dimmed to indicate the customer is outside the ordering window.
+  final bool isOrderingOpen;
+
   const ProductCard({
     super.key,
     required this.product,
     this.onTap,
     this.onQuantityChanged,
     this.isSupplierOpen = true,
+    this.isOrderingOpen = true,
   });
 
   @override
@@ -137,6 +142,7 @@ class _ProductCardState extends State<ProductCard>
   Future<void> _handleAdd(BuildContext ctx) async {
     if (_isGuest(ctx)) { _promptLogin(ctx); return; }                 // ← GUARD
     if (widget.product.isOutOfStock || !widget.isSupplierOpen) return;
+    if (widget.product.requiresDeliveryWindows && !widget.isOrderingOpen) return;
     HapticFeedback.lightImpact();
     _triggerBounce();
     try {
@@ -328,6 +334,7 @@ class _ProductCardState extends State<ProductCard>
                           bounceScale: _bounceScale,
                           primaryColor: primaryColor,
                           isSupplierOpen: widget.isSupplierOpen,
+                          isOrderingOpen: widget.isOrderingOpen,
                           onAdd: () => _handleAdd(ctx),
                           onIncrement: () =>
                               _handleIncrement(ctx, cartState.quantity),
@@ -402,6 +409,7 @@ class _CartControl extends StatelessWidget {
   final Animation<double> bounceScale;
   final Color primaryColor;
   final bool isSupplierOpen;
+  final bool isOrderingOpen;
   final VoidCallback onAdd;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
@@ -412,6 +420,7 @@ class _CartControl extends StatelessWidget {
     required this.bounceScale,
     required this.primaryColor,
     this.isSupplierOpen = true,
+    this.isOrderingOpen = true,
     required this.onAdd,
     required this.onIncrement,
     required this.onDecrement,
@@ -420,6 +429,9 @@ class _CartControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!isSupplierOpen && !product.isOutOfStock) {
+      return _AddButton(onTap: null, color: primaryColor);
+    }
+    if (product.requiresDeliveryWindows && !isOrderingOpen && !product.isOutOfStock) {
       return _AddButton(onTap: null, color: primaryColor);
     }
 

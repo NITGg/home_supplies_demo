@@ -117,6 +117,25 @@ class ProductDeliveryWindowsData {
     return map;
   }
 
+  /// True when the current local time falls inside any ORDER window for today.
+  bool get isCurrentlyInOrderWindow {
+    if (orderWindows.isEmpty) return false;
+    final now = DateTime.now();
+    final jsDay = now.weekday == 7 ? 0 : now.weekday;
+    final nowMin = now.hour * 60 + now.minute;
+    return orderWindows.any((w) {
+      if (w.dayOfWeek != jsDay) return false;
+      final from = _timeToMinutes(w.timeFrom);
+      final to   = _timeToMinutes(w.timeTo);
+      return nowMin >= from && nowMin < to;
+    });
+  }
+
+  static int _timeToMinutes(String t) {
+    final p = t.split(':');
+    return int.parse(p[0]) * 60 + int.parse(p[1]);
+  }
+
   /// Returns the next N valid DELIVERY dates starting from [from], restricted
   /// to days that have a DELIVERY window configured.
   List<DateTime> nextDeliveryDates({

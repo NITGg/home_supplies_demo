@@ -94,7 +94,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     _loadDeliveryWindows(product.spId!);
                   });
                 }
-                return _buildLoaded(product, isSupplierOpen: isSupplierOpen);
+                final isInOrderWindow = !product.requiresDeliveryWindows ||
+                    _deliveryWindows == null ||
+                    _deliveryWindows!.isCurrentlyInOrderWindow;
+                return _buildLoaded(
+                  product,
+                  isSupplierOpen: isSupplierOpen,
+                  isInOrderWindow: isInOrderWindow,
+                );
               }(),
           };
         },
@@ -102,7 +109,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildLoaded(ProductModel product, {bool isSupplierOpen = true}) {
+  Widget _buildLoaded(
+    ProductModel product, {
+    bool isSupplierOpen = true,
+    bool isInOrderWindow = true,
+  }) {
     final l10n = AppLocalizations.of(context)!;
 
     return SafeArea(
@@ -189,6 +200,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         bottomNavigationBar: _AddToCartBar(
           product: product,
           isSupplierOpen: isSupplierOpen,
+          isInOrderWindow: isInOrderWindow,
         ),
       ),
     );
@@ -231,8 +243,13 @@ class _BarCartState {
 class _AddToCartBar extends StatefulWidget {
   final ProductModel product;
   final bool isSupplierOpen;
+  final bool isInOrderWindow;
 
-  const _AddToCartBar({required this.product, this.isSupplierOpen = true});
+  const _AddToCartBar({
+    required this.product,
+    this.isSupplierOpen = true,
+    this.isInOrderWindow = true,
+  });
 
   @override
   State<_AddToCartBar> createState() => _AddToCartBarState();
@@ -416,6 +433,11 @@ class _AddToCartBarState extends State<_AddToCartBar>
               key: const ValueKey('closed'),
               l10n: l10n,
             );
+          } else if (!widget.isInOrderWindow) {
+            content = _OutsideOrderWindowButton(
+              key: const ValueKey('no-order-window'),
+              l10n: l10n,
+            );
           } else if (isBusy) {
             content = _BusyBar(
               key: const ValueKey('busy'),
@@ -509,6 +531,31 @@ class _SupplierClosedButton extends StatelessWidget {
           context,
         ).colorScheme.errorContainer.withOpacity(0.55),
         disabledForegroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+}
+
+// ── Outside order window button ───────────────────────────────────────────────
+
+class _OutsideOrderWindowButton extends StatelessWidget {
+  final AppLocalizations l10n;
+
+  const _OutsideOrderWindowButton({super.key, required this.l10n});
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: null,
+      icon: const Icon(Icons.schedule_outlined),
+      label: Text(
+        l10n.outsideOrderWindowButton,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+      style: FilledButton.styleFrom(
+        minimumSize: const Size.fromHeight(56),
+        disabledBackgroundColor: Colors.orange.shade100.withOpacity(0.70),
+        disabledForegroundColor: Colors.orange.shade800,
       ),
     );
   }
@@ -1365,8 +1412,9 @@ class _ErrorView extends StatelessWidget {
 // ── Delivery windows section ──────────────────────────────────────────────────
 
 /// Shown in product details when [ProductModel.requiresDeliveryWindows] is true.
-/// Displays ORDER windows (when the customer can place orders) and DELIVERY
-/// windows (when the product will be delivered), grouped by day of week.
+/// Displays two separate panels: ORDER times (مواعيد الطلب) and DELIVERY times
+/// (مواعيد التوصيل), grouped by day. Also shows a warning banner when the
+/// current time is outside any order window.
 class _DeliveryWindowsSection extends StatelessWidget {
   final bool isLoading;
   final ProductDeliveryWindowsData? data;
@@ -1375,10 +1423,30 @@ class _DeliveryWindowsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = Colors.indigo.shade700;
-    final l10n   = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
 
-    // Day names indexed 0 (Sun) … 6 (Sat) — pulled from localizations
+    if (isLoading) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    if (data == null || !data!.requiresDeliveryWindows) return const SizedBox.shrink();
+
+    final isInWindow = data!.isCurrentlyInOrderWindow;
     final dayNames = [
       l10n.dayNameSunday,
       l10n.dayNameMonday,
@@ -1389,151 +1457,188 @@ class _DeliveryWindowsSection extends StatelessWidget {
       l10n.dayNameSaturday,
     ];
 
-    if (isLoading) {
-      return _buildCard(
-        accent: accent,
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
-          child: Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Outside-order-window warning ────────────────────────────────────
+        if (!isInWindow) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.orange.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline_rounded, size: 16, color: Colors.orange.shade700),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.outsideOrderWindowBanner,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.orange.shade800,
+                      height: 1.4,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+          const SizedBox(height: 12),
+        ],
+
+        // ── Two panels side by side ──────────────────────────────────────────
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // مواعيد الطلب
+            Expanded(
+              child: _WindowPanel(
+                icon: Icons.edit_calendar_rounded,
+                color: Colors.blue.shade700,
+                title: l10n.orderTimesTitle,
+                hint: l10n.orderTimesHint,
+                windowsByDay: data!.orderWindowsByDay,
+                dayNames: dayNames,
+              ),
+            ),
+            const SizedBox(width: 10),
+            // مواعيد التوصيل
+            Expanded(
+              child: _WindowPanel(
+                icon: Icons.local_shipping_rounded,
+                color: Colors.green.shade700,
+                title: l10n.deliveryTimesTitle,
+                hint: l10n.deliveryTimesHint,
+                windowsByDay: data!.deliveryWindowsByDay,
+                dayNames: dayNames,
+              ),
+            ),
+          ],
         ),
-      );
-    }
+      ],
+    );
+  }
+}
 
-    if (data == null || !data!.requiresDeliveryWindows) return const SizedBox.shrink();
+class _WindowPanel extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String hint;
+  final Map<int, List<DeliveryWindow>> windowsByDay;
+  final List<String> dayNames;
 
-    final orderByDay    = data!.orderWindowsByDay;
-    final deliveryByDay = data!.deliveryWindowsByDay;
-    final allDays       = {...orderByDay.keys, ...deliveryByDay.keys}.toList()..sort();
+  const _WindowPanel({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.hint,
+    required this.windowsByDay,
+    required this.dayNames,
+  });
 
-    return _buildCard(
-      accent: accent,
+  @override
+  Widget build(BuildContext context) {
+    final days = windowsByDay.keys.toList()..sort();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.20)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ───────────────────────────────────────────────────────
+          // ── Header ──────────────────────────────────────────────────────
           Row(
             children: [
-              Icon(Icons.calendar_month_rounded, size: 16, color: accent),
-              const SizedBox(width: 6),
-              Text(
-                l10n.deliveryScheduleTitle,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: accent),
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
-            l10n.deliveryScheduleSubtitle,
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600, height: 1.4),
+            hint,
+            style: TextStyle(fontSize: 10, color: Colors.grey.shade600, height: 1.4),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          // ── Day rows ──────────────────────────────────────────────────────
-          ...allDays.map((dow) {
-            final dayLabel   = dayNames[dow];
-            final orders     = orderByDay[dow] ?? [];
-            final deliveries = deliveryByDay[dow] ?? [];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 80,
-                    child: Text(
-                      dayLabel,
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          // ── Day rows ────────────────────────────────────────────────────
+          if (days.isEmpty)
+            Text(
+              '—',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+            )
+          else
+            ...days.map((dow) {
+              final windows = windowsByDay[dow] ?? [];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      dayNames[dow],
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Wrap(
-                      spacing: 6,
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 4,
                       runSpacing: 4,
-                      children: [
-                        ...orders.map((w) => _WindowChip(
-                              label: w.timeRange,
-                              type: 'ORDER',
-                              color: Colors.blue.shade700,
-                            )),
-                        ...deliveries.map((w) => _WindowChip(
-                              label: w.timeRange,
-                              type: 'DELIVERY',
-                              color: Colors.green.shade700,
-                            )),
-                      ],
+                      children: windows.map((w) => _TimeChip(
+                        label: w.timeRange,
+                        color: color,
+                      )).toList(),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }),
-
-          // ── Legend ────────────────────────────────────────────────────────
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              _WindowChip(label: l10n.orderWindowLabel,    type: 'ORDER',    color: Colors.blue.shade700),
-              const SizedBox(width: 8),
-              _WindowChip(label: l10n.deliveryWindowLabel, type: 'DELIVERY', color: Colors.green.shade700),
-            ],
-          ),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
   }
-
-  Widget _buildCard({required Color accent, required Widget child}) =>
-      Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.indigo.shade50,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.indigo.shade100),
-        ),
-        child: child,
-      );
 }
 
-class _WindowChip extends StatelessWidget {
+class _TimeChip extends StatelessWidget {
   final String label;
-  final String type;
   final Color color;
 
-  const _WindowChip({required this.label, required this.type, required this.color});
+  const _TimeChip({required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withOpacity(0.10),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.35)),
+        border: Border.all(color: color.withOpacity(0.30)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            type == 'ORDER'
-                ? Icons.edit_calendar_rounded
-                : Icons.local_shipping_rounded,
-            size: 10,
-            color: color,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
-          ),
-        ],
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
       ),
     );
   }

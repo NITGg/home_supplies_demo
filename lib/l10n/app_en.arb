@@ -892,5 +892,23 @@
   "@noDeliveryDatesAvailable": { "description": "Toast when product windows yield no future dates" },
 
   "pleaseSelectDeliveryDateAndSlot": "Please select a delivery date and time slot first.",
-  "@pleaseSelectDeliveryDateAndSlot": { "description": "Toast when user taps checkout without selecting a slot" }
+  "@pleaseSelectDeliveryDateAndSlot": { "description": "Toast when user taps checkout without selecting a slot" },
+
+  "orderTimesTitle": "Order Times",
+  "@orderTimesTitle": { "description": "Section title for order windows in product details" },
+
+  "deliveryTimesTitle": "Delivery Times",
+  "@deliveryTimesTitle": { "description": "Section title for delivery windows in product details" },
+
+  "orderTimesHint": "Place your order during these times",
+  "@orderTimesHint": { "description": "Subtitle under order times section" },
+
+  "deliveryTimesHint": "Your order will arrive during one of these times",
+  "@deliveryTimesHint": { "description": "Subtitle under delivery times section" },
+
+  "outsideOrderWindowBanner": "Ordering unavailable now — place your order during the listed order times",
+  "@outsideOrderWindowBanner": { "description": "Warning banner shown when outside order window" },
+
+  "outsideOrderWindowButton": "Outside Order Time",
+  "@outsideOrderWindowButton": { "description": "Disabled add-to-cart button label when outside order window" }
 }
