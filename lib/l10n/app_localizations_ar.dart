@@ -1840,7 +1840,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String spotsLeft(int count) {
-    return 'تبقى $count أماكن';
+    return 'تبقى $count أماكن للحجز';
   }
 
   @override

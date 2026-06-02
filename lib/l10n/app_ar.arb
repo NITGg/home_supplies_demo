@@ -871,7 +871,7 @@
     "placeholders": { "range": { "type": "String" } }
   },
 
-  "spotsLeft": "تبقى {count} أماكن",
+  "spotsLeft": "تبقى {count} أماكن للحجز",
   "@spotsLeft": {
     "description": "Badge showing remaining capacity in a slot",
     "placeholders": { "count": { "type": "int" } }
