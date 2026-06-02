@@ -46,7 +46,9 @@ class CartCubit extends Cubit<CartState> {
   // ── Fetch ─────────────────────────────────────────────────────────────────
 
   void reset() {
-    for (final p in _pending.values) p.debounce.cancel();
+    for (final p in _pending.values) {
+      p.debounce.cancel();
+    }
     _pending.clear();
     _safeEmit(const CartLoading());
   }
@@ -210,7 +212,9 @@ class CartCubit extends Cubit<CartState> {
     final loaded = _loaded;
     if (loaded == null) return;
 
-    for (final p in _pending.values) p.debounce.cancel();
+    for (final p in _pending.values) {
+      p.debounce.cancel();
+    }
     _pending.clear();
 
     _safeEmit(CartLoaded(CartResponseModel(
@@ -244,7 +248,9 @@ class CartCubit extends Cubit<CartState> {
   }) async {
     final loaded = _loaded;
 
-    for (final p in _pending.values) p.debounce.cancel();
+    for (final p in _pending.values) {
+      p.debounce.cancel();
+    }
     _pending.clear();
 
     if (loaded != null) {

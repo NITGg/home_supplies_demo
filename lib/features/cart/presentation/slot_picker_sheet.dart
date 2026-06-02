@@ -134,7 +134,9 @@ class _DeliveryWindowPickerSheetState
   void _selectDate(DateTime date) {
     if (date.year == _selectedDate.year &&
         date.month == _selectedDate.month &&
-        date.day == _selectedDate.day) return;
+        date.day == _selectedDate.day) {
+      return;
+    }
     _selectedDate = date;
     _fetchSlots(date);
   }
