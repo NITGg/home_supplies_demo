@@ -16,6 +16,8 @@ class AppSettings {
   static int platform_supplier_id = 9;
   static String? ios_url;
   static bool? chat_enable_send_images;
+  static bool? paymob_enabled;
+  static bool? kashier_enabled;
 
   static String? ios_version;
 
@@ -46,6 +48,8 @@ class AppSettings {
         ios_url = settings['app_ios_url'];
         platform_supplier_id = (settings['platform_supplier_id'] as int?) ?? 9;
         chat_enable_send_images = settings['chat_enable_send_images'] as bool?;
+        kashier_enabled = settings['kashier_enabled'] as bool?;
+        paymob_enabled = settings['paymob_enabled'] as bool?;
         customer_budget_cash_on_delivery_limit =
             settings['customer_budget_cash_on_delivery_limit'];
         customer_catalog_cod_limit = settings['customer_catalog_cod_limit'];

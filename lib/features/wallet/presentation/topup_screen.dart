@@ -1,7 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import 'package:tawreedat_go/core/widgets/banners.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -101,7 +101,6 @@ class _TopUpScreenState extends State<TopUpScreen> {
         leading: BackButton(
           color: Colors.black,
           onPressed: () => context.pop(),
-
         ),
       ),
       body: BlocConsumer<WalletCubit, WalletState>(
@@ -138,14 +137,19 @@ class _TopUpScreenState extends State<TopUpScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline,
-                          color: Colors.blue.shade700, size: 24),
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.blue.shade700,
+                        size: 24,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           l10n.pendingCommissionsWillBeDeducted,
                           style: TextStyle(
-                              fontSize: 13, color: Colors.blue.shade700),
+                            fontSize: 13,
+                            color: Colors.blue.shade700,
+                          ),
                         ),
                       ),
                     ],
@@ -157,7 +161,9 @@ class _TopUpScreenState extends State<TopUpScreen> {
                 Text(
                   l10n.selectAmount,
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -171,7 +177,9 @@ class _TopUpScreenState extends State<TopUpScreen> {
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 16),
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? AppColors.kPrimaryColor
@@ -186,8 +194,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                           boxShadow: [
                             if (isSelected)
                               BoxShadow(
-                                color: AppColors.kPrimaryColor
-                                    .withOpacity(0.3),
+                                color: AppColors.kPrimaryColor.withOpacity(0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -198,9 +205,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: isSelected
-                                ? Colors.white
-                                : Colors.black87,
+                            color: isSelected ? Colors.white : Colors.black87,
                           ),
                         ),
                       ),
@@ -213,7 +218,9 @@ class _TopUpScreenState extends State<TopUpScreen> {
                 Text(
                   l10n.orEnterCustomAmount,
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -238,8 +245,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
 
                 Text(
                   l10n.minimumTopUp,
-                  style: TextStyle(
-                      fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
 
                 const SizedBox(height: 40),
@@ -291,7 +297,9 @@ class _PaymentMethodSheet extends StatelessWidget {
                 child: Text(
                   l10n.selectPaymentMethod,
                   style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               IconButton(
@@ -300,14 +308,27 @@ class _PaymentMethodSheet extends StatelessWidget {
               ),
             ],
           ),
-          // const SizedBox(height: 24),
-          // _PaymentMethodTile(
-          //   asset: 'assets/images/Paymob.jpg',
-          //   title: l10n.creditDebitCard,
-          //   subtitle: l10n.onlinePayment,
-          //   color: AppColors.kSecondaryColor,
-          //   onTap: onOnlinePayment,
-          // ),
+          if (AppSettings.kashier_enabled == true) ...[
+            const SizedBox(height: 24),
+            _PaymentMethodTile(
+              asset: 'assets/images/kashier.png',
+              title: l10n.creditDebitCard,
+              subtitle: l10n.onlinePayment,
+              color: AppColors.kSecondaryColor,
+              onTap: onOnlinePayment,
+            ),
+          ],
+          if (AppSettings.paymob_enabled == true) ...[
+            const SizedBox(height: 24),
+            _PaymentMethodTile(
+              asset: 'assets/images/Paymob.jpg',
+              title: l10n.creditDebitCard,
+              subtitle: l10n.onlinePayment,
+              color: AppColors.kSecondaryColor,
+              onTap: onOnlinePayment,
+            ),
+          ],
+
           const SizedBox(height: 12),
           _PaymentMethodTile(
             asset: 'assets/images/InstaPayVodaCash.png',
@@ -357,26 +378,38 @@ class _PaymentMethodTile extends StatelessWidget {
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Image.asset(asset,
-                  fit: BoxFit.cover, width: 40, height: 40),
+              child: Image.asset(
+                asset,
+                fit: BoxFit.scaleDown,
+                width: 40,
+                height: 40,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(subtitle,
-                      style: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade600)),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios,
-                size: 18, color: Colors.grey.shade400),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 18,
+              color: Colors.grey.shade400,
+            ),
           ],
         ),
       ),
