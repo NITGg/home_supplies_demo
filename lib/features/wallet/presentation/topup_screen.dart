@@ -113,7 +113,9 @@ class _TopUpScreenState extends State<TopUpScreen> {
       body: BlocConsumer<WalletCubit, WalletState>(
         listener: (context, state) {
           if (state is TopUpInitiated) {
-            dLog('🟢 TopUpInitiated received: provider=${state.response.provider}, url=${state.response.checkoutUrl}');
+            dLog(
+              '🟢 TopUpInitiated received: provider=${state.response.provider}, url=${state.response.checkoutUrl}',
+            );
             context.push(
               '/wallet/topup/payment',
               extra: {
@@ -324,7 +326,7 @@ class _PaymentMethodSheet extends StatelessWidget {
             const SizedBox(height: 24),
             _PaymentMethodTile(
               asset: 'assets/images/kashier.png',
-              title: l10n.creditDebitCard,
+              title: "${l10n.creditDebitCard} / ${l10n.mobileWallet}",
               subtitle: l10n.onlinePayment,
               color: AppColors.kSecondaryColor,
               onTap: onKashierPayment,
@@ -340,15 +342,17 @@ class _PaymentMethodSheet extends StatelessWidget {
               onTap: onPaymobPayment,
             ),
           ],
-
-          const SizedBox(height: 12),
-          _PaymentMethodTile(
-            asset: 'assets/images/InstaPayVodaCash.png',
-            title: l10n.mobileWalletInstaPay,
-            subtitle: l10n.transferToOurNumbers,
-            color: AppColors.kPrimaryColor,
-            onTap: onManualTransfer,
-          ),
+          if (AppSettings.paymob_enabled == false &&
+              AppSettings.kashier_enabled == false) ...[
+            const SizedBox(height: 12),
+            _PaymentMethodTile(
+              asset: 'assets/images/InstaPayVodaCash.png',
+              title: l10n.mobileWalletInstaPay,
+              subtitle: l10n.transferToOurNumbers,
+              color: AppColors.kPrimaryColor,
+              onTap: onManualTransfer,
+            ),
+          ],
           const SizedBox(height: 24),
         ],
       ),

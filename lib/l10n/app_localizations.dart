@@ -2423,6 +2423,12 @@ abstract class AppLocalizations {
   /// **'Mobile Wallet / InstaPay'**
   String get mobileWalletInstaPay;
 
+  /// No description provided for @mobileWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile Wallet'**
+  String get mobileWallet;
+
   /// No description provided for @transferToOurNumbers.
   ///
   /// In en, this message translates to:

@@ -522,6 +522,7 @@
       "creditDebitCard": "بطاقة الدفع",
       "onlinePayment": "الدفع عبر الإنترنت",
       "mobileWalletInstaPay": "محفظة موبايل / InstaPay",
+      "mobileWallet": "محفظة موبايل",
       "transferToOurNumbers": "التحويل إلى أرقامنا",
       "manualTransfer": "تحويل يدوي",
       "transferAmount": "حول المبلغ إلى أحد الحسابات التالية",

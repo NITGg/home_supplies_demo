@@ -1196,6 +1196,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mobileWalletInstaPay => 'Mobile Wallet / InstaPay';
 
   @override
+  String get mobileWallet => 'Mobile Wallet';
+
+  @override
   String get transferToOurNumbers => 'Transfer to our numbers';
 
   @override

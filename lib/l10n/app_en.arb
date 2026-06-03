@@ -520,6 +520,8 @@
   "creditDebitCard": "Credit/Debit Card",
   "onlinePayment": "Online Payment",
   "mobileWalletInstaPay": "Mobile Wallet / InstaPay",
+  "mobileWallet": "Mobile Wallet",
+
   "transferToOurNumbers": "Transfer to our numbers",
   "manualTransfer": "Manual Transfer",
   "transferAmount": "Transfer the amount to one of these accounts",
