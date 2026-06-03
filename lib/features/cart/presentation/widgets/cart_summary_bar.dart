@@ -192,6 +192,7 @@ class CartSummaryBar extends StatelessWidget {
                   }
                 : onPaymentMethodChanged,
             l10n: l10n,
+            cashDisabled: overCodLimit,
           ),
 
           const Divider(height: 24),

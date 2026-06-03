@@ -889,6 +889,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get created => 'Created';
 
   @override
+  String get pendingPayment => 'Pending Payment';
+
+  @override
   String get inProgress => 'In Progress';
 
   @override
@@ -1400,6 +1403,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cod => 'COD';
+
+  @override
+  String get card => 'Card';
 
   @override
   String get codN => 'COD';

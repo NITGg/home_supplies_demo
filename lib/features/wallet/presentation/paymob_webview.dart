@@ -13,12 +13,22 @@ class PaymobWebViewScreen extends StatefulWidget {
   final int transactionId;
   final String provider;
 
+  /// Called after a successful payment instead of the default
+  /// `/wallet/topup/success` navigation. Supply this when using the WebView
+  /// for non-wallet flows (e.g. order payment).
+  final VoidCallback? onPaymentSuccess;
+
+  /// Called after a failed payment instead of the default banner + pop.
+  final VoidCallback? onPaymentFailed;
+
   const PaymobWebViewScreen({
     super.key,
     required this.paymentUrl,
     required this.amount,
     required this.transactionId,
     this.provider = 'paymob',
+    this.onPaymentSuccess,
+    this.onPaymentFailed,
   });
 
   @override
@@ -48,7 +58,11 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
         NavigationDelegate(
           onPageStarted: (url) {
             dLog("➡️ Page started loading: $url");
-            setState(() => _isLoading = true);
+            // Lock back navigation as soon as any payment page starts loading.
+            setState(() {
+              _isLoading = true;
+              _canPop = false;
+            });
           },
           onPageFinished: (url) {
             dLog("✅ Page finished loading: $url");
@@ -57,13 +71,6 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
           onNavigationRequest: (request) async {
             dLog("🔗 Navigation request: ${request.url}");
 
-            // Prevent back navigation during payment
-            if (request.url.contains(
-              "https://accept.paymob.com/unifiedcheckout/payment-status",
-            )) {
-              setState(() => _canPop = false);
-            }
-
             // Detect Paymob redirect — must be checked before the allowlist
             // because these URLs are intercepted and never actually navigated
             // to; blocking them here would break success/failure handling.
@@ -71,25 +78,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
                 request.url.contains("post_pay")) {
               final uri = Uri.parse(request.url);
               final success = uri.queryParameters["success"] == "true";
-
-              if (success) {
-                if (mounted) {
-                  context.go(
-                    '/wallet/topup/success',
-                    extra: {
-                      'amount': widget.amount,
-                      'transactionId': widget.transactionId,
-                    },
-                  );
-                }
-              } else {
-                if (mounted) {
-                  final l10n = AppLocalizations.of(context)!;
-                  showErrorBanner(context, l10n.paymentFailed);
-                  setState(() => _canPop = true);
-                  Navigator.pop(context);
-                }
-              }
+              _handlePaymentResult(success: success);
               return NavigationDecision.prevent;
             }
 
@@ -99,26 +88,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
                 request.url.contains('paymentStatus')) {
               final uri = Uri.parse(request.url);
               final status = uri.queryParameters['paymentStatus']?.toUpperCase();
-              final success = status == 'SUCCESS';
-
-              if (success) {
-                if (mounted) {
-                  context.go(
-                    '/wallet/topup/success',
-                    extra: {
-                      'amount': widget.amount,
-                      'transactionId': widget.transactionId,
-                    },
-                  );
-                }
-              } else {
-                if (mounted) {
-                  final l10n = AppLocalizations.of(context)!;
-                  showErrorBanner(context, l10n.paymentFailed);
-                  setState(() => _canPop = true);
-                  Navigator.pop(context);
-                }
-              }
+              _handlePaymentResult(success: status == 'SUCCESS');
               return NavigationDecision.prevent;
             }
 
@@ -143,42 +113,38 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
       ..loadRequest(Uri.parse(widget.paymentUrl));
   }
 
-  void _showCancelDialog() {
-    final l10n = AppLocalizations.of(context)!;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.cancelPayment),
-        content: Text(l10n.cancelPaymentConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.no),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close WebView
-            },
-            child: Text(l10n.yes, style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+  void _handlePaymentResult({required bool success}) {
+    if (!mounted) return;
+    if (success) {
+      if (widget.onPaymentSuccess != null) {
+        widget.onPaymentSuccess!();
+      } else {
+        context.go(
+          '/wallet/topup/success',
+          extra: {
+            'amount': widget.amount,
+            'transactionId': widget.transactionId,
+          },
+        );
+      }
+    } else {
+      setState(() => _canPop = true);
+      if (widget.onPaymentFailed != null) {
+        widget.onPaymentFailed!();
+      } else {
+        final l10n = AppLocalizations.of(context)!;
+        showErrorBanner(context, l10n.paymentFailed);
+        Navigator.pop(context);
+      }
+    }
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return PopScope(
       canPop: _canPop,
-      onPopInvoked: (didPop) {
-        if (!didPop && !_canPop) {
-          _showCancelDialog();
-        }
-      },
       child: Scaffold(
         appBar: AppBar(
           title: Text(
@@ -188,15 +154,9 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
           backgroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          leading: CircleBackButton(
-            onPressed: () {
-              if (_canPop) {
-                Navigator.pop(context);
-              } else {
-                _showCancelDialog();
-              }
-            },
-          ),
+          leading: _canPop
+              ? CircleBackButton(onPressed: () => Navigator.pop(context))
+              : const SizedBox.shrink(),
         ),
         body: WebViewWidget(controller: _controller),
       ),

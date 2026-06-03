@@ -11,6 +11,7 @@ import 'package:tawreedat_go/features/home/layout/manager/home_cubit.dart';
 
 import '../../../core/style/app_colors.dart';
 import '../../../core/utils/app_dynamic_settings.dart';
+import '../../wallet/presentation/paymob_webview.dart';
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../addresses/manager/address_cubit.dart';
@@ -327,6 +328,13 @@ class _CartScreenState extends State<CartScreen> {
         }
       }
     }
+
+    // CARD: ask which provider before placing the order
+    if (_paymentMethod == 'CARD') {
+      _showCardProviderSheet();
+      return;
+    }
+
     // Window-scheduling always sends scheduleAt; normal flow only when _isScheduled
     final effectiveScheduleAt = _requiresWindowScheduling
         ? _scheduleAt
@@ -336,6 +344,31 @@ class _CartScreenState extends State<CartScreen> {
       paymentMethod: _paymentMethod,
       couponCode: _appliedCoupon?.code,
       scheduleAt: effectiveScheduleAt,
+    );
+  }
+
+  void _showCardProviderSheet() {
+    final l10n = AppLocalizations.of(context)!;
+    final effectiveScheduleAt = _requiresWindowScheduling
+        ? _scheduleAt
+        : (_isScheduled ? _scheduleAt : null);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetCtx) => _CardProviderSheet(
+        l10n: l10n,
+        onProviderSelected: (provider) {
+          Navigator.pop(sheetCtx);
+          context.read<OrderCubit>().createCatalogOrder(
+            paymentMethod: 'CARD',
+            provider: provider,
+            couponCode: _appliedCoupon?.code,
+            scheduleAt: effectiveScheduleAt,
+          );
+        },
+      ),
     );
   }
 
@@ -986,6 +1019,35 @@ class _CartScreenState extends State<CartScreen> {
         backgroundColor: Colors.orange,
         textColor: Colors.white,
       );
+    } else if (state is OrderPendingPayment) {
+      // CARD payment: push the payment WebView; on success go to orders tab.
+      if (mounted) {
+        FocusScope.of(context).unfocus();
+        final payment = state.order.payment!;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymobWebViewScreen(
+              paymentUrl: payment.checkoutUrl,
+              amount: 0, // amount not needed for order payment confirmation
+              transactionId: payment.transactionId,
+              provider: payment.provider,
+              onPaymentSuccess: () {
+                _cubit.refreshCart();
+                context.go('/mainHome', extra: GoToTab(HomeCubit.ordersTabIndex));
+                showSuccessBanner(context, '${l10n.created}: ${state.order.orderNumber}');
+                // Delay the orders refresh so the server has time to process
+                // the payment before we fetch the list.
+                context.read<OrderCubit>().refreshAfterCardPayment();
+              },
+              onPaymentFailed: () {
+                showErrorBanner(context, l10n.paymentFailed);
+                Navigator.pop(context);
+              },
+            ),
+          ),
+        );
+      }
     } else if (state is OrderSuccess) {
       if (mounted) {
         FocusScope.of(context).unfocus();
@@ -1347,6 +1409,129 @@ class _CheckoutPill extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Card provider selection bottom sheet ──────────────────────────────────────
+
+class _CardProviderSheet extends StatelessWidget {
+  final AppLocalizations l10n;
+  final ValueChanged<String> onProviderSelected;
+
+  const _CardProviderSheet({
+    required this.l10n,
+    required this.onProviderSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.selectPaymentMethod,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (AppSettings.kashier_enabled == true) ...[
+            _ProviderTile(
+              asset: 'assets/images/kashier.png',
+              name: "${l10n.creditDebitCard} / ${l10n.mobileWallet}",
+              onTap: () => onProviderSelected('kashier'),
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (AppSettings.paymob_enabled == true) ...[
+            _ProviderTile(
+              asset: 'assets/images/Paymob.jpg',
+              name: l10n.creditDebitCard,
+              onTap: () => onProviderSelected('paymob'),
+            ),
+            const SizedBox(height: 12),
+          ],
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProviderTile extends StatelessWidget {
+  final String asset;
+  final String name;
+  final VoidCallback onTap;
+
+  const _ProviderTile({
+    required this.asset,
+    required this.name,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Image.asset(
+                asset,
+                width: 40,
+                height: 40,
+                fit: BoxFit.scaleDown,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 18,
+              color: Colors.grey.shade400,
+            ),
+          ],
         ),
       ),
     );

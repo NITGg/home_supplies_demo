@@ -53,6 +53,8 @@ class OrderCard extends StatelessWidget {
     switch (order.displayStatus) {
       case 'PENDING':
         return Colors.orange;
+      case 'PENDING_PAYMENT':
+        return Colors.deepOrange;
       case 'SCHEDULED':
         return const Color(0xFF5C6BC0);
       case 'IN_PROGRESS':
@@ -70,6 +72,8 @@ class OrderCard extends StatelessWidget {
     switch (order.displayStatus) {
       case 'PENDING':
         return Icons.schedule;
+      case 'PENDING_PAYMENT':
+        return Icons.credit_card_outlined;
       case 'SCHEDULED':
         return Icons.event_available_rounded;
       case 'IN_PROGRESS':
@@ -88,6 +92,8 @@ class OrderCard extends StatelessWidget {
     switch (order.displayStatus) {
       case 'PENDING':
         return l10n?.pending ?? 'Pending';
+      case 'PENDING_PAYMENT':
+        return l10n?.pendingPayment ?? 'في انتظار الدفع';
       case 'SCHEDULED':
         return l10n?.scheduled ?? 'Scheduled';
       case 'IN_PROGRESS':

@@ -1829,6 +1829,12 @@ abstract class AppLocalizations {
   /// **'Created'**
   String get created;
 
+  /// No description provided for @pendingPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Payment'**
+  String get pendingPayment;
+
   /// No description provided for @inProgress.
   ///
   /// In en, this message translates to:
@@ -2818,6 +2824,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'COD'**
   String get cod;
+
+  /// No description provided for @card.
+  ///
+  /// In en, this message translates to:
+  /// **'Card'**
+  String get card;
 
   /// No description provided for @codN.
   ///

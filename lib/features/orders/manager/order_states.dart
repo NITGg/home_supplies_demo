@@ -36,6 +36,17 @@ class OrderSuccess extends OrderState {
   List<Object?> get props => [message, order];
 }
 
+/// Order was created with payment_method=CARD and requires the customer to
+/// complete payment through the provider's checkout URL.
+class OrderPendingPayment extends OrderState {
+  final Order order;
+
+  const OrderPendingPayment({required this.order});
+
+  @override
+  List<Object?> get props => [order];
+}
+
 // ── Orders List ───────────────────────────────────────────────────────────────
 
 class OrdersLoaded extends OrderState {

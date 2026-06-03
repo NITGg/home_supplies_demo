@@ -54,7 +54,7 @@ class OrderCubit extends Cubit<OrderState> {
         'OrderCubit: Loading active orders — skip: $_activeSkip, limit: $_activeLimit',
       );
 
-      final [SchedualedResponse, pendingResponse, inProgressResponse] =
+      final [SchedualedResponse, pendingResponse, pendingPaymentResponse, inProgressResponse] =
           await Future.wait([
         _repository.getOrders(
           skip: _activeSkip,
@@ -68,6 +68,12 @@ class OrderCubit extends Cubit<OrderState> {
           status: 'PENDING',
           filterByExpiry: true,
         ),
+        // _repository.getOrders(
+        //   skip: _activeSkip,
+        //   limit: _activeLimit,
+        //   status: 'PENDING_PAYMENT',
+        // ),
+        Future.value(OrdersListResponse(orders: [], totalOrders: 0, totalPages: 1)),
         _repository.getOrders(
           skip: _activeSkip,
           limit: _activeLimit,
@@ -75,10 +81,11 @@ class OrderCubit extends Cubit<OrderState> {
         ),
       ]);
 
-      // Combine both lists
+      // Combine all active status lists
       final combinedOrders = [
         ...SchedualedResponse.orders,
         ...pendingResponse.orders,
+        ...pendingPaymentResponse.orders,
         ...inProgressResponse.orders,
       ];
 
@@ -120,6 +127,17 @@ class OrderCubit extends Cubit<OrderState> {
       dLog('OrderCubit: Error loading active orders: $e');
       safeEmit(OrderError(extractErrorMessage(e)));
     }
+  }
+
+  // ── Card-payment refresh ──────────────────────────────────────────────────
+
+  /// Called right after a successful card payment. Waits 1 second so the
+  /// server has time to process the webhook/callback and update the order
+  /// status before we fetch the active orders list.
+  void refreshAfterCardPayment() {
+    Future.delayed(const Duration(seconds: 1), () {
+      loadActiveOrders(loadMore: false);
+    });
   }
 
   // ── Load History Orders ────────────────────────────────────────────────────
@@ -285,21 +303,30 @@ class OrderCubit extends Cubit<OrderState> {
   Future<void> createCatalogOrder({
     required String paymentMethod,
     String? couponCode,
-    DateTime? scheduleAt,                          // ← NEW
+    DateTime? scheduleAt,
+    String? provider, // only sent when paymentMethod == 'CARD'
   }) async {
     safeEmit(OrderOperationLoading());
     try {
-      dLog('OrderCubit: Creating catalog order — payment: $paymentMethod, scheduleAt: $scheduleAt');
+      dLog('OrderCubit: Creating catalog order — payment: $paymentMethod, provider: $provider, scheduleAt: $scheduleAt');
 
       final response = await _repository.createCatalogOrder(
         paymentMethod: paymentMethod,
         couponCode: couponCode,
-        scheduleAt: scheduleAt,                    // ← NEW
+        scheduleAt: scheduleAt,
+        provider: provider,
       );
 
-      dLog('OrderCubit: Catalog order created — ${response.order.orderNumber}');
-      safeEmit(OrderSuccess(message: response.message, order: response.order));
-      await loadActiveOrders(loadMore: false);
+      dLog('OrderCubit: Catalog order created — ${response.order.orderNumber}, status: ${response.order.status}');
+
+      if (response.order.isPendingPayment) {
+        // CARD payment: redirect customer to checkout URL before the order
+        // can be confirmed. Do NOT navigate to orders list yet.
+        safeEmit(OrderPendingPayment(order: response.order));
+      } else {
+        safeEmit(OrderSuccess(message: response.message, order: response.order));
+        await loadActiveOrders(loadMore: false);
+      }
     } catch (e) {
       dLog('OrderCubit: Error creating catalog order: $e');
       safeEmit(OrderError(extractErrorMessage(e)));

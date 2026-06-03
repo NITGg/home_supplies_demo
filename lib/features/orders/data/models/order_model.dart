@@ -2,6 +2,27 @@ import 'dart:io';
 
 import 'order_items.dart';
 
+// ── Payment object returned when payment_method == 'CARD' ─────────────────────
+class OrderPayment {
+  final String provider;
+  final int transactionId;
+  final String checkoutUrl;
+
+  const OrderPayment({
+    required this.provider,
+    required this.transactionId,
+    required this.checkoutUrl,
+  });
+
+  factory OrderPayment.fromJson(Map<String, dynamic> json) {
+    return OrderPayment(
+      provider: json['provider'] as String? ?? 'paymob',
+      transactionId: json['transactionId'] as int,
+      checkoutUrl: json['checkoutUrl'] as String? ?? '',
+    );
+  }
+}
+
 class Order {
   String get itemsSummary {
     if (orderItems.isEmpty) return '';
@@ -71,6 +92,9 @@ class Order {
 
   final List<OrderItem> orderItems;
 
+  // Card-payment details — only present when payment_method == 'CARD'
+  final OrderPayment? payment;
+
   Order({
     this.courierName,
     this.confirmationOtp,
@@ -122,6 +146,7 @@ class Order {
     this.isTakeTime = false,
     this.isReadyForPickUp = false,
     this.orderScheduleAt,
+    this.payment,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -204,6 +229,10 @@ class Order {
       orderScheduleAt: json['order_schedule_at'] != null
           ? DateTime.parse(json['order_schedule_at']).toLocal()
           : null,
+      // ── Card payment ─────────────────────────────────────────────────────
+      payment: json['payment'] != null
+          ? OrderPayment.fromJson(json['payment'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -224,6 +253,7 @@ class Order {
   }
 
   bool get isPending => status == 'PENDING';
+  bool get isPendingPayment => status == 'PENDING_PAYMENT';
   bool get isAccepted => status == 'ACCEPTED';
   bool get isInProgress => status == 'IN_PROGRESS';
   bool get isDelivered => status == 'DELIVERED';
@@ -249,9 +279,17 @@ class OrderResponse {
   OrderResponse({required this.message, required this.order});
 
   factory OrderResponse.fromJson(Map<String, dynamic> json) {
+    // `payment` lives at the response root, not inside `order`.
+    // Merge it into the order map so Order.fromJson can pick it up.
+    final orderJson = Map<String, dynamic>.from(
+      json['order'] as Map<String, dynamic>,
+    );
+    if (json['payment'] != null && orderJson['payment'] == null) {
+      orderJson['payment'] = json['payment'];
+    }
     return OrderResponse(
       message: json['message'] as String,
-      order: Order.fromJson(json['order'] as Map<String, dynamic>),
+      order: Order.fromJson(orderJson),
     );
   }
 }

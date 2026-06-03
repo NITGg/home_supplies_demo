@@ -97,10 +97,11 @@ class OrderRemoteDataSource {
   Future<OrderResponse> createCatalogOrder({
     required String paymentMethod,
     String? couponCode,
-    DateTime? scheduleAt, // ← NEW
+    DateTime? scheduleAt,
+    String? provider, // only relevant when paymentMethod == 'CARD'
   }) async {
     dLog(
-      'Creating catalog order — payment: $paymentMethod, coupon: $couponCode, scheduleAt: $scheduleAt',
+      'Creating catalog order — payment: $paymentMethod, provider: $provider, coupon: $couponCode, scheduleAt: $scheduleAt',
     );
 
     final bool isScheduled = scheduleAt != null;
@@ -110,11 +111,15 @@ class OrderRemoteDataSource {
       data: {
         'type': 'CATALOG_PURCHASE',
         'payment_method': paymentMethod,
-        'supplier_store_address_id': 1, // ← NEW (hardcoded)
-        if (isScheduled) 'is_order_scheduled': true, // ← NEW
-        if (scheduleAtUtc != null) 'order_schedule_at': scheduleAtUtc, // ← NEW
+        'supplier_store_address_id': 1,
+        if (isScheduled) 'is_order_scheduled': true,
+        if (scheduleAtUtc != null) 'order_schedule_at': scheduleAtUtc,
         if (couponCode != null && couponCode.isNotEmpty)
           'coupon_code': couponCode,
+        if (provider != null) 'card_provider': provider,
+        if (provider == 'kashier')
+          'card_redirection_url':
+              'https://tawreedat.nitg-eg.com/admin_apis/api/v1/test',
       },
       options: Options(),
     );

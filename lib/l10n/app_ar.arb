@@ -390,6 +390,7 @@
   "created": "تم الإنشاء",
 
   "pending": "قيد الانتظار",
+  "pendingPayment": "في انتظار الدفع",
   "inProgress": "قيد التنفيذ",
   "delivered": "تم التوصيل",
 
@@ -599,6 +600,7 @@
   "walletBalanceHintOverBudget": "في حال كانت الميزانية أكبر من",
   "walletBalanceHintOverBudget2": "يتم الدفع عن طريق المحفظة فقط",
     "cod": "الدفع عند الاستلام",
+    "card": "بطاقة",
     "codN": "الدفع\n عند الاستلام",
     "ratingExcellent": "ممتاز",
     "far": "يبعد",

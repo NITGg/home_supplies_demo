@@ -381,6 +381,7 @@
   "created": "Created",
 
   "pending": "Pending",
+  "pendingPayment": "Pending Payment",
   "inProgress": "In Progress",
   "delivered": "Delivered",
 
@@ -601,6 +602,7 @@
     "walletBalanceHintOverBudget": "If the budget is higher than",
     "walletBalanceHintOverBudget2": "payment will be made via wallet only",
     "cod": "COD",
+    "card": "Card",
     "codN": "COD",
     "far": "Away",
     "outForDelivery": "Out For Delivery",

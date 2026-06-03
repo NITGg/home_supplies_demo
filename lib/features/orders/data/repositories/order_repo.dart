@@ -28,12 +28,14 @@ class OrderRepository {
   Future<OrderResponse> createCatalogOrder({
     required String paymentMethod,
     String? couponCode,
-    DateTime? scheduleAt,                          // ← NEW
+    DateTime? scheduleAt,
+    String? provider,
   }) async {
     return await _remoteDataSource.createCatalogOrder(
       paymentMethod: paymentMethod,
       couponCode: couponCode,
-      scheduleAt: scheduleAt,                      // ← NEW
+      scheduleAt: scheduleAt,
+      provider: provider,
     );
   }
 

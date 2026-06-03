@@ -889,6 +889,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get created => 'تم الإنشاء';
 
   @override
+  String get pendingPayment => 'في انتظار الدفع';
+
+  @override
   String get inProgress => 'قيد التنفيذ';
 
   @override
@@ -1400,6 +1403,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cod => 'الدفع عند الاستلام';
+
+  @override
+  String get card => 'بطاقة';
 
   @override
   String get codN => 'الدفع\n عند الاستلام';
