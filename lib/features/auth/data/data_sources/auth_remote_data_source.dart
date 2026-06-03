@@ -102,6 +102,7 @@ class AuthRemoteDataSource {
     required String password,
     String locale = 'en',
   }) async {
+    dLog('📤 POST /auth/login — phone=$phone');
     final response = await _dio.post(
       '/auth/login?lang=${LocaleManager.currentLocale}',
       data: {
@@ -118,7 +119,7 @@ class AuthRemoteDataSource {
 
   Future<ProfileResponseModel> getProfile(String token) async {
     final response = await _dio.get(
-      '/profile?lang=${LocaleManager.currentLocale}',
+      '/auth/verify-me?lang=${LocaleManager.currentLocale}',
       options: Options(
         headers: {'Authorization': 'Bearer $token'},
       ),
@@ -216,14 +217,11 @@ class AuthRemoteDataSource {
     required String newPassword,
   }) async {
     final response = await _dio.post(
-      '/profile/change-password?lang=${LocaleManager.currentLocale}',
+      '/auth/change-password?lang=${LocaleManager.currentLocale}',
       data: {
-        'oldPassword': oldPassword,
-        'newPassword': newPassword,
+        'old_password': oldPassword,
+        'new_password': newPassword,
       },
-      options: Options(
-        headers: {'Authorization': 'Bearer $token'},
-      ),
     );
 
     if (response.statusCode != 200) {
@@ -231,31 +229,35 @@ class AuthRemoteDataSource {
     }
   }
 
-  Future<void> forgotPassword({String? phone, String? email}) async {
-    final Map<String, dynamic> data = {};
-    if (phone != null) data['phone'] = phone;
-    if (email != null) data['email'] = email;
-
-    await _dio.post(
+  /// Returns the `via` channel ("email" or "phone") from the server response.
+  Future<String> forgotPassword({String? phone, String? email}) async {
+    final identifier = phone ?? email ?? '';
+    final channel = phone != null ? 'phone' : 'email';
+    dLog('📤 POST /auth/forget-password — identifier=$identifier channel=$channel');
+    final response = await _dio.post(
       '/auth/forget-password?lang=${LocaleManager.currentLocale}',
-      data: data,
+      data: {'identifier': identifier, 'channel': channel},
       options: Options(
         headers: {'Accept-Language': LocaleManager.currentLocale},
       ),
     );
+    dLog('📥 /auth/forget-password — status: ${response.statusCode}, body: ${response.data}');
+    return (response.data['via'] as String?) ?? channel;
   }
 
   Future<void> resetPassword({
     required String code,
     required String password,
   }) async {
-    await _dio.post(
-      '/auth/reset-password?lang=${LocaleManager.currentLocale}',
+    dLog('📤 POST /auth/verify-forget-password — code=$code');
+    final response = await _dio.post(
+      '/auth/verify-forget-password?lang=${LocaleManager.currentLocale}',
       data: {'code': code, 'password': password},
       options: Options(
         headers: {'Accept-Language': LocaleManager.currentLocale},
       ),
     );
+    dLog('📥 /auth/verify-forget-password — status: ${response.statusCode}');
   }
 
   /// Kept for backward-compat; delegates to requestVerification.

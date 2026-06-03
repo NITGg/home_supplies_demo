@@ -7,23 +7,35 @@ import 'package:pinput/pinput.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../core/utils/logger.dart';
+import '../../../../core/widgets/banners.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../main.dart' show rootNavigatorKey;
 import '../../manager/profile_cubit.dart';
 import '../../manager/profile_states.dart';
 
 class ProfileOtpScreen extends StatefulWidget {
-  /// The masked destination shown to the user (e.g. "a***@mail.com" or "+9665***").
-  final String destination;
+  /// Current contact value (OTP sent here for ownership confirmation).
+  /// Null or empty means no old contact exists — only the new OTP is shown.
+  final String? oldDestination;
 
-  /// Called only after OTP is confirmed successfully on the backend.
-  /// Use this to continue any pending work (e.g. updateProfile).
+  /// New contact value (OTP sent here to confirm it belongs to the user).
+  final String newDestination;
+
+  /// Called only after OTP(s) are confirmed successfully on the backend.
   final VoidCallback? onConfirmed;
+
+  /// When set, the screen is in single-code mode (no old contact).
+  /// Called with just the new OTP code; skips the old-contact PIN entirely
+  /// and uses /auth/verify-account instead of /auth/verify-old-new-phone-email.
+  final void Function(String code)? onSingleVerify;
 
   const ProfileOtpScreen({
     super.key,
-    required this.destination,
+    this.oldDestination,
+    required this.newDestination,
     this.onConfirmed,
+    this.onSingleVerify,
   });
 
   @override
@@ -31,10 +43,15 @@ class ProfileOtpScreen extends StatefulWidget {
 }
 
 class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
-  static const int _otpLength = 6;
+  static const int _otpLength = 4;
 
-  final _otpController = TextEditingController();
-  final _otpFocusNode  = FocusNode();
+  final _oldOtpController = TextEditingController();
+  final _newOtpController = TextEditingController();
+  final _oldFocusNode     = FocusNode();
+  final _newFocusNode     = FocusNode();
+
+  bool get _hasOldContact =>
+      widget.oldDestination != null && widget.oldDestination!.isNotEmpty;
 
   int  _secondsRemaining = 60;
   bool _canResend        = false;
@@ -49,12 +66,12 @@ class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    _otpController.dispose();
-    _otpFocusNode.dispose();
+    _oldOtpController.dispose();
+    _newOtpController.dispose();
+    _oldFocusNode.dispose();
+    _newFocusNode.dispose();
     super.dispose();
   }
-
-  // ─── Timer ────────────────────────────────────────────────────────────────
 
   void _startTimer() {
     _timer?.cancel();
@@ -62,7 +79,6 @@ class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
       _secondsRemaining = 60;
       _canResend        = false;
     });
-
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) { t.cancel(); return; }
       if (_secondsRemaining > 0) {
@@ -74,40 +90,52 @@ class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
     });
   }
 
-  // ─── Actions ──────────────────────────────────────────────────────────────
-
-  void _verify() {
-    final otp = _otpController.text.trim();
-    if (otp.length != _otpLength) {
-      _showSnack(
-        AppLocalizations.of(context)!.required, // reuse or add dedicated key
-        Colors.red,
-      );
-      return;
-    }
-    dLog('ProfileOtpScreen: verifying OTP for ${widget.destination}');
-    context.read<ProfileCubit>().confirmOtp(code: otp);
+  void _showError(String message) {
+    final ctx = rootNavigatorKey.currentContext;
+    if (ctx != null) showErrorBanner(ctx, message);
   }
 
-  void _showSnack(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: color),
+  void _verify() {
+    final newOtp = _newOtpController.text.trim();
+
+    if (newOtp.length != _otpLength) {
+      _showError(AppLocalizations.of(context)!.required);
+      return;
+    }
+
+    // Single-code mode: first-time contact addition, no old code needed.
+    if (widget.onSingleVerify != null) {
+      dLog('ProfileOtpScreen: single verify new=$newOtp');
+      widget.onSingleVerify!(newOtp);
+      return;
+    }
+
+    // Two-code mode: changing an existing contact.
+    final oldOtp = _oldOtpController.text.trim();
+    if (_hasOldContact && oldOtp.length != _otpLength) {
+      _showError(AppLocalizations.of(context)!.required);
+      return;
+    }
+
+    dLog('ProfileOtpScreen: two-code verify hasOld=$_hasOldContact old=$oldOtp new=$newOtp');
+    context.read<ProfileCubit>().verifyContactChange(
+      oldCode: _hasOldContact ? oldOtp : '',
+      newCode: newOtp,
     );
   }
 
-  // ─── State listener ───────────────────────────────────────────────────────
-
   void _onState(BuildContext ctx, ProfileState state) {
+    final rootCtx = rootNavigatorKey.currentContext;
     if (state is ProfileOtpConfirmSuccess) {
-      _showSnack(state.message, Colors.green);
-      widget.onConfirmed?.call(); // ← continue pending work
-      Navigator.pop(ctx);         // ← close OTP screen
+      if (state.message.isNotEmpty && rootCtx != null) {
+        showSuccessBanner(rootCtx, state.message);
+      }
+      widget.onConfirmed?.call();
+      Navigator.pop(ctx);
     } else if (state is ProfileFailure) {
-      _showSnack(state.message, Colors.red);
+      if (rootCtx != null) showErrorBanner(rootCtx, state.message);
     }
   }
-
-  // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -123,11 +151,22 @@ class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
       ),
     );
 
+    final focusedPin = defaultPin.copyDecorationWith(
+      border: Border.all(color: AppColors.kPrimaryColor, width: 2),
+    );
+
+    final submittedPin = defaultPin.copyWith(
+      decoration: defaultPin.decoration?.copyWith(
+        color: AppColors.kPrimaryColor.withOpacity(0.1),
+        border: Border.all(color: AppColors.kPrimaryColor),
+      ),
+    );
+
     return BlocListener<ProfileCubit, ProfileState>(
       listener: _onState,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(loc.verify), // reuse key or add verifyOtp key
+          title: Text(loc.verify),
           centerTitle: true,
         ),
         body: BlocBuilder<ProfileCubit, ProfileState>(
@@ -139,90 +178,94 @@ class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
 
-                  // ── Icon ──────────────────────────────────────────────────
                   Container(
-                    width: 100,
-                    height: 100,
+                    width: 80,
+                    height: 80,
                     decoration: BoxDecoration(
                       color: AppColors.kPrimaryColor.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.lock_outline_rounded,
-                      size: 48,
+                      size: 40,
                       color: AppColors.kPrimaryColor,
                     ),
                   ),
 
                   const SizedBox(height: 24),
 
-                  // ── Subtitle ──────────────────────────────────────────────
-                  Text(
-                    loc.enterOtpSent, // "Enter the OTP sent to"
-                    style: AppTextStyles.bold18,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    widget.destination,
-                    style: AppTextStyles.bold16
-                        .copyWith(color: AppColors.kPrimaryColor),
-                  ),
+                  // ── Old contact PIN (only when an old contact exists) ────
+                  if (_hasOldContact) ...[
+                    _SectionLabel(
+                      title: loc.enterOtpSent,
+                      destination: widget.oldDestination!,
+                    ),
+                    const SizedBox(height: 16),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Pinput(
+                        length: _otpLength,
+                        controller: _oldOtpController,
+                        focusNode: _oldFocusNode,
+                        enabled: !isLoading,
+                        defaultPinTheme: defaultPin,
+                        focusedPinTheme: focusedPin,
+                        submittedPinTheme: submittedPin,
+                        onCompleted: (_) {
+                          if (!isLoading) _newFocusNode.requestFocus();
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
 
-                  const SizedBox(height: 40),
-
-                  // ── Pin input ─────────────────────────────────────────────
+                  // ── New contact PIN ──────────────────────────────────────
+                  _SectionLabel(
+                    title: loc.enterOtpSent,
+                    destination: widget.newDestination,
+                  ),
+                  const SizedBox(height: 16),
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: Pinput(
                       length: _otpLength,
-                      controller: _otpController,
-                      focusNode: _otpFocusNode,
+                      controller: _newOtpController,
+                      focusNode: _newFocusNode,
                       enabled: !isLoading,
                       defaultPinTheme: defaultPin,
-                      focusedPinTheme: defaultPin.copyDecorationWith(
-                        border: Border.all(
-                          color: AppColors.kPrimaryColor,
-                          width: 2,
-                        ),
-                      ),
-                      submittedPinTheme: defaultPin.copyWith(
-                        decoration: defaultPin.decoration?.copyWith(
-                          color: AppColors.kPrimaryColor.withOpacity(0.1),
-                          border: Border.all(color: AppColors.kPrimaryColor),
-                        ),
-                      ),
-                      onCompleted: (_) { if (!isLoading) _verify(); },
+                      focusedPinTheme: focusedPin,
+                      submittedPinTheme: submittedPin,
+                      onCompleted: (_) {
+                        // Auto-submit when this is the only PIN on screen
+                        if (!isLoading && (!_hasOldContact || _oldOtpController.text.trim().length == _otpLength)) {
+                          _verify();
+                        }
+                      },
                     ),
                   ),
 
                   const SizedBox(height: 24),
 
-                  // ── Resend timer ──────────────────────────────────────────
                   _canResend
                       ? TextButton(
-                    onPressed: isLoading ? null : _startTimer,
-                    child: Text(
-                      loc.resendOtp,
-                      style: AppTextStyles.bold14.copyWith(
-                        color: isLoading
-                            ? Colors.grey
-                            : AppColors.kPrimaryColor,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  )
+                          onPressed: isLoading ? null : _startTimer,
+                          child: Text(
+                            loc.resendOtp,
+                            style: AppTextStyles.bold14.copyWith(
+                              color: isLoading ? Colors.grey : AppColors.kPrimaryColor,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        )
                       : Text(
-                    '${loc.resendOtpIn} $_secondsRemaining ${loc.seconds}',
-                    style: AppTextStyles.regular14
-                        .copyWith(color: Colors.grey),
-                  ),
+                          '${loc.resendOtpIn} $_secondsRemaining ${loc.seconds}',
+                          style: AppTextStyles.regular14.copyWith(color: Colors.grey),
+                        ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 32),
 
-                  // ── Confirm button ────────────────────────────────────────
                   AppCustomButton(
                     text: loc.confirm,
                     isLoading: isLoading,
@@ -234,6 +277,28 @@ class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
           },
         ),
       ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String title;
+  final String destination;
+
+  const _SectionLabel({required this.title, required this.destination});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(title, style: AppTextStyles.bold16, textAlign: TextAlign.center),
+        const SizedBox(height: 4),
+        Text(
+          destination,
+          textDirection: TextDirection.ltr,
+          style: AppTextStyles.bold14.copyWith(color: AppColors.kPrimaryColor),
+        ),
+      ],
     );
   }
 }

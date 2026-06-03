@@ -938,8 +938,9 @@ class _PhoneNumberSheetState extends State<_PhoneNumberSheet> {
       _errorMessage = null;
       _submitted = true;
     });
-    widget.parentContext.read<ProfileCubit>().changePhone(
-      phone: _phoneController.text.trim(),
+    widget.parentContext.read<ProfileCubit>().changeContactInfo(
+      type: 'phone',
+      newValue: _phoneController.text.trim(),
     );
   }
 

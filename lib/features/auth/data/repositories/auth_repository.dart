@@ -146,8 +146,8 @@ class AuthRepository {
     );
   }
 
-  Future<void> forgotPassword({String? phone, String? email}) async {
-    await _remoteDataSource.forgotPassword(phone: phone, email: email);
+  Future<String> forgotPassword({String? phone, String? email}) async {
+    return await _remoteDataSource.forgotPassword(phone: phone, email: email);
   }
 
   Future<void> resetPassword({

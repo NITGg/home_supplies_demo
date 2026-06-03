@@ -57,40 +57,24 @@ class ProfileRemoteDataSource {
       rethrow;
     }
   }
-  /// CHANGE MAIN PHONE (triggers OTP)
-  Future<Map<String, dynamic>> changePhone({
+  /// Sends OTP to both old and new contact values.
+  /// [type] is "phone" or "email", [newValue] is the new contact value.
+  Future<Map<String, dynamic>> changeContactInfo({
     required String token,
-    required String phone,
+    required String type,
+    required String newValue,
   }) async {
     try {
+      dLog('📤 POST /auth/change-phone-email — type=$type newValue=$newValue');
       final response = await _dio.post(
-        '/profile/change-phone?lang=${LocaleManager.currentLocale}',
-        data: {'phone': phone},
+        '/auth/change-phone-email?lang=${LocaleManager.currentLocale}',
+        data: {'type': type, 'new_value': newValue},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      dLog('Change phone response: ${response.data}');
+      dLog('📥 /auth/change-phone-email — status: ${response.statusCode} body: ${response.data}');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      dLog('Change phone error: $e');
-      rethrow;
-    }
-  }
-
-  /// CHANGE EMAIL (triggers OTP)
-  Future<Map<String, dynamic>> changeEmail({
-    required String token,
-    required String email,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/profile/change-email?lang=${LocaleManager.currentLocale}',
-        data: {'email': email},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      dLog('Change email response: ${response.data}');
-      return response.data as Map<String, dynamic>;
-    } catch (e) {
-      dLog('Change email error: $e');
+      dLog('changeContactInfo error: $e');
       rethrow;
     }
   }
@@ -135,21 +119,23 @@ class ProfileRemoteDataSource {
     }
   }
 
-  /// CONFIRM OTP (after change-phone or change-email)
-  Future<Map<String, dynamic>> confirmOtp({
+  /// Verifies OTPs sent to both old and new contact values.
+  Future<Map<String, dynamic>> verifyContactChange({
     required String token,
-    required String code,
+    required String oldCode,
+    required String newCode,
   }) async {
     try {
+      dLog('📤 POST /auth/verify-old-new-phone-email — oldCode=$oldCode newCode=$newCode');
       final response = await _dio.post(
-        '/profile/confirm-otp?lang=${LocaleManager.currentLocale}',
-        data: {'code': code},
+        '/auth/verify-old-new-phone-email?lang=${LocaleManager.currentLocale}',
+        data: {'old_code': oldCode, 'new_code': newCode},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      dLog('Confirm OTP response: ${response.data}');
+      dLog('📥 /auth/verify-old-new-phone-email — status: ${response.statusCode} body: ${response.data}');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      dLog('Confirm OTP error: $e');
+      dLog('verifyContactChange error: $e');
       rethrow;
     }
   }

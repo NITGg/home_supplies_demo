@@ -887,6 +887,24 @@ abstract class AppLocalizations {
   /// **'Passwords do not match'**
   String get passwordMismatch;
 
+  /// No description provided for @passwordNeedsUppercase.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must contain an uppercase letter'**
+  String get passwordNeedsUppercase;
+
+  /// No description provided for @passwordNeedsLowercase.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must contain a lowercase letter'**
+  String get passwordNeedsLowercase;
+
+  /// No description provided for @passwordNeedsNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must contain a number'**
+  String get passwordNeedsNumber;
+
   /// No description provided for @weNeedYourPhoneNumber.
   ///
   /// In en, this message translates to:

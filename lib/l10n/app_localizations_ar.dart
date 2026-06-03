@@ -407,6 +407,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get passwordMismatch => 'كلمات المرور غير متطابقة';
 
   @override
+  String get passwordNeedsUppercase => 'يجب أن تحتوي كلمة المرور على حرف كبير';
+
+  @override
+  String get passwordNeedsLowercase => 'يجب أن تحتوي كلمة المرور على حرف صغير';
+
+  @override
+  String get passwordNeedsNumber => 'يجب أن تحتوي كلمة المرور على رقم';
+
+  @override
   String get weNeedYourPhoneNumber => 'نحن بحاجة لرقم هاتفك';
 
   @override

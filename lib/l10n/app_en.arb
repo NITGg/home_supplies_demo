@@ -159,6 +159,9 @@
 
   "invalidEmail": "Invalid email",
   "passwordMismatch": "Passwords do not match",
+  "passwordNeedsUppercase": "Password must contain an uppercase letter",
+  "passwordNeedsLowercase": "Password must contain a lowercase letter",
+  "passwordNeedsNumber": "Password must contain a number",
 
   "weNeedYourPhoneNumber": "We need your phone number",
   "maybeLater": "Maybe later",

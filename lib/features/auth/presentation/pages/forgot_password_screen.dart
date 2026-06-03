@@ -61,6 +61,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               '/auth/verify-otp',
               extra: {
                 'destination': state.destination,
+                'via': state.via,
                 'isPasswordReset': true,
               },
             );

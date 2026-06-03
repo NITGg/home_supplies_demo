@@ -174,6 +174,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: AppTextButton(
+                          text: loc.forgotPassword,
+                          color: AppColors.kPrimaryColor,
+                          underline: true,
+                          onPressed: () => context.push('/auth/forgot-password'),
+                        ),
+                      ),
+
                       const SizedBox(height: 20),
                       Text(
                         loc.orSignInwith,

@@ -152,17 +152,21 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  Future<void> changePhone({required String phone}) async {
+  /// Sends verification OTP for a contact being added for the first time.
+  /// Uses /auth/request-verification (no old contact to confirm ownership of).
+  Future<void> addContactInfo({
+    required String type,
+    required String value,
+  }) async {
     emit(ProfileLoading());
     try {
-      final token = await _authRepository.getSavedToken();
-      if (token == null || token.isEmpty) {
-        emit(ProfileFailure('لا يوجد رمز مصادقة'));
-        return;
-      }
-      final result = await _profileRepository.changePhone(token: token, phone: phone);
-      await fetchProfile();
-      emit(ProfileChangePhoneSuccess(message: result['message'] as String? ?? ''));
+      await _authRepository.requestVerification(
+        phone: type == 'phone' ? value : null,
+        email: type == 'email' ? value : null,
+      );
+      emit(type == 'email'
+          ? ProfileChangeEmailSuccess(message: '')
+          : ProfileChangePhoneSuccess(message: ''));
     } on DioException catch (e) {
       emit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
@@ -170,36 +174,72 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  Future<void> changeEmail({required String email}) async {
+  /// Verifies a newly added contact using /auth/verify-account.
+  /// Used when the user is adding a contact for the first time (no old code).
+  Future<void> verifyNewContact({
+    String? phone,
+    String? email,
+    required String code,
+  }) async {
     emit(ProfileLoading());
     try {
-      final token = await _authRepository.getSavedToken();
-      if (token == null || token.isEmpty) {
-        emit( ProfileFailure('لا يوجد رمز مصادقة'));
-        return;
-      }
-      final result = await _profileRepository.changeEmail(token: token, email: email);
-      await fetchProfile();
-      emit(ProfileChangeEmailSuccess(message: result['message'] as String? ?? ''));
-    } on DioException catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
-    } catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
-    }
-  }
-
-
-  Future<void> confirmOtp({required String code}) async {
-    emit(ProfileLoading());
-    try {
-      final token = await _authRepository.getSavedToken();
-      if (token == null || token.isEmpty) {
-        emit(ProfileFailure('لا يوجد رمز مصادقة'));
-        return;
-      }
-      final result = await _profileRepository.confirmOtp(
-        token: token,
+      final result = await _authRepository.verifyAccount(
+        phone: phone,
+        email: email,
         code: code,
+      );
+      await fetchProfile();
+      emit(ProfileOtpConfirmSuccess(message: result.message));
+    } on DioException catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    } catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    }
+  }
+
+  /// Sends OTP to both old and new contact values.
+  /// [type] is "phone" or "email".
+  Future<void> changeContactInfo({
+    required String type,
+    required String newValue,
+  }) async {
+    emit(ProfileLoading());
+    try {
+      final token = await _authRepository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+      final result = await _profileRepository.changeContactInfo(
+        token: token,
+        type: type,
+        newValue: newValue,
+      );
+      emit(type == 'email'
+          ? ProfileChangeEmailSuccess(message: result['message'] as String? ?? '')
+          : ProfileChangePhoneSuccess(message: result['message'] as String? ?? ''));
+    } on DioException catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    } catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    }
+  }
+
+  Future<void> verifyContactChange({
+    required String oldCode,
+    required String newCode,
+  }) async {
+    emit(ProfileLoading());
+    try {
+      final token = await _authRepository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+      final result = await _profileRepository.verifyContactChange(
+        token: token,
+        oldCode: oldCode,
+        newCode: newCode,
       );
       await fetchProfile();
       emit(ProfileOtpConfirmSuccess(

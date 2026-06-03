@@ -114,6 +114,9 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                   validator: (value) {
                     if (value == null || value.isEmpty) return loc.enterPassword;
                     if (value.length < 6) return loc.shortPassword;
+                    if (!RegExp(r'[A-Z]').hasMatch(value)) return loc.passwordNeedsUppercase;
+                    if (!RegExp(r'[a-z]').hasMatch(value)) return loc.passwordNeedsLowercase;
+                    if (!RegExp(r'[0-9]').hasMatch(value)) return loc.passwordNeedsNumber;
                     return null;
                   },
                 ),

@@ -407,6 +407,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordMismatch => 'Passwords do not match';
 
   @override
+  String get passwordNeedsUppercase => 'Password must contain an uppercase letter';
+
+  @override
+  String get passwordNeedsLowercase => 'Password must contain a lowercase letter';
+
+  @override
+  String get passwordNeedsNumber => 'Password must contain a number';
+
+  @override
   String get weNeedYourPhoneNumber => 'We need your phone number';
 
   @override

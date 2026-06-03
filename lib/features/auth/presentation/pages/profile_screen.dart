@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/widgets/circel_back_button.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/delete_account_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/widgets/change_password_sheet.dart';
 import '../../manager/auth_cubit.dart';
 import '../../manager/auth_state.dart';
 import '../../manager/profile_cubit.dart';
@@ -42,11 +44,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: BlocConsumer<ProfileCubit, ProfileState>(
           listener: (context, state) {
             if (state is ProfileFailure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: Colors.red,
-                ),
+              Fluttertoast.showToast(
+                msg: state.message,
+                toastLength: Toast.LENGTH_LONG,
+                gravity: ToastGravity.BOTTOM,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
               );
             }
             if (state is ProfileUpdateSuccess) {
@@ -184,17 +187,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: Column(
                             children: [
-                              // if (profile.loginType == 'LOCAL')
-                              //   AppCustomButton(
-                              //     onPressed: () {
-                              //       showChangePasswordBottomSheet(context);
-                              //     },
-                              //     text: localizations.changePassword,
-                              //     isSecondary: true,
-                              //     isLoading:
-                              //         context.read<AuthCubit>().state
-                              //             is AuthLoading,
-                              //   ),
+                              if (profile.loginType == null || profile.loginType == 'LOCAL')
+                                AppCustomButton(
+                                  onPressed: () {
+                                    showChangePasswordBottomSheet(context);
+                                  },
+                                  text: localizations.changePassword,
+                                  isSecondary: true,
+                                  isLoading:
+                                      context.read<AuthCubit>().state
+                                          is AuthLoading,
+                                ),
+                              if (profile.loginType == null || profile.loginType == 'LOCAL')
+                                const SizedBox(height: 12),
                               AppCustomButton(
                                 onPressed: () {
                                   showDialog(

@@ -62,5 +62,10 @@ class AuthForgotPasswordOtpSent extends AuthState {
   /// Phone number OR email — whatever the user entered.
   final String destination;
   final String message;
-  AuthForgotPasswordOtpSent({required this.destination, required this.message});
+  final String via; // "phone" or "email" — from server response
+  AuthForgotPasswordOtpSent({
+    required this.destination,
+    required this.message,
+    required this.via,
+  });
 }

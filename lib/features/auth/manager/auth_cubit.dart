@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/utils/api_client.dart';
@@ -171,6 +172,18 @@ class AuthCubit extends Cubit<AuthState> {
       await _initializeUserSession();
       emit(AuthSuccess(shortAuthResponse: result));
     } catch (e) {
+      // 403 means the account exists but a channel is unverified.
+      // Redirect to OTP verification instead of showing a generic error.
+      if (e is DioException && e.response?.statusCode == 403) {
+        final data = e.response?.data;
+        if (data is Map) {
+          final unverified = (data['unverified'] as List?)?.cast<String>() ?? [];
+          final channel = unverified.isNotEmpty ? unverified.first : 'phone';
+          dLog('⚠️ login 403 — unverified: $unverified → redirecting to OTP ($channel)');
+          emit(AuthOtpRequired(destination: phone, via: channel));
+          return;
+        }
+      }
       emit(AuthFailure(extractErrorMessage(e)));
     }
   }
@@ -283,10 +296,11 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> forgotPassword({String? phone, String? email}) async {
     emit(AuthLoading());
     try {
-      await _repository.forgotPassword(phone: phone, email: email);
+      final via = await _repository.forgotPassword(phone: phone, email: email);
       emit(AuthForgotPasswordOtpSent(
         destination: phone ?? email ?? '',
         message: 'OTP sent successfully',
+        via: via,
       ));
     } catch (e) {
       emit(AuthFailure(extractErrorMessage(e)));

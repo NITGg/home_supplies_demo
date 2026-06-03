@@ -14,20 +14,17 @@ class ProfileRepository {
   }
 
 
-  /// CHANGE MAIN PHONE (triggers OTP)
-  Future<Map<String, dynamic>> changePhone({
+  /// Sends OTP to both old and new contact values (phone or email).
+  Future<Map<String, dynamic>> changeContactInfo({
     required String token,
-    required String phone,
+    required String type,
+    required String newValue,
   }) async {
-    return await _remoteDataSource.changePhone(token: token, phone: phone);
-  }
-
-  /// CHANGE EMAIL (triggers OTP)
-  Future<Map<String, dynamic>> changeEmail({
-    required String token,
-    required String email,
-  }) async {
-    return await _remoteDataSource.changeEmail(token: token, email: email);
+    return await _remoteDataSource.changeContactInfo(
+      token: token,
+      type: type,
+      newValue: newValue,
+    );
   }
 
   /// UPDATE PROFILE (basic info without photo)
@@ -68,10 +65,15 @@ class ProfileRepository {
     );
   }
 
-  Future<Map<String, dynamic>> confirmOtp({
+  Future<Map<String, dynamic>> verifyContactChange({
     required String token,
-    required String code,
+    required String oldCode,
+    required String newCode,
   }) async {
-    return await _remoteDataSource.confirmOtp(token: token, code: code);
+    return await _remoteDataSource.verifyContactChange(
+      token: token,
+      oldCode: oldCode,
+      newCode: newCode,
+    );
   }
 }

@@ -173,6 +173,9 @@
 
   "invalidEmail": "بريد إلكتروني غير صحيح",
   "passwordMismatch": "كلمات المرور غير متطابقة",
+  "passwordNeedsUppercase": "يجب أن تحتوي كلمة المرور على حرف كبير",
+  "passwordNeedsLowercase": "يجب أن تحتوي كلمة المرور على حرف صغير",
+  "passwordNeedsNumber": "يجب أن تحتوي كلمة المرور على رقم",
 
   "weNeedYourPhoneNumber": "نحن بحاجة لرقم هاتفك",
   "maybeLater": "ربما لاحقاً",
