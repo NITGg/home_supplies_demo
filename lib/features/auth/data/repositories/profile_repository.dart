@@ -65,6 +65,14 @@ class ProfileRepository {
     );
   }
 
+  /// POST /profile/change-phone — requests OTP to the new phone number.
+  Future<Map<String, dynamic>> changePhone({
+    required String token,
+    required String phone,
+  }) async {
+    return await _remoteDataSource.changePhone(token: token, phone: phone);
+  }
+
   Future<Map<String, dynamic>> verifyContactChange({
     required String token,
     required String oldCode,

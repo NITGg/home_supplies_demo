@@ -197,6 +197,32 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
+  /// POST /profile/change-phone — requests OTP to verify the new phone number.
+  /// Emits [ProfilePhoneOtpSent] on success so the caller can navigate to the
+  /// OTP screen (same flow as auth registration).
+  Future<void> changePhone({required String phone}) async {
+    emit(ProfileLoading());
+    try {
+      final token = await _authRepository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+      final result = await _profileRepository.changePhone(
+        token: token,
+        phone: phone,
+      );
+      emit(ProfilePhoneOtpSent(
+        destination: phone,
+        message: result['message'] as String? ?? '',
+      ));
+    } on DioException catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    } catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    }
+  }
+
   /// Sends OTP to both old and new contact values.
   /// [type] is "phone" or "email".
   Future<void> changeContactInfo({

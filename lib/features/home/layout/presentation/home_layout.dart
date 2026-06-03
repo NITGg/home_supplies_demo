@@ -905,10 +905,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Phone-number sheet (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _PhoneNumberSheet extends StatefulWidget {
   final BuildContext parentContext;
 
@@ -938,10 +934,9 @@ class _PhoneNumberSheetState extends State<_PhoneNumberSheet> {
       _errorMessage = null;
       _submitted = true;
     });
-    widget.parentContext.read<ProfileCubit>().changeContactInfo(
-      type: 'phone',
-      newValue: _phoneController.text.trim(),
-    );
+    String phone = _phoneController.text.trim();
+    if (!phone.startsWith('+2')) phone = '+2$phone';
+    widget.parentContext.read<ProfileCubit>().changePhone(phone: phone);
   }
 
   @override
@@ -952,8 +947,15 @@ class _PhoneNumberSheetState extends State<_PhoneNumberSheet> {
       bloc: widget.parentContext.read<ProfileCubit>(),
       listener: (_, state) {
         if (!_submitted) return;
-        if (state is ProfileLoaded) {
-          if (mounted) Navigator.pop(context);
+        if (state is ProfilePhoneOtpSent) {
+          if (mounted) {
+            Navigator.pop(context);
+            widget.parentContext.push('/auth/verify-otp', extra: {
+              'destination': state.destination,
+              'via': state.via,
+              'isPasswordReset': false,
+            });
+          }
         } else if (state is ProfileFailure) {
           if (mounted) {
             setState(() {
