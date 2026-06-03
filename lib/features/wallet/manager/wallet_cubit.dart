@@ -2,6 +2,7 @@
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/logger.dart';
 import '../data/models/transaction_penality_models.dart';
 import '../data/models/wallet_model.dart';
 import '../data/repositories/wallet_repo.dart';
@@ -144,12 +145,15 @@ class WalletCubit extends Cubit<WalletState> {
   }
 
   // ==================== Top-Up ====================
-  Future<void> initiateOnlineTopUp({required int amount}) async {
+  Future<void> initiateOnlineTopUp({required int amount, String? provider}) async {
+    dLog('💳 initiateOnlineTopUp: amount=$amount, provider=$provider');
     emit(TopUpLoading());
     try {
-      final response = await repository.initiateRecharge(amount);
+      final response = await repository.initiateRecharge(amount, provider: provider);
+      dLog('✅ initiateRecharge success: provider=${response.provider}, transactionId=${response.transactionId}, checkoutUrl=${response.checkoutUrl}');
       emit(TopUpInitiated(response: response));
-    } catch (e) {
+    } catch (e, st) {
+      dLog('❌ initiateRecharge error: $e\n$st');
       emit(TopUpError(message: extractErrorMessage(e)));
     }
   }

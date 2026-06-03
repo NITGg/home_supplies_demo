@@ -7,6 +7,7 @@ import '../../../../core/style/app_colors.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/text_form.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/utils/logger.dart';
 import '../manager/wallet_cubit.dart';
 import '../manager/wallet_state.dart';
 
@@ -70,9 +71,15 @@ class _TopUpScreenState extends State<TopUpScreen> {
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _PaymentMethodSheet(
         amount: _selectedAmount!,
-        onOnlinePayment: () {
+        onKashierPayment: () {
           Navigator.pop(sheetContext);
-          // amount_cents = EGP amount * 100
+          context.read<WalletCubit>().initiateOnlineTopUp(
+            amount: _selectedAmount! * 100,
+            provider: 'kashier',
+          );
+        },
+        onPaymobPayment: () {
+          Navigator.pop(sheetContext);
           context.read<WalletCubit>().initiateOnlineTopUp(
             amount: _selectedAmount! * 100,
           );
@@ -106,16 +113,19 @@ class _TopUpScreenState extends State<TopUpScreen> {
       body: BlocConsumer<WalletCubit, WalletState>(
         listener: (context, state) {
           if (state is TopUpInitiated) {
+            dLog('🟢 TopUpInitiated received: provider=${state.response.provider}, url=${state.response.checkoutUrl}');
             context.push(
               '/wallet/topup/payment',
               extra: {
                 'paymentUrl': state.response.checkoutUrl,
                 'amount': _selectedAmount! * 100,
                 'transactionId': state.response.transactionId,
+                'provider': state.response.provider,
               },
             );
           }
           if (state is TopUpError) {
+            dLog('🔴 TopUpError: ${state.message}');
             showErrorBanner(context, state.message);
           }
         },
@@ -268,12 +278,14 @@ class _TopUpScreenState extends State<TopUpScreen> {
 
 class _PaymentMethodSheet extends StatelessWidget {
   final int amount;
-  final VoidCallback onOnlinePayment;
+  final VoidCallback onKashierPayment;
+  final VoidCallback onPaymobPayment;
   final VoidCallback onManualTransfer;
 
   const _PaymentMethodSheet({
     required this.amount,
-    required this.onOnlinePayment,
+    required this.onKashierPayment,
+    required this.onPaymobPayment,
     required this.onManualTransfer,
   });
 
@@ -315,7 +327,7 @@ class _PaymentMethodSheet extends StatelessWidget {
               title: l10n.creditDebitCard,
               subtitle: l10n.onlinePayment,
               color: AppColors.kSecondaryColor,
-              onTap: onOnlinePayment,
+              onTap: onKashierPayment,
             ),
           ],
           if (AppSettings.paymob_enabled == true) ...[
@@ -325,7 +337,7 @@ class _PaymentMethodSheet extends StatelessWidget {
               title: l10n.creditDebitCard,
               subtitle: l10n.onlinePayment,
               color: AppColors.kSecondaryColor,
-              onTap: onOnlinePayment,
+              onTap: onPaymobPayment,
             ),
           ],
 

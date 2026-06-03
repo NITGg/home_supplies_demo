@@ -11,12 +11,14 @@ class PaymobWebViewScreen extends StatefulWidget {
   final String paymentUrl;
   final int amount;
   final int transactionId;
+  final String provider;
 
   const PaymobWebViewScreen({
     super.key,
     required this.paymentUrl,
     required this.amount,
     required this.transactionId,
+    this.provider = 'paymob',
   });
 
   @override
@@ -31,6 +33,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
   // SEC-12: Only these domains may be navigated to inside the payment WebView.
   static const _allowedDomains = [
     'paymob.com',
+    'kashier.io',
     'tawreedat.nitg-eg.com',
   ];
 
@@ -70,7 +73,6 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
               final success = uri.queryParameters["success"] == "true";
 
               if (success) {
-                // Payment successful
                 if (mounted) {
                   context.go(
                     '/wallet/topup/success',
@@ -81,7 +83,35 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
                   );
                 }
               } else {
-                // Payment failed
+                if (mounted) {
+                  final l10n = AppLocalizations.of(context)!;
+                  showErrorBanner(context, l10n.paymentFailed);
+                  setState(() => _canPop = true);
+                  Navigator.pop(context);
+                }
+              }
+              return NavigationDecision.prevent;
+            }
+
+            // Detect Kashier redirect — Kashier appends paymentStatus to the
+            // merchant callback URL which is outside the kashier.io domain.
+            if (widget.provider == 'kashier' &&
+                request.url.contains('paymentStatus')) {
+              final uri = Uri.parse(request.url);
+              final status = uri.queryParameters['paymentStatus']?.toUpperCase();
+              final success = status == 'SUCCESS';
+
+              if (success) {
+                if (mounted) {
+                  context.go(
+                    '/wallet/topup/success',
+                    extra: {
+                      'amount': widget.amount,
+                      'transactionId': widget.transactionId,
+                    },
+                  );
+                }
+              } else {
                 if (mounted) {
                   final l10n = AppLocalizations.of(context)!;
                   showErrorBanner(context, l10n.paymentFailed);

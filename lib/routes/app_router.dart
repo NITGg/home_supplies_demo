@@ -242,6 +242,7 @@ Future<GoRouter> createAppRouter({
             paymentUrl: extra['paymentUrl'] as String,
             amount: extra['amount'] as int,
             transactionId: extra['transactionId'] as int,
+            provider: extra['provider'] as String? ?? 'paymob',
           );
         },
       ),

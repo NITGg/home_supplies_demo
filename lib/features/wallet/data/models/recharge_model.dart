@@ -3,26 +3,36 @@
 
 class RechargeModel {
   final String message;
+  final String provider;
   final int transactionId;
-  final String clientSecret;
   final String checkoutUrl;
-  final int intentionOrderId;
+
+  // Paymob-specific
+  final String? clientSecret;
+  final int? intentionOrderId;
+
+  // Kashier-specific
+  final String? sessionId;
 
   RechargeModel({
     required this.message,
+    required this.provider,
     required this.transactionId,
-    required this.clientSecret,
     required this.checkoutUrl,
-    required this.intentionOrderId,
+    this.clientSecret,
+    this.intentionOrderId,
+    this.sessionId,
   });
 
   factory RechargeModel.fromJson(Map<String, dynamic> json) {
     return RechargeModel(
       message: json['message'] ?? '',
+      provider: json['provider'] ?? 'paymob',
       transactionId: json['transactionId'],
-      clientSecret: json['clientSecret'] ?? '',
       checkoutUrl: json['checkoutUrl'] ?? '',
+      clientSecret: json['clientSecret'],
       intentionOrderId: json['intentionOrderId'],
+      sessionId: json['sessionId'],
     );
   }
 }

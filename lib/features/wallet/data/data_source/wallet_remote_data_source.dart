@@ -24,11 +24,17 @@ class WalletRemoteDataSource {
     );
   }
 
-  Future<RechargeModel> initiateRecharge(int amountCents) async {
+  Future<RechargeModel> initiateRecharge(int amountCents, {String? provider}) async {
+    final body = <String, dynamic>{'amount_cents': amountCents.toString()};
+    if (provider != null) body['provider'] = provider;
+    //only send this in kashier
+    if (provider != null) body['redirection_url'] = "https://tawreedat.nitg-eg.com/admin_apis/api/v1/test";
+    dLog('📤 POST /profile/wallet/recharge/initiate body=$body');
     final response = await _dio.post(
       '/profile/wallet/recharge/initiate?lang=${LocaleManager.currentLocale}',
-      data: {'amount_cents': amountCents.toString()},
+      data: body,
     );
+    dLog('📥 initiateRecharge status=${response.statusCode} data=${response.data}');
     if (response.statusCode == 201) {
       return RechargeModel.fromJson(response.data);
     }

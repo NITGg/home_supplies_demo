@@ -13,8 +13,8 @@ class WalletRepository {
     return await remoteDataSource.getWalletData();
   }
 
-  Future<RechargeModel> initiateRecharge(int amountCents) async {
-    return await remoteDataSource.initiateRecharge(amountCents);
+  Future<RechargeModel> initiateRecharge(int amountCents, {String? provider}) async {
+    return await remoteDataSource.initiateRecharge(amountCents, provider: provider);
   }
 
   // ==================== Get Transactions ====================
