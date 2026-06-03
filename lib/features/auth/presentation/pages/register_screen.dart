@@ -32,7 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
+  // final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
@@ -42,7 +42,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     firstNameController.dispose();
     lastNameController.dispose();
-    emailController.dispose();
+    // emailController.dispose();
     phoneController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
@@ -63,7 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       context.read<AuthCubit>().register(
         context: context,
-        email: emailController.text.isEmpty ? null : emailController.text,
+        // email: emailController.text.isEmpty ? null : emailController.text,
         phone: phone,
         password: passwordController.text,
         fullName: '${firstNameController.text} ${lastNameController.text}',
@@ -157,28 +157,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     validator: (v) =>
                                     v!.isEmpty ? 'Required' : null,
                                   ),
-                                  const SizedBox(height: 18),
-                                  AppTextFormField(
-                                    focusNode: emailFocus,
-                                    textInputAction: TextInputAction.next,
-                                    onFieldSubmitted: (_) {
-                                      FocusScope.of(
-                                        context,
-                                      ).requestFocus(phoneFocus);
-                                    },
-                                    label: loc.email,
-                                    controller: emailController,
-                                    validator: (v) {
-                                      if (v!.isEmpty) return null;
-                                      final emailRegex = RegExp(
-                                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                      );
-                                      if (!emailRegex.hasMatch(v)) {
-                                        return loc.invalidEmail;
-                                      }
-                                      return null;
-                                    },
-                                  ),
+                                  // const SizedBox(height: 18),
+                                  // AppTextFormField(
+                                  //   focusNode: emailFocus,
+                                  //   textInputAction: TextInputAction.next,
+                                  //   onFieldSubmitted: (_) {
+                                  //     FocusScope.of(
+                                  //       context,
+                                  //     ).requestFocus(phoneFocus);
+                                  //   },
+                                  //   label: loc.email,
+                                  //   // controller: emailController,
+                                  //   validator: (v) {
+                                  //     if (v!.isEmpty) return null;
+                                  //     final emailRegex = RegExp(
+                                  //       r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                  //     );
+                                  //     if (!emailRegex.hasMatch(v)) {
+                                  //       return loc.invalidEmail;
+                                  //     }
+                                  //     return null;
+                                  //   },
+                                  // ),
                                   const SizedBox(height: 18),
                                   AppTextFormField(
                                     focusNode: phoneFocus,
