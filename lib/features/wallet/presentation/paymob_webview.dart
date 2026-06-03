@@ -39,13 +39,10 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
   late final WebViewController _controller;
   bool _canPop = true;
   bool _isLoading = true;
-
-  // SEC-12: Only these domains may be navigated to inside the payment WebView.
-  static const _allowedDomains = [
-    'paymob.com',
-    'kashier.io',
-    'tawreedat.nitg-eg.com',
-  ];
+  // True once the user has navigated away from the initial payment page
+  // (i.e. they submitted their card data). Only after this point do we lock
+  // the back button, because before submission there is nothing to lose.
+  bool _paymentSubmitted = false;
 
   @override
   void initState() {
@@ -58,11 +55,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
         NavigationDelegate(
           onPageStarted: (url) {
             dLog("➡️ Page started loading: $url");
-            // Lock back navigation as soon as any payment page starts loading.
-            setState(() {
-              _isLoading = true;
-              _canPop = false;
-            });
+            setState(() => _isLoading = true);
           },
           onPageFinished: (url) {
             dLog("✅ Page finished loading: $url");
@@ -71,9 +64,9 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
           onNavigationRequest: (request) async {
             dLog("🔗 Navigation request: ${request.url}");
 
-            // Detect Paymob redirect — must be checked before the allowlist
-            // because these URLs are intercepted and never actually navigated
-            // to; blocking them here would break success/failure handling.
+            // Detect Paymob redirect — intercepted before any domain check
+            // because the callback URL is outside our allowed domains but
+            // must be handled here, not navigated to.
             if (request.url.contains("redirection-url") ||
                 request.url.contains("post_pay")) {
               final uri = Uri.parse(request.url);
@@ -92,17 +85,21 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
               return NavigationDecision.prevent;
             }
 
-            // SEC-12: Block any navigation that does not originate from the
-            // payment provider or the app's own backend. This prevents an
-            // injected or rogue page from redirecting the WebView to an
-            // arbitrary third-party origin.
-            final isAllowed =
-            _allowedDomains.any((d) => request.url.contains(d));
-            if (!isAllowed) {
-              dLog("🚫 Blocked navigation to unlisted domain: ${request.url}");
-              return NavigationDecision.prevent;
+            // Once the user navigates away from the initial page (form
+            // submission, 3DS redirect, etc.) lock the back button so they
+            // cannot accidentally abort mid-transaction.
+            if (!_paymentSubmitted &&
+                request.url != widget.paymentUrl &&
+                request.isMainFrame) {
+              setState(() {
+                _paymentSubmitted = true;
+                _canPop = false;
+              });
             }
 
+            // Allow all navigation: payment flows legitimately visit bank
+            // domains (3DS / Mastercard SecureCode / Visa OTP pages) that
+            // cannot be enumerated in a static allowlist.
             return NavigationDecision.navigate;
           },
           onWebResourceError: (error) {
