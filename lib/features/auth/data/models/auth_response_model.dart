@@ -1,3 +1,89 @@
+/// Response from POST /register — no token yet, just user info + via channel.
+class RegisterResponseModel {
+  final String message;
+  final RegisterUserModel user;
+  final String via; // "phone" or "email"
+
+  RegisterResponseModel({
+    required this.message,
+    required this.user,
+    required this.via,
+  });
+
+  factory RegisterResponseModel.fromJson(Map<String, dynamic> json) {
+    return RegisterResponseModel(
+      message: json['message'] as String,
+      user: RegisterUserModel.fromJson(json['user'] as Map<String, dynamic>),
+      via: json['via'] as String? ?? 'phone',
+    );
+  }
+}
+
+class RegisterUserModel {
+  final int id;
+  final String fullName;
+  final String? email;
+  final String? phone;
+  final bool? isActive;
+  final bool? isEmailVerified;
+  final bool? isPhoneVerified;
+
+  RegisterUserModel({
+    required this.id,
+    required this.fullName,
+    this.email,
+    this.phone,
+    this.isActive,
+    this.isEmailVerified,
+    this.isPhoneVerified,
+  });
+
+  factory RegisterUserModel.fromJson(Map<String, dynamic> json) {
+    return RegisterUserModel(
+      id: json['id'] as int,
+      fullName: json['full_name'] as String,
+      email: json['email'] as String?,
+      phone: json['phone'] as String?,
+      isActive: json['is_active'] as bool?,
+      isEmailVerified: json['is_email_verified'] as bool?,
+      isPhoneVerified: json['is_phone_verified'] as bool?,
+    );
+  }
+}
+
+/// Response from POST /verify-account.
+class VerifyAccountResponseModel {
+  final String message;
+  final bool verified;
+  final String via;
+  final bool fullyVerified;
+  final String? token; // present only when fullyVerified == true
+  final List<String> unverified; // channels still pending
+
+  VerifyAccountResponseModel({
+    required this.message,
+    required this.verified,
+    required this.via,
+    required this.fullyVerified,
+    this.token,
+    this.unverified = const [],
+  });
+
+  factory VerifyAccountResponseModel.fromJson(Map<String, dynamic> json) {
+    return VerifyAccountResponseModel(
+      message: json['message'] as String,
+      verified: json['verified'] as bool? ?? false,
+      via: json['via'] as String? ?? '',
+      fullyVerified: json['fullyVerified'] as bool? ?? false,
+      token: json['token'] as String?,
+      unverified: (json['unverified'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+          [],
+    );
+  }
+}
+
 class ShortAuthResponseModel {
   final String message;
   final String token;

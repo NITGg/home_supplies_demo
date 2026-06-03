@@ -78,7 +78,11 @@ class _LoginScreenState extends State<LoginScreen> {
             if (Navigator.of(context, rootNavigator: true).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
             }
-            context.push('/auth/verify-otp', extra: state.phone);
+            context.push('/auth/verify-otp', extra: {
+              'destination': state.destination,
+              'via': state.via,
+              'isPasswordReset': false,
+            });
           } else if (state is AuthRoleNotAllowed) {
             showErrorBanner(context, state.message);
             context.pop();

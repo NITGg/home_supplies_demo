@@ -85,6 +85,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               barrierDismissible: false,
               builder: (dialogContext) => const Center(child: LoadingScreen()),
             );
+          } else if (state is AuthOtpRequired) {
+            if (Navigator.of(context, rootNavigator: true).canPop()) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
+            context.push('/auth/verify-otp', extra: {
+              'destination': state.destination,
+              'via': state.via,
+              'isPasswordReset': false,
+            });
           } else if (state is AuthSuccess) {
             if (Navigator.of(context, rootNavigator: true).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
@@ -150,7 +159,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     onFieldSubmitted: (_) {
                                       FocusScope.of(
                                         context,
-                                      ).requestFocus(emailFocus);
+                                      ).requestFocus(phoneFocus);
                                     },
                                     label: '${loc.lastName} *',
                                     controller: lastNameController,

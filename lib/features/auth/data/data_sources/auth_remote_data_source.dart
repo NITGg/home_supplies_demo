@@ -27,12 +27,13 @@ class AuthRemoteDataSource {
       );
     }
   }
-  Future<ShortAuthResponseModel> register({
+  Future<RegisterResponseModel> register({
     required BuildContext context,
     required String fullName,
     required String phone,
     required String password,
     String? email,
+    String? gender,
   }) async {
     final Map<String, dynamic> data = {
       'full_name': fullName,
@@ -40,10 +41,10 @@ class AuthRemoteDataSource {
       'password': password,
     };
 
-    if (email != null && email.isNotEmpty) {
-      data['email'] = email;
-    }
+    if (email != null && email.isNotEmpty) data['email'] = email;
+    if (gender != null && gender.isNotEmpty) data['gender'] = gender;
 
+    dLog('📤 POST /auth/register — body: $data');
     final response = await _dio.post(
       '/auth/register?lang=${LocaleManager.currentLocale}',
       data: data,
@@ -51,8 +52,49 @@ class AuthRemoteDataSource {
         headers: {'Accept-Language': LocaleManager.currentLocale},
       ),
     );
+    dLog('📥 /auth/register — status: ${response.statusCode}, body: ${response.data}');
 
-    return ShortAuthResponseModel.fromJson(response.data);
+    return RegisterResponseModel.fromJson(response.data);
+  }
+
+  /// POST /verify-account — submit OTP code for phone or email.
+  Future<VerifyAccountResponseModel> verifyAccount({
+    String? phone,
+    String? email,
+    required String code,
+  }) async {
+    final Map<String, dynamic> data = {'code': code};
+    if (phone != null) data['phone'] = phone;
+    if (email != null) data['email'] = email;
+
+    dLog('📤 POST /auth/verify-account — body: $data');
+    final response = await _dio.post(
+      '/auth/verify-account?lang=${LocaleManager.currentLocale}',
+      data: data,
+      options: Options(
+        headers: {'Accept-Language': LocaleManager.currentLocale},
+      ),
+    );
+    dLog('📥 /auth/verify-account — status: ${response.statusCode}, body: ${response.data}');
+
+    return VerifyAccountResponseModel.fromJson(response.data);
+  }
+
+  /// POST /request-verification — resend OTP for phone or email.
+  Future<void> requestVerification({String? phone, String? email}) async {
+    final Map<String, dynamic> data = {};
+    if (phone != null) data['phone'] = phone;
+    if (email != null) data['email'] = email;
+
+    dLog('📤 POST /auth/request-verification — body: $data');
+    final response = await _dio.post(
+      '/auth/request-verification?lang=${LocaleManager.currentLocale}',
+      data: data,
+      options: Options(
+        headers: {'Accept-Language': LocaleManager.currentLocale},
+      ),
+    );
+    dLog('📥 /auth/request-verification — status: ${response.statusCode}');
   }
 
   Future<ShortAuthResponseModel> login({
@@ -216,15 +258,9 @@ class AuthRemoteDataSource {
     );
   }
 
-  Future<void> resendOtp({required String phone}) async {
-    await _dio.post(
-      '/auth/resend-otp?lang=${LocaleManager.currentLocale}',
-      data: {'phone': phone},
-      options: Options(
-        headers: {'Accept-Language': LocaleManager.currentLocale},
-      ),
-    );
-  }
+  /// Kept for backward-compat; delegates to requestVerification.
+  Future<void> resendOtp({required String phone}) =>
+      requestVerification(phone: phone);
 
   Future<void> logout() async {
     await _dio.post(

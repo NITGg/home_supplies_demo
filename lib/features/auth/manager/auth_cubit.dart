@@ -17,6 +17,11 @@ String kUserId = '';
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repository;
 
+  // Stored during register() so verifyRegistrationOtp() can resolve the next
+  // channel's destination even though the OTP screen only passes one channel.
+  String? _registeredPhone;
+  String? _registeredEmail;
+
   AuthCubit(this._repository) : super(AuthInitial());
 
   void reset() => emit(AuthInitial());
@@ -39,10 +44,15 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> _initializeUserSession() async {
+    dLog('🔑 _initializeUserSession: reading token from storage');
     kAuthtoken = await _repository.getSavedToken() ?? '';
+    dLog('🔑 _initializeUserSession: token=${kAuthtoken.isNotEmpty ? '[present]' : '[MISSING]'}');
     var prof = await SecureStorageService().getUserProfile();
     if (prof != null) {
       kUserId = prof['id']?.toString() ?? '';
+      dLog('🔑 _initializeUserSession: userId=$kUserId');
+    } else {
+      dLog('⚠️ _initializeUserSession: no profile in storage');
     }
     await _registerFCMToken();
   }
@@ -53,19 +63,87 @@ class AuthCubit extends Cubit<AuthState> {
     required String phone,
     required String password,
     String? email,
+    String? gender,
   }) async {
     emit(AuthLoading());
     try {
+      dLog('📝 register: phone=$phone email=$email');
       final result = await _repository.register(
         context: context,
         fullName: fullName,
         phone: phone,
         password: password,
         email: email,
+        gender: gender,
       );
-      await _initializeUserSession();
-      emit(AuthSuccess(shortAuthResponse: result));
+      dLog('✅ register success: via=${result.via} phone=${result.user.phone} email=${result.user.email}');
+      // Token is NOT available yet — user must verify OTP first.
+      // Store both contacts so verifyRegistrationOtp can resolve the next channel.
+      _registeredPhone = result.user.phone ?? phone;
+      _registeredEmail = result.user.email ?? email;
+      final destination = result.via == 'email'
+          ? (_registeredEmail ?? phone)
+          : (_registeredPhone ?? phone);
+      dLog('📲 emitting AuthOtpRequired: destination=$destination via=${result.via}');
+      emit(AuthOtpRequired(destination: destination, via: result.via));
     } catch (e) {
+      dLog('❌ register error: $e');
+      emit(AuthFailure(extractErrorMessage(e)));
+    }
+  }
+
+  /// Called from the OTP screen after registration to verify the code.
+  Future<void> verifyRegistrationOtp({
+    String? phone,
+    String? email,
+    required String code,
+  }) async {
+    emit(AuthLoading());
+    dLog('🔐 verifyRegistrationOtp: phone=$phone email=$email code=$code');
+    try {
+      final result = await _repository.verifyAccount(
+        phone: phone,
+        email: email,
+        code: code,
+      );
+      dLog('✅ verifyAccount response: fullyVerified=${result.fullyVerified} via=${result.via} unverified=${result.unverified} token=${result.token != null ? '[present]' : '[null]'}');
+
+      if (result.fullyVerified) {
+        dLog('🎉 fully verified — initializing session');
+        await _initializeUserSession();
+        emit(AuthSuccess());
+      } else {
+        // One channel verified, another is still pending.
+        final nextChannel = result.unverified.isNotEmpty
+            ? result.unverified.first
+            : '';
+        dLog('⏭️ partial verification — next channel: $nextChannel');
+        // Use the contacts captured at registration time so the second OTP
+        // screen always has the correct destination regardless of which channel
+        // was just verified.
+        emit(AuthNextOtpRequired(
+          destination: nextChannel == 'email'
+              ? (_registeredEmail ?? '')
+              : (_registeredPhone ?? ''),
+          via: nextChannel,
+        ));
+      }
+    } catch (e) {
+      dLog('❌ verifyRegistrationOtp error: $e');
+      emit(AuthFailure(extractErrorMessage(e)));
+    }
+  }
+
+  /// Resend OTP during registration verification.
+  Future<void> resendRegistrationOtp({String? phone, String? email}) async {
+    emit(AuthLoading());
+    dLog('🔄 resendRegistrationOtp: phone=$phone email=$email');
+    try {
+      await _repository.requestVerification(phone: phone, email: email);
+      dLog('✅ OTP resent');
+      emit(AuthOtpResent(message: 'OTP resent successfully'));
+    } catch (e) {
+      dLog('❌ resendRegistrationOtp error: $e');
       emit(AuthFailure(extractErrorMessage(e)));
     }
   }
@@ -238,10 +316,11 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  /// Resend OTP — delegates to requestVerification (new endpoint).
   Future<void> resendPhoneOtp({required String phone}) async {
     emit(AuthLoading());
     try {
-      await _repository.resendOtp(phone: phone);
+      await _repository.requestVerification(phone: phone);
       emit(AuthOtpResent(message: 'OTP resent successfully'));
     } catch (e) {
       emit(AuthFailure(extractErrorMessage(e)));

@@ -57,6 +57,9 @@ class ApiClient {
         handler.next(options);
       },
       onError: (e, handler) async {
+        dLog('🌐 HTTP error: ${e.requestOptions.method} ${e.requestOptions.uri}');
+        dLog('   status: ${e.response?.statusCode}');
+        dLog('   body:   ${e.response?.data}');
         final friendlyError = _toFriendlyError(e);
         if (e.response?.statusCode == 401) {
           final token = await SecureStorageService().getToken();

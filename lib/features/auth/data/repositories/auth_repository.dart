@@ -12,23 +12,53 @@ class AuthRepository {
 
   AuthRepository(this._remoteDataSource, this._storageService);
 
-  Future<ShortAuthResponseModel> register({
+  Future<RegisterResponseModel> register({
     required var context,
     required String fullName,
     required String phone,
     required String password,
     String? email,
+    String? gender,
   }) async {
+    // No token returned at this stage — just user info and the OTP channel.
     final response = await _remoteDataSource.register(
       context: context,
       fullName: fullName,
       phone: phone,
       password: password,
       email: email,
+      gender: gender,
     );
-    await _storageService.saveToken(response.token);
-    await _storageService.saveUserProfile(response.user.toJson());
     return response;
+  }
+
+  /// Verify OTP for the given channel (phone or email).
+  /// Saves the token and user profile when [fullyVerified] is true.
+  Future<VerifyAccountResponseModel> verifyAccount({
+    String? phone,
+    String? email,
+    required String code,
+  }) async {
+    final response = await _remoteDataSource.verifyAccount(
+      phone: phone,
+      email: email,
+      code: code,
+    );
+    if (response.fullyVerified && response.token != null) {
+      await _storageService.saveToken(response.token!);
+      // Fetch and cache the full profile so kUserId is available immediately
+      // after the registration OTP flow completes.
+      try {
+        final profile = await _remoteDataSource.getProfile(response.token!);
+        await _storageService.saveUserProfile(profile.user.toJson());
+      } catch (_) {}
+    }
+    return response;
+  }
+
+  /// Request (or resend) an OTP for the given channel.
+  Future<void> requestVerification({String? phone, String? email}) async {
+    await _remoteDataSource.requestVerification(phone: phone, email: email);
   }
 
   Future<ShortAuthResponseModel> login({

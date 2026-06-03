@@ -38,10 +38,19 @@ class AuthProfileDeleted extends AuthState {
   AuthProfileDeleted(this.message);
 }
 
+/// Emitted after registration — OTP has been sent to [destination].
+/// [via] is "phone" or "email".
 class AuthOtpRequired extends AuthState {
-  final String phone;
-  final ShortAuthResponseModel authResponse;
-  AuthOtpRequired({required this.phone, required this.authResponse});
+  final String destination; // phone or email to show on OTP screen
+  final String via;         // "phone" or "email"
+  AuthOtpRequired({required this.destination, required this.via});
+}
+
+/// Emitted when one channel is verified but another remains (e.g. email done, phone pending).
+class AuthNextOtpRequired extends AuthState {
+  final String destination; // next channel destination
+  final String via;         // "phone" or "email"
+  AuthNextOtpRequired({required this.destination, required this.via});
 }
 
 class AuthOtpResent extends AuthState {

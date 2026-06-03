@@ -18,11 +18,14 @@ class OtpVerificationScreen extends StatefulWidget {
   /// Phone number OR email — whatever the user entered on the previous screen.
   final String destination;
   final bool isPasswordReset;
+  /// "phone" or "email" — tells the screen which channel to verify.
+  final String via;
 
   const OtpVerificationScreen({
     super.key,
     required this.destination,
     this.isPasswordReset = false,
+    this.via = 'phone',
   });
 
   @override
@@ -30,7 +33,7 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  static const int _otpLength = 6;
+  static const int _otpLength = 4;
 
   final _otpController = TextEditingController();
   final _otpFocusNode = FocusNode();
@@ -89,16 +92,21 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
 
     if (widget.isPasswordReset) {
-      // Carry the code forward — no backend call here
+      // Carry the code forward to new-password screen — no backend call here.
       if (_hasNavigated) return;
       _hasNavigated = true;
       context.push(
         '/auth/new-password',
-        extra: {'otp': widget.destination.contains('@') ? otp: '123'},
+        extra: {'otp': otp},
       );
     } else {
-      // Registration flow — delegate to cubit
-      context.read<AuthCubit>().resendPhoneOtp(phone: widget.destination);
+      // Registration flow — verify OTP via the correct channel.
+      final isEmail = widget.via == 'email';
+      context.read<AuthCubit>().verifyRegistrationOtp(
+        phone: isEmail ? null : widget.destination,
+        email: isEmail ? widget.destination : null,
+        code: otp,
+      );
     }
   }
 
@@ -106,14 +114,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     if (!_canResend) return;
     _otpController.clear();
 
-    final isEmail = widget.destination.contains('@');
+    final isEmail = widget.via == 'email';
     if (widget.isPasswordReset) {
       context.read<AuthCubit>().forgotPassword(
         phone: isEmail ? null : widget.destination,
         email: isEmail ? widget.destination : null,
       );
     } else {
-      context.read<AuthCubit>().resendPhoneOtp(phone: widget.destination);
+      context.read<AuthCubit>().resendRegistrationOtp(
+        phone: isEmail ? null : widget.destination,
+        email: isEmail ? widget.destination : null,
+      );
     }
     _startTimer();
   }
@@ -122,11 +133,22 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   void _onState(BuildContext ctx, AuthState state) {
     if (_hasNavigated) return;
-    dLog('OtpVerificationScreen — ${state.runtimeType}');
+    dLog('OtpVerificationScreen — \${state.runtimeType}');
 
     if (state is AuthSuccess && !widget.isPasswordReset) {
       _hasNavigated = true;
       ctx.go('/mainHome');
+    } else if (state is AuthNextOtpRequired) {
+      // One channel done, another still pending — push a new OTP screen.
+      _hasNavigated = true;
+      ctx.pushReplacement(
+        '/auth/verify-otp',
+        extra: {
+          'destination': state.destination,
+          'via': state.via,
+          'isPasswordReset': false,
+        },
+      );
     } else if (state is AuthOtpResent) {
       showSuccessBanner(ctx, state.message);
     } else if (state is AuthForgotPasswordOtpSent) {
