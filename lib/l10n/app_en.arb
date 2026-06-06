@@ -515,6 +515,8 @@
 "averageRating": "Average Rating",
 "rateTheCourier": "Rate the Courier",
 "howWasYourExperience": "How was your experience with this courier?",
+"rateTheSupplier": "Rate the Supplier",
+"howWasYourExperienceWithSupplier": "How was your experience with the products?",
 "leaveAComment": "Leave a comment (optional)",
 "submitReview": "Submit Review",
 "pleaseSelectRating": "Please select a rating",

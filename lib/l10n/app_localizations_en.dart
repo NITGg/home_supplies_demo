@@ -1181,6 +1181,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get howWasYourExperience => 'How was your experience with this courier?';
 
   @override
+  String get rateTheSupplier => 'Rate the Supplier';
+
+  @override
+  String get howWasYourExperienceWithSupplier => 'How was your experience with the products?';
+
+  @override
   String get leaveAComment => 'Leave a comment (optional)';
 
   @override

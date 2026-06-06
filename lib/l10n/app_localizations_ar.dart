@@ -1181,6 +1181,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get howWasYourExperience => 'كيف كانت تجربتك مع هذا المندوب؟';
 
   @override
+  String get rateTheSupplier => 'قيّم المورد';
+
+  @override
+  String get howWasYourExperienceWithSupplier => 'كيف كانت تجربتك مع المنتجات؟';
+
+  @override
   String get leaveAComment => 'اترك تعليقاً (اختياري)';
 
   @override

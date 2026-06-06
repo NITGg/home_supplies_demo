@@ -2393,6 +2393,18 @@ abstract class AppLocalizations {
   /// **'How was your experience with this courier?'**
   String get howWasYourExperience;
 
+  /// No description provided for @rateTheSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate the Supplier'**
+  String get rateTheSupplier;
+
+  /// No description provided for @howWasYourExperienceWithSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'How was your experience with the products?'**
+  String get howWasYourExperienceWithSupplier;
+
   /// No description provided for @leaveAComment.
   ///
   /// In en, this message translates to:

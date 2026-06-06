@@ -11,6 +11,7 @@ import '../../../../core/utils/formatDate.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../refunds/manager/refund_cubit.dart';
 import '../../../refunds/presentation/refund_request_sheet.dart';
+import 'sheets/supplier_review_bottom_sheet.dart';
 import '../../data/models/order_model.dart';
 import '../../manager/order_cubit.dart';
 import '../../manager/order_states.dart';
@@ -189,6 +190,8 @@ class OrderCard extends StatelessWidget {
                 order.isRefundable &&
                 (order.orderItems.any((i) => i.product.isRefundable)))
               _buildRefundButton(context),
+            if (order.isDelivered && order.type == 'CATALOG_PURCHASE')
+              _buildRateSupplierButton(context),
           ],
         ),
       ),
@@ -211,6 +214,34 @@ class OrderCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRateSupplierButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _openSupplierReviewSheet(context),
+          icon: const Icon(Icons.star_outline_rounded, size: 18),
+          label: Text(
+            l10n.rateTheSupplier,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openSupplierReviewSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => SupplierReviewBottomSheet(orderId: order.id!),
     );
   }
 
