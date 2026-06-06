@@ -57,7 +57,7 @@ class UserProfileModel {
       fullName: user['full_name'] as String,
       phone: user['phone'] as String?,
       extraPhones: user['extra_phones'] as String?,
-      personalPhoto: user['personal_photo'] as String?,
+      personalPhoto: (user['personal_photo'] ?? user['image_url']) as String?,
       gender: user['gender'] as String?,
       lang: user['lang'] as String?,
       isActive: user['is_active'] as bool?,

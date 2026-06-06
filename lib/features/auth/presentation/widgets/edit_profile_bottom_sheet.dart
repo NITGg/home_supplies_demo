@@ -10,7 +10,6 @@ import '../../../../main.dart' show rootNavigatorKey;
 import '../../data/models/user_profile_model.dart';
 import '../../manager/profile_cubit.dart';
 import '../../manager/profile_states.dart';
-import '../pages/otp_screen.dart';
 
 class EditProfileBottomSheet extends StatefulWidget {
   final UserProfileModel profile;
@@ -25,26 +24,13 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _extraPhoneController;
-  late TextEditingController _phoneController;
-  late TextEditingController _emailController;
   bool isMale = true;
-
-  bool get _isLocalLogin =>
-      widget.profile.loginType == null || widget.profile.loginType == 'LOCAL';
-
-  bool get _phoneChanged =>
-      _phoneController.text.trim() != (widget.profile.phone ?? '');
-
-  bool get _emailChanged =>
-      _emailController.text.trim() != (widget.profile.email ?? '');
 
   @override
   void initState() {
     super.initState();
     _nameController       = TextEditingController(text: widget.profile.fullName);
     _extraPhoneController = TextEditingController(text: widget.profile.extraPhones ?? '');
-    _phoneController      = TextEditingController(text: widget.profile.phone ?? '');
-    _emailController      = TextEditingController(text: widget.profile.email ?? '');
     isMale = widget.profile.gender == 'MALE';
   }
 
@@ -52,8 +38,6 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
   void dispose() {
     _nameController.dispose();
     _extraPhoneController.dispose();
-    _phoneController.dispose();
-    _emailController.dispose();
     super.dispose();
   }
 
@@ -71,8 +55,6 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
         } else if (state is ProfileFailure) {
           if (rootCtx != null) showErrorBanner(rootCtx, state.message);
         }
-        // ProfileChangePhoneSuccess / ProfileChangeEmailSuccess are handled
-        // inside _saveChanges — we navigate to OTP from there.
       },
       child: Directionality(
         textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
@@ -127,37 +109,6 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
                           },
                         ),
                         const SizedBox(height: 16),
-
-                        // ── Extra phone ────────────────────────────────────
-                        // AppTextFormField(
-                        //   isRequired: false,
-                        //   label: localizations.extraPhone,
-                        //   controller: _extraPhoneController,
-                        //   isPhone: true,
-                        // ),
-                        // const SizedBox(height: 16),
-
-                        // ── Phone (LOCAL + social) ─────────────────────────
-                        AppTextFormField(
-                          isRequired: false,
-                          label: localizations.phone,
-                          controller: _phoneController,
-                          isPhone: true,
-                          onChanged: (_) => setState(() {}),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // ── Email (LOCAL only) ─────────────────────────────
-                        // if (_isLocalLogin) ...[
-                        //   AppTextFormField(
-                        //     isRequired: false,
-                        //     label: localizations.email,
-                        //     controller: _emailController,
-                        //     keyboardType: TextInputType.emailAddress,
-                        //     onChanged: (_) => setState(() {}),
-                        //   ),
-                        //   const SizedBox(height: 16),
-                        // ],
 
                         // ── Gender ─────────────────────────────────────────
                         _buildGenderSwitch(localizations),
@@ -250,106 +201,10 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
     final cubit      = context.read<ProfileCubit>();
     final extraPhone = _extraPhoneController.text.trim();
 
-    Future<void> doUpdateProfile() async {
-      await cubit.updateProfile(
-        fullName:    _nameController.text.trim(),
-        gender:      isMale ? 'MALE' : 'FEMALE',
-        extraPhones: extraPhone.isEmpty ? null : extraPhone,
-      );
-    }
-
-    // Helper: push an OTP screen for a contact change.
-    // When [oldDest] is null (first-time add), uses request-verification +
-    // verify-account (single PIN). Otherwise uses change-phone-email +
-    // verify-old-new-phone-email (two PINs).
-    Future<void> pushOtpFor({
-      required String type,
-      required String? oldDest,
-      required String newValue,
-      required VoidCallback onConfirmed,
-    }) async {
-      final isFirstTime = oldDest == null;
-
-      if (isFirstTime) {
-        await cubit.addContactInfo(type: type, value: newValue);
-      } else {
-        await cubit.changeContactInfo(type: type, newValue: newValue);
-      }
-      if (!mounted) return;
-      if (cubit.state is ProfileFailure) return;
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: cubit,
-            child: ProfileOtpScreen(
-              oldDestination: oldDest,
-              newDestination: newValue,
-              onConfirmed: onConfirmed,
-              onSingleVerify: isFirstTime
-                  ? (code) => cubit.verifyNewContact(
-                        phone: type == 'phone' ? newValue : null,
-                        email: type == 'email' ? newValue : null,
-                        code: code,
-                      )
-                  : null,
-            ),
-          ),
-        ),
-      );
-    }
-
-    String? existingPhone = (widget.profile.phone?.isNotEmpty == true) ? widget.profile.phone : null;
-    String? existingEmail = (widget.profile.email?.isNotEmpty == true) ? widget.profile.email : null;
-
-    // ── LOCAL: phone changed → OTP; after confirming, handle email if also changed
-    if (_isLocalLogin && _phoneChanged) {
-      final newPhone = _phoneController.text.trim();
-      final newEmail = _emailController.text.trim();
-      final emailAlsoChanged = _emailChanged;
-
-      await pushOtpFor(
-        type: 'phone',
-        oldDest: existingPhone,
-        newValue: newPhone,
-        onConfirmed: emailAlsoChanged
-            ? () async {
-                await pushOtpFor(
-                  type: 'email',
-                  oldDest: existingEmail,
-                  newValue: newEmail,
-                  onConfirmed: doUpdateProfile,
-                );
-              }
-            : doUpdateProfile,
-      );
-      return;
-    }
-
-    // ── LOCAL: only email changed
-    if (_isLocalLogin && _emailChanged) {
-      await pushOtpFor(
-        type: 'email',
-        oldDest: existingEmail,
-        newValue: _emailController.text.trim(),
-        onConfirmed: doUpdateProfile,
-      );
-      return;
-    }
-
-    // ── Social: only phone can be changed
-    if (!_isLocalLogin && _phoneChanged) {
-      await pushOtpFor(
-        type: 'phone',
-        oldDest: existingPhone,
-        newValue: _phoneController.text.trim(),
-        onConfirmed: doUpdateProfile,
-      );
-      return;
-    }
-
-    // ── No credential change — update name / gender / extra phones directly
-    await doUpdateProfile();
+    await cubit.updateProfile(
+      fullName:    _nameController.text.trim(),
+      gender:      isMale ? 'MALE' : 'FEMALE',
+      extraPhones: extraPhone.isEmpty ? null : extraPhone,
+    );
   }
 }

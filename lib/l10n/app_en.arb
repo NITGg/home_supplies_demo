@@ -147,6 +147,8 @@
   "accountDeletedSuccess": "Account deleted successfully",
 
   "changePassword": "Change Password",
+  "changePhone": "Change Phone Number",
+  "changeEmail": "Change Email",
   "loginData": "Login Data",
 
   "noData": "No Data",

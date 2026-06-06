@@ -248,6 +248,7 @@ class LongUserModel {
       'full_name': fullName,
       'phone': phone,
       'image_url': imageUrl,
+      'personal_photo': imageUrl,
       'lang': lang,
       'last_login_at': lastLoginAt?.toIso8601String(),
       'is_Active': isActive,

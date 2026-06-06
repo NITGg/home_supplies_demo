@@ -383,6 +383,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changePassword => 'Change Password';
 
   @override
+  String get changePhone => 'Change Phone Number';
+
+  @override
+  String get changeEmail => 'Change Email';
+
+  @override
   String get loginData => 'Login Data';
 
   @override

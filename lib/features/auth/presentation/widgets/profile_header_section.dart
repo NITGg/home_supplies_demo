@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:tawreedat_go/core/utils/logger.dart';
-import 'package:tawreedat_go/core/widgets/image_with_fallback.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -45,12 +44,17 @@ class ProfileHeaderSection extends StatelessWidget {
                     child: ClipOval(
                       child: profile.personalPhoto != null &&
                               profile.personalPhoto!.isNotEmpty
-                          ? ImageWithIconFallback(
-                              imageUrl: profile.personalPhoto,
+                          ? Image.network(
+                              profile.personalPhoto!,
                               width: 70,
                               height: 70,
                               fit: BoxFit.cover,
-                              isCircle: true,
+                              errorBuilder: (context, error, stackTrace) {
+                                dLog('ProfileHeader: image failed — url=${profile.personalPhoto} error=$error');
+                                return SvgPicture.asset(
+                                  'assets/images/drawer/profile_placholder.svg',
+                                );
+                              },
                             )
                           : SvgPicture.asset(
                               'assets/images/drawer/profile_placholder.svg',

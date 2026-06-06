@@ -383,6 +383,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get changePassword => 'تغيير كلمة المرور';
 
   @override
+  String get changePhone => 'تغيير رقم الهاتف';
+
+  @override
+  String get changeEmail => 'تغيير البريد الإلكتروني';
+
+  @override
   String get loginData => 'بيانات التسجيل';
 
   @override

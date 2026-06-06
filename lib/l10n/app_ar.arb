@@ -161,6 +161,8 @@
   "accountDeletedSuccess": "تم حذف الحساب بنجاح",
 
   "changePassword": "تغيير كلمة المرور",
+  "changePhone": "تغيير رقم الهاتف",
+  "changeEmail": "تغيير البريد الإلكتروني",
   "loginData": "بيانات التسجيل",
 
   "noData": "لا توجد بيانات",

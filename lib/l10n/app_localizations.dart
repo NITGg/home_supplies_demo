@@ -839,6 +839,18 @@ abstract class AppLocalizations {
   /// **'Change Password'**
   String get changePassword;
 
+  /// No description provided for @changePhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Phone Number'**
+  String get changePhone;
+
+  /// No description provided for @changeEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Email'**
+  String get changeEmail;
+
   /// No description provided for @loginData.
   ///
   /// In en, this message translates to:

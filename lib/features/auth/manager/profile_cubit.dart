@@ -60,8 +60,10 @@ class ProfileCubit extends Cubit<ProfileState> {
       }
 
       dLog('ProfileCubit: Fetching profile with token');
-      final result = await _authRepository.getProfile(token);
+      final result = await _profileRepository.getProfile(token);
       _currentProfile = result.user;
+      dLog('ProfileCubit: personalPhoto=${result.user.personalPhoto} loginType=${result.user.loginType}');
+      await SecureStorageService().saveUserProfile(result.user.toJson());
       // Sync local locale to match profile lang (no backend call).
       await LocaleManager.syncFromProfile(_currentProfile?.lang??'AR');
       emit(ProfileLoaded(profile: result.user));
