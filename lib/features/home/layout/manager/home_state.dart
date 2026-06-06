@@ -19,3 +19,5 @@ class HomeTabChanged extends HomeState {
 }
 
 class HomeHistoryTabRequested extends HomeState {}
+
+class HomeActiveTabRequested extends HomeState {}

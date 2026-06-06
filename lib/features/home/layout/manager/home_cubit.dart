@@ -18,15 +18,25 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   void requestHistoryTab() {
-    // If we're not on the orders tab, go there first
     currentIndex = ordersTabIndex;
-    pendingHistoryTab = true; // 👈 store intent
-    // Emit the intent — OrdersListScreen's BlocListener catches this
+    pendingHistoryTab = true;
     emit(HomeHistoryTabRequested());
   }
 
   void consumePendingHistoryTab() {
-    pendingHistoryTab = false; // 👈 clear after consuming
+    pendingHistoryTab = false;
+  }
+
+  bool pendingActiveTab = false;
+
+  void requestActiveTab() {
+    currentIndex = ordersTabIndex;
+    pendingActiveTab = true;
+    emit(HomeActiveTabRequested());
+  }
+
+  void consumePendingActiveTab() {
+    pendingActiveTab = false;
   }
 }
 

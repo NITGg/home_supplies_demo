@@ -80,6 +80,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       if (homeCubit.pendingHistoryTab) {
         homeCubit.consumePendingHistoryTab();
         _onTabChanged(ViewMode.history);
+      } else if (homeCubit.pendingActiveTab) {
+        homeCubit.consumePendingActiveTab();
+        _onTabChanged(ViewMode.active);
       }
     });
   }
@@ -438,8 +441,11 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<HomeCubit, HomeState>(
-      listenWhen: (_, current) => current is HomeHistoryTabRequested,
-      listener: (context, state) => _onTabChanged(ViewMode.history),
+      listenWhen: (_, current) =>
+          current is HomeHistoryTabRequested || current is HomeActiveTabRequested,
+      listener: (context, state) => _onTabChanged(
+        state is HomeActiveTabRequested ? ViewMode.active : ViewMode.history,
+      ),
       child: Scaffold(
         body: SafeArea(
           child: RefreshIndicator(

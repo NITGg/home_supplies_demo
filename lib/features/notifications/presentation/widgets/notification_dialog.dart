@@ -33,6 +33,7 @@ class _NotifType {
   static const orderCancelled = 'ORDER_CANCELLED';
   static const orderExpired = 'ORDER_EXPIRED';
   static const orderDelivered = 'ORDER_DELIVERED';
+  static const orderCollected = 'ORDER_COLLECTED';
   static const badgeUpdated = 'BADGE_UPDATED';
 }
 
@@ -165,6 +166,11 @@ class NotificationsDialog extends StatelessWidget {
         _requestHistoryTab();
         return;
 
+      case _NotifType.orderCollected:
+        dLog('ordernoti collected');
+        _requestActiveTab();
+        return;
+
       case _NotifType.newMessage:
         dLog('messagenoti');
         _openChat(context, payload, notifData);
@@ -218,6 +224,14 @@ class NotificationsDialog extends StatelessWidget {
       homeCubit!.requestHistoryTab();
     } else {
       debugPrint('⚠️ HomeCubit not injected — cannot request history tab');
+    }
+  }
+
+  void _requestActiveTab() {
+    if (homeCubit != null) {
+      homeCubit!.requestActiveTab();
+    } else {
+      debugPrint('⚠️ HomeCubit not injected — cannot request active tab');
     }
   }
 
