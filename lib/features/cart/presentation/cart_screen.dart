@@ -1199,6 +1199,7 @@ class _CartScreenState extends State<CartScreen> {
                 // ── Pill ────────────────────────────────────────────────────
                 _CheckoutPill(
                   total: displayTotal,
+                  hasCoupon: _appliedCoupon != null,
                   expanded: _summaryExpanded.value,
                   onTap: _toggleSummary,
                 ),
@@ -1339,11 +1340,13 @@ class _CartScreenState extends State<CartScreen> {
 /// Tapping it expands / collapses the full [CartSummaryBar].
 class _CheckoutPill extends StatelessWidget {
   final double total;
+  final bool hasCoupon;
   final bool expanded;
   final VoidCallback onTap;
 
   const _CheckoutPill({
     required this.total,
+    required this.hasCoupon,
     required this.expanded,
     required this.onTap,
   });
@@ -1368,25 +1371,53 @@ class _CheckoutPill extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // ── Total badge ──────────────────────────────────────────────
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.kPrimaryColor.withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Text(
-                  '${total.toStringAsFixed(2)} ${l10n.egp}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: AppColors.kPrimaryColor,
-                  ),
-                ),
-              ),
+              // ── Total badge / coupon badge ───────────────────────────────
+              hasCoupon
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.green.shade300),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.local_offer_outlined,
+                              size: 14, color: Colors.green.shade700),
+                          const SizedBox(width: 5),
+                          Text(
+                            l10n.couponRedeemed,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.kPrimaryColor.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Text(
+                        '${total.toStringAsFixed(2)} ${l10n.egp}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: AppColors.kPrimaryColor,
+                        ),
+                      ),
+                    ),
 
               const Spacer(),
 
