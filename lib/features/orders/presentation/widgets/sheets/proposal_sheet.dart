@@ -1064,7 +1064,7 @@ class _ProposalCardState extends State<_ProposalCard> {
 
           const SizedBox(height: 10),
 
-          // ── Courier / delivery fee ──────────────────────────────────────────
+          // ── Delivery fee (courier + platform summed) ────────────────────────
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -1085,7 +1085,7 @@ class _ProposalCardState extends State<_ProposalCard> {
                 ),
                 if (!hasDiscount)
                   Text(
-                    '${courierFee.toStringAsFixed(2)} ${l10n.egp}',
+                    '${(courierFee + platformFee).toStringAsFixed(2)} ${l10n.egp}',
                     style: AppTextStyles.bold18.copyWith(
                       color: AppColors.kPrimaryColor,
                       fontSize: 20,
@@ -1096,7 +1096,7 @@ class _ProposalCardState extends State<_ProposalCard> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${courierFee.toStringAsFixed(2)} ${l10n.egp}',
+                        '${(courierFee + platformFee).toStringAsFixed(2)} ${l10n.egp}',
                         style: AppTextStyles.bold14.copyWith(
                           fontSize: 13,
                           color: Colors.red.shade400,
@@ -1106,7 +1106,7 @@ class _ProposalCardState extends State<_ProposalCard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${discountedCourierFee.toStringAsFixed(2)} ${l10n.egp}',
+                        '${(discountedCourierFee + platformFee).toStringAsFixed(2)} ${l10n.egp}',
                         style: AppTextStyles.bold18.copyWith(
                           color: Colors.green.shade700,
                           fontSize: 20,
@@ -1114,38 +1114,6 @@ class _ProposalCardState extends State<_ProposalCard> {
                       ),
                     ],
                   ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // ── Platform / service fee ──────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.kPrimaryColor.withOpacity(0.2),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.serviceFee,
-                  style: AppTextStyles.bold14.copyWith(
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-                Text(
-                  '${platformFee.toStringAsFixed(2)} ${l10n.egp}',
-                  style: AppTextStyles.bold18.copyWith(
-                    color: AppColors.kPrimaryColor,
-                    fontSize: 20,
-                  ),
-                ),
               ],
             ),
           ),

@@ -48,13 +48,13 @@ class VehicleInfo {
   final int id;
   final String name;
   final String nameAr;
-  final String icon;
+  final String? icon;
 
   VehicleInfo({
     required this.id,
     required this.name,
     required this.nameAr,
-    required this.icon,
+    this.icon,
   });
 
   factory VehicleInfo.fromJson(Map<String, dynamic> json) {
@@ -62,7 +62,7 @@ class VehicleInfo {
       id: json['id'] as int,
       name: json['name'] as String,
       nameAr: json['name_ar'] as String,
-      icon: json['icon'] as String,
+      icon: json['icon'] as String?,
     );
   }
 }

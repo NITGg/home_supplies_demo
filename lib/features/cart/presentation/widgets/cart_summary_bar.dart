@@ -250,17 +250,12 @@ class CartSummaryBar extends StatelessWidget {
           if (preview != null) ...[
             const SizedBox(height: 6),
             CartDeliveryFeeRow(
-              original: deliveryFeeRounded!,
-              discounted: discountedDeliveryFee,
+              original: deliveryFeeRounded! + platformFee,
+              discounted: discountedDeliveryFee != null
+                  ? discountedDeliveryFee + platformFee
+                  : null,
               egp: l10n.egp,
               label: l10n.deliveryFee,
-              theme: theme,
-            ),
-            CartDeliveryFeeRow(
-              original: preview?.platformFee ?? 0,
-              discounted: preview?.platformFee ?? 0,
-              egp: l10n.egp,
-              label: l10n.serviceFee,
               theme: theme,
             ),
           ],
