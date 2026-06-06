@@ -193,6 +193,10 @@
 
   "googleSignin": "Google Account",
   "appleSignin": "Apple Account",
+  "linkAccount": "Link Your Account",
+  "linkAccountSubtitle": "Link your Google or Apple account for faster and more secure sign-in.",
+  "linkGoogleAccount": "Link with Google",
+  "linkAppleAccount": "Link with Apple",
 
   "offers": "Offers",
   "upTo": "Up to",

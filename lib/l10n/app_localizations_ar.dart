@@ -485,6 +485,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appleSignin => 'حساب آبل';
 
   @override
+  String get linkAccount => 'ربط حسابك';
+
+  @override
+  String get linkAccountSubtitle => 'اربط حساب جوجل أو آبل لتسجيل دخول أسرع وأكثر أماناً.';
+
+  @override
+  String get linkGoogleAccount => 'ربط بحساب جوجل';
+
+  @override
+  String get linkAppleAccount => 'ربط بحساب آبل';
+
+  @override
   String get offers => 'عروض';
 
   @override

@@ -15,6 +15,8 @@ class UserProfileModel {
   final bool? isPhoneVerified;
   final String? fcmToken;
   final String? loginType;
+  final String? googleId;
+  final String? appleId;
   final DateTime? lastLoginAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -38,6 +40,8 @@ class UserProfileModel {
     this.isPhoneVerified,
     this.fcmToken,
     this.loginType,
+    this.googleId,
+    this.appleId,
     this.lastLoginAt,
     this.createdAt,
     this.updatedAt,
@@ -65,6 +69,8 @@ class UserProfileModel {
       isPhoneVerified: user['is_phone_verified'] as bool?,
       fcmToken: user['fcm_token'] as String?,
       loginType: user['login_type'] as String?,
+      googleId: user['google_id'] as String?,
+      appleId: user['apple_id'] as String?,
       lastLoginAt: user['last_login_at'] != null
           ? DateTime.tryParse(user['last_login_at'])
           : null,
@@ -100,6 +106,8 @@ class UserProfileModel {
       "is_phone_verified": isPhoneVerified,
       "fcm_token": fcmToken,
       "login_type": loginType,
+      "google_id": googleId,
+      "apple_id": appleId,
       "last_login_at": lastLoginAt?.toIso8601String(),
       "created_at": createdAt?.toIso8601String(),
       "updated_at": updatedAt?.toIso8601String(),

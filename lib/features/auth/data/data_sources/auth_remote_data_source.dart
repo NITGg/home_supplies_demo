@@ -167,6 +167,29 @@ class AuthRemoteDataSource {
     return authResponse;
   }
 
+  Future<void> linkGoogle({
+    required String token,
+    required String idToken,
+  }) async {
+    await _dio.post(
+      '/auth/link-google?lang=${LocaleManager.currentLocale}',
+      data: {'idToken': idToken},
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+  }
+
+  Future<void> linkApple({
+    required String token,
+    required String idToken,
+    required String nonce,
+  }) async {
+    await _dio.post(
+      '/auth/link-apple?lang=${LocaleManager.currentLocale}',
+      data: {'idToken': idToken, 'nonce': nonce},
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+  }
+
   Future<UpdateProfileResponseModel> updateProfile({
     required String token,
     String? fullName,

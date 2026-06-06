@@ -33,6 +33,11 @@ class AuthFailure extends AuthState {
   AuthFailure(this.message);
 }
 
+class AuthSocialLinkSuccess extends AuthState {
+  final String message;
+  AuthSocialLinkSuccess({required this.message});
+}
+
 class AuthProfileDeleted extends AuthState {
   final String message;
   AuthProfileDeleted(this.message);

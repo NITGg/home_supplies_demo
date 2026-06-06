@@ -7,6 +7,7 @@ import 'package:tawreedat_go/core/utils/secure_storage_service.dart';
 
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/social_auth_service.dart';
 import '../../../l10n/manager/locale_cubit.dart';
 import '../data/models/user_profile_model.dart';
 import '../data/repositories/profile_repository.dart';
@@ -280,6 +281,56 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
+
+  Future<void> linkWithGoogle() async {
+    emit(ProfileLoading());
+    try {
+      final token = await _authRepository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+      final idToken = await SocialAuthService.signInWithGoogle();
+      if (idToken == null) {
+        emit(ProfileFailure('تم إلغاء تسجيل الدخول بواسطة Google'));
+        return;
+      }
+      await _authRepository.linkGoogle(token: token, idToken: idToken);
+      await fetchProfile();
+      emit(ProfileLinkSuccess(message: 'تم ربط حساب Google بنجاح'));
+    } on DioException catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    } catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    }
+  }
+
+  Future<void> linkWithApple() async {
+    emit(ProfileLoading());
+    try {
+      final token = await _authRepository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+      final appleData = await SocialAuthService.signInWithApple();
+      if (appleData == null) {
+        emit(ProfileFailure('تم إلغاء تسجيل الدخول بواسطة Apple'));
+        return;
+      }
+      await _authRepository.linkApple(
+        token: token,
+        idToken: appleData['token']!,
+        nonce: '',
+      );
+      await fetchProfile();
+      emit(ProfileLinkSuccess(message: 'تم ربط حساب Apple بنجاح'));
+    } on DioException catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    } catch (e) {
+      emit(ProfileFailure(extractErrorMessage(e)));
+    }
+  }
 
   void reset() {
     _currentProfile = null;

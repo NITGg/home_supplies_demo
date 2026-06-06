@@ -112,6 +112,14 @@ class AuthRepository {
     return response;
   }
 
+  Future<void> linkGoogle({required String token, required String idToken}) async {
+    await _remoteDataSource.linkGoogle(token: token, idToken: idToken);
+  }
+
+  Future<void> linkApple({required String token, required String idToken, required String nonce}) async {
+    await _remoteDataSource.linkApple(token: token, idToken: idToken, nonce: nonce);
+  }
+
   Future<UpdateProfileResponseModel> updateProfile({
     required String token,
     String? fullName,

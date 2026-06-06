@@ -19,10 +19,10 @@ import '../../../../../addresses/data/models/address_model.dart';
 import '../../../../../addresses/data/models/governorate_model.dart';
 import '../../../../../addresses/manager/address_cubit.dart';
 import '../../../../../addresses/manager/address_states.dart';
-import '../../../../../auth/manager/profile_cubit.dart';
-import '../../../../../auth/manager/profile_states.dart';
+// import '../../../../../auth/manager/profile_cubit.dart'; // TODO: coupon
+// import '../../../../../auth/manager/profile_states.dart'; // TODO: coupon
 import '../../../../../cart/data/models/order_preview_model.dart';
-import '../../../../../coupons/manager/coupons_cubit.dart';
+// import '../../../../../coupons/manager/coupons_cubit.dart'; // TODO: coupon
 import '../../../../../wallet/manager/wallet_cubit.dart';
 import '../../../../../wallet/manager/wallet_state.dart';
 import '../../../../data/data_source/order_remote_data_source.dart';
@@ -30,7 +30,7 @@ import '../../../../data/models/draft_model.dart';
 import '../../../../data/models/order_model.dart';
 import '../../../../manager/order_cubit.dart';
 import '../../../../manager/order_states.dart';
-import 'coupon_section.dart';
+// import 'coupon_section.dart'; // TODO: coupon
 import 'insufficient_balance_sheet.dart';
 import 'pin_icon.dart';
 import 'product_image_picker.dart';
@@ -41,13 +41,13 @@ class CreateOrderBottomSheet extends StatefulWidget {
   final GovernoratesResponse governorates;
   final double? walletBalance;
 
-  final String? initialCouponCode;
+  // final String? initialCouponCode; // TODO: re-enable when coupon feature is ready
 
   const CreateOrderBottomSheet({
     super.key,
     required this.governorates,
     this.walletBalance,
-    this.initialCouponCode,
+    // this.initialCouponCode,
   });
 
   @override
@@ -59,12 +59,12 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   final FocusNode _productDescriptionFocus = FocusNode();
   final FocusNode _budgetFocus = FocusNode();
 
-  final FocusNode _couponFocus = FocusNode();
+  // final FocusNode _couponFocus = FocusNode(); // TODO: coupon
 
   final _productDescriptionController = TextEditingController();
   final _budgetController = TextEditingController();
 
-  final _couponController = TextEditingController();
+  // final _couponController = TextEditingController(); // TODO: coupon
 
   Address? _pickupAddress;
   Address? _deliveryAddress;
@@ -79,8 +79,8 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   OrderPreviewModel? _orderPreview;
   bool _fetchingPreview = false;
 
-  CouponValid? _appliedCoupon;
-  bool _couponValidating = false;
+  // CouponValid? _appliedCoupon; // TODO: coupon
+  // bool _couponValidating = false; // TODO: coupon
 
   // ── Schedule ───────────────────────────────────────────────────────────────
   bool _isScheduled = false;
@@ -116,13 +116,13 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     _productDescriptionController.text =
         CreateOrderDraft.productDescription; // ← DRAFT
     _budgetController.text = CreateOrderDraft.budget; // ← DRAFT
-    _couponController.text = CreateOrderDraft.couponCode; // ← DRAFT
+    // _couponController.text = CreateOrderDraft.couponCode; // TODO: coupon
     _pickupAddress = CreateOrderDraft.pickupAddress; // ← DRAFT
     _deliveryAddress = CreateOrderDraft.deliveryAddress; // ← DRAFT
     _isShopping = CreateOrderDraft.isShopping; // ← DRAFT
     _paymentMethod = CreateOrderDraft.paymentMethod; // ← DRAFT
     _pickupNearMe = CreateOrderDraft.pickupNearMe; // ← DRAFT
-    _appliedCoupon = CreateOrderDraft.appliedCoupon; // ← DRAFT
+    // _appliedCoupon = CreateOrderDraft.appliedCoupon; // TODO: coupon
     _isScheduled = CreateOrderDraft.isScheduled; // ← DRAFT
     _scheduleAt = CreateOrderDraft.scheduleAt; // ← DRAFT
 
@@ -136,7 +136,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       setState(() {}); // (already existed for rebuild)
       _syncDraft(); // ← DRAFT
     });
-    _couponController.addListener(_syncDraft); // ← DRAFT
+    // _couponController.addListener(_syncDraft); // TODO: coupon
 
     _preloadDefaultDelivery();
 
@@ -148,28 +148,21 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         _fetchPreviewIfReady();
       } // ← DRAFT
 
-      if (!mounted) return;
-      if (context.read<ProfileCubit>().currentProfile?.roleId == 4) return;
-
-      // Only auto-fill coupon when the draft doesn't already have one.         // ← DRAFT
-      if (_couponController.text.isEmpty) {
-        final profileState = context.read<ProfileCubit>().state;
-        if (profileState is ProfileLoaded && profileState.profile.roleId == 4) {
-          return;
-        }
-
-        final code = widget.initialCouponCode?.isNotEmpty == true
-            ? widget.initialCouponCode
-            : await context.read<CouponCubit>().getOrFetchFirstOrderCoupon();
-
-        if (!mounted || code == null || code.isEmpty) return;
-        _couponController.text = code;
-        _validateCoupon();
-      } else if (_appliedCoupon == null && _couponController.text.isNotEmpty) {
-        // ← DRAFT
-        // Coupon text was restored but validation state was lost — re-validate. // ← DRAFT
-        _validateCoupon(); // ← DRAFT
-      }
+      // TODO: coupon — re-enable auto-fill and validation when ready
+      // if (!mounted) return;
+      // if (context.read<ProfileCubit>().currentProfile?.roleId == 4) return;
+      // if (_couponController.text.isEmpty) {
+      //   final profileState = context.read<ProfileCubit>().state;
+      //   if (profileState is ProfileLoaded && profileState.profile.roleId == 4) return;
+      //   final code = widget.initialCouponCode?.isNotEmpty == true
+      //       ? widget.initialCouponCode
+      //       : await context.read<CouponCubit>().getOrFetchFirstOrderCoupon();
+      //   if (!mounted || code == null || code.isEmpty) return;
+      //   _couponController.text = code;
+      //   _validateCoupon();
+      // } else if (_appliedCoupon == null && _couponController.text.isNotEmpty) {
+      //   _validateCoupon();
+      // }
     });
   }
 
@@ -178,7 +171,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     // ← DRAFT
     CreateOrderDraft.productDescription = _productDescriptionController.text;
     CreateOrderDraft.budget = _budgetController.text;
-    // CreateOrderDraft.couponCode = _couponController.text;
+    // CreateOrderDraft.couponCode = _couponController.text; // TODO: coupon
     CreateOrderDraft.pickupAddress = _pickupAddress;
     CreateOrderDraft.deliveryAddress = _deliveryAddress;
     CreateOrderDraft.isShopping = _isShopping;
@@ -215,10 +208,10 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     _initCubit.close();
     _productDescriptionController.dispose();
     _budgetController.dispose();
-    _couponController.dispose();
+    // _couponController.dispose(); // TODO: coupon
     _productDescriptionFocus.dispose();
     _budgetFocus.dispose();
-    _couponFocus.dispose();
+    // _couponFocus.dispose(); // TODO: coupon
     super.dispose();
   }
 
@@ -360,27 +353,17 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     return fee;
   }
 
-//  ── Coupon ─────────────────────────────────────────────────────────────────
-
-  Future<void> _validateCoupon() async {
-    final code = _couponController.text.trim();
-    if (code.isEmpty) return;
-
-    setState(() {
-      _couponValidating = true;
-      _appliedCoupon = null;
-    });
-
-    context.read<OrderCubit>().validateCoupon(code,customOrder: true);
-  }
-
-  void _removeCoupon() {
-    setState(() {
-      _appliedCoupon = null;
-      _couponController.clear();
-    });
-    _syncDraft(); // ← DRAFT
-  }
+// TODO: coupon — re-enable when coupon feature is ready
+//  Future<void> _validateCoupon() async {
+//    final code = _couponController.text.trim();
+//    if (code.isEmpty) return;
+//    setState(() { _couponValidating = true; _appliedCoupon = null; });
+//    context.read<OrderCubit>().validateCoupon(code, customOrder: true);
+//  }
+//  void _removeCoupon() {
+//    setState(() { _appliedCoupon = null; _couponController.clear(); });
+//    _syncDraft();
+//  }
 
 //  ── Address sheet ──────────────────────────────────────────────────────────
 
@@ -1023,7 +1006,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       ),
       // estimatedDeliveryFee: ((_calculateShippingFee() ?? 0) * 100).toString(),
       _isShopping ? _paymentMethod : 'WALLET',
-      couponCode: _appliedCoupon?.code,
+      // couponCode: _appliedCoupon?.code, // TODO: coupon
       scheduleAt: _isScheduled ? _scheduleAt : null,
     );
   }
@@ -1459,39 +1442,20 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       },
       child: BlocListener<OrderCubit, OrderState>(
         listener: (context, state) {
-          if (state is CouponValidating) {
-            if (!_couponValidating) setState(() => _couponValidating = true);
-          } else if (state is CouponRedeemed) {
-            setState(() {
-              _couponValidating = false;
-              if (state.coupon != null) _appliedCoupon = state.coupon;
-            });
-            _syncDraft(); // ← DRAFT
-            Fluttertoast.showToast(
-              msg: l10n.couponRedeemed,
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.BOTTOM,
-              backgroundColor: Colors.green.shade700,
-            );
-          } else if (state is CouponInvalid) {
-            setState(() => _couponValidating = false);
-            Fluttertoast.showToast(
-              msg: state.message,
-              toastLength: Toast.LENGTH_LONG,
-              gravity: ToastGravity.BOTTOM,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-            );
-          } else if (state is CouponRedeemError) {
-            setState(() => _couponValidating = false);
-            Fluttertoast.showToast(
-              msg: state.message,
-              toastLength: Toast.LENGTH_LONG,
-              gravity: ToastGravity.BOTTOM,
-              backgroundColor: Colors.orange,
-              textColor: Colors.white,
-            );
-          } else
+          // TODO: coupon — re-enable when coupon feature is ready
+          // if (state is CouponValidating) {
+          //   if (!_couponValidating) setState(() => _couponValidating = true);
+          // } else if (state is CouponRedeemed) {
+          //   setState(() { _couponValidating = false; if (state.coupon != null) _appliedCoupon = state.coupon; });
+          //   _syncDraft();
+          //   Fluttertoast.showToast(msg: l10n.couponRedeemed, ...);
+          // } else if (state is CouponInvalid) {
+          //   setState(() => _couponValidating = false);
+          //   Fluttertoast.showToast(msg: state.message, ...);
+          // } else if (state is CouponRedeemError) {
+          //   setState(() => _couponValidating = false);
+          //   Fluttertoast.showToast(msg: state.message, ...);
+          // } else
           if (state is OrderSuccess) {
             CreateOrderDraft.clear(); // ← DRAFT — wipe draft after a successful order
             Navigator.pop(context, state.order);
@@ -1665,15 +1629,16 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                             shippingFee,
                             isOverBudget,
                           ),
-                          const SizedBox(height: 24),
-                          CouponSection(
-                            couponController: _couponController,
-                            couponFocus: _couponFocus,
-                            appliedCoupon: _appliedCoupon,
-                            couponValidating: _couponValidating,
-                            onValidate: _validateCoupon,
-                            onRemove: _removeCoupon,
-                          ),
+                          // TODO: coupon — re-enable when coupon feature is ready
+                          // const SizedBox(height: 24),
+                          // CouponSection(
+                          //   couponController: _couponController,
+                          //   couponFocus: _couponFocus,
+                          //   appliedCoupon: _appliedCoupon,
+                          //   couponValidating: _couponValidating,
+                          //   onValidate: _validateCoupon,
+                          //   onRemove: _removeCoupon,
+                          // ),
                           const SizedBox(height: 16),
                           _buildScheduleSection(l10n),
                           const SizedBox(height: 16),

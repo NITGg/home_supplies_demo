@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'link_account_sheet.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
@@ -329,6 +330,28 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       }
 
                       if (!mounted) return;
+
+                      // Prompt LOCAL accounts to link a social account
+                      // (skip if already linked to both or on first-time phone sheet)
+                      final p = profileState.profile;
+                      final needsGoogle = p.googleId == null;
+                      final needsApple = Platform.isIOS && p.appleId == null;
+                      if (p.loginType == 'LOCAL' && (needsGoogle || needsApple)) {
+                        await showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => BlocProvider.value(
+                            value: context.read<AuthCubit>(),
+                            child: LinkAccountSheet(
+                              googleId: p.googleId,
+                              appleId: p.appleId,
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (!mounted) return;
                       _showPendingNotificationDialog();
 
                     },
@@ -377,7 +400,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                           child: CreateOrderBottomSheet(
                             governorates: governorates,
                             walletBalance: balance,
-                            initialCouponCode: '',
+                            // initialCouponCode: '',
                           ),
                         ),
                       ).then((order) {

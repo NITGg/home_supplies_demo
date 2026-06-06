@@ -1043,6 +1043,30 @@ abstract class AppLocalizations {
   /// **'Apple Account'**
   String get appleSignin;
 
+  /// No description provided for @linkAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Link Your Account'**
+  String get linkAccount;
+
+  /// No description provided for @linkAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link your Google or Apple account for faster and more secure sign-in.'**
+  String get linkAccountSubtitle;
+
+  /// No description provided for @linkGoogleAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Link with Google'**
+  String get linkGoogleAccount;
+
+  /// No description provided for @linkAppleAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Link with Apple'**
+  String get linkAppleAccount;
+
   /// No description provided for @offers.
   ///
   /// In en, this message translates to:

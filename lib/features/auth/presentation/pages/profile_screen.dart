@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 import '../../../../core/style/app_colors.dart';
+import '../../../../core/widgets/banners.dart';
 import '../../../../core/widgets/circel_back_button.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/delete_account_dialog.dart';
@@ -62,6 +66,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   backgroundColor: Colors.green,
                 ),
               );
+            }
+            if (state is ProfileLinkSuccess) {
+              showSuccessBanner(context, state.message);
             }
           },
           builder: (context, state) {
@@ -201,15 +208,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 12),
 
                               // Change Email — local accounts only
-                              if (profile.loginType == 'LOCAL') ...[
-                                AppCustomButton(
-                                  onPressed: () =>
-                                      _showChangeContactDialog(context, profile, 'email'),
-                                  text: localizations.changeEmail,
-                                  isSecondary: true,
-                                ),
-                                const SizedBox(height: 12),
-                              ],
+                              // if (profile.loginType == 'LOCAL') ...[
+                              //   AppCustomButton(
+                              //     onPressed: () =>
+                              //         _showChangeContactDialog(context, profile, 'email'),
+                              //     text: localizations.changeEmail,
+                              //     isSecondary: true,
+                              //   ),
+                              //   const SizedBox(height: 12),
+                              // ],
 
                               if (profile.loginType == 'LOCAL')
                                 AppCustomButton(
@@ -224,6 +231,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               if (profile.loginType == 'LOCAL')
                                 const SizedBox(height: 12),
+
                               AppCustomButton(
                                 onPressed: () {
                                   showDialog(
@@ -239,6 +247,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     context.read<AuthCubit>().state
                                         is AuthLoading,
                               ),
+
+                              // ── Link social accounts (LOCAL only) ──────────
+                              if (profile.loginType == 'LOCAL') ...[
+                                const SizedBox(height: 24),
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.kPrimaryColor.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.link_rounded,
+                                        size: 16,
+                                        color: AppColors.kPrimaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            localizations.linkAccount,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF2D3436),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            localizations.linkAccountSubtitle,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                if (profile.googleId == null) ...[
+                                  _SocialLinkButton(
+                                    label: localizations.linkGoogleAccount,
+                                    assetPath: 'assets/images/login/google.svg',
+                                    isLoading: context.watch<ProfileCubit>().state is ProfileLoading,
+                                    onPressed: () => context.read<ProfileCubit>().linkWithGoogle(),
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (Platform.isIOS && profile.appleId == null) ...[
+                                  _SocialLinkButton(
+                                    label: localizations.linkAppleAccount,
+                                    assetPath: 'assets/images/login/apple.svg',
+                                    isLoading: context.watch<ProfileCubit>().state is ProfileLoading,
+                                    onPressed: () => context.read<ProfileCubit>().linkWithApple(),
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                              ],
                             ],
                           ),
                         ),
@@ -485,6 +558,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SocialLinkButton extends StatelessWidget {
+  final String label;
+  final String assetPath;
+  final VoidCallback onPressed;
+  final bool isLoading;
+
+  const _SocialLinkButton({
+    required this.label,
+    required this.assetPath,
+    required this.onPressed,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: isLoading ? null : onPressed,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        height: 56,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: isLoading
+            ? const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  SvgPicture.asset(assetPath, height: 24, width: 24),
+                ],
+              ),
+      ),
     );
   }
 }

@@ -42,6 +42,11 @@ class ProfileOtpConfirmSuccess extends ProfileState {
 
 /// Emitted after POST /profile/change-phone succeeds.
 /// The OTP screen should be pushed with [destination] and [via].
+class ProfileLinkSuccess extends ProfileState {
+  final String message;
+  ProfileLinkSuccess({required this.message});
+}
+
 class ProfilePhoneOtpSent extends ProfileState {
   final String destination; // the new phone number
   final String via;         // "phone" (always for this flow)

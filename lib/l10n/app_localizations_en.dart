@@ -485,6 +485,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appleSignin => 'Apple Account';
 
   @override
+  String get linkAccount => 'Link Your Account';
+
+  @override
+  String get linkAccountSubtitle => 'Link your Google or Apple account for faster and more secure sign-in.';
+
+  @override
+  String get linkGoogleAccount => 'Link with Google';
+
+  @override
+  String get linkAppleAccount => 'Link with Apple';
+
+  @override
   String get offers => 'offers';
 
   @override

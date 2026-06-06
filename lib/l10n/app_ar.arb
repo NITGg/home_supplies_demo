@@ -208,6 +208,10 @@
 
   "googleSignin": "حساب جوجل",
   "appleSignin": "حساب آبل",
+  "linkAccount": "ربط حسابك",
+  "linkAccountSubtitle": "اربط حساب جوجل أو آبل لتسجيل دخول أسرع وأكثر أماناً.",
+  "linkGoogleAccount": "ربط بحساب جوجل",
+  "linkAppleAccount": "ربط بحساب آبل",
 
   "offers": "العروض",
   "upTo": "خصم حتى",

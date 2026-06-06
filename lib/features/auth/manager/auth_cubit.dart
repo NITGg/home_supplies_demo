@@ -109,19 +109,21 @@ class AuthCubit extends Cubit<AuthState> {
       );
       dLog('✅ verifyAccount response: fullyVerified=${result.fullyVerified} via=${result.via} unverified=${result.unverified} token=${result.token != null ? '[present]' : '[null]'}');
 
-      if (result.fullyVerified) {
-        dLog('🎉 fully verified — initializing session');
+      // Phone verification is sufficient to start — treat email-only pending as fully verified.
+      final emailOnlyPending = !result.fullyVerified &&
+          result.unverified.length == 1 &&
+          result.unverified.first == 'email';
+
+      if (result.fullyVerified || emailOnlyPending) {
+        dLog('🎉 verified — initializing session (emailOnlyPending=$emailOnlyPending)');
         await _initializeUserSession();
         emit(AuthSuccess());
       } else {
-        // One channel verified, another is still pending.
+        // One channel verified, another non-email channel is still pending.
         final nextChannel = result.unverified.isNotEmpty
             ? result.unverified.first
             : '';
         dLog('⏭️ partial verification — next channel: $nextChannel');
-        // Use the contacts captured at registration time so the second OTP
-        // screen always has the correct destination regardless of which channel
-        // was just verified.
         emit(AuthNextOtpRequired(
           destination: nextChannel == 'email'
               ? (_registeredEmail ?? '')
@@ -175,12 +177,21 @@ class AuthCubit extends Cubit<AuthState> {
       // 403 means the account exists but a channel is unverified.
       // Redirect to OTP verification instead of showing a generic error.
       if (e is DioException && e.response?.statusCode == 403) {
-        final data = e.response?.data;
-        if (data is Map) {
-          final unverified = (data['unverified'] as List?)?.cast<String>() ?? [];
+        final body = e.response?.data;
+        if (body is Map) {
+          // unverified list is nested under body['data']
+          final inner = body['data'];
+          final unverified = (inner is Map
+              ? (inner['unverified'] as List?)?.cast<String>()
+              : (body['unverified'] as List?)?.cast<String>()) ?? [];
           final channel = unverified.isNotEmpty ? unverified.first : 'phone';
           dLog('⚠️ login 403 — unverified: $unverified → redirecting to OTP ($channel)');
-          emit(AuthOtpRequired(destination: phone, via: channel));
+          // For email channel the destination is the email (unknown here), pass empty so
+          // the OTP screen just shows the channel label without a specific address.
+          emit(AuthOtpRequired(
+            destination: channel == 'email' ? '' : phone,
+            via: channel,
+          ));
           return;
         }
       }
@@ -246,6 +257,50 @@ class AuthCubit extends Cubit<AuthState> {
       } else {
         emit(AuthFailure('تم إلغاء تسجيل الدخول بواسطة Apple'));
       }
+    } catch (e) {
+      emit(AuthFailure(extractErrorMessage(e)));
+    }
+  }
+
+  Future<void> linkWithGoogle() async {
+    emit(AuthLoading());
+    try {
+      final token = await _repository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        emit(AuthFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+      final idToken = await SocialAuthService.signInWithGoogle();
+      if (idToken == null) {
+        emit(AuthFailure('تم إلغاء تسجيل الدخول بواسطة Google'));
+        return;
+      }
+      await _repository.linkGoogle(token: token, idToken: idToken);
+      emit(AuthSocialLinkSuccess(message: 'تم ربط حساب Google بنجاح'));
+    } catch (e) {
+      emit(AuthFailure(extractErrorMessage(e)));
+    }
+  }
+
+  Future<void> linkWithApple() async {
+    emit(AuthLoading());
+    try {
+      final token = await _repository.getSavedToken();
+      if (token == null || token.isEmpty) {
+        emit(AuthFailure('لا يوجد رمز مصادقة'));
+        return;
+      }
+      final appleData = await SocialAuthService.signInWithApple();
+      if (appleData == null) {
+        emit(AuthFailure('تم إلغاء تسجيل الدخول بواسطة Apple'));
+        return;
+      }
+      await _repository.linkApple(
+        token: token,
+        idToken: appleData['token']!,
+        nonce: '',
+      );
+      emit(AuthSocialLinkSuccess(message: 'تم ربط حساب Apple بنجاح'));
     } catch (e) {
       emit(AuthFailure(extractErrorMessage(e)));
     }

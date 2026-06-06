@@ -217,7 +217,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 const SizedBox(height: 8),
 
                 Text(
-                  widget.destination,
+                  widget.destination.isNotEmpty
+                      ? widget.destination
+                      : (widget.via == 'email' ? loc.email : loc.phone),
                   textDirection: TextDirection.ltr,
                   style: AppTextStyles.bold16
                       .copyWith(color: AppColors.kPrimaryColor),
