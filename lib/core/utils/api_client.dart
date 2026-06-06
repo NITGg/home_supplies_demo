@@ -51,7 +51,7 @@ class ApiClient {
 
         final token = await SecureStorageService().getToken();
         if (token != null && token.isNotEmpty) {
-          dLog('🔒 $token');
+          // dLog('🔒 $token');
           options.headers['Authorization'] = 'Bearer $token';
         }
         handler.next(options);
@@ -66,6 +66,10 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             dLog('🔒 401 on ${e.requestOptions.method} ${e.requestOptions.uri} — authenticated session expired, clearing');
             await _clearSession();
+            // Absorb the error — _clearSession() already navigates to login,
+            // so there's no cubit to notify and no UI left to show an error on.
+            handler.reject(friendlyError);
+            return;
           } else {
             // Guest hit an authenticated endpoint — log it so we can guard it properly
             dLog('⚠️ 401 on ${e.requestOptions.method} ${e.requestOptions.uri} — no token (guest), skipping redirect');

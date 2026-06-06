@@ -1295,6 +1295,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get topup => 'Top Up';
 
   @override
+  String get cardPaymentReceived => 'Card Payment';
+
+  @override
   String get amount => 'Amount';
 
   @override

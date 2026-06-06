@@ -552,6 +552,7 @@
       "cancelPaymentConfirm": "هل أنت متأكد أنك تريد إلغاء عملية الدفع؟",
       "transactionHistory": "سجل المعاملات",
       "topup": "شحن",
+  "cardPaymentReceived": "دفع بالبطاقة",
         "amount": "المبلغ",
         "pleaseEnterAmount": "برجاء ادخل مبلغ",
           "pendingCommissionsWillBeDeducted": "سيتم خصم أي جزاءات معلقة تلقائيًا عند الشحن",

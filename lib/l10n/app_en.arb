@@ -554,6 +554,7 @@
   "cancelPaymentConfirm": "Are you sure you want to cancel the payment?",
   "transactionHistory": "Transaction History",
   "topup": "Top Up",
+  "cardPaymentReceived": "Card Payment",
     "amount": "Amount",
     "pleaseEnterAmount": "Please Enter Amount",
     "minimumTopUpIs": "Minimum top-up is 10 EGP",

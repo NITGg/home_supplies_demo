@@ -1295,6 +1295,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get topup => 'شحن';
 
   @override
+  String get cardPaymentReceived => 'دفع بالبطاقة';
+
+  @override
   String get amount => 'المبلغ';
 
   @override

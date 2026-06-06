@@ -2621,6 +2621,12 @@ abstract class AppLocalizations {
   /// **'Top Up'**
   String get topup;
 
+  /// No description provided for @cardPaymentReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Card Payment'**
+  String get cardPaymentReceived;
+
   /// No description provided for @amount.
   ///
   /// In en, this message translates to:

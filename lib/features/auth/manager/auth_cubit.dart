@@ -175,7 +175,8 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthSuccess(shortAuthResponse: result));
     } catch (e) {
       // 403 means the account exists but a channel is unverified.
-      // Redirect to OTP verification instead of showing a generic error.
+      // Only redirect to OTP when unverified channels are explicitly listed.
+      // Any other 403 (e.g. frozen account) falls through to AuthFailure.
       if (e is DioException && e.response?.statusCode == 403) {
         final body = e.response?.data;
         if (body is Map) {
@@ -184,15 +185,15 @@ class AuthCubit extends Cubit<AuthState> {
           final unverified = (inner is Map
               ? (inner['unverified'] as List?)?.cast<String>()
               : (body['unverified'] as List?)?.cast<String>()) ?? [];
-          final channel = unverified.isNotEmpty ? unverified.first : 'phone';
-          dLog('⚠️ login 403 — unverified: $unverified → redirecting to OTP ($channel)');
-          // For email channel the destination is the email (unknown here), pass empty so
-          // the OTP screen just shows the channel label without a specific address.
-          emit(AuthOtpRequired(
-            destination: channel == 'email' ? '' : phone,
-            via: channel,
-          ));
-          return;
+          if (unverified.isNotEmpty) {
+            final channel = unverified.first;
+            dLog('⚠️ login 403 — unverified: $unverified → redirecting to OTP ($channel)');
+            emit(AuthOtpRequired(
+              destination: channel == 'email' ? '' : phone,
+              via: channel,
+            ));
+            return;
+          }
         }
       }
       emit(AuthFailure(extractErrorMessage(e)));

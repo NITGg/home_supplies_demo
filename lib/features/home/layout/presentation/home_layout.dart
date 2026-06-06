@@ -13,7 +13,6 @@ import 'package:tawreedat_go/features/wallet/manager/wallet_state.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/utils/socket_service.dart';
 import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/image_with_fallback.dart';
 import '../../../../core/widgets/loading_screen.dart';
 import '../../../../core/widgets/login_prompt.dart';
 import '../../../../core/widgets/text_form.dart';
@@ -1264,12 +1263,14 @@ class _ProfileAvatar extends StatelessWidget {
             tag: 'profile-avatar',
             child: ClipOval(
               child: imageUrl != null && imageUrl!.isNotEmpty
-                  ? ImageWithIconFallback(
-                      imageUrl: imageUrl,
+                  ? Image.network(
+                      imageUrl!,
                       width: 70,
                       height: 70,
                       fit: BoxFit.cover,
-                      isCircle: true,
+                      errorBuilder: (_, __, ___) => SvgPicture.asset(
+                        'assets/images/drawer/profile_placholder.svg',
+                      ),
                     )
                   : SvgPicture.asset(
                       'assets/images/drawer/profile_placholder.svg',

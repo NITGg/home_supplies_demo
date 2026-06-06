@@ -33,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool hasShownDialog = false;
+  bool _socialAuthInProgress = false;
 
   @override
   void didChangeDependencies() {
@@ -68,6 +69,9 @@ class _LoginScreenState extends State<LoginScreen> {
       body: BlocListener<AuthCubit, AuthState>(
         listener: (context, state) {
           if (state is AuthLoading) {
+            // Skip the blocking dialog during social auth — the button shows
+            // its own spinner and the native Google/Apple UI is the indicator.
+            if (_socialAuthInProgress) return;
             showDialog(
               useSafeArea: false,
               context: context,
@@ -193,7 +197,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      const SocialAuthButtons(),
+                      SocialAuthButtons(
+                        onSocialAuthStarted: () =>
+                            setState(() => _socialAuthInProgress = true),
+                        onSocialAuthEnded: () =>
+                            setState(() => _socialAuthInProgress = false),
+                      ),
 
                       const SizedBox(height: 28),
 
