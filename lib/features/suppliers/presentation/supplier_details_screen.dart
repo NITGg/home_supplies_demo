@@ -795,11 +795,11 @@ class _SupplierHeaderBackground extends StatelessWidget {
           ),
         ),
 
-        // Name & subtitle at bottom
+        // Name & rating at bottom
         Positioned(
           left: 20,
           right: 20,
-          bottom: 50,
+          bottom: 30,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
@@ -822,6 +822,8 @@ class _SupplierHeaderBackground extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 6),
+              _SupplierRatingRow(rating: supplier.avgRating),
             ],
           ),
         ),
@@ -848,6 +850,55 @@ class _SupplierHeaderBackground extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Rating row ────────────────────────────────────────────────────────────────
+
+class _SupplierRatingRow extends StatelessWidget {
+  final double rating;
+
+  const _SupplierRatingRow({required this.rating});
+
+  @override
+  Widget build(BuildContext context) {
+    final filledStars = rating.floor();
+    final hasHalf = (rating - filledStars) >= 0.5;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < 5; i++)
+          Icon(
+            i < filledStars
+                ? Icons.star_rounded
+                : (i == filledStars && hasHalf)
+                    ? Icons.star_half_rounded
+                    : Icons.star_outline_rounded,
+            color: const Color(0xFFFFD700),
+            size: 18,
+            shadows: const [Shadow(blurRadius: 4, color: Colors.black38)],
+          ),
+        const SizedBox(width: 6),
+        Text(
+          rating.toStringAsFixed(1),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            shadows: [Shadow(blurRadius: 8, color: Colors.black54)],
+          ),
+        ),
+        const Text(
+          ' / 5',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+            shadows: [Shadow(blurRadius: 4, color: Colors.black38)],
+          ),
+        ),
+      ],
     );
   }
 }

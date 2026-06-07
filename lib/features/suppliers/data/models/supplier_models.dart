@@ -436,6 +436,7 @@ class SupplierModel {
   final SupplierUserModel user;
   final List<SupplierCategoryModel> categories;
   final List<SupplierAddressModel> addresses;
+  final double avgRating;
 
   const SupplierModel({
     required this.id,
@@ -444,6 +445,7 @@ class SupplierModel {
     required this.user,
     this.categories = const [],
     this.addresses = const [],
+    this.avgRating = 0,
   });
 
   factory SupplierModel.fromJson(Map<String, dynamic> json) {
@@ -468,6 +470,7 @@ class SupplierModel {
       user: SupplierUserModel.fromJson(json['user'] as Map<String, dynamic>),
       categories: categories,
       addresses: addresses,
+      avgRating: (json['avg_rating'] as num?)?.toDouble() ?? 0,
     );
   }
 
