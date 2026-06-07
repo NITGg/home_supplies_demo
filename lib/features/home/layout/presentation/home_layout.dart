@@ -260,7 +260,13 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         // Guests may not switch to the orders tab.
         if (!_isGuest || extra.index == 0) {
-          if (mounted) _homeCubit.changeTab(extra.index);
+          if (mounted) {
+            _homeCubit.changeTab(extra.index);
+            // Always land on active orders when navigating here from cart/payment.
+            if (extra.index == HomeCubit.ordersTabIndex) {
+              _homeCubit.requestActiveTab();
+            }
+          }
         }
       });
     }

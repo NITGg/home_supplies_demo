@@ -192,8 +192,6 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       return;
     }
 
-    if (_viewMode != ViewMode.active) return;
-
     context.read<OrderCubit>().loadActiveOrders(loadMore: false).then((_) {
       if (!mounted) return;
 
@@ -474,7 +472,12 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                 if (state is OrdersLoaded) {
                   if (_isLoadingMore) setState(() => _isLoadingMore = false);
                   _expirationReloadPending = false;
-                  if (_viewMode == ViewMode.active &&
+                  if (state.viewMode == OrderViewMode.active &&
+                      _viewMode == ViewMode.history) {
+                    // A socket event reloaded active orders while on history —
+                    // switch to active so the user never gets stuck in shimmer.
+                    _onTabChanged(ViewMode.active);
+                  } else if (_viewMode == ViewMode.active &&
                       state.viewMode == OrderViewMode.active) {
                     _scheduleExpirationReload(state.orders);
                   }
