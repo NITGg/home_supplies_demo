@@ -30,6 +30,12 @@ class CartCubit extends Cubit<CartState> {
 
   final Map<int, _PendingSync> _pending = {};
 
+  // Quantities currently being synced to the server (debounce fired but the
+  // network call hasn't completed yet).  _silentRefresh must respect these
+  // exactly like pending debounce entries so it doesn't overwrite in-flight
+  // optimistic state.
+  final Map<int, int> _inFlightQty = {};
+
   CartCubit({CartRepository? repository})
       : _repository = repository ?? CartRepositoryImpl(),
         super(const CartLoading());
@@ -50,6 +56,7 @@ class CartCubit extends Cubit<CartState> {
       p.debounce.cancel();
     }
     _pending.clear();
+    _inFlightQty.clear();
     _safeEmit(const CartLoading());
   }
 
@@ -75,8 +82,17 @@ class CartCubit extends Cubit<CartState> {
     try {
       final data = await _repository.getCart();
       final currentPreview = _loaded?.preview;
-      _safeEmit(CartLoaded(_enrichSummary(data), preview: currentPreview));
-      if (refetchPreview && data.cartItems.isNotEmpty) {
+      // Preserve any optimistic quantities that are still pending (debounce not
+      // yet fired) OR in-flight (debounce fired, network call not yet complete).
+      // Without this, a concurrent refresh overwrites the optimistic value and
+      // causes a visible flicker back to the server's stale quantity.
+      final mergedItems = data.cartItems.map((item) {
+        final pendingQty = _pending[item.spId]?.targetQuantity ?? _inFlightQty[item.spId];
+        return pendingQty != null ? item.copyWithQuantity(pendingQty) : item;
+      }).toList();
+      final merged = data.copyWith(cartItems: mergedItems);
+      _safeEmit(CartLoaded(_enrichSummary(merged), preview: currentPreview));
+      if (refetchPreview && merged.cartItems.isNotEmpty) {
         unawaited(_fetchPreviewSilently());
       }
     } catch (e) {
@@ -102,7 +118,7 @@ class CartCubit extends Cubit<CartState> {
         final busy = Set<int>.from(current.busyItemIds)..remove(spId);
         _safeEmit(current.copyWith(busyItemIds: busy));
         _applyItemAdd(item);
-        unawaited(_silentRefresh());
+        unawaited(_fetchPreviewSilently());
       } else {
         await fetchCart();
       }
@@ -312,12 +328,18 @@ class CartCubit extends Cubit<CartState> {
     final targetQty = entry.targetQuantity;
     dLog('[CartCubit] flush sync spId=$spId qty=$targetQty');
 
+    // Keep the quantity visible to _silentRefresh while the request is in flight
+    // so a concurrent refresh doesn't overwrite the optimistic value.
+    _inFlightQty[spId] = targetQty;
+
     try {
       final updated = await _repository.updateItem(
         cartItemId: spId,
         action: CartUpdateAction.set,
         quantity: targetQty,
       );
+
+      _inFlightQty.remove(spId);
 
       if (updated == null) {
         // Server treated qty as a remove — ensure item is gone locally.
@@ -330,6 +352,7 @@ class CartCubit extends Cubit<CartState> {
         unawaited(_fetchPreviewSilently());
       }
     } catch (e) {
+      _inFlightQty.remove(spId);
       dLog('[CartCubit] flushSync error spId=$spId: $e');
       // Network error — restore from server.
       await _silentRefresh();
@@ -444,6 +467,7 @@ class CartCubit extends Cubit<CartState> {
           .catchError((e) => dLog('[CartCubit] close flush error: $e'));
     }
     _pending.clear();
+    _inFlightQty.clear();
     return super.close();
   }
 }
