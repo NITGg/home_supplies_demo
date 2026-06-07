@@ -22,10 +22,10 @@ class MainSupplierWorkingHoursBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Guard: only render when working-hours data is available.
+    // Guard: only render when working-hours data is available and not 24/7.
     final wh = supplier.workingHours;
     final status = supplier.currentStatus;
-    if (wh == null || status == null) return const SizedBox.shrink();
+    if (wh == null || status == null || wh.isAlwaysOpen) return const SizedBox.shrink();
 
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);

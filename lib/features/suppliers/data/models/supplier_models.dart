@@ -281,6 +281,25 @@ class SupplierWorkingHours {
 
     return _toTimezone(utc, timezone).weekday % 7;
   }
+
+  /// True when every day of the week is open with at least one full-day slot
+  /// (00:00–00:00), meaning the supplier is effectively open 24/7.
+  bool get isAlwaysOpen {
+    if (days.length < 7) return false;
+    for (int i = 0; i < 7; i++) {
+      final sched = days[i];
+      if (sched == null || sched.isClosed || sched.slots.isEmpty) return false;
+      final hasFullDay = sched.slots.any(
+        (s) =>
+            s.openHour == 0 &&
+            s.openMinute == 0 &&
+            s.closeHour == 0 &&
+            s.closeMinute == 0,
+      );
+      if (!hasFullDay) return false;
+    }
+    return true;
+  }
 }
 
 class _DaySchedule {

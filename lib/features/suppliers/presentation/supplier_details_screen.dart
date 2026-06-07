@@ -285,7 +285,8 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
           _SupplierSliverAppBar(supplier: state.supplier),
 
           // ── Working hours banner ──────────────────────────────────────────
-          if (state.supplier.workingHours != null)
+          if (state.supplier.workingHours != null &&
+              !state.supplier.workingHours!.isAlwaysOpen)
             SliverToBoxAdapter(
               child: _WorkingHoursBanner(supplier: state.supplier),
             ),
