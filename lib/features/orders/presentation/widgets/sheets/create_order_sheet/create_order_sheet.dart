@@ -792,9 +792,6 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       double fee,
       bool isOverBudget,
       ) {
-    if (!_isShopping) return const SizedBox.shrink();
-
-    // Fee chip — shows a spinner while fetching, then the real server total
     final feeChip = Container(
       height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -837,6 +834,11 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
         ],
       ),
     );
+
+    // Shipping mode: fee chip takes full width, no payment toggle (always WALLET)
+    if (!_isShopping) {
+      return feeChip;
+    }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
