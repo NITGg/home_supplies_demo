@@ -459,13 +459,19 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
             },
             color: AppColors.kPrimaryColor,
             child: BlocConsumer<OrderCubit, OrderState>(
-              listenWhen: (_, current) =>
-                  current is OrdersLoaded ||
-                  current is OrderCancelled ||
-                  current is OrderCancelError ||
-                  current is DeliveryConfirmed ||
-                  current is OrderError ||
-                  current is OrderSuccess,
+              listenWhen: (prev, current) {
+                if (current is OrderError) {
+                  // Suppress banners for errors from cart order-creation.
+                  // Those have prev=OrdersLoaded; real list-load errors have
+                  // prev=OrderLoading.
+                  return prev is OrderLoading;
+                }
+                return current is OrdersLoaded ||
+                    current is OrderCancelled ||
+                    current is OrderCancelError ||
+                    current is DeliveryConfirmed ||
+                    current is OrderSuccess;
+              },
               listener: (context, state) {
                 if (state is OrderSuccess) _onTabChanged(ViewMode.active);
 
@@ -503,10 +509,15 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                   showErrorBanner(context, state.message);
                 }
               },
-              buildWhen: (_, current) =>
+              buildWhen: (prev, current) =>
                   current is OrderLoading ||
                   current is OrdersLoaded ||
-                  current is OrderError,
+                  // Only replace the screen with an error view when the error
+                  // came from a list-load attempt (prev was OrderLoading).
+                  // Errors from cart order-creation also emit OrderError but
+                  // their prev state is OrdersLoaded — those should not
+                  // overwrite the orders list.
+                  (current is OrderError && prev is OrderLoading),
               builder: (context, orderState) {
                 return CustomScrollView(
                   controller: _scrollController,
