@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../widgets/banners.dart';
 import 'logger.dart';
 
 class ImagePickerService {
@@ -58,9 +59,7 @@ class ImagePickerService {
 
       if (size > _maxBytes) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)!.imageTooLarge)),
-          );
+          showErrorBanner(context, AppLocalizations.of(context)!.imageTooLarge);
         }
         return null;
       }
@@ -68,9 +67,7 @@ class ImagePickerService {
       return file;
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.failedToChooseImage)),
-        );
+        showErrorBanner(context, AppLocalizations.of(context)!.failedToChooseImage);
       }
       return null;
     }

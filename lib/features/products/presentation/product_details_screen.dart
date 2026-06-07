@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/widgets/banners.dart';
 import '../../../core/utils/formatDate.dart';
 import '../../../core/utils/time_format.dart';
 import '../../../core/widgets/circel_back_button.dart';
@@ -387,13 +388,7 @@ class _AddToCartBarState extends State<_AddToCartBar>
   }
 
   void _showError(BuildContext ctx, [String? message]) {
-    ScaffoldMessenger.of(ctx).showSnackBar(
-      SnackBar(
-        content: Text(message ?? AppLocalizations.of(ctx)!.cartUpdateFailed),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Theme.of(ctx).colorScheme.error,
-      ),
-    );
+    showErrorBanner(ctx, message ?? AppLocalizations.of(ctx)!.cartUpdateFailed);
   }
 
   // ── Build ────────────────────────────────────────────────────────────────

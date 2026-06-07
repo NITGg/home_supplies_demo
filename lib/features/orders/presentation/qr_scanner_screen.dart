@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:tawreedat_go/features/orders/presentation/widgets/sheets/review_bottom_sheet.dart';
 import '../../../core/style/app_colors.dart';
+import '../../../core/widgets/banners.dart';
 import '../../../core/style/text_styles.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/models/qr_model.dart';
@@ -111,9 +112,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   void _showError(String message) {
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
-      );
+      showErrorBanner(context, message);
     }
   }
 
@@ -132,12 +131,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         listener: (context, state) {
           if (state is DeliveryConfirmed) {
             _showReviewSheet(context, state.orderId, state.courierId, state.courierUserId);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(AppLocalizations.of(context)!.deliveryConfirmed),
-                backgroundColor: Colors.green,
-              ),
-            );
+            showSuccessBanner(context, AppLocalizations.of(context)!.deliveryConfirmed);
           } else if (state is OrderError) {
             _showError(state.message);
             setState(() => _isProcessing = false);

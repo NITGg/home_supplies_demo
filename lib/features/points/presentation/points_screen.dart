@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/widgets/circel_back_button.dart';
 import 'package:tawreedat_go/features/auth/manager/profile_cubit.dart';
 import '../../../core/style/app_colors.dart';
+import '../../../core/widgets/banners.dart';
 import '../../../l10n/manager/locale_cubit.dart';
 import '../../wallet/manager/wallet_cubit.dart';
 import '../manager/points_cubit.dart';
@@ -51,28 +52,17 @@ class _PointsView extends StatelessWidget {
         listener: (context, state) {
           if (state is PointsConverted) {
             context.read<WalletCubit>().refreshWalletData();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  isArabic
-                      ? '✅ تم تحويل ${state.pointsConverted} نقطة إلى رصيد بنجاح!'
-                      : '✅ ${state.pointsConverted} points converted successfully!',
-                ),
-                backgroundColor: Colors.green.shade600,
-                behavior: SnackBarBehavior.floating,
-              ),
+            showSuccessBanner(
+              context,
+              isArabic
+                  ? 'تم تحويل ${state.pointsConverted} نقطة إلى رصيد بنجاح!'
+                  : '${state.pointsConverted} points converted successfully!',
             );
           } else if (state is FinesPaidWithPoints) {
             // Also refresh after paying fines
-            context.read<WalletCubit>().refreshWalletData(); }
-          else if (state is ConvertPointsError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red.shade600,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            context.read<WalletCubit>().refreshWalletData();
+          } else if (state is ConvertPointsError) {
+            showErrorBanner(context, state.message);
           }
         },
         builder: (context, state) {

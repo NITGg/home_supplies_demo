@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/widgets/banners.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/user_profile_model.dart';
 
@@ -191,9 +192,7 @@ class ProfileHeaderSection extends StatelessWidget {
           limitInMB.toString(),
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        showErrorBanner(context, message);
       }
       return;
     }

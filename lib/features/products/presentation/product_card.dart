@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/style/app_colors.dart';
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/widgets/banners.dart';
 import '../../../core/utils/formatDate.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
@@ -188,13 +189,7 @@ class _ProductCardState extends State<ProductCard>
   }
 
   void _showError(BuildContext ctx, [String? message]) {
-    ScaffoldMessenger.of(ctx).showSnackBar(
-      SnackBar(
-        content: Text(message ?? AppLocalizations.of(ctx)!.cartUpdateFailed),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Theme.of(ctx).colorScheme.error,
-      ),
-    );
+    showErrorBanner(ctx, message ?? AppLocalizations.of(ctx)!.cartUpdateFailed);
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────

@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:tawreedat_go/core/utils/logger.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tawreedat_go/l10n/app_localizations.dart';
 
 import '../../../../../../core/style/app_colors.dart';
+import '../../../../../../core/widgets/banners.dart';
 import '../../../../../../core/style/text_styles.dart';
 
 class ProductImagePicker extends StatelessWidget {
@@ -100,13 +100,7 @@ class ProductImagePicker extends StatelessWidget {
             limitInMB.toString(),
           );
 
-          Fluttertoast.showToast(
-            msg: message,
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
+          showErrorBanner(context, message);
         }
         return;
       }

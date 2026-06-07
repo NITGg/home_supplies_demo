@@ -8,6 +8,7 @@ import 'package:tawreedat_go/features/wallet/data/data_source/wallet_remote_data
 import 'package:tawreedat_go/features/wallet/data/repositories/wallet_repo.dart';
 
 import '../../../core/style/app_colors.dart';
+import '../../../core/widgets/banners.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/manager/locale_cubit.dart';
@@ -168,28 +169,15 @@ class _PenaltiesViewState extends State<PenaltiesView> {
     return BlocListener<PointsCubit, PointsState>(
       listener: (context, state) {
         if (state is FinesPaidWithPoints) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isArabic
-                    ? '✅ تم سداد الغرامات بنجاح!'
-                    : '✅ Penalties paid successfully!',
-              ),
-              backgroundColor: Colors.green.shade600,
-              behavior: SnackBarBehavior.floating,
-            ),
+          showSuccessBanner(
+            context,
+            isArabic ? 'تم سداد الغرامات بنجاح!' : 'Penalties paid successfully!',
           );
           _exitSelectionMode();
           _currentPage = 1;
           context.read<WalletCubit>().fetchPenalties();
         } else if (state is PayFinesError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red.shade600,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          showErrorBanner(context, state.message);
         }
       },
       child: Scaffold(

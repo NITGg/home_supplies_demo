@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
+import '../../../../core/widgets/banners.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/loading_screen.dart';
 import '../../../../core/widgets/text_button.dart';
@@ -103,9 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             if (Navigator.of(context, rootNavigator: true).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
             }
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
+            showErrorBanner(context, state.message);
           }
         },
         builder: (context, state) {

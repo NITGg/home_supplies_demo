@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/widgets/banners.dart';
 import 'package:tawreedat_go/features/cart/presentation/widgets/cart_item_tile.dart';
@@ -244,12 +243,7 @@ class _CartScreenState extends State<CartScreen> {
     );
 
     if (dates.isEmpty) {
-      Fluttertoast.showToast(
-        msg: AppLocalizations.of(context)!.noDeliveryDatesAvailable,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.orange,
-        textColor: Colors.white,
-      );
+      showErrorBanner(context, AppLocalizations.of(context)!.noDeliveryDatesAvailable);
       return;
     }
 
@@ -305,12 +299,7 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _checkout() async {
     // Window-scheduling products MUST have a delivery slot selected
     if (_requiresWindowScheduling && _scheduleAt == null) {
-      Fluttertoast.showToast(
-        msg: AppLocalizations.of(context)!.pleaseSelectDeliveryDateAndSlot,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+      showErrorBanner(context, AppLocalizations.of(context)!.pleaseSelectDeliveryDateAndSlot);
       return;
     }
     if (_isScheduled && _scheduleAt == null) return;
@@ -432,10 +421,7 @@ class _CartScreenState extends State<CartScreen> {
     );
 
     if (scheduled.isBefore(earliest)) {
-      Fluttertoast.showToast(
-        msg: AppLocalizations.of(context)!.pleaseChooseFutureTime,
-        gravity: ToastGravity.BOTTOM,
-      );
+      showErrorBanner(context, AppLocalizations.of(context)!.pleaseChooseFutureTime);
       return;
     }
 
@@ -995,30 +981,13 @@ class _CartScreenState extends State<CartScreen> {
       if (state.coupon != null) {
         _cubit.refreshPreview(couponCode: state.coupon!.code);
       }
-      Fluttertoast.showToast(
-        msg: l10n.couponRedeemed,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.green.shade700,
-      );
+      showSuccessBanner(context, l10n.couponRedeemed);
     } else if (state is CouponInvalid) {
       setState(() => _couponValidating = false);
-      Fluttertoast.showToast(
-        msg: state.message,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+      showErrorBanner(context, state.message);
     } else if (state is CouponRedeemError) {
       setState(() => _couponValidating = false);
-      Fluttertoast.showToast(
-        msg: state.message,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.orange,
-        textColor: Colors.white,
-      );
+      showErrorBanner(context, state.message);
     } else if (state is OrderPendingPayment) {
       // CARD payment: push the payment WebView; on success go to orders tab.
       if (mounted) {

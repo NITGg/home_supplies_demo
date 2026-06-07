@@ -1,8 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import '../../../core/style/app_colors.dart';
+import '../../../core/widgets/banners.dart';
 import '../../../core/utils/area_boundry_validator.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/widgets/custom_button.dart';
@@ -282,25 +282,13 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (_selectedAreaId == null) {
-        Fluttertoast.showToast(
-          msg: AppLocalizations.of(context)!.pleaseSelectArea,
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-        );
+        showErrorBanner(context, AppLocalizations.of(context)!.pleaseSelectArea);
         return;
       }
 
       if (_latController.text.trim().isEmpty ||
           _longController.text.trim().isEmpty) {
-        Fluttertoast.showToast(
-          msg: AppLocalizations.of(context)!.pleaseSelectLocation,
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-        );
+        showErrorBanner(context, AppLocalizations.of(context)!.pleaseSelectLocation);
         return;
       }
 
@@ -417,13 +405,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                   _pickedAdministrativeArea ?? area.name,
                   _pickedGovernorate ?? '',
                 );
-                Fluttertoast.showToast(
-                  msg: AppLocalizations.of(context)!.addressOutsideArea,
-                  toastLength: Toast.LENGTH_LONG,
-                  gravity: ToastGravity.BOTTOM,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                );
+                showErrorBanner(context, AppLocalizations.of(context)!.addressOutsideArea);
                 return;
               }
 
@@ -490,12 +472,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
             if (state is AddressOperationSuccess) {
               Navigator.pop(context, state.address);
             } else if (state is AddressError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: Colors.red,
-                ),
-              );
+              showErrorBanner(context, state.message);
             }
           },
         ),

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tawreedat_go/core/widgets/loading_screen.dart';
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/widgets/banners.dart';
@@ -51,21 +50,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: BlocConsumer<ProfileCubit, ProfileState>(
           listener: (context, state) {
             if (state is ProfileFailure) {
-              Fluttertoast.showToast(
-                msg: state.message,
-                toastLength: Toast.LENGTH_LONG,
-                gravity: ToastGravity.BOTTOM,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
-              );
+              showErrorBanner(context, state.message);
             }
             if (state is ProfileUpdateSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              showSuccessBanner(context, state.message);
             }
             if (state is ProfileLinkSuccess) {
               showSuccessBanner(context, state.message);

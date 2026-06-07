@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/widgets/banners.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../manager/cart_cubit.dart';
 import '../../data/models/multiple_supplier_exception.dart';
@@ -60,13 +61,7 @@ class _MultipleSupplierDialogState extends State<MultipleSupplierDialog> {
       setState(() => _isLoading = false);
       if (ctx.mounted) {
         final l10n = AppLocalizations.of(ctx)!;
-        ScaffoldMessenger.of(ctx).showSnackBar(
-          SnackBar(
-            content: Text(l10n.cartUpdateFailed),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Theme.of(ctx).colorScheme.error,
-          ),
-        );
+        showErrorBanner(ctx, l10n.cartUpdateFailed);
       }
     }
   }

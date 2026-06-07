@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 import '../../../../../core/style/text_styles.dart';
 import '../../../../../core/widgets/banners.dart';
@@ -117,13 +116,7 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
           Navigator.pop(context, true);
           showSuccessBanner(context, l10n.refundRequestSubmitted);
         } else if (state is RefundSubmitError) {
-          Fluttertoast.showToast(
-            msg: state.message,
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
+          showErrorBanner(context, state.message);
         }
       },
       child: Container(

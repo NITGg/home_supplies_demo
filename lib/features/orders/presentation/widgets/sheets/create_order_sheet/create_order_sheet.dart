@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/style/app_colors.dart';
 import 'package:tawreedat_go/core/style/text_styles.dart';
@@ -888,63 +887,33 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_isShopping && _productImage == null) {
-      Fluttertoast.showToast(
-        msg: AppLocalizations.of(context)!.tapToSelectImage,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+      showErrorBanner(context, AppLocalizations.of(context)!.tapToSelectImage);
       return;
     }
 
     if (!_pickupNearMe && _pickupAddress == null) {
-      Fluttertoast.showToast(
-        msg: l10n.pleaseSelectLocation,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-      );
+      showErrorBanner(context, l10n.pleaseSelectLocation);
     }
 
     if (_deliveryAddress == null) {
-      Fluttertoast.showToast(
-        msg: l10n.pleaseSelectLocation,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-      );
+      showErrorBanner(context, l10n.pleaseSelectLocation);
       return;
     }
 
     if (_distanceResult == null) {
-      Fluttertoast.showToast(
-        msg: l10n.pleaseSelectLocation,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-      );
+      showErrorBanner(context, l10n.pleaseSelectLocation);
       return;
     }
 
     final effectivePickup = _effectivePickup!;
 
     if (!_isAddressInArea(effectivePickup)) {
-      Fluttertoast.showToast(
-        msg: l10n.pickupAddressOutOfArea,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.orange,
-        textColor: Colors.white,
-      );
+      showErrorBanner(context, l10n.pickupAddressOutOfArea);
       return;
     }
 
     if (!_isAddressInArea(_deliveryAddress!)) {
-      Fluttertoast.showToast(
-        msg: l10n.deliveryAddressOutOfArea,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.orange,
-        textColor: Colors.white,
-      );
+      showErrorBanner(context, l10n.deliveryAddressOutOfArea);
       return;
     }
 
@@ -953,11 +922,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       final minDistance =
           double.tryParse(AppSettings.min_delivery_distance ?? '0') ?? 0;
       if (distanceMeters < minDistance) {
-        Fluttertoast.showToast(
-          msg: l10n.distanceTooClose,
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-        );
+        showErrorBanner(context, l10n.distanceTooClose);
         return;
       }
     }
@@ -1048,10 +1013,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
     );
 
     if (scheduled.isBefore(earliest)) {
-      Fluttertoast.showToast(
-        msg: AppLocalizations.of(context)!.pleaseChooseFutureTime,
-        gravity: ToastGravity.BOTTOM,
-      );
+      showErrorBanner(context, AppLocalizations.of(context)!.pleaseChooseFutureTime);
       return;
     }
 
@@ -1464,13 +1426,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
               '${l10n.created}: ${state.order.orderNumber}',
             );
           } else if (state is OrderError) {
-            Fluttertoast.showToast(
-              msg: state.message,
-              toastLength: Toast.LENGTH_LONG,
-              gravity: ToastGravity.BOTTOM,
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-            );
+            showErrorBanner(context, state.message);
           }
         },
         child: DraggableScrollableSheet(

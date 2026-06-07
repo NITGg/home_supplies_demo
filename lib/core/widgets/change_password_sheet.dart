@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tawreedat_go/core/widgets/banners.dart';
 import 'package:tawreedat_go/core/widgets/text_form.dart';
 import '../../../../core/style/text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -31,13 +32,7 @@ void showChangePasswordBottomSheet(BuildContext context) {
         listener: (context, state) async {
           if (state is AuthUpdateSuccess) {
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  AppLocalizations.of(context)!.profileUpdatedSuccessfully,
-                ),
-              ),
-            );
+            showSuccessBanner(context, AppLocalizations.of(context)!.profileUpdatedSuccessfully);
           } else if (state is AuthFailure) {
             showDialog(
               context: context,

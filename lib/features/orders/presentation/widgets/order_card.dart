@@ -676,16 +676,9 @@ class OrderCard extends StatelessWidget {
           current is DeliveryConfirmed || current is OrderError,
       listener: (context, state) {
         if (state is DeliveryConfirmed) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.deliveryConfirmed),
-              backgroundColor: Colors.green.shade700,
-            ),
-          );
+          showSuccessBanner(context, l10n.deliveryConfirmed);
         } else if (state is OrderError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-          );
+          showErrorBanner(context, state.message);
         }
       },
       buildWhen: (_, current) =>
@@ -862,9 +855,7 @@ class OrderCard extends StatelessWidget {
         if (state is OrderRetried) {
           onRetrySuccess?.call();
         } else if (state is OrderRetryError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-          );
+          showErrorBanner(context, state.message);
         }
       },
       buildWhen: (_, current) =>

@@ -7,6 +7,7 @@ import '../../../../../core/style/app_colors.dart';
 import '../../../../../core/style/text_styles.dart';
 import '../../../../../core/utils/api_client.dart';
 import '../../../../../core/utils/logger.dart';
+import '../../../../../core/widgets/banners.dart';
 import '../../../../../core/widgets/custom_button.dart';
 import '../../../../../l10n/app_localizations.dart';
 
@@ -41,9 +42,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
     final l10n = AppLocalizations.of(context)!;
 
     if (_selectedRating == 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.pleaseSelectRating)));
+      showErrorBanner(context, l10n.pleaseSelectRating);
       return;
     }
 
@@ -75,12 +74,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
 
       if (response.statusCode == 201 && mounted) {
         navigatedAway = true; // ← set BEFORE popping
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.reviewSubmitted),
-            backgroundColor: Colors.green,
-          ),
-        );
+        showSuccessBanner(context, l10n.reviewSubmitted);
         context.pop();
         if (context.canPop()) {
           context.pop();
@@ -91,12 +85,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
         '❌ DioException: ${e.type} | status: ${e.response?.statusCode} | data: ${e.response?.data}',
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.reviewError),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorBanner(context, l10n.reviewError);
       }
     } catch (e) {
       dLog('❌ Unexpected: $e');
