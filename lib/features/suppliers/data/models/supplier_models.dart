@@ -293,8 +293,8 @@ class SupplierWorkingHours {
         (s) =>
             s.openHour == 0 &&
             s.openMinute == 0 &&
-            s.closeHour == 0 &&
-            s.closeMinute == 0,
+            s.closeHour == 23 &&
+            s.closeMinute == 59,
       );
       if (!hasFullDay) return false;
     }

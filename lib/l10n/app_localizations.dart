@@ -2396,7 +2396,7 @@ abstract class AppLocalizations {
   /// No description provided for @rateTheSupplier.
   ///
   /// In en, this message translates to:
-  /// **'Rate the Supplier'**
+  /// **'Rate the Store'**
   String get rateTheSupplier;
 
   /// No description provided for @howWasYourExperienceWithSupplier.
