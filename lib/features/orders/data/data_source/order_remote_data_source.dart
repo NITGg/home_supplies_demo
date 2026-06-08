@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:mime/mime.dart';
@@ -173,10 +174,11 @@ class OrderRemoteDataSource {
     int skip = 0,
     int limit = 20,
     String? status,
+    List<String>? statusIn,
     bool filterByExpiry = true,
   }) async {
     dLog(
-      'Fetching orders - skip: $skip, limit: $limit, status: $status, filterByExpiry: $filterByExpiry',
+      'Fetching orders - skip: $skip, limit: $limit, status: $status, statusIn: $statusIn, filterByExpiry: $filterByExpiry',
     );
 
     final queryParams = {
@@ -185,6 +187,7 @@ class OrderRemoteDataSource {
       'includes': 'courier=user',
       'lang': LocaleManager.currentLocale,
       if (status != null) 'status': status,
+      if (statusIn != null) 'status[in]': jsonEncode(statusIn),
       if (filterByExpiry) 'expires_at[gte]': DateTime.now().toUtc(),
     };
 

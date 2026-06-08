@@ -45,7 +45,6 @@ class OrderCubit extends Cubit<OrderState> {
       _activeOrders = [];
       _activeSkip = 0;
     } else {
-      _activeLoading = true;
       safeEmit(OrdersLoadingMore(viewMode: OrderViewMode.active));
     }
 
@@ -54,44 +53,29 @@ class OrderCubit extends Cubit<OrderState> {
         'OrderCubit: Loading active orders — skip: $_activeSkip, limit: $_activeLimit',
       );
 
-      final [SchedualedResponse, pendingResponse, pendingPaymentResponse, inProgressResponse] =
-          await Future.wait([
+      final [pendingScheduledResponse, inProgressResponse] = await Future.wait([
         _repository.getOrders(
           skip: _activeSkip,
           limit: _activeLimit,
-          status: 'SCHEDULED',
+          statusIn: ['SCHEDULED', 'PENDING'],
           filterByExpiry: true,
         ),
-        _repository.getOrders(
-          skip: _activeSkip,
-          limit: _activeLimit,
-          status: 'PENDING',
-          filterByExpiry: true,
-        ),
-        // _repository.getOrders(
-        //   skip: _activeSkip,
-        //   limit: _activeLimit,
-        //   status: 'PENDING_PAYMENT',
-        // ),
-        Future.value(OrdersListResponse(orders: [], totalOrders: 0, totalPages: 1)),
         _repository.getOrders(
           skip: _activeSkip,
           limit: _activeLimit,
           status: 'IN_PROGRESS',
+          filterByExpiry: false,
         ),
       ]);
 
-      // Combine all active status lists
       final combinedOrders = [
-        ...SchedualedResponse.orders,
-        ...pendingResponse.orders,
-        ...pendingPaymentResponse.orders,
+        ...pendingScheduledResponse.orders,
         ...inProgressResponse.orders,
       ];
 
       // Sort by created date (newest first)
       combinedOrders.sort(
-            (a, b) => (b.createdAt ?? DateTime.now()).compareTo(
+        (a, b) => (b.createdAt ?? DateTime.now()).compareTo(
           a.createdAt ?? DateTime.now(),
         ),
       );
@@ -102,12 +86,10 @@ class OrderCubit extends Cubit<OrderState> {
         _activeOrders.addAll(combinedOrders);
       }
 
-      // Update skip for next load
       _activeSkip = _activeOrders.length;
 
-      // Total count is sum of both statuses
       _activeTotalCount =
-          pendingResponse.totalOrders + inProgressResponse.totalOrders;
+          pendingScheduledResponse.totalOrders + inProgressResponse.totalOrders;
 
       _activeLoading = false;
 
@@ -152,8 +134,8 @@ class OrderCubit extends Cubit<OrderState> {
     final token = await SecureStorageService().getToken();   // ← self-check
     if (token == null || token.isEmpty) return;
     if (_historyLoading) return;
+    _historyLoading = true;
 
-    // Reset pagination when filter changes
     if (!loadMore || filter != _historyFilter) {
       _historyFilter = filter;
       safeEmit(OrderLoading());
@@ -161,7 +143,6 @@ class OrderCubit extends Cubit<OrderState> {
       _historySkip = 0;
       _historyTotalCount = 0;
     } else {
-      _historyLoading = true;
       safeEmit(OrdersLoadingMore(viewMode: OrderViewMode.history));
     }
 
@@ -170,62 +151,31 @@ class OrderCubit extends Cubit<OrderState> {
         'OrderCubit: Loading history orders — skip: $_historySkip, limit: $_historyLimit, filter: $_historyFilter',
       );
 
-      List<Order> combinedOrders = [];
+      List<Order> combinedOrders;
 
-      if (_historyFilter == 'DELIVERED') {
-        final deliveredResponse = await _repository.getOrders(
+      if (_historyFilter == 'all') {
+        final response = await _repository.getOrders(
           skip: _historySkip,
           limit: _historyLimit,
-          status: 'DELIVERED',
+          statusIn: ['DELIVERED', 'CANCELLED', 'EXPIRED'],
         );
-        combinedOrders = deliveredResponse.orders;
-        _historyTotalCount = deliveredResponse.totalOrders;
-      } else if (_historyFilter == 'CANCELLED') {
-        final cancelledResponse = await _repository.getOrders(
-          skip: _historySkip,
-          limit: _historyLimit,
-          status: 'CANCELLED',
-        );
-        combinedOrders = cancelledResponse.orders;
-        _historyTotalCount = cancelledResponse.totalOrders;
+        combinedOrders = response.orders;
+        _historyTotalCount = response.totalOrders;
       } else {
-        // 'all' — fetch all three in parallel
-        final [deliveredResponse, cancelledResponse, expiredResponse] =
-            await Future.wait([
-          _repository.getOrders(
-            skip: _historySkip,
-            limit: _historyLimit,
-            status: 'DELIVERED',
-          ),
-          _repository.getOrders(
-            skip: _historySkip,
-            limit: _historyLimit,
-            status: 'CANCELLED',
-          ),
-          _repository.getOrders(
-            skip: _historySkip,
-            limit: _historyLimit,
-            status: 'EXPIRED',
-          ),
-        ]);
-        combinedOrders = [
-          ...deliveredResponse.orders,
-          ...cancelledResponse.orders,
-          ...expiredResponse.orders,
-        ];
-        _historyTotalCount =
-            deliveredResponse.totalOrders +
-                cancelledResponse.totalOrders +
-                cancelledResponse.totalOrders;
+        final response = await _repository.getOrders(
+          skip: _historySkip,
+          limit: _historyLimit,
+          status: _historyFilter,
+        );
+        combinedOrders = response.orders;
+        _historyTotalCount = response.totalOrders;
       }
 
       // Sort by completion date (newest first)
       combinedOrders.sort((a, b) {
-        final dateA =
-            b.deliveredAt ?? b.canceledAt ?? b.createdAt ?? DateTime.now();
-        final dateB =
-            a.deliveredAt ?? a.canceledAt ?? a.createdAt ?? DateTime.now();
-        return dateA.compareTo(dateB);
+        final dateA = a.deliveredAt ?? a.canceledAt ?? a.createdAt ?? DateTime.now();
+        final dateB = b.deliveredAt ?? b.canceledAt ?? b.createdAt ?? DateTime.now();
+        return dateB.compareTo(dateA);
       });
 
       if (!loadMore) {
@@ -566,6 +516,7 @@ class OrderCubit extends Cubit<OrderState> {
     _historySkip = 0;
     _historyTotalCount = 0;
     _historyLoading = false;
+    _historyFilter = 'all';
 
     safeEmit(OrderInitial());
   }
