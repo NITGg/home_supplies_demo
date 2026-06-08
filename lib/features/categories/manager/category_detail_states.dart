@@ -63,10 +63,8 @@ class CategoryDetailLoaded extends CategoryDetailState {
   final CategoryModel category;
   final List<SubCategorySection> sections;
 
-  /// The main supplier fetched alongside the category.  When non-null and the
-  /// supplier has working-hours configured, a banner is shown at the top of
-  /// the category detail screen.
-  final SupplierModel? mainSupplier;
+  /// All suppliers that carry products in this category.
+  final List<SupplierModel> suppliers;
 
   /// Used when the category has no sub-categories – products belong directly.
   final List<ProductModel> directProducts;
@@ -77,7 +75,7 @@ class CategoryDetailLoaded extends CategoryDetailState {
   const CategoryDetailLoaded({
     required this.category,
     required this.sections,
-    this.mainSupplier,
+    this.suppliers = const [],
     this.directProducts = const [],
     this.directProductsLoading = false,
     this.directProductsHasMore = true,
@@ -86,11 +84,14 @@ class CategoryDetailLoaded extends CategoryDetailState {
 
   bool get hasSections => sections.isNotEmpty;
 
+  /// Quick lookup: supplierId → SupplierModel.
+  Map<int, SupplierModel> get suppliersById =>
+      {for (final s in suppliers) s.id: s};
+
   CategoryDetailLoaded copyWith({
     CategoryModel? category,
     List<SubCategorySection>? sections,
-    SupplierModel? mainSupplier,
-    bool clearMainSupplier = false,
+    List<SupplierModel>? suppliers,
     List<ProductModel>? directProducts,
     bool? directProductsLoading,
     bool? directProductsHasMore,
@@ -99,13 +100,12 @@ class CategoryDetailLoaded extends CategoryDetailState {
     return CategoryDetailLoaded(
       category: category ?? this.category,
       sections: sections ?? this.sections,
-      mainSupplier:
-      clearMainSupplier ? null : (mainSupplier ?? this.mainSupplier),
+      suppliers: suppliers ?? this.suppliers,
       directProducts: directProducts ?? this.directProducts,
       directProductsLoading:
-      directProductsLoading ?? this.directProductsLoading,
+          directProductsLoading ?? this.directProductsLoading,
       directProductsHasMore:
-      directProductsHasMore ?? this.directProductsHasMore,
+          directProductsHasMore ?? this.directProductsHasMore,
       directProductsSkip: directProductsSkip ?? this.directProductsSkip,
     );
   }
@@ -114,7 +114,7 @@ class CategoryDetailLoaded extends CategoryDetailState {
   List<Object?> get props => [
     category,
     sections,
-    mainSupplier,
+    suppliers,
     directProducts,
     directProductsLoading,
     directProductsHasMore,

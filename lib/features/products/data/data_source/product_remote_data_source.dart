@@ -40,7 +40,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     final queryParams = <String, dynamic>{
       'skip': skip,
       'limit': limit,
-      'supplier_id': supplierId ?? AppSettings.platform_supplier_id,
+      if (supplierId != null) 'supplier_id': supplierId,
       if (categoryId != null) 'product[category_id]': categoryId,
       if (isFeatured != null) 'is_featured': isFeatured,
       if (isOffered != null) 'has_offers': isOffered,

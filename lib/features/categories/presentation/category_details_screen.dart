@@ -10,8 +10,8 @@ import '../../../l10n/app_localizations.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
 import '../../products/data/models/product_model.dart';
 import '../../search/presentation/search_dialog.dart';
-import '../../suppliers/presentation/main_supplier_hours_banner.dart';
-import '../../suppliers/presentation/suppliers_strip_widget.dart';
+import '../../suppliers/data/models/supplier_models.dart';
+import '../../suppliers/presentation/supplier_card.dart';
 import '../data/models/category_models.dart';
 import '../manager/category_detail_cubit.dart';
 import '../manager/category_detail_states.dart';
@@ -329,18 +329,16 @@ class _LoadedViewState extends State<_LoadedView> {
         slivers: [
           // ── Hero app bar ──────────────────────────────────────────────────
           _CategorySliverAppBar(category: state.category),
-          SliverToBoxAdapter(
-            child: state.mainSupplier != null
-                ? MainSupplierWorkingHoursBanner(supplier: state.mainSupplier!)
-                : const SizedBox.shrink(),
-          ),
-          SliverToBoxAdapter(
-            child: SuppliersStripWidget(
-              categoryIds: state.hasSections
-                  ? state.sections.map((s) => s.subCategory.id).toList()
-                  : [state.category.id],
+          if (state.suppliers.isNotEmpty)
+            SliverToBoxAdapter(
+              child: _CategorySuppliersStrip(
+                suppliers: state.suppliers,
+                onTap: (supplier) => context.push(
+                  '/suppliers/${supplier.id}',
+                  extra: {'supplier': supplier, 'filterCategoryId': null},
+                ),
+              ),
             ),
-          ),
           // ── Sticky pills row (only when there are multiple sections) ──────
           if (hasPills)
             SliverPersistentHeader(
@@ -361,15 +359,11 @@ class _LoadedViewState extends State<_LoadedView> {
                   const Divider(height: 1, indent: 16, endIndent: 16),
               itemBuilder: (_, i) {
                 final section = state.sections[i];
-                // Inherit the main supplier's open/closed status so product
-                // cards block the cart when the supplier is closed.
-                final isOpen =
-                    state.mainSupplier?.currentStatus?.isOpen ?? true;
                 return KeyedSubtree(
                   key: _sectionKeys[i],
                   child: SubCategorySectionWidget(
                     section: section,
-                    isSupplierOpen: isOpen,
+                    suppliersById: state.suppliersById,
                     onProductTap: widget.onProductTap,
                     onLoadMore: () =>
                         widget.onLoadMoreSection(section.subCategory.id),
@@ -388,6 +382,7 @@ class _LoadedViewState extends State<_LoadedView> {
                   ? const _EmptyProducts()
                   : DirectProductsGrid(
                       products: state.directProducts,
+                      suppliersById: state.suppliersById,
                       isLoadingMore: state.directProductsLoading,
                       hasMore: state.directProductsHasMore,
                       onProductTap: widget.onProductTap,
@@ -805,6 +800,64 @@ class _EmptyProducts extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Category suppliers strip (reads from state, no extra API call) ────────────
+
+class _CategorySuppliersStrip extends StatelessWidget {
+  final List<SupplierModel> suppliers;
+  final void Function(SupplierModel) onTap;
+
+  const _CategorySuppliersStrip({
+    required this.suppliers,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                AppLocalizations.of(context)!.suppliers,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 110,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: suppliers.length,
+            itemBuilder: (_, i) => SupplierCard(
+              supplier: suppliers[i],
+              onTap: () => onTap(suppliers[i]),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Divider(color: Colors.grey.shade200, height: 1),
+      ],
     );
   }
 }

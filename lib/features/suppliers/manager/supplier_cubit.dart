@@ -1,6 +1,5 @@
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
@@ -17,8 +16,7 @@ import 'supplier_states.dart';
 ///
 /// Leave [categoryIds] empty (or omit it) to fetch all suppliers.
 ///
-/// The main supplier ([AppConfig.kMainSupplierId]) is always excluded from the
-/// strip because their products already fill the entire catalogue.
+/// All suppliers are shown equally — there is no platform-level exclusion.
 class SuppliersCubit extends Cubit<SuppliersState> {
   final SupplierRepository _repository;
 
@@ -45,16 +43,13 @@ class SuppliersCubit extends Cubit<SuppliersState> {
   }
 
   /// Fetches suppliers for every id in [categoryIds] in parallel, merges,
-  /// deduplicates, and strips out the main supplier.
+  /// and deduplicates by supplier id.
   Future<List<SupplierModel>> _fetchAndMerge() async {
     List<SupplierModel> raw;
 
     if (categoryIds.isEmpty) {
       final response = await _repository.getSuppliers();
       raw = response.suppliers;
-      dLog('SuppliersCubit: fetched ${raw.length} suppliers');
-      dLog('SuppliersCubit: ids=${raw.map((s) => s.id).toList()}');
-      dLog('SuppliersCubit: kMainSupplierId=${AppSettings.platform_supplier_id}');
     } else if (categoryIds.length == 1) {
       final response =
       await _repository.getSuppliers(categoryId: categoryIds.first);
@@ -77,10 +72,7 @@ class SuppliersCubit extends Cubit<SuppliersState> {
       }
     }
 
-    // Always exclude the main supplier — their products already fill the
-    // catalogue so showing them again in the strip is redundant.
-    final result = raw.where((s) => s.id != AppSettings.platform_supplier_id).toList();
-    dLog('SuppliersCubit: after filter=${result.length}');
-    return result;
+    dLog('SuppliersCubit: after dedup=${raw.length}');
+    return raw;
   }
 }

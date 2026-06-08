@@ -864,8 +864,9 @@ class _SupplierRatingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final filledStars = rating.floor();
-    final hasHalf = (rating - filledStars) >= 0.5;
+    final roundedRating = (rating * 2).round() / 2; // snap to nearest 0.5
+    final filledStars = roundedRating.floor();
+    final hasHalf = (roundedRating - filledStars) >= 0.5;
 
     return Row(
       mainAxisSize: MainAxisSize.min,

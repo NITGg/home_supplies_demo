@@ -1,32 +1,49 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/image_with_fallback.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/presentation/product_card.dart';
+import '../../suppliers/data/models/supplier_models.dart';
 import '../manager/category_detail_states.dart';
 
 class SubCategorySectionWidget extends StatelessWidget {
   final SubCategorySection section;
   final void Function(ProductModel product) onProductTap;
-  final VoidCallback? onLoadMore; // restored
-  final bool isSupplierOpen;
+  final VoidCallback? onLoadMore;
+  final Map<int, SupplierModel> suppliersById;
 
   const SubCategorySectionWidget({
     super.key,
     required this.section,
     required this.onProductTap,
+    required this.suppliersById,
     this.onLoadMore,
-    this.isSupplierOpen = true,
   });
+
+  /// Groups products by supplierId preserving first-seen order.
+  Map<int?, List<ProductModel>> _groupBySupplier(List<ProductModel> products) {
+    final groups = <int?, List<ProductModel>>{};
+    for (final p in products) {
+      (groups[p.supplierId] ??= []).add(p);
+    }
+    return groups;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return section.products.isEmpty? SizedBox.shrink():Column(
+    if (section.products.isEmpty && !section.isLoading) {
+      return const SizedBox.shrink();
+    }
+
+    final groups = _groupBySupplier(section.products);
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Section header ───────────────────────────────────────────────
+        // ── Sub-category header ──────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
           child: Row(
@@ -52,57 +69,51 @@ class SubCategorySectionWidget extends StatelessWidget {
           ),
         ),
 
-        // ── Products list or skeleton ────────────────────────────────────
+        // ── Products skeleton while initially loading ─────────────────────
         if (section.isLoading && section.products.isEmpty)
           const _ProductListSkeleton()
-        else if (section.products.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              AppLocalizations.of(context)!.noProductsInSection,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade500,
-              ),
-            ),
-          )
         else
-          _ProductList(
-            products: section.products,
-            isLoadingMore: section.isLoading,
-            hasMore: section.hasMore,
-            isSupplierOpen: isSupplierOpen,
-            onProductTap: onProductTap,
-            onLoadMore: onLoadMore,
-          ),
+          // ── One horizontal row per supplier ────────────────────────────
+          for (final entry in groups.entries)
+            _SupplierProductRow(
+              supplier: suppliersById[entry.key],
+              products: entry.value,
+              // Only the last group carries the "load more" spinner so we
+              // don't show duplicates.
+              isLoadingMore: entry.key == groups.keys.last && section.isLoading,
+              hasMore: entry.key == groups.keys.last && section.hasMore,
+              onProductTap: onProductTap,
+              onLoadMore: onLoadMore,
+            ),
       ],
     );
   }
 }
 
-// ── Horizontal product list ───────────────────────────────────────────────────
+// ── Supplier header + horizontal product row ──────────────────────────────────
 
-class _ProductList extends StatefulWidget {
+class _SupplierProductRow extends StatefulWidget {
+  final SupplierModel? supplier;
   final List<ProductModel> products;
   final bool isLoadingMore;
   final bool hasMore;
-  final bool isSupplierOpen;
   final void Function(ProductModel) onProductTap;
   final VoidCallback? onLoadMore;
 
-  const _ProductList({
+  const _SupplierProductRow({
+    required this.supplier,
     required this.products,
     required this.isLoadingMore,
     required this.hasMore,
-    this.isSupplierOpen = true,
     required this.onProductTap,
     this.onLoadMore,
   });
 
   @override
-  State<_ProductList> createState() => _ProductListState();
+  State<_SupplierProductRow> createState() => _SupplierProductRowState();
 }
 
-class _ProductListState extends State<_ProductList> {
+class _SupplierProductRowState extends State<_SupplierProductRow> {
   late final ScrollController _scrollController;
 
   @override
@@ -128,48 +139,59 @@ class _ProductListState extends State<_ProductList> {
 
   @override
   Widget build(BuildContext context) {
-    // +1 for the trailing loader slot when loading more
+    final supplier = widget.supplier;
+    final isOpen = supplier?.currentStatus?.isOpen ?? true;
     final itemCount = widget.products.length + (widget.hasMore ? 1 : 0);
 
-    return SizedBox(
-      height: 300,
-      child: ListView.builder(
-        controller: _scrollController,
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: itemCount,
-        itemBuilder: (_, i) {
-          // Trailing spinner card
-          if (i == widget.products.length) {
-            return const Padding(
-              padding: EdgeInsets.only(right: 10),
-              child: SizedBox(
-                width: 48,
-                child: Center(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (supplier != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: _SupplierRowHeader(supplier: supplier, isOpen: isOpen),
+          ),
+
+        // ── Products horizontal scroll ────────────────────────────────────
+        SizedBox(
+          height: 300,
+          child: ListView.builder(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: itemCount,
+            itemBuilder: (_, i) {
+              if (i == widget.products.length) {
+                return const Padding(
+                  padding: EdgeInsets.only(right: 10),
                   child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    width: 48,
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  ),
+                );
+              }
+              final product = widget.products[i];
+              return SizedBox(
+                width: 180,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 10, bottom: 20),
+                  child: ProductCard(
+                    product: product,
+                    isSupplierOpen: isOpen,
+                    onTap: () => widget.onProductTap(product),
                   ),
                 ),
-              ),
-            );
-          }
-
-          final product = widget.products[i];
-          return SizedBox(
-            width: 180,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 10,bottom: 20),
-              child: ProductCard(
-                product: product,
-                isSupplierOpen: widget.isSupplierOpen,
-                onTap: () => widget.onProductTap(product),
-              ),
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -245,6 +267,7 @@ class _SkeletonCardState extends State<_SkeletonCard>
 
 class DirectProductsGrid extends StatelessWidget {
   final List<ProductModel> products;
+  final Map<int, SupplierModel> suppliersById;
   final bool isLoadingMore;
   final bool hasMore;
   final void Function(ProductModel) onProductTap;
@@ -253,45 +276,183 @@ class DirectProductsGrid extends StatelessWidget {
   const DirectProductsGrid({
     super.key,
     required this.products,
+    this.suppliersById = const {},
     required this.isLoadingMore,
     required this.hasMore,
     required this.onProductTap,
     this.onLoadMore,
   });
 
+  Map<int?, List<ProductModel>> _groupBySupplier() {
+    final groups = <int?, List<ProductModel>>{};
+    for (final p in products) {
+      (groups[p.supplierId] ??= []).add(p);
+    }
+    return groups;
+  }
+
+  Widget _buildGroup(
+    BuildContext context, {
+    required int? supplierId,
+    required List<ProductModel> groupProducts,
+    required bool isLastGroup,
+    required int crossAxisCount,
+  }) {
+    final theme = Theme.of(context);
+    final supplier = suppliersById[supplierId];
+    final isOpen = supplier?.currentStatus?.isOpen ?? true;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (supplier != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: _SupplierRowHeader(supplier: supplier, isOpen: isOpen),
+          ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              mainAxisExtent: crossAxisCount == 3 ? 400 : 300,
+            ),
+            itemCount:
+                groupProducts.length + (isLastGroup && isLoadingMore ? 2 : 0),
+            itemBuilder: (_, i) {
+              if (i >= groupProducts.length) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                );
+              }
+              final product = groupProducts[i];
+              return ProductCard(
+                product: product,
+                isSupplierOpen: isOpen,
+                onTap: () => onProductTap(product),
+              );
+            },
+          ),
+        ),
+        if (!isLastGroup)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Divider(color: Colors.grey.shade200, height: 1),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final crossAxisCount = MediaQuery.sizeOf(context).width > 600 ? 3 : 2;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(), // outer CustomScrollView handles scrolling
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+    final groups = _groupBySupplier();
+    final supplierIds = groups.keys.toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (int g = 0; g < supplierIds.length; g++)
+          _buildGroup(
+            context,
+            supplierId: supplierIds[g],
+            groupProducts: groups[supplierIds[g]]!,
+            isLastGroup: g == supplierIds.length - 1,
             crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            // childAspectRatio: 0.72,
-            mainAxisExtent:crossAxisCount == 3 ? 400: 300
+          ),
+      ],
+    );
+  }
+}
+
+// ── Shared supplier row header ────────────────────────────────────────────────
+
+class _SupplierRowHeader extends StatelessWidget {
+  final SupplierModel supplier;
+  final bool isOpen;
+
+  const _SupplierRowHeader({required this.supplier, required this.isOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context).languageCode;
+
+    return Row(
+      children: [
+        SizedBox(
+          width: 32,
+          height: 32,
+          child: ClipOval(
+            child: supplier.user.personalPhoto != null
+                ? ImageWithIconFallback(
+                    imageUrl: supplier.user.personalPhoto!,
+                    fit: BoxFit.cover,
+                  )
+                : CircleAvatar(
+                    backgroundColor: theme.colorScheme.primaryContainer,
+                    child: Text(
+                      supplier.user.fullName.isNotEmpty
+                          ? supplier.user.fullName[0].toUpperCase()
+                          : '?',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+          ),
         ),
-        itemCount: products.length + (isLoadingMore ? 2 : 0), // 2 skeleton placeholders at end
-        itemBuilder: (_, i) {
-          if (i >= products.length) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(12),
-              ),
-            );
-          }
-          final product = products[i];
-          return SizedBox(
-            child: ProductCard(
-              product: product,
-              onTap: () => onProductTap(product),
-            ),
-          );
-        },
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            supplier.user.fullName,
+            style: theme.textTheme.labelLarge
+                ?.copyWith(fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 8),
+        _OpenChip(isOpen: isOpen, locale: locale),
+      ],
+    );
+  }
+}
+
+class _OpenChip extends StatelessWidget {
+  final bool isOpen;
+  final String locale;
+
+  const _OpenChip({required this.isOpen, required this.locale});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isOpen ? Colors.green.shade50 : Colors.red.shade50,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isOpen ? Colors.green.shade200 : Colors.red.shade200,
+        ),
+      ),
+      child: Text(
+        isOpen
+            ? (locale == 'ar' ? 'مفتوح' : 'Open')
+            : (locale == 'ar' ? 'مغلق' : 'Closed'),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: isOpen ? Colors.green.shade700 : Colors.red.shade700,
+        ),
       ),
     );
   }
