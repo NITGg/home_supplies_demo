@@ -54,7 +54,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           builder: (context, state) {
             return switch (state) {
               CategoryDetailInitial() || CategoryDetailLoading() =>
-                _LoadingView(category: widget.category),
+                _InitialShimmerView(category: widget.category),
               CategoryDetailError(:final message) => _ErrorView(
                 message: message,
                 category: widget.category,
@@ -178,9 +178,10 @@ class _LoadedViewState extends State<_LoadedView> {
   void _checkAutoLoad() {
     final screenHeight = MediaQuery.of(context).size.height;
     const loadBuffer = 300.0;
+    final visible = widget.state.sectionsWithProducts;
 
     for (int i = 0; i < _sectionKeys.length; i++) {
-      final section = widget.state.sections[i];
+      final section = visible[i];
       if (!section.hasMore || section.isLoading) continue;
 
       final ctx = _sectionKeys[i].currentContext;
@@ -201,7 +202,9 @@ class _LoadedViewState extends State<_LoadedView> {
   @override
   void didUpdateWidget(_LoadedView old) {
     super.didUpdateWidget(old);
-    if (old.state.sections.length != widget.state.sections.length) {
+    final oldVisible = old.state.sectionsWithProducts.length;
+    final newVisible = widget.state.sectionsWithProducts.length;
+    if (oldVisible != newVisible) {
       _rebuildKeys();
     }
   }
@@ -215,11 +218,9 @@ class _LoadedViewState extends State<_LoadedView> {
 
   void _rebuildKeys() {
     _sectionKeys = List.generate(
-      widget.state.sections.length,
+      widget.state.sectionsWithProducts.length,
       (_) => GlobalKey(),
     );
-    // Stale offsets are invalid after a rebuild — clear them so we never
-    // jump to a wrong position.
     _sectionScrollOffsets.clear();
   }
 
@@ -319,7 +320,17 @@ class _LoadedViewState extends State<_LoadedView> {
   Widget build(BuildContext context) {
     final state = widget.state;
     final theme = Theme.of(context);
-    final hasPills = state.hasSections && state.sections.length > 1;
+
+    // Only show pills for sections that actually have products, so empty
+    // sub-categories never appear as navigation targets.
+    final visibleSections = state.sectionsWithProducts;
+    final hasPills = visibleSections.length > 1;
+
+    // Show shimmer while all sections are still loading and none has products
+    // yet — avoids the flickering "each section loads then disappears" effect.
+    final showSectionShimmer =
+        state.hasSections && state.anySectionLoading && !state.hasAnyProducts;
+
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       notificationPredicate: (notification) => notification.depth == 0,
@@ -327,7 +338,7 @@ class _LoadedViewState extends State<_LoadedView> {
         physics: const AlwaysScrollableScrollPhysics(),
         controller: _scrollController,
         slivers: [
-          // ── Hero app bar ──────────────────────────────────────────────────
+          // ── Hero app bar ────────────────────────────────────────────────
           _CategorySliverAppBar(category: state.category),
           if (state.suppliersReady && state.suppliers.isNotEmpty)
             SliverToBoxAdapter(
@@ -339,31 +350,36 @@ class _LoadedViewState extends State<_LoadedView> {
                 ),
               ),
             ),
-          // ── Sticky pills row (only when there are multiple sections) ──────
-          if (hasPills)
+
+          // ── Sticky pills (only sections with products) ───────────────────
+          if (hasPills && !showSectionShimmer)
             SliverPersistentHeader(
               pinned: true,
               delegate: _PillsHeaderDelegate(
-                sections: state.sections,
+                sections: visibleSections,
                 activeIndex: _activePillIndex,
                 onPillTap: _scrollToSection,
                 theme: theme,
               ),
             ),
 
-          // ── Content ───────────────────────────────────────────────────────
-          if (state.allSectionsEmpty)
+          // ── Content ──────────────────────────────────────────────────────
+          if (showSectionShimmer)
+            // Still loading: show a full-page shimmer instead of partial skeletons
+            const SliverToBoxAdapter(child: _SectionsShimmer())
+          else if (state.allSectionsEmpty)
             const SliverFillRemaining(
               hasScrollBody: false,
               child: _EmptyProducts(),
             )
           else if (state.hasSections)
+            // Only list sections that have products
             SliverList.separated(
-              itemCount: state.sections.length,
+              itemCount: visibleSections.length,
               separatorBuilder: (_, __) =>
                   const Divider(height: 1, indent: 16, endIndent: 16),
               itemBuilder: (_, i) {
-                final section = state.sections[i];
+                final section = visibleSections[i];
                 return KeyedSubtree(
                   key: _sectionKeys[i],
                   child: SubCategorySectionWidget(
@@ -379,10 +395,7 @@ class _LoadedViewState extends State<_LoadedView> {
           else
             SliverToBoxAdapter(
               child: state.directProductsLoading && state.directProducts.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(48),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
+                  ? const _DirectProductsShimmer()
                   : state.directProducts.isEmpty
                   ? const _EmptyProducts()
                   : DirectProductsGrid(
@@ -782,6 +795,175 @@ class _GradientMesh extends StatelessWidget {
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
+// ── Full-page shimmer shown while all sections are loading ────────────────────
+
+class _SectionsShimmer extends StatefulWidget {
+  const _SectionsShimmer();
+
+  @override
+  State<_SectionsShimmer> createState() => _SectionsShimmerState();
+}
+
+class _SectionsShimmerState extends State<_SectionsShimmer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.3, end: 0.9)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final shimmer = Colors.grey.shade300.withOpacity(_anim.value);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: List.generate(3, (s) => _ShimmerSection(color: shimmer)),
+        );
+      },
+    );
+  }
+}
+
+class _ShimmerSection extends StatelessWidget {
+  final Color color;
+  const _ShimmerSection({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+          child: Row(
+            children: [
+              Container(
+                width: 4, height: 20,
+                decoration: BoxDecoration(
+                  color: color, borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 120, height: 16,
+                decoration: BoxDecoration(
+                  color: color, borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Horizontal product card skeletons
+        SizedBox(
+          height: 260,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: 4,
+            itemBuilder: (_, __) => Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: Container(
+                width: 180,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Divider(color: Colors.grey.shade200, height: 1),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Grid shimmer for direct-products (leaf) categories ───────────────────────
+
+class _DirectProductsShimmer extends StatefulWidget {
+  const _DirectProductsShimmer();
+
+  @override
+  State<_DirectProductsShimmer> createState() => _DirectProductsShimmerState();
+}
+
+class _DirectProductsShimmerState extends State<_DirectProductsShimmer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.3, end: 0.9)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final crossAxisCount = MediaQuery.sizeOf(context).width > 600 ? 3 : 2;
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final color = Colors.grey.shade300.withOpacity(_anim.value);
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              mainAxisExtent: crossAxisCount == 3 ? 400 : 300,
+            ),
+            itemCount: 6,
+            itemBuilder: (_, __) => Container(
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── Empty products ────────────────────────────────────────────────────────────
+
 class _EmptyProducts extends StatelessWidget {
   const _EmptyProducts();
 
@@ -869,69 +1051,26 @@ class _CategorySuppliersStrip extends StatelessWidget {
 
 // ── Loading view ──────────────────────────────────────────────────────────────
 
-class _LoadingView extends StatefulWidget {
+/// Initial loading view — uses the same shimmer style as the loaded-but-still-
+/// fetching phase so there is only one consistent shimmer from tap to content.
+class _InitialShimmerView extends StatelessWidget {
   final CategoryModel? category;
 
-  const _LoadingView({this.category});
-
-  @override
-  State<_LoadingView> createState() => _LoadingViewState();
-}
-
-class _LoadingViewState extends State<_LoadingView>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _pulse;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 950),
-    )..repeat(reverse: true);
-    _pulse = Tween<double>(
-      begin: 0.06,
-      end: 0.15,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
+  const _InitialShimmerView({this.category});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulse,
-      builder: (context, _) {
-        final shimmer = Colors.black.withOpacity(_pulse.value);
-        return CustomScrollView(
-          physics: const NeverScrollableScrollPhysics(),
-          slivers: [
-            if (widget.category != null)
-              _CategorySliverAppBar(category: widget.category!)
-            else
-              _GradientPlaceholderAppBar(shimmer: shimmer),
-
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-              sliver: SliverGrid.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.72,
-                children: List.generate(
-                  6,
-                  (_) => _SkeletonProductCard(shimmer: shimmer),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+    return CustomScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      slivers: [
+        if (category != null)
+          _CategorySliverAppBar(category: category!)
+        else
+          _GradientPlaceholderAppBar(
+            shimmer: Colors.black.withOpacity(0.10),
+          ),
+        const SliverToBoxAdapter(child: _SectionsShimmer()),
+      ],
     );
   }
 }
@@ -1073,79 +1212,6 @@ class _GradientPlaceholderAppBar extends StatelessWidget {
 
 // ── Skeleton product card ─────────────────────────────────────────────────────
 
-class _SkeletonProductCard extends StatelessWidget {
-  final Color shimmer;
-
-  const _SkeletonProductCard({required this.shimmer});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Container(
-              decoration: BoxDecoration(
-                color: shimmer,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: shimmer,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  ),
-                  Container(
-                    height: 10,
-                    width: 80,
-                    decoration: BoxDecoration(
-                      color: shimmer,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  ),
-                  Container(
-                    height: 10,
-                    width: 55,
-                    decoration: BoxDecoration(
-                      color: shimmer,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ── Error view ────────────────────────────────────────────────────────────────
 

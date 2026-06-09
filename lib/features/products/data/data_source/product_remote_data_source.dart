@@ -50,7 +50,6 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       if (isBestSelling != null) 'best_seller': isBestSelling,
       if (isLastPurchased != null) 'last_bought': isLastPurchased,
     };
-    log(LocationService.instance.latLngBody.toString());
 
     final response = await _dio.get(
       '/products?lang=${LocaleManager.currentLocale}',

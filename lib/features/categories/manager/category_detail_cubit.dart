@@ -28,7 +28,15 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
     if (!isClosed) emit(const CategoryDetailLoading());
 
     try {
-      // Phase 1: category + sub-categories — emit immediately so UI renders.
+      // Fire the suppliers HTTP request immediately so it runs in parallel with
+      // the category + sub-categories fetch. We deliberately start the raw
+      // Future here rather than calling _fetchAndUpdateSuppliers(), because
+      // that helper reads state — and state won't be CategoryDetailLoaded until
+      // after the category fetch completes. The result is applied below, after
+      // the loaded state has been emitted.
+      final suppliersRequest = _supplierRepository.getSuppliers();
+
+      // Fetch category detail and its sub-categories in parallel.
       final results = await Future.wait([
         _categoryRepository.getCategoryById(categoryId),
         _categoryRepository.getCategories(
@@ -47,39 +55,31 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
           .map((sc) => SubCategorySection(subCategory: sc))
           .toList();
 
+      // State is now CategoryDetailLoaded — safe to apply suppliers when ready.
       if (!isClosed) emit(CategoryDetailLoaded(category: category, sections: sections));
 
-      // Phase 2: suppliers + products run fully in parallel —
-      // no supplier_id needed for products since the backend now returns
-      // all active suppliers when supplier_id is omitted.
+      // Products + supplier application run in parallel.
       await Future.wait([
-        _fetchAndUpdateSuppliers(),
+        suppliersRequest.then((r) {
+          if (isClosed) return;
+          final current = state;
+          if (current is CategoryDetailLoaded) {
+            emit(current.copyWith(suppliers: r.suppliers));
+          }
+        }).catchError((e) {
+          dLog('CategoryDetailCubit: suppliers fetch failed → $e');
+        }),
         if (sections.isNotEmpty)
           _loadAllSectionProducts(sections.map((s) => s.subCategory.id).toList())
         else
           _loadDirectProducts(categoryId, isInitial: true),
       ]);
 
-      // Phase 3: trim suppliers list to only those with products here.
+      // Trim suppliers to only those that have products in this category.
       _filterSuppliersToActive();
     } catch (e) {
       dLog('CategoryDetailCubit: ❌ load failed → $e');
       if (!isClosed) emit(CategoryDetailError(extractErrorMessage(e)));
-    }
-  }
-
-  // ── Fetch all active suppliers and update state ────────────────────────────
-
-  Future<void> _fetchAndUpdateSuppliers() async {
-    try {
-      final r = await _supplierRepository.getSuppliers();
-      if (isClosed) return;
-      final current = state;
-      if (current is CategoryDetailLoaded) {
-        emit(current.copyWith(suppliers: r.suppliers));
-      }
-    } catch (e) {
-      dLog('CategoryDetailCubit: suppliers fetch failed → $e');
     }
   }
 

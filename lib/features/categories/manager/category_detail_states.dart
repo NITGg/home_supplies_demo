@@ -89,8 +89,18 @@ class CategoryDetailLoaded extends CategoryDetailState {
 
   bool get hasSections => sections.isNotEmpty;
 
+  /// True while at least one section is still fetching its first page.
+  bool get anySectionLoading => sections.any((s) => s.isLoading);
+
+  /// True when at least one section has products.
+  bool get hasAnyProducts => sections.any((s) => s.products.isNotEmpty);
+
+  /// Sections that have at least one product — used for the visible list and
+  /// the pills strip (empty sections are hidden once loading is done).
+  List<SubCategorySection> get sectionsWithProducts =>
+      sections.where((s) => s.products.isNotEmpty).toList();
+
   /// True when every section has finished loading and returned zero products.
-  /// Used to show the empty state instead of a list of invisible widgets.
   bool get allSectionsEmpty =>
       hasSections &&
       sections.every((s) => !s.isLoading && s.products.isEmpty);
