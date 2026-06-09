@@ -34,10 +34,6 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
       '/users/suppliers/nearby?includes=user,addresses&lang=${LocaleManager.currentLocale}',
       queryParameters: queryParams.isNotEmpty ? queryParams : null,
       data: LocationService.instance.latLngBody,
-      // data: {
-      //   "lat": "30.045889",
-      //   "lng": "31.221417"
-      // },
     );
     dLog('[SupplierDS] getSuppliers → ${response.data}');
 

@@ -1031,7 +1031,7 @@ class _CategorySuppliersStrip extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 110,
+          height: 120,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),

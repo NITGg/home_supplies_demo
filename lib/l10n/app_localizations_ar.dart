@@ -1582,6 +1582,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noProductsInSection => 'لا توجد منتجات في هذه الفئة';
 
   @override
+  String get searchProducts => 'البحث عن منتجات...';
+
+  @override
+  String get sortBy => 'ترتيب';
+
+  @override
+  String get priceLowToHigh => 'السعر: من الأقل';
+
+  @override
+  String get priceHighToLow => 'السعر: من الأعلى';
+
+  @override
+  String get highestDiscount => 'أعلى خصم';
+
+  @override
+  String get allCategories => 'الكل';
+
+  @override
   String get showMore => 'عرض المزيد';
 
   @override

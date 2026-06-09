@@ -1582,6 +1582,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noProductsInSection => 'No products in this category';
 
   @override
+  String get searchProducts => 'Search products...';
+
+  @override
+  String get sortBy => 'Sort';
+
+  @override
+  String get priceLowToHigh => 'Price: Low to High';
+
+  @override
+  String get priceHighToLow => 'Price: High to Low';
+
+  @override
+  String get highestDiscount => 'Highest Discount';
+
+  @override
+  String get allCategories => 'All';
+
+  @override
   String get showMore => 'Show More';
 
   @override

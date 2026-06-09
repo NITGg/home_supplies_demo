@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/widgets/banners.dart';
@@ -19,6 +20,7 @@ import '../../cart/presentation/widgets/multiple_supplier_dialog.dart';
 import '../../home/layout/manager/guest_cubit.dart';
 import '../../cart/data/models/slot_model.dart';
 import '../../cart/data/repo/slot_repo.dart';
+import '../../suppliers/data/models/supplier_models.dart';
 import '../data/models/product_model.dart';
 import '../manager/product_detail_cubit.dart';
 import '../manager/product_details_states.dart';
@@ -89,7 +91,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               product: widget.product,
               onRetry: () => _cubit.load(_id, supplierId: _supplierId),
             ),
-            ProductDetailLoaded(:final product, :final isSupplierOpen) => () {
+            ProductDetailLoaded(:final product, :final isSupplierOpen, :final supplier) => () {
                 // Defer the fetch so it never runs during a build frame.
                 if (product.requiresDeliveryWindows && product.spId != null) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -103,6 +105,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   product,
                   isSupplierOpen: isSupplierOpen,
                   isInOrderWindow: isInOrderWindow,
+                  supplier: supplier,
                 );
               }(),
           };
@@ -115,6 +118,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     ProductModel product, {
     bool isSupplierOpen = true,
     bool isInOrderWindow = true,
+    SupplierModel? supplier,
   }) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -140,6 +144,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     const SizedBox(height: 12),
                     _PriceSection(product: product),
                     const SizedBox(height: 12),
+                    if (supplier != null) ...[
+                      _SupplierSection(
+                        supplier: supplier,
+                        isOpen: isSupplierOpen,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1126,6 +1137,105 @@ class _MetaInfo extends StatelessWidget {
           if (product.weight != null)
             Text('${product.weight} ${AppLocalizations.of(context)!.weight}'),
         ],
+      ),
+    );
+  }
+}
+
+// ── Supplier section ──────────────────────────────────────────────────────────
+
+class _SupplierSection extends StatelessWidget {
+  final SupplierModel supplier;
+  final bool isOpen;
+
+  const _SupplierSection({required this.supplier, required this.isOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final photoUrl = supplier.photoUrl;
+    final initials = supplier.displayName.isNotEmpty
+        ? supplier.displayName.trim()[0].toUpperCase()
+        : '?';
+
+    return GestureDetector(
+      onTap: () => context.push(
+        '/suppliers/${supplier.id}',
+        extra: {'supplier': supplier},
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            // ── Avatar ────────────────────────────────────────────────────────
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: theme.colorScheme.primaryContainer,
+              backgroundImage:
+                  photoUrl != null ? NetworkImage(photoUrl) : null,
+              child: photoUrl == null
+                  ? Text(
+                      initials,
+                      style: TextStyle(
+                        color: theme.colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+
+            // ── Name + open/closed badge ──────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    supplier.displayName,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: isOpen ? Colors.green : Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        isOpen ? l10n.openNow : l10n.closed,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isOpen ? Colors.green.shade700 : Colors.red.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Chevron ───────────────────────────────────────────────────────
+            Icon(
+              Icons.chevron_right_rounded,
+              color: theme.colorScheme.outline,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -19,6 +19,7 @@ abstract class ProductRemoteDataSource {
     bool? isOffered,
     bool? isBestSelling,
     int? supplierId,
+    String? keyword,
   });
 
   Future<ProductModel> getProductById(int id, {int? supplierId});
@@ -39,6 +40,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     bool? isLastPurchased,
     bool? isBestSelling,
     int? supplierId,
+    String? keyword,
   }) async {
     final queryParams = <String, dynamic>{
       'skip': skip,
@@ -49,16 +51,13 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       if (isOffered != null) 'has_offers': isOffered,
       if (isBestSelling != null) 'best_seller': isBestSelling,
       if (isLastPurchased != null) 'last_bought': isLastPurchased,
+      if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
     };
 
     final response = await _dio.get(
       '/products?lang=${LocaleManager.currentLocale}',
       queryParameters: queryParams,
       data: LocationService.instance.latLngBody,
-      // data: {
-      //   "lat": "30.045889",
-      //   "lng": "31.221417"
-      // },
     );
 
     dLog(response.statusCode.toString());

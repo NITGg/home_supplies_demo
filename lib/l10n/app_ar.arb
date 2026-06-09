@@ -682,6 +682,12 @@
 "updateQuantityFailed": "تعذّر تحديث الكمية",
 
 "noProductsInSection": "لا توجد منتجات في هذه الفئة",
+"searchProducts": "البحث عن منتجات...",
+"sortBy": "ترتيب",
+"priceLowToHigh": "السعر: من الأقل",
+"priceHighToLow": "السعر: من الأعلى",
+"highestDiscount": "أعلى خصم",
+"allCategories": "الكل",
 "showMore": "عرض المزيد",
 "vat": "ضريبة القيمة المضافة",
 "loadMore": "تحميل المزيد",

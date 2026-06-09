@@ -358,6 +358,130 @@ class ProductModel {
     );
   }
 
+  // ── Search API factory ────────────────────────────────────────────────────
+  //
+  // Search response shape (supplierProducts item):
+  // {
+  //   "id": 9,              ← supplier_product id (spId)
+  //   "price": 5200,        ← cents
+  //   "stock": 91,
+  //   "product": {          ← nested product
+  //     "id": 9,
+  //     "name": "...",
+  //     "images": "[...]",
+  //     "category": { "id": 10, ... },
+  //     "brand": null
+  //   },
+  //   "supplier": { "id": 9, "user": { "id": 156, "full_name": "...", ... } }
+  // }
+
+  factory ProductModel.fromSearchJson(Map<String, dynamic> json) {
+    final supplierData =
+    json['supplier_data'] as Map<String, dynamic>?;
+
+    final supplier =
+    supplierData?['supplier'] as Map<String, dynamic>?;
+
+    final category =
+    json['category'] as Map<String, dynamic>?;
+
+    final originalPrice =
+        _parseCents(supplierData?['price']) ?? 0.0;
+
+    return ProductModel(
+      id: _parseIntOr0(json['id']),
+      name: json['name'] as String? ?? '',
+      nameAr: json['name_ar'] as String?,
+      description: json['description'] as String?,
+      descriptionAr: json['description_ar'] as String?,
+      sku: json['sku']?.toString() ?? '',
+      barcode: json['barcode'] as String?,
+      slug: json['slug']?.toString() ?? '',
+      synonyms: _parseSynonyms(json['synonyms']),
+      images: _parseImages(json['images']),
+
+      weight: null,
+      dimensions: null,
+
+      categoryId: _parseIntOr0(category?['id']),
+      brandId: null,
+
+      sortId: 0,
+      color: null,
+
+      refundPolicy: null,
+      refundable: null,
+      refundablePeriod: null,
+
+      createdAt: DateTime.tryParse(
+        json['created_at']?.toString() ?? '',
+      ) ??
+          DateTime.now(),
+
+      updatedAt: DateTime.tryParse(
+        json['updated_at']?.toString() ?? '',
+      ) ??
+          DateTime.now(),
+
+      deletedAt: null,
+
+      attributes: const [],
+      units: const [],
+
+      spId: _parseInt(supplierData?['id']),
+      supplierId: _parseInt(supplier?['id']),
+
+      price: originalPrice,
+      costPrice: _parseCents(supplierData?['cost_price']),
+
+      stock: _parseIntOr0(supplierData?['stock']),
+      minStock: 0,
+
+      isActive: _parseBool(
+        supplierData?['is_active'],
+        fallback: true,
+      ),
+
+      isFeatured: _parseBool(
+        supplierData?['is_featured'],
+      ),
+
+      isBestSeller: _parseBool(
+        supplierData?['is_best_seller'],
+      ),
+
+      rating: _parseDoubleOr0(
+        supplierData?['rating'],
+      ),
+
+      totalReviews: _parseIntOr0(
+        supplierData?['total_reviews'],
+      ),
+
+      maxAmountForOneOrder:
+      _parseInt(supplierData?['max_amount_for_one_order']),
+
+      minAmountForOneOrder:
+      _parseInt(supplierData?['min_amount_for_one_order']),
+
+      pickupReadyDurationFrom:
+      _parseInt(supplierData?['estimated_time_from']),
+
+      pickupReadyDurationTo:
+      _parseInt(supplierData?['estimated_time_to']),
+
+      requiresDeliveryWindows:
+      _parseBool(supplierData?['requires_delivery_windows']),
+
+      offer: null,
+      discountType: null,
+      offerValidFrom: null,
+      offerValidTo: null,
+      discountValueTotal: null,
+      priceOutSite: null,
+    );
+  }
+
   // ── Computed helpers ───────────────────────────────────────────────────────
 
   String get displayName =>

@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/features/products/manager/product_details_states.dart';
 
 import '../../../core/utils/extract_error_message.dart';
+import '../../suppliers/data/models/supplier_models.dart';
 import '../../suppliers/data/repo/supplier_repo.dart';
 import '../data/repo/product_repo.dart';
 
@@ -27,9 +28,10 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
       // Check whether the supplier is currently open.
       bool isSupplierOpen = true;
       final sid = product.supplierId ?? supplierId;
+      SupplierModel? supplier;
       if (sid != null) {
         try {
-          final supplier = await _supplierRepository.getSupplierById(sid);
+          supplier = await _supplierRepository.getSupplierById(sid);
           isSupplierOpen = supplier.currentStatus?.isOpen ?? true;
         } catch (_) {
           // If supplier fetch fails, default to open so we never block the user
@@ -39,7 +41,11 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
       }
 
       if (!isClosed) {
-        emit(ProductDetailLoaded(product, isSupplierOpen: isSupplierOpen));
+        emit(ProductDetailLoaded(
+          product,
+          isSupplierOpen: isSupplierOpen,
+          supplier: supplier,
+        ));
       }
     } catch (e) {
       if (!isClosed) {

@@ -681,6 +681,12 @@
 "updateQuantityFailed": "Failed to update quantity",
 
 "noProductsInSection": "No products in this category",
+"searchProducts": "Search products...",
+"sortBy": "Sort",
+"priceLowToHigh": "Price: Low to High",
+"priceHighToLow": "Price: High to Low",
+"highestDiscount": "Highest Discount",
+"allCategories": "All",
 "showMore": "Show More",
 "loadMore": "Load More",
 "differentSupplierTitle": "Different Store",

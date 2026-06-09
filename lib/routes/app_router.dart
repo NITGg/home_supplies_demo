@@ -45,6 +45,7 @@ import '../features/wallet/presentation/paymob_webview.dart';
 import '../features/wallet/presentation/penalties_screen.dart';
 import '../features/wallet/presentation/topup_screen.dart';
 import '../features/wallet/presentation/transaction_history_screen.dart';
+import '../features/search/presentation/search_screen.dart';
 import '../features/wallet/presentation/wallet_screen.dart';
 
 Future<GoRouter> createAppRouter({
@@ -298,6 +299,7 @@ Future<GoRouter> createAppRouter({
           product: state.extra as ProductModel?,
         ),
       ),
+      GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
       GoRoute(path: '/cart', builder: (context, state) => const CartScreen()),
       GoRoute(
         path: '/categories',

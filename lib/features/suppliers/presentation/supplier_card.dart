@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:tawreedat_go/core/style/app_colors.dart';
+import 'package:tawreedat_go/core/style/text_styles.dart';
+import 'package:tawreedat_go/l10n/app_localizations.dart';
 
 import '../../../core/widgets/image_with_fallback.dart';
 import '../data/models/supplier_models.dart';
@@ -79,6 +82,18 @@ class SupplierCard extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
               maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 6),
+
+            // ── DIST ──────────────────────────────────────────────────────
+            Text(
+              supplier.distanceKm < 10
+                  ? '${AppLocalizations.of(context)!.far} ${supplier.distanceKm.floor()} ${AppLocalizations.of(context)!.km}'
+                  : "${AppLocalizations.of(context)!.far} 10+ ${AppLocalizations.of(context)!.km}",
+              style: AppTextStyles.regular14.copyWith(fontSize: 10,color: AppColors.kPrimaryColor),
+              textAlign: TextAlign.center,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ],

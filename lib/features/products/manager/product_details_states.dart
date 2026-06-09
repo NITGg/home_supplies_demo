@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../suppliers/data/models/supplier_models.dart';
 import '../data/models/product_model.dart';
 
 sealed class ProductDetailState extends Equatable {
@@ -23,10 +24,18 @@ class ProductDetailLoaded extends ProductDetailState {
   /// Defaults to true so that screens without supplier context are unaffected.
   final bool isSupplierOpen;
 
-  const ProductDetailLoaded(this.product, {this.isSupplierOpen = true});
+  /// Full supplier info fetched alongside the product. May be null if the
+  /// product has no supplier context or the fetch failed.
+  final SupplierModel? supplier;
+
+  const ProductDetailLoaded(
+    this.product, {
+    this.isSupplierOpen = true,
+    this.supplier,
+  });
 
   @override
-  List<Object?> get props => [product, isSupplierOpen];
+  List<Object?> get props => [product, isSupplierOpen, supplier];
 }
 
 class ProductDetailError extends ProductDetailState {

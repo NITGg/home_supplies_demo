@@ -14,6 +14,7 @@ abstract class ProductRepository {
     bool? isOffered,
     bool? isLastPurchased,
     int? supplierId,
+    String? keyword,
   });
 
   Future<ProductModel> getProductById(int id, {int? supplierId});
@@ -37,6 +38,7 @@ class ProductRepositoryImpl implements ProductRepository {
     bool? isOffered,
     bool? isLastPurchased,
     int? supplierId,
+    String? keyword,
   }) async {
     return await _dataSource.getProducts(
       skip: skip,
@@ -47,6 +49,7 @@ class ProductRepositoryImpl implements ProductRepository {
       supplierId: supplierId,
       isBestSelling: isBestSelling,
       isOffered: isOffered,
+      keyword: keyword,
     );
   }
 
