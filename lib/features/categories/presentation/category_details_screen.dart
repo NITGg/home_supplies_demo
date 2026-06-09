@@ -352,7 +352,12 @@ class _LoadedViewState extends State<_LoadedView> {
             ),
 
           // ── Content ───────────────────────────────────────────────────────
-          if (state.hasSections)
+          if (state.allSectionsEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: _EmptyProducts(),
+            )
+          else if (state.hasSections)
             SliverList.separated(
               itemCount: state.sections.length,
               separatorBuilder: (_, __) =>

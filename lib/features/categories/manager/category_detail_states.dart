@@ -89,6 +89,12 @@ class CategoryDetailLoaded extends CategoryDetailState {
 
   bool get hasSections => sections.isNotEmpty;
 
+  /// True when every section has finished loading and returned zero products.
+  /// Used to show the empty state instead of a list of invisible widgets.
+  bool get allSectionsEmpty =>
+      hasSections &&
+      sections.every((s) => !s.isLoading && s.products.isEmpty);
+
   /// Quick lookup: supplierId → SupplierModel.
   Map<int, SupplierModel> get suppliersById =>
       {for (final s in suppliers) s.id: s};

@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -29,7 +31,7 @@ class DefaultAddressPickerSheet extends StatefulWidget {
 class _DefaultAddressPickerSheetState
     extends State<DefaultAddressPickerSheet> {
   int? _pendingDefaultId;
-  bool _saving = false;
+  bool _reloading = false; // suppresses full-screen spinner during silent reloads
   bool _addSheetAutoOpened = false;
 
   @override
@@ -45,6 +47,14 @@ class _DefaultAddressPickerSheetState
   Future<void> _openAddSheet({bool autoDetect = false}) async {
     final addressCubit = context.read<AddressCubit>();
 
+    // Snapshot existing IDs so we can identify a newly added address afterward.
+    final existingIds = (addressCubit.state is AddressesLoaded)
+        ? (addressCubit.state as AddressesLoaded)
+            .addresses
+            .map((a) => a.id)
+            .toSet()
+        : <int?>{};
+
     await showModalBottomSheet<Address>(
       isDismissible: true,
       context: context,
@@ -52,11 +62,45 @@ class _DefaultAddressPickerSheetState
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider.value(
         value: addressCubit,
-        child: AddressFormBottomSheet(autoDetect: autoDetect,),
+        child: AddressFormBottomSheet(autoDetect: autoDetect),
       ),
     );
 
-    if (mounted) addressCubit.loadAddresses();
+    if (!mounted) return;
+
+    // Suppress spinner while we wait for createAddress's internal reload.
+    setState(() => _reloading = true);
+
+    if (addressCubit.state is AddressLoading) {
+      await addressCubit.stream
+          .firstWhere((s) => s is! AddressLoading)
+          .timeout(const Duration(seconds: 10), onTimeout: () => AddressInitial());
+    }
+
+    if (mounted && addressCubit.state is! AddressesLoaded) {
+      await addressCubit.loadAddresses();
+    }
+
+    if (!mounted) return;
+    setState(() => _reloading = false);
+
+    final freshState = addressCubit.state;
+    if (freshState is! AddressesLoaded) return;
+
+    final newAddress = freshState.addresses
+        .where((a) => !existingIds.contains(a.id))
+        .firstOrNull;
+
+    if (newAddress != null && mounted) {
+      // Close the sheet immediately — update happens silently in the background.
+      Navigator.pop(context);
+      if (!newAddress.isDefault) {
+        unawaited(addressCubit.updateAddress(
+          newAddress.id!,
+          newAddress.copyWith(isDefault: true),
+        ));
+      }
+    }
   }
 
   Future<void> _openEditSheet(Address address) async {
@@ -141,23 +185,24 @@ class _DefaultAddressPickerSheetState
     );
   }
 
-  Future<void> _confirmDefault(List<Address> addresses) async {
+  void _confirmDefault(List<Address> addresses) {
     if (_pendingDefaultId == null) return;
 
     final address = addresses.firstWhere((a) => a.id == _pendingDefaultId);
 
-    if (address.isDefault) {
-      if (mounted) Navigator.pop(context);
-      return;
-    }
+    // Capture cubit before popping so context is no longer needed.
+    final cubit = context.read<AddressCubit>();
 
-    setState(() => _saving = true);
-
-    await context
-        .read<AddressCubit>()
-        .updateAddress(address.id!, address.copyWith(isDefault: true));
-
+    // Close immediately — the user shouldn't wait for a network call.
     if (mounted) Navigator.pop(context);
+
+    // Fire the update in the background only if the selection actually changed.
+    if (!address.isDefault) {
+      unawaited(cubit.updateAddress(
+        address.id!,
+        address.copyWith(isDefault: true),
+      ));
+    }
   }
 
   @override
@@ -166,10 +211,6 @@ class _DefaultAddressPickerSheetState
 
     return BlocConsumer<AddressCubit, AddressState>(
       listener: (context, state) {
-        if (state is AddressError || state is AddressesLoaded) {
-          if (_saving && mounted) setState(() => _saving = false);
-        }
-
         // Auto-open add sheet the first time we confirm there are no addresses
         if (state is AddressesLoaded &&
             state.addresses.isEmpty &&
@@ -288,7 +329,7 @@ class _DefaultAddressPickerSheetState
                 Expanded(
                   child: Builder(
                     builder: (context) {
-                      if (state is AddressLoading && !_saving) {
+                      if (state is AddressLoading && !_reloading) {
                         return const Center(
                           child: LoadingScreen(isOne: true, asWidget: true),
                         );
@@ -365,16 +406,11 @@ class _DefaultAddressPickerSheetState
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     child: Builder(
                       builder: (context) {
-                        final isLoading = _saving || state is AddressLoading;
-
                         if (addresses.isEmpty) return const SizedBox();
 
                         return AppCustomButton(
-                          onPressed: isLoading
-                              ? () {}
-                              : () => _confirmDefault(addresses),
+                          onPressed: () => _confirmDefault(addresses),
                           text: l10n.confirm,
-                          isLoading: isLoading,
                         );
                       },
                     ),

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../ads/presentation/widgets/popups.dart';
+import '../../addresses/manager/address_cubit.dart';
+import '../../addresses/manager/address_states.dart';
 import '../../addresses/presentation/default_address_chip.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
 import '../../home/layout/manager/guest_cubit.dart';
@@ -24,13 +26,31 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   final GlobalKey<CategoriesGridWidgetState> _categoriesKey = GlobalKey();
   bool _categoriesEmpty = false;
 
+  /// ID of the default address that was active the last time categories loaded.
+  /// Used to detect a genuine address change vs. a routine reload.
+  int? _lastDefaultAddressId;
+
   void _navigateToCategory(CategoryModel category) {
     context.push('/categories/${category.id}', extra: category);
   }
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
+    return BlocListener<AddressCubit, AddressState>(
+      listener: (context, state) {
+        if (state is! AddressesLoaded) return;
+        final newDefault = state.addresses
+            .where((a) => a.isDefault)
+            .firstOrNull
+            ?.id ?? state.addresses.firstOrNull?.id;
+
+        if (_lastDefaultAddressId != null && newDefault != _lastDefaultAddressId) {
+          // Default address changed — refresh so products reflect new location.
+          _categoriesKey.currentState?.refresh();
+        }
+        _lastDefaultAddressId = newDefault;
+      },
+      child: RefreshIndicator(
       onRefresh: () => _categoriesKey.currentState?.refresh() ?? Future.value(),
       color: AppColors.kPrimaryColor,
       child: CustomScrollView(
@@ -104,6 +124,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 300)),
         ],
+      ),
       ),
     );
   }

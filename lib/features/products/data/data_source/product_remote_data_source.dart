@@ -1,7 +1,10 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:tawreedat_go/core/utils/logger.dart';
 import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 import '../../../../core/utils/api_client.dart';
+import '../../../../core/utils/location_service.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/product_model.dart';
 import '../models/product_response_model.dart';
@@ -47,10 +50,12 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       if (isBestSelling != null) 'best_seller': isBestSelling,
       if (isLastPurchased != null) 'last_bought': isLastPurchased,
     };
+    log(LocationService.instance.latLngBody.toString());
 
     final response = await _dio.get(
       '/products?lang=${LocaleManager.currentLocale}',
       queryParameters: queryParams,
+      data: LocationService.instance.latLngBody,
     );
 
     dLog(response.statusCode.toString());

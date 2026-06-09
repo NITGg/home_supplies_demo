@@ -4,20 +4,71 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 
 import '../../l10n/app_localizations.dart';
+import 'secure_storage_service.dart';
 
 class LocationService {
   LocationService._();
   static final LocationService instance = LocationService._();
-  bool _isRequesting = false; // ← ADD
+  bool _isRequesting = false;
+
+  // ── Default-address coordinates ───────────────────────────────────────────
+  // Updated by AddressCubit whenever the address list is (re)loaded.
+  // Read by data-sources (e.g. ProductRemoteDataSourceImpl) via [latLngBody].
+
+  String? _lat;
+  String? _lng;
+
+  static const _kLat = 'default_address_lat';
+  static const _kLng = 'default_address_lng';
+
+  /// Updates the in-memory coordinates AND persists them so they survive
+  /// an app restart. Pass nulls to clear (e.g. on logout).
+  Future<void> update({required String? lat, required String? lng}) async {
+    _lat = lat;
+    _lng = lng;
+    final storage = SecureStorageService();
+    if (lat != null && lng != null) {
+      await Future.wait([
+        storage.writeValue(_kLat, lat),
+        storage.writeValue(_kLng, lng),
+      ]);
+    } else {
+      await Future.wait([
+        storage.deleteValue(_kLat),
+        storage.deleteValue(_kLng),
+      ]);
+    }
+  }
+
+  /// Restores coordinates persisted in a previous session.
+  /// Call once in main() before the widget tree builds so the first
+  /// product fetch already has coordinates available.
+  Future<void> restoreFromStorage() async {
+    final storage = SecureStorageService();
+    final results = await Future.wait([
+      storage.readValue(_kLat),
+      storage.readValue(_kLng),
+    ]);
+    _lat = results[0];
+    _lng = results[1];
+  }
+
+  /// Returns `{"lat": "...", "lng": "..."}` when coordinates are available,
+  /// or an empty map when they are not (safe to spread into a request body).
+  Map<String, String> get latLngBody {
+    if (_lat == null || _lng == null) return const {};
+    return {'lat': _lat!, 'lng': _lng!};
+  }
+
+  bool get hasLocation => _lat != null && _lng != null;
+
+  // ── GPS / device location ─────────────────────────────────────────────────
 
   Future<Position?> getCurrentLocation({BuildContext? context}) async {
-    // ── Guard against concurrent calls ──────────────────────────
     if (_isRequesting) {
-      // Wait for the in-flight request to finish, then just get position
       while (_isRequesting) {
         await Future.delayed(const Duration(milliseconds: 100));
       }
-      // By now permission is resolved — just get position directly
       try {
         return await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
@@ -27,15 +78,14 @@ class LocationService {
       }
     }
 
-    _isRequesting = true; // ← LOCK
+    _isRequesting = true;
     try {
       return await _doGetLocation(context: context);
     } finally {
-      _isRequesting = false; // ← always release
+      _isRequesting = false;
     }
   }
 
-  // Rename your existing while(true) body into this private method
   Future<Position?> _doGetLocation({BuildContext? context}) async {
     while (true) {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -112,7 +162,6 @@ class LocationService {
     }
   }
 
-  /// Suspends execution until the app returns to the foreground.
   Future<void> _waitForAppResume() async {
     final completer = Completer<void>();
 

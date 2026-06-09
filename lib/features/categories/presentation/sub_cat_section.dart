@@ -357,6 +357,21 @@ class DirectProductsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final crossAxisCount = MediaQuery.sizeOf(context).width > 600 ? 3 : 2;
+
+    // Only group by supplier when we actually have supplier data to display.
+    // Without it, products from different suppliers would still be split into
+    // separate grids (one per unique supplierId) causing lone products to
+    // appear visually separated from the rest.
+    if (suppliersById.isEmpty) {
+      return _buildGroup(
+        context,
+        supplierId: null,
+        groupProducts: products,
+        isLastGroup: true,
+        crossAxisCount: crossAxisCount,
+      );
+    }
+
     final groups = _groupBySupplier();
     final supplierIds = groups.keys.toList();
 

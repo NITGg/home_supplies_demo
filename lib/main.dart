@@ -22,6 +22,7 @@ import 'core/error/handler.dart';
 import 'core/error/restart_widget.dart';
 import 'core/utils/api_client.dart';
 import 'core/utils/app_dynamic_settings.dart';
+import 'core/utils/location_service.dart';
 import 'core/utils/logger.dart';
 import 'core/utils/secure_storage_service.dart';
 import 'core/style/app_colors.dart';
@@ -146,6 +147,7 @@ Future<void> main() async {
       //   'MAPS_API_KEY is not set. Add --dart-define=MAPS_API_KEY=... to your run config.',
       // );
       ApiClient.instance.init();
+      await LocationService.instance.restoreFromStorage();
       await ConnectivityManager.instance.init();
       if (ConnectivityManager.instance.isConnected) {
         await Future.wait([

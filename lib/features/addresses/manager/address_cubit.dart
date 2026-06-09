@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/location_service.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/utils/secure_storage_service.dart';
 import '../data/models/address_model.dart';
@@ -25,6 +26,7 @@ class AddressCubit extends Cubit<AddressState> {
       final response = await _repository.getAddresses();
       dLog('AddressCubit: Loaded ${response.addresses.length} addresses');
       if (!isClosed) {
+        await _syncDefaultLocation(response.addresses);
         emit(AddressesLoaded(response.addresses));
       }
     } catch (e) {
@@ -33,6 +35,28 @@ class AddressCubit extends Cubit<AddressState> {
         emit(AddressError(extractErrorMessage(e)));
       }
     }
+  }
+
+  /// Pushes the default address coordinates to [LocationService] so any
+  /// data-source can include them in requests without a BuildContext.
+  /// Also persists them to storage so the next cold start has them immediately.
+  Future<void> _syncDefaultLocation(List<Address> addresses) async {
+    if (addresses.isEmpty) {
+      await LocationService.instance.update(lat: null, lng: null);
+      return;
+    }
+
+    final defaultAddress = addresses.firstWhere(
+      (a) => a.isDefault,
+      orElse: () => addresses.first,
+    );
+
+    await LocationService.instance.update(
+      lat: defaultAddress.addressLat.isNotEmpty ? defaultAddress.addressLat : null,
+      lng: defaultAddress.addressLong.isNotEmpty ? defaultAddress.addressLong : null,
+    );
+
+    dLog('LocationService updated: lat=${defaultAddress.addressLat}, lng=${defaultAddress.addressLong}');
   }
 
   Future<void> createAddress(Address address) async {
