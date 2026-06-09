@@ -9,7 +9,6 @@ class SearchResponse {
   final List<ProductModel> products;
 
   /// supplierId → SupplierModel. Populated when the API includes supplier data.
-  /// Currently empty; used by the search screen for supplier headers / chips.
   final Map<int, SupplierModel> suppliersById;
 
   const SearchResponse({
