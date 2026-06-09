@@ -55,6 +55,10 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       '/products?lang=${LocaleManager.currentLocale}',
       queryParameters: queryParams,
       data: LocationService.instance.latLngBody,
+      // data: {
+      //   "lat": "30.045889",
+      //   "lng": "31.221417"
+      // },
     );
 
     dLog(response.statusCode.toString());

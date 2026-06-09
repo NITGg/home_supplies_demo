@@ -2,6 +2,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/utils/api_client.dart';
+import '../../../../core/utils/location_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../l10n/manager/locale_cubit.dart';
 import '../models/supplier_models.dart';
@@ -30,8 +31,13 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
     };
 
     final response = await _dio.get(
-      '/users/suppliers?includes=user,addresses&lang=${LocaleManager.currentLocale}',
+      '/users/suppliers/nearby?includes=user,addresses&lang=${LocaleManager.currentLocale}',
       queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      data: LocationService.instance.latLngBody,
+      // data: {
+      //   "lat": "30.045889",
+      //   "lng": "31.221417"
+      // },
     );
     dLog('[SupplierDS] getSuppliers → ${response.data}');
 

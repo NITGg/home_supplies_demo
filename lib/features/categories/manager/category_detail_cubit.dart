@@ -101,7 +101,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
     };
 
     if (activeIds.isEmpty) {
-      emit(current.copyWith(suppliersReady: true));
+      emit(current.copyWith(suppliers: [], suppliersReady: true));
       return;
     }
 
