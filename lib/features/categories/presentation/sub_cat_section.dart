@@ -78,6 +78,7 @@ class SubCategorySectionWidget extends StatelessWidget {
             _SupplierProductRow(
               supplier: suppliersById[entry.key],
               products: entry.value,
+              isOpen: suppliersById[entry.key]?.currentStatus?.isOpen,
               // Only the last group carries the "load more" spinner so we
               // don't show duplicates.
               isLoadingMore: entry.key == groups.keys.last && section.isLoading,
@@ -97,6 +98,7 @@ class _SupplierProductRow extends StatefulWidget {
   final List<ProductModel> products;
   final bool isLoadingMore;
   final bool hasMore;
+  final bool? isOpen;
   final void Function(ProductModel) onProductTap;
   final VoidCallback? onLoadMore;
 
@@ -105,6 +107,7 @@ class _SupplierProductRow extends StatefulWidget {
     required this.products,
     required this.isLoadingMore,
     required this.hasMore,
+    required this.isOpen,
     required this.onProductTap,
     this.onLoadMore,
   });
@@ -140,7 +143,7 @@ class _SupplierProductRowState extends State<_SupplierProductRow> {
   @override
   Widget build(BuildContext context) {
     final supplier = widget.supplier;
-    final isOpen = supplier?.currentStatus?.isOpen ?? true;
+    final isOpen = widget.isOpen;
     final itemCount = widget.products.length + (widget.hasMore ? 1 : 0);
 
     return Column(
@@ -183,7 +186,7 @@ class _SupplierProductRowState extends State<_SupplierProductRow> {
                   padding: const EdgeInsets.only(right: 10, bottom: 20),
                   child: ProductCard(
                     product: product,
-                    isSupplierOpen: isOpen,
+                    isSupplierOpen: isOpen ?? true,
                     onTap: () => widget.onProductTap(product),
                   ),
                 ),
@@ -300,7 +303,7 @@ class DirectProductsGrid extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
     final supplier = suppliersById[supplierId];
-    final isOpen = supplier?.currentStatus?.isOpen ?? true;
+    final isOpen = supplier?.currentStatus?.isOpen;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,6 +313,7 @@ class DirectProductsGrid extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: _SupplierRowHeader(supplier: supplier, isOpen: isOpen),
           ),
+
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: GridView.builder(
@@ -335,7 +339,7 @@ class DirectProductsGrid extends StatelessWidget {
               final product = groupProducts[i];
               return ProductCard(
                 product: product,
-                isSupplierOpen: isOpen,
+                isSupplierOpen: isOpen ?? true,
                 onTap: () => onProductTap(product),
               );
             },
@@ -376,7 +380,7 @@ class DirectProductsGrid extends StatelessWidget {
 
 class _SupplierRowHeader extends StatelessWidget {
   final SupplierModel supplier;
-  final bool isOpen;
+  final bool? isOpen;
 
   const _SupplierRowHeader({required this.supplier, required this.isOpen});
 
@@ -421,7 +425,7 @@ class _SupplierRowHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        _OpenChip(isOpen: isOpen, locale: locale),
+        if (isOpen != null) _OpenChip(isOpen: isOpen!, locale: locale),
       ],
     );
   }

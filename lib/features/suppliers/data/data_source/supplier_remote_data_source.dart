@@ -30,7 +30,7 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
     };
 
     final response = await _dio.get(
-      '/users/suppliers?includes=user&lang=${LocaleManager.currentLocale}',
+      '/users/suppliers?includes=user,addresses&lang=${LocaleManager.currentLocale}',
       queryParameters: queryParams.isNotEmpty ? queryParams : null,
     );
     dLog('[SupplierDS] getSuppliers → ${response.data}');
