@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/widgets/image_with_fallback.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
+import '../../categories/presentation/category_card.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/presentation/product_card.dart';
 import '../../suppliers/data/models/supplier_models.dart';
@@ -125,8 +126,9 @@ class _SearchScreenBodyState extends State<_SearchScreenBody> {
               SearchInitial() => _HintView(key: const ValueKey('hint')),
               SearchLoading() => _LoadingView(key: const ValueKey('loading')),
               SearchEmpty() => _EmptyView(key: const ValueKey('empty')),
-              SearchError(:final message) =>
-                _ErrorView(key: const ValueKey('error'), message: message),
+              SearchError() => _EmptyView(key: const ValueKey('empty')),
+              // SearchError(:final message) =>
+              //   _ErrorView(key: const ValueKey('error'), message: message),
               SearchSuccess() => _SuccessView(
                   key: const ValueKey('results'),
                   state: state,
@@ -188,8 +190,38 @@ class _SuccessView extends StatelessWidget {
           ),
 
         // ── No products after filtering ───────────────────────────────────
-        if (products.isEmpty)
-          const SliverFillRemaining(child: _EmptyView()),
+
+        if (products.isEmpty && categories.isNotEmpty)
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverGrid(
+              delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                  final category = categories[index];
+
+                  return CategoryCard(
+                    category: category,
+                    style: CategoryCardStyle.compact,
+                    onTap: () {
+                      context.push('/categories/${category.id}');
+                    },
+                  );
+                },
+                childCount: categories.length,
+              ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.2,
+              ),
+            ),
+          ),
+
+        if (products.isEmpty && categories.isEmpty)
+          const SliverFillRemaining(
+            child: _EmptyView(),
+          ),
 
         // ── Supplier groups ───────────────────────────────────────────────
         for (final entry in groups.entries)
@@ -356,50 +388,55 @@ class _SupplierGroup extends StatelessWidget {
       children: [
         // ── Supplier header ─────────────────────────────────────────────────
         if (supplier != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                // Avatar
-                SizedBox(
-                  width: 32,
-                  height: 32,
-                  child: ClipOval(
-                    child: supplier!.user.personalPhoto != null
-                        ? ImageWithIconFallback(
-                            imageUrl: supplier!.user.personalPhoto!,
-                            fit: BoxFit.cover,
-                          )
-                        : CircleAvatar(
-                            backgroundColor:
-                                theme.colorScheme.primaryContainer,
-                            child: Text(
-                              supplier!.user.fullName.isNotEmpty
-                                  ? supplier!.user.fullName[0].toUpperCase()
-                                  : '?',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onPrimaryContainer,
-                                fontWeight: FontWeight.bold,
+          InkWell(
+            onTap: (){
+              context.push('/suppliers/${supplier!.id}');
+            },
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  // Avatar
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: ClipOval(
+                      child: supplier!.user.personalPhoto != null
+                          ? ImageWithIconFallback(
+                              imageUrl: supplier!.user.personalPhoto!,
+                              fit: BoxFit.cover,
+                            )
+                          : CircleAvatar(
+                              backgroundColor:
+                                  theme.colorScheme.primaryContainer,
+                              child: Text(
+                                supplier!.user.fullName.isNotEmpty
+                                    ? supplier!.user.fullName[0].toUpperCase()
+                                    : '?',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    supplier!.user.fullName,
-                    style: theme.textTheme.labelLarge
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (isOpen != null) ...[
                   const SizedBox(width: 8),
-                  _OpenChip(isOpen: isOpen, locale: locale),
+                  Expanded(
+                    child: Text(
+                      supplier!.user.fullName,
+                      style: theme.textTheme.labelLarge
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isOpen != null) ...[
+                    const SizedBox(width: 8),
+                    _OpenChip(isOpen: isOpen, locale: locale),
+                  ],
                 ],
-              ],
+              ),
             ),
           )
         else
