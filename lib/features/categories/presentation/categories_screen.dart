@@ -30,6 +30,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   /// Used to detect a genuine address change vs. a routine reload.
   int? _lastDefaultAddressId;
 
+  /// True once we've received at least one non-empty address list.
+  /// Allows us to detect the "all deleted → new address added" case and
+  /// refresh, while still suppressing a refresh on the very first load.
+  bool _hadAddress = false;
+
   void _navigateToCategory(CategoryModel category) {
     context.push('/categories/${category.id}', extra: category);
   }
@@ -44,11 +49,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             .firstOrNull
             ?.id ?? state.addresses.firstOrNull?.id;
 
-        if (_lastDefaultAddressId != null && newDefault != _lastDefaultAddressId) {
-          // Default address changed — refresh so products reflect new location.
+        if (_hadAddress && newDefault != _lastDefaultAddressId) {
+          // Default address changed (including null → new after deletion) —
+          // refresh so products reflect the new delivery location.
           _categoriesKey.currentState?.refresh();
         }
         _lastDefaultAddressId = newDefault;
+        if (newDefault != null) _hadAddress = true;
       },
       child: RefreshIndicator(
       onRefresh: () => _categoriesKey.currentState?.refresh() ?? Future.value(),
