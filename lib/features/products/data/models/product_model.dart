@@ -386,7 +386,17 @@ class ProductModel {
     json['category'] as Map<String, dynamic>?;
 
     final originalPrice =
-        _parseCents(supplierData?['price']) ?? 0.0;
+        _parseCents(supplierData?['original_price']) ??
+            _parseCents(supplierData?['price']) ??
+            0.0;
+
+    final unitPrice =
+    _parseCents(supplierData?['unit_price']);
+
+    final offerPrice =
+    (unitPrice != null && unitPrice < originalPrice)
+        ? unitPrice
+        : null;
 
     return ProductModel(
       id: _parseIntOr0(json['id']),
@@ -413,14 +423,12 @@ class ProductModel {
       refundable: null,
       refundablePeriod: null,
 
-      createdAt: DateTime.tryParse(
-        json['created_at']?.toString() ?? '',
-      ) ??
+      createdAt:
+      DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
 
-      updatedAt: DateTime.tryParse(
-        json['updated_at']?.toString() ?? '',
-      ) ??
+      updatedAt:
+      DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
           DateTime.now(),
 
       deletedAt: null,
@@ -464,6 +472,15 @@ class ProductModel {
       minAmountForOneOrder:
       _parseInt(supplierData?['min_amount_for_one_order']),
 
+      maxAmountForOneUser:
+      _parseInt(supplierData?['max_amount_for_one_user']),
+
+      minAmountForOneUser:
+      _parseInt(supplierData?['min_amount_for_one_user']),
+
+      reservedInCartsAmount:
+      _parseInt(supplierData?['reserved_in_carts_amount']),
+
       pickupReadyDurationFrom:
       _parseInt(supplierData?['estimated_time_from']),
 
@@ -473,11 +490,29 @@ class ProductModel {
       requiresDeliveryWindows:
       _parseBool(supplierData?['requires_delivery_windows']),
 
-      offer: null,
-      discountType: null,
-      offerValidFrom: null,
-      offerValidTo: null,
-      discountValueTotal: null,
+      // Offer support
+      offer: offerPrice,
+
+      discountType:
+      supplierData?['active_offer']?['offer_type'] as String?,
+
+      offerValidFrom:
+      supplierData?['active_offer']?['start_date'] != null
+          ? DateTime.tryParse(
+        supplierData!['active_offer']['start_date'] as String,
+      )
+          : null,
+
+      offerValidTo:
+      supplierData?['active_offer']?['end_date'] != null
+          ? DateTime.tryParse(
+        supplierData!['active_offer']['end_date'] as String,
+      )
+          : null,
+
+      discountValueTotal:
+      _parseCents(supplierData?['active_offer']?['offer_value']),
+
       priceOutSite: null,
     );
   }
