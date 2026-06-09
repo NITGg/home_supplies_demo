@@ -100,13 +100,14 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
           .whereType<int>(),
     };
 
-    if (activeIds.isEmpty) return;
+    if (activeIds.isEmpty) {
+      emit(current.copyWith(suppliersReady: true));
+      return;
+    }
 
     final filtered =
         current.suppliers.where((s) => activeIds.contains(s.id)).toList();
-    if (filtered.length != current.suppliers.length) {
-      emit(current.copyWith(suppliers: filtered));
-    }
+    emit(current.copyWith(suppliers: filtered, suppliersReady: true));
   }
 
   // ── Section products ───────────────────────────────────────────────────────

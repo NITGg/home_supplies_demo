@@ -66,6 +66,10 @@ class CategoryDetailLoaded extends CategoryDetailState {
   /// All suppliers that carry products in this category.
   final List<SupplierModel> suppliers;
 
+  /// True only after suppliers have been fetched AND filtered to active ones.
+  /// The strip is hidden until this is set to avoid a flash of unfiltered data.
+  final bool suppliersReady;
+
   /// Used when the category has no sub-categories – products belong directly.
   final List<ProductModel> directProducts;
   final bool directProductsLoading;
@@ -76,6 +80,7 @@ class CategoryDetailLoaded extends CategoryDetailState {
     required this.category,
     required this.sections,
     this.suppliers = const [],
+    this.suppliersReady = false,
     this.directProducts = const [],
     this.directProductsLoading = false,
     this.directProductsHasMore = true,
@@ -92,6 +97,7 @@ class CategoryDetailLoaded extends CategoryDetailState {
     CategoryModel? category,
     List<SubCategorySection>? sections,
     List<SupplierModel>? suppliers,
+    bool? suppliersReady,
     List<ProductModel>? directProducts,
     bool? directProductsLoading,
     bool? directProductsHasMore,
@@ -101,6 +107,7 @@ class CategoryDetailLoaded extends CategoryDetailState {
       category: category ?? this.category,
       sections: sections ?? this.sections,
       suppliers: suppliers ?? this.suppliers,
+      suppliersReady: suppliersReady ?? this.suppliersReady,
       directProducts: directProducts ?? this.directProducts,
       directProductsLoading:
           directProductsLoading ?? this.directProductsLoading,
@@ -115,6 +122,7 @@ class CategoryDetailLoaded extends CategoryDetailState {
     category,
     sections,
     suppliers,
+    suppliersReady,
     directProducts,
     directProductsLoading,
     directProductsHasMore,

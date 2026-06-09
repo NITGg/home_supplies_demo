@@ -329,7 +329,7 @@ class _LoadedViewState extends State<_LoadedView> {
         slivers: [
           // ── Hero app bar ──────────────────────────────────────────────────
           _CategorySliverAppBar(category: state.category),
-          if (state.suppliers.isNotEmpty)
+          if (state.suppliersReady && state.suppliers.isNotEmpty)
             SliverToBoxAdapter(
               child: _CategorySuppliersStrip(
                 suppliers: state.suppliers,
