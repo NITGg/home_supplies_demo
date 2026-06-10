@@ -320,14 +320,11 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
           // ── Search bar — filters this supplier's products server-side ─────
           if (state.sections.isNotEmpty)
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
                 child: LocalSearchField(
                   controller: _searchCtrl,
                   hintText: l10n.searchProducts,
                   hasQuery: _searchQuery.isNotEmpty,
                 ),
-              ),
             ),
 
           // ── Sticky category pills ─────────────────────────────────────────

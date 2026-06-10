@@ -383,13 +383,10 @@ class _LoadedViewState extends State<_LoadedView> {
           // ── Search bar — filters this category's products server-side ─────
           if (showSearchBar)
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
                 child: LocalSearchField(
                   controller: _searchCtrl,
                   hintText: l10n.searchProducts,
                   hasQuery: _searchQuery.isNotEmpty,
-                ),
               ),
             ),
 
