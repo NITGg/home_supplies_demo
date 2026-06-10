@@ -632,6 +632,7 @@ class OrderCard extends StatelessWidget {
                       ChatNavigator.openChatWithUser(
                         context,
                         targetUserId: order.courierUserId ?? 0,
+                        orderId: order.id,
                         chatTitle: order.courierName,
                         chatAvatarUrl: order.courierPhoto,
                       );

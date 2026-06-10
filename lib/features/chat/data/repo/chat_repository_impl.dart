@@ -24,8 +24,11 @@ class ChatRepositoryImpl implements ChatRepository {
       _remote.getChatById(chatId, knownChat: knownChat);
 
   @override
-  Future<({ChatModel chat, bool created})> createOrGetChat(int userId) =>
-      _remote.createOrGetChat(userId);
+  Future<({ChatModel chat, bool created})> createOrGetChat(
+    int userId, {
+    int? orderId,
+  }) =>
+      _remote.createOrGetChat(userId, orderId: orderId);
 
   @override
   Future<List<MessageModel>> loadMoreMessages(int chatId, {required int page}) =>

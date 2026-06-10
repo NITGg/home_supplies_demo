@@ -10,7 +10,10 @@ abstract class ChatRepository {
 
   Future<ChatWithMessagesModel> openChat(int chatId, {ChatModel? knownChat});
 
-  Future<({ChatModel chat, bool created})> createOrGetChat(int userId);
+  Future<({ChatModel chat, bool created})> createOrGetChat(
+    int userId, {
+    int? orderId,
+  });
 
   Future<List<MessageModel>> loadMoreMessages(int chatId, {required int page});
 

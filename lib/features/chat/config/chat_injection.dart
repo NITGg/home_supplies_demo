@@ -176,12 +176,13 @@ class ChatNavigator {
   static Future<void> openChatWithUser(
       BuildContext context, {
         required int targetUserId,
+        int? orderId,
         String? chatTitle,
         String? chatAvatarUrl,
       }) {
     return _push(
       context,
-      onCreated: (cubit) => cubit.openChat(targetUserId),
+      onCreated: (cubit) => cubit.openChat(targetUserId, orderId: orderId),
       chatTitle: chatTitle,
       chatAvatarUrl: chatAvatarUrl,
     );

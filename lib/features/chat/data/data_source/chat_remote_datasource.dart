@@ -17,7 +17,10 @@ abstract class ChatRemoteDataSource {
         ChatModel? knownChat,
       });
 
-  Future<({ChatModel chat, bool created})> createOrGetChat(int userId);
+  Future<({ChatModel chat, bool created})> createOrGetChat(
+    int userId, {
+    int? orderId,
+  });
 
   Future<List<MessageModel>> getMoreMessages(int chatId, {required int page});
 
@@ -90,9 +93,15 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   }
 
   @override
-  Future<({ChatModel chat, bool created})> createOrGetChat(int userId) async {
-    dLog('📡 [ChatDS] POST $_kChatBase/create-chat/$userId');
-    final response = await _dio.post('$_kChatBase/create-chat/$userId');
+  Future<({ChatModel chat, bool created})> createOrGetChat(
+    int userId, {
+    int? orderId,
+  }) async {
+    dLog('📡 [ChatDS] POST $_kChatBase/create-chat/$userId (orderId: $orderId)');
+    final response = await _dio.post(
+      '$_kChatBase/create-chat/$userId',
+      data: orderId != null ? {'order_id': orderId} : null,
+    );
     dLog('📡 [ChatDS] createOrGetChat($userId) raw response: ${response.data}');
 
     final data = _extractData(response.data) as Map<String, dynamic>;

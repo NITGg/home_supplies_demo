@@ -65,8 +65,8 @@ class ChatCubit extends Cubit<ChatState> {
 
   // ─── Start New Chat ───────────────────────────────────────────────────────
 
-  Future<void> openChat(int targetUserId) async {
-    dLog('🔵 [ChatCubit] openChat(targetUserId: $targetUserId)');
+  Future<void> openChat(int targetUserId, {int? orderId}) async {
+    dLog('🔵 [ChatCubit] openChat(targetUserId: $targetUserId, orderId: $orderId)');
     emit(const ChatLoading());
     try {
       final existingChats = await _repo.getMyChats();
@@ -82,7 +82,8 @@ class ChatCubit extends Cubit<ChatState> {
       if (existingChat != null) {
         chat = existingChat;
       } else {
-        final result = await _repo.createOrGetChat(targetUserId);
+        final result =
+            await _repo.createOrGetChat(targetUserId, orderId: orderId);
         chat = result.chat;
       }
 
