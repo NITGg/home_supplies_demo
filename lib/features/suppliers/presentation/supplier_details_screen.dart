@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:tawreedat_go/core/widgets/image_with_fallback.dart';
 
 import '../../../core/widgets/circel_back_button.dart';
+import '../../../core/widgets/local_search_field.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/presentation/product_card.dart';
-import '../../search/presentation/search_dialog.dart';
 import '../data/models/supplier_models.dart';
 import '../manager/supplier_details_cubit.dart';
 import '../manager/supplier_states.dart';
@@ -109,15 +109,42 @@ class _SupplierLoadedView extends StatefulWidget {
 
 class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchCtrl = TextEditingController();
   late List<GlobalKey> _sectionKeys;
   int _activePillIndex = 0;
+  String _searchQuery = '';
   final Map<int, double> _sectionScrollOffsets = {};
 
   @override
   void initState() {
     super.initState();
-    _rebuildKeys();
+    _rebuildKeys(_filteredSections.length);
     _scrollController.addListener(_onScroll);
+    _searchCtrl.addListener(() {
+      final q = _searchCtrl.text.trim().toLowerCase();
+      if (q == _searchQuery) return;
+      setState(() => _searchQuery = q);
+    });
+  }
+
+  bool _matches(ProductModel product) =>
+      _searchQuery.isEmpty ||
+      product.displayName.toLowerCase().contains(_searchQuery);
+
+  /// Category sections, with each section's products filtered by
+  /// [_searchQuery]. Sections with no matching products are dropped.
+  List<SupplierCategorySection> get _filteredSections {
+    final sections = widget.state.sections;
+    if (_searchQuery.isEmpty) return sections;
+    return sections
+        .map((s) => s.copyWith(
+              products: s.products
+                  .cast<ProductModel>()
+                  .where(_matches)
+                  .toList(),
+            ))
+        .where((s) => s.products.isNotEmpty)
+        .toList();
   }
 
   void _onScroll() {
@@ -160,11 +187,15 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
   }
 
   void _checkAutoLoad() {
+    // Don't fetch more pages while a local search is filtering the results.
+    if (_searchQuery.isNotEmpty) return;
+
     final screenHeight = MediaQuery.of(context).size.height;
     const loadBuffer = 300.0;
+    final sections = _filteredSections;
 
     for (int i = 0; i < _sectionKeys.length; i++) {
-      final section = widget.state.sections[i];
+      final section = sections[i];
       if (!section.hasMore || section.isLoading) continue;
 
       final ctx = _sectionKeys[i].currentContext;
@@ -186,7 +217,7 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
   void didUpdateWidget(_SupplierLoadedView old) {
     super.didUpdateWidget(old);
     if (old.state.sections.length != widget.state.sections.length) {
-      _rebuildKeys();
+      _rebuildKeys(_filteredSections.length);
     }
   }
 
@@ -194,14 +225,12 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
-  void _rebuildKeys() {
-    _sectionKeys = List.generate(
-      widget.state.sections.length,
-      (_) => GlobalKey(),
-    );
+  void _rebuildKeys(int length) {
+    _sectionKeys = List.generate(length, (_) => GlobalKey());
     _sectionScrollOffsets.clear();
   }
 
@@ -272,7 +301,19 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
   Widget build(BuildContext context) {
     final state = widget.state;
     final theme = Theme.of(context);
-    final hasPills = state.sections.length > 1;
+    final l10n = AppLocalizations.of(context)!;
+
+    final visibleSections = _filteredSections;
+    if (_sectionKeys.length != visibleSections.length) {
+      _rebuildKeys(visibleSections.length);
+    }
+    final hasPills = visibleSections.length > 1;
+
+    // No results because the search query filtered everything out (as
+    // opposed to the supplier genuinely having no products).
+    final noSearchResults = _searchQuery.isNotEmpty &&
+        state.sections.isNotEmpty &&
+        visibleSections.isEmpty;
 
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
@@ -291,12 +332,22 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
               child: _WorkingHoursBanner(supplier: state.supplier),
             ),
 
+          // ── Local search bar — filters the already-loaded products ────────
+          if (state.sections.isNotEmpty)
+            SliverToBoxAdapter(
+              child: LocalSearchField(
+                controller: _searchCtrl,
+                hintText: l10n.searchProducts,
+                hasQuery: _searchQuery.isNotEmpty,
+              ),
+            ),
+
           // ── Sticky category pills ─────────────────────────────────────────
           if (hasPills)
             SliverPersistentHeader(
               pinned: true,
               delegate: _SupplierPillsHeaderDelegate(
-                sections: state.sections,
+                sections: visibleSections,
                 activeIndex: _activePillIndex,
                 onPillTap: _scrollToSection,
                 theme: theme,
@@ -306,13 +357,17 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
           // ── Category sections ─────────────────────────────────────────────
           if (state.sections.isEmpty)
             const SliverFillRemaining(child: _EmptySupplierProducts())
+          else if (noSearchResults)
+            SliverFillRemaining(
+              child: _EmptySupplierProducts(message: l10n.noResultsFound),
+            )
           else
             SliverList.separated(
-              itemCount: state.sections.length,
+              itemCount: visibleSections.length,
               separatorBuilder: (_, __) =>
                   const Divider(height: 1, indent: 16, endIndent: 16),
               itemBuilder: (_, i) {
-                final section = state.sections[i];
+                final section = visibleSections[i];
                 // Compute supplier open status once — null status means the
                 // supplier has no working-hours configured, so default to open.
                 final isOpen = state.supplier.currentStatus?.isOpen ?? true;
@@ -662,18 +717,7 @@ class _SupplierSliverAppBar extends StatelessWidget {
       scrolledUnderElevation: 2,
       elevation: 0,
       leading: CircleBackButton(onPressed: context.pop),
-      actions: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey.shade200,
-          child: IconButton(
-            icon: Icon(Icons.search_rounded, color: Colors.grey.shade700),
-            onPressed: () => showSearchDialog(context),
-            padding: EdgeInsets.zero,
-          ),
-        ),
-        CartButton(),
-      ],
+      actions: [CartButton()],
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: EdgeInsets.zero,
         stretchModes: const [
@@ -908,7 +952,9 @@ class _SupplierRatingRow extends StatelessWidget {
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 class _EmptySupplierProducts extends StatelessWidget {
-  const _EmptySupplierProducts();
+  final String? message;
+
+  const _EmptySupplierProducts({this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -920,7 +966,7 @@ class _EmptySupplierProducts extends StatelessWidget {
           Icon(Icons.store_outlined, size: 64, color: Colors.grey.shade400),
           const SizedBox(height: 16),
           Text(
-            AppLocalizations.of(context)!.noProductsInSection,
+            message ?? AppLocalizations.of(context)!.noProductsInSection,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),

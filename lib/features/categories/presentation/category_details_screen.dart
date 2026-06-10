@@ -6,10 +6,10 @@ import 'package:tawreedat_go/features/categories/presentation/sub_cat_section.da
 
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../core/widgets/image_with_fallback.dart';
+import '../../../core/widgets/local_search_field.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
 import '../../products/data/models/product_model.dart';
-import '../../search/presentation/search_dialog.dart';
 import '../../suppliers/data/models/supplier_models.dart';
 import '../../suppliers/presentation/supplier_card.dart';
 import '../data/models/category_models.dart';
@@ -102,10 +102,12 @@ class _LoadedView extends StatefulWidget {
 
 class _LoadedViewState extends State<_LoadedView> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchCtrl = TextEditingController();
 
   // One GlobalKey per section — used to measure positions for scrolling.
   late List<GlobalKey> _sectionKeys;
   int _activePillIndex = 0;
+  String _searchQuery = '';
 
   /// Absolute scroll offset of each section's top edge, updated continuously
   /// as the user scrolls. Used as a fallback when a section hasn't been
@@ -115,8 +117,37 @@ class _LoadedViewState extends State<_LoadedView> {
   @override
   void initState() {
     super.initState();
-    _rebuildKeys();
+    _rebuildKeys(_filteredSections.length);
     _scrollController.addListener(_onScroll);
+    _searchCtrl.addListener(() {
+      final q = _searchCtrl.text.trim().toLowerCase();
+      if (q == _searchQuery) return;
+      setState(() => _searchQuery = q);
+    });
+  }
+
+  bool _matches(ProductModel product) =>
+      _searchQuery.isEmpty ||
+      product.displayName.toLowerCase().contains(_searchQuery);
+
+  /// Sections with products, filtered by [_searchQuery]. Sections that have
+  /// no matching products are dropped entirely.
+  List<SubCategorySection> get _filteredSections {
+    final visible = widget.state.sectionsWithProducts;
+    if (_searchQuery.isEmpty) return visible;
+    return visible
+        .map((s) => s.copyWith(
+              products: s.products.where(_matches).toList(),
+            ))
+        .where((s) => s.products.isNotEmpty)
+        .toList();
+  }
+
+  /// Direct products (leaf categories) filtered by [_searchQuery].
+  List<ProductModel> get _filteredDirectProducts {
+    final list = widget.state.directProducts;
+    if (_searchQuery.isEmpty) return list;
+    return list.where(_matches).toList();
   }
 
   // ── Scroll listener — updates the active pill and offset cache ────────────
@@ -166,6 +197,8 @@ class _LoadedViewState extends State<_LoadedView> {
   void _checkAutoLoadDirect() {
     final state = widget.state;
     if (state.hasSections) return;
+    // Don't fetch more pages while a local search is filtering the results.
+    if (_searchQuery.isNotEmpty) return;
     if (!state.directProductsHasMore || state.directProductsLoading) return;
 
     final position = _scrollController.position;
@@ -176,9 +209,12 @@ class _LoadedViewState extends State<_LoadedView> {
   }
 
   void _checkAutoLoad() {
+    // Don't fetch more pages while a local search is filtering the results.
+    if (_searchQuery.isNotEmpty) return;
+
     final screenHeight = MediaQuery.of(context).size.height;
     const loadBuffer = 300.0;
-    final visible = widget.state.sectionsWithProducts;
+    final visible = _filteredSections;
 
     for (int i = 0; i < _sectionKeys.length; i++) {
       final section = visible[i];
@@ -205,7 +241,7 @@ class _LoadedViewState extends State<_LoadedView> {
     final oldVisible = old.state.sectionsWithProducts.length;
     final newVisible = widget.state.sectionsWithProducts.length;
     if (oldVisible != newVisible) {
-      _rebuildKeys();
+      _rebuildKeys(_filteredSections.length);
     }
   }
 
@@ -213,14 +249,12 @@ class _LoadedViewState extends State<_LoadedView> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
-  void _rebuildKeys() {
-    _sectionKeys = List.generate(
-      widget.state.sectionsWithProducts.length,
-      (_) => GlobalKey(),
-    );
+  void _rebuildKeys(int length) {
+    _sectionKeys = List.generate(length, (_) => GlobalKey());
     _sectionScrollOffsets.clear();
   }
 
@@ -320,16 +354,34 @@ class _LoadedViewState extends State<_LoadedView> {
   Widget build(BuildContext context) {
     final state = widget.state;
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
-    // Only show pills for sections that actually have products, so empty
-    // sub-categories never appear as navigation targets.
-    final visibleSections = state.sectionsWithProducts;
+    // Only show pills for sections that actually have products and match the
+    // current search query, so empty sub-categories never appear as
+    // navigation targets.
+    final visibleSections = _filteredSections;
+    if (_sectionKeys.length != visibleSections.length) {
+      _rebuildKeys(visibleSections.length);
+    }
     final hasPills = visibleSections.length > 1;
+    final filteredDirectProducts = _filteredDirectProducts;
 
     // Show shimmer while all sections are still loading and none has products
     // yet — avoids the flickering "each section loads then disappears" effect.
     final showSectionShimmer =
         state.hasSections && state.anySectionLoading && !state.hasAnyProducts;
+
+    // The search field is only useful once there's something to filter.
+    final showSearchBar =
+        state.hasAnyProducts || state.directProducts.isNotEmpty;
+
+    // No results because the search query filtered everything out (as
+    // opposed to the section/category genuinely having no products).
+    final noSearchResults = _searchQuery.isNotEmpty &&
+        (state.hasSections
+            ? state.hasAnyProducts && visibleSections.isEmpty
+            : state.directProducts.isNotEmpty &&
+                filteredDirectProducts.isEmpty);
 
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
@@ -351,6 +403,16 @@ class _LoadedViewState extends State<_LoadedView> {
               ),
             ),
 
+          // ── Local search bar — filters the already-loaded products ────────
+          if (showSearchBar)
+            SliverToBoxAdapter(
+              child: LocalSearchField(
+                controller: _searchCtrl,
+                hintText: l10n.searchProducts,
+                hasQuery: _searchQuery.isNotEmpty,
+              ),
+            ),
+
           // ── Sticky pills (only sections with products) ───────────────────
           if (hasPills && !showSectionShimmer)
             SliverPersistentHeader(
@@ -367,6 +429,11 @@ class _LoadedViewState extends State<_LoadedView> {
           if (showSectionShimmer)
             // Still loading: show a full-page shimmer instead of partial skeletons
             const SliverToBoxAdapter(child: _SectionsShimmer())
+          else if (noSearchResults)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: _EmptyProducts(message: l10n.noResultsFound),
+            )
           else if (state.allSectionsEmpty)
             const SliverFillRemaining(
               hasScrollBody: false,
@@ -399,10 +466,11 @@ class _LoadedViewState extends State<_LoadedView> {
                   : state.directProducts.isEmpty
                   ? const _EmptyProducts()
                   : DirectProductsGrid(
-                      products: state.directProducts,
+                      products: filteredDirectProducts,
                       suppliersById: state.suppliersById,
                       isLoadingMore: state.directProductsLoading,
-                      hasMore: state.directProductsHasMore,
+                      hasMore:
+                          state.directProductsHasMore && _searchQuery.isEmpty,
                       onProductTap: widget.onProductTap,
                       onLoadMore: widget.onLoadMoreDirect,
                     ),
@@ -554,20 +622,7 @@ class _CategorySliverAppBar extends StatelessWidget {
       scrolledUnderElevation: 2,
       elevation: 0,
       leading: CircleBackButton(),
-      actions: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey.shade200,
-          child: IconButton(
-            icon: Icon(Icons.search_rounded, color: Colors.grey.shade700),
-            onPressed: () {
-              showSearchDialog(context);
-            },
-            padding: EdgeInsets.zero,
-          ),
-        ),
-        CartButton(),
-      ],
+      actions: [CartButton()],
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: EdgeInsets.zero,
         stretchModes: const [
@@ -965,7 +1020,9 @@ class _DirectProductsShimmerState extends State<_DirectProductsShimmer>
 // ── Empty products ────────────────────────────────────────────────────────────
 
 class _EmptyProducts extends StatelessWidget {
-  const _EmptyProducts();
+  final String? message;
+
+  const _EmptyProducts({this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -980,7 +1037,7 @@ class _EmptyProducts extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            AppLocalizations.of(context)!.noProductsInSection,
+            message ?? AppLocalizations.of(context)!.noProductsInSection,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
