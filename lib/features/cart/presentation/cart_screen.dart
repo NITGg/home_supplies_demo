@@ -217,7 +217,8 @@ class _CartScreenState extends State<CartScreen> {
 
     try {
       final spId = windowProduct.spId;
-      final data = await _deliveryWindowsRepo.fetchWindows(spId);
+      final sId = windowProduct.product.supplierId;
+      final data = await _deliveryWindowsRepo.fetchWindows(spId,sId!);
       if (mounted) {
         setState(() => _productDeliveryWindows = data);
       }

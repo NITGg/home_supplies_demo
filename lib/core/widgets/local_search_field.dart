@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tawreedat_go/core/style/text_styles.dart';
 
 /// A simple text field for filtering already-loaded data on screen
 /// (as opposed to triggering a server-side search).
@@ -24,6 +25,7 @@ class LocalSearchField extends StatelessWidget {
         controller: controller,
         decoration: InputDecoration(
           hintText: hintText,
+          hintStyle: AppTextStyles.regular14.copyWith(color: Colors.grey),
           prefixIcon: const Icon(Icons.search_rounded, size: 20),
           suffixIcon: hasQuery
               ? IconButton(

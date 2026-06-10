@@ -97,6 +97,12 @@ class ChatError extends ChatState {
   List<Object?> get props => [message];
 }
 
+/// Emitted when the server responds with 403 to a chat action, meaning the
+/// associated order has ended and the chat is no longer accessible.
+class ChatOrderEnded extends ChatState {
+  const ChatOrderEnded();
+}
+
 /// Emitted when a single message fails to send.
 /// Does NOT replace [ChatLoaded] — the UI shows a snackbar / retry prompt
 /// while the message list remains visible.

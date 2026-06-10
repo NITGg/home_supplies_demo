@@ -73,6 +73,14 @@ class ProfileRepository {
     return await _remoteDataSource.changePhone(token: token, phone: phone);
   }
 
+  /// POST /profile/confirm-otp — confirms the OTP sent for a phone change.
+  Future<Map<String, dynamic>> confirmOtp({
+    required String token,
+    required String code,
+  }) async {
+    return await _remoteDataSource.confirmOtp(token: token, code: code);
+  }
+
   Future<Map<String, dynamic>> verifyContactChange({
     required String token,
     required String oldCode,

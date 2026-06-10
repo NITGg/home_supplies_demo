@@ -63,12 +63,25 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return BlocConsumer<ChatCubit, ChatState>(
       listenWhen: (prev, curr) {
+        if (curr is ChatOrderEnded) return true;
         if (prev is ChatLoaded && curr is ChatLoaded) {
           return curr.messages.length > prev.messages.length;
         }
         return false;
       },
-      listener: (context, state) => _scrollToBottom(),
+      listener: (context, state) {
+        if (state is ChatOrderEnded) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.orderEndedChatClosed),
+            ),
+          );
+          Navigator.of(context).pop();
+          return;
+        }
+        _scrollToBottom();
+      },
       builder: (context, state) {
         return Scaffold(
           appBar: _buildAppBar(context, state),
@@ -155,6 +168,10 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildBody(BuildContext context, ChatState state) {
     if (state is ChatLoading || state is ChatInitial) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state is ChatOrderEnded) {
+      return const SizedBox.shrink();
     }
 
     if (state is ChatError) {

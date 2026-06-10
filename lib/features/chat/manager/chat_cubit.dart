@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/logger.dart';
@@ -153,6 +154,10 @@ class ChatCubit extends Cubit<ChatState> {
       );
     } catch (e) {
       dLog('❌ [ChatCubit] sendTextMessage failed: $e');
+      if (_isOrderEndedError(e)) {
+        emit(const ChatOrderEnded());
+        return;
+      }
       _markFailed(optimistic.localId, 'Failed to send message. Tap to retry.');
     }
   }
@@ -207,6 +212,10 @@ class ChatCubit extends Cubit<ChatState> {
       );
     } catch (e) {
       dLog('❌ [ChatCubit] sendImageMessage failed: $e');
+      if (_isOrderEndedError(e)) {
+        emit(const ChatOrderEnded());
+        return;
+      }
       _markFailed(optimistic.localId, 'Failed to send image. Tap to retry.');
     }
   }
@@ -281,6 +290,10 @@ class ChatCubit extends Cubit<ChatState> {
       }
     } catch (e) {
       dLog('❌ [ChatCubit] retryMessage failed: $e');
+      if (_isOrderEndedError(e)) {
+        emit(const ChatOrderEnded());
+        return;
+      }
       if (state is! ChatLoaded) return;
       emit(
         MessageSendFailed(
@@ -481,6 +494,10 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  bool _isOrderEndedError(Object e) {
+    return e is DioException && e.response?.statusCode == 403;
+  }
 
   void _markFailed(String localId, String error) {
     if (state is! ChatLoaded) return;

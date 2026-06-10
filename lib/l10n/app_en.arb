@@ -697,6 +697,7 @@
     "chatClosed": "..................",
     "messages": "Messages",
     "typing": "Typing…",
+    "orderEndedChatClosed": "This order has ended, so the chat is now closed.",
     "locationUnavailable": "Location Unavailable",
     "locationAlwaysMessage": "To receive orders in the background, please set location to 'Always' in settings",
     "locationAlwaysTitle": "Enable Location Always",

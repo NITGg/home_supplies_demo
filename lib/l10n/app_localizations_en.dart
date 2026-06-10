@@ -1627,6 +1627,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get typing => 'Typing…';
 
   @override
+  String get orderEndedChatClosed => 'This order has ended, so the chat is now closed.';
+
+  @override
   String get locationUnavailable => 'Location Unavailable';
 
   @override

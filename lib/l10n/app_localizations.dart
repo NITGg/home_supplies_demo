@@ -3257,6 +3257,12 @@ abstract class AppLocalizations {
   /// **'Typing…'**
   String get typing;
 
+  /// No description provided for @orderEndedChatClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This order has ended, so the chat is now closed.'**
+  String get orderEndedChatClosed;
+
   /// No description provided for @locationUnavailable.
   ///
   /// In en, this message translates to:

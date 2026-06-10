@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/image_with_fallback.dart';
-import '../../../l10n/app_localizations.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/presentation/product_card.dart';
 import '../../suppliers/data/models/supplier_models.dart';
@@ -301,56 +300,91 @@ class DirectProductsGrid extends StatelessWidget {
     required bool isLastGroup,
     required int crossAxisCount,
   }) {
-    final theme = Theme.of(context);
     final supplier = suppliersById[supplierId];
     final isOpen = supplier?.currentStatus?.isOpen;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (supplier != null)
+    // When grouped by supplier, render each supplier's products as a
+    // horizontal scroll row (there can be many suppliers, so a full grid
+    // per supplier would make the page extremely tall).
+    if (supplier != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: _SupplierRowHeader(supplier: supplier, isOpen: isOpen),
           ),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              mainAxisExtent: crossAxisCount == 3 ? 400 : 300,
-            ),
-            itemCount:
-                groupProducts.length + (isLastGroup && isLoadingMore ? 2 : 0),
-            itemBuilder: (_, i) {
-              if (i >= groupProducts.length) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(12),
+          SizedBox(
+            height: 300,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount:
+                  groupProducts.length + (isLastGroup && isLoadingMore ? 1 : 0),
+              itemBuilder: (_, i) {
+                if (i >= groupProducts.length) {
+                  return const SizedBox(
+                    width: 180,
+                    child: Padding(
+                      padding: EdgeInsets.only(right: 10),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  );
+                }
+                final product = groupProducts[i];
+                return SizedBox(
+                  width: 180,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: ProductCard(
+                      product: product,
+                      isSupplierOpen: isOpen ?? true,
+                      onTap: () => onProductTap(product),
+                    ),
                   ),
                 );
-              }
-              final product = groupProducts[i];
-              return ProductCard(
-                product: product,
-                isSupplierOpen: isOpen ?? true,
-                onTap: () => onProductTap(product),
-              );
-            },
+              },
+            ),
           ),
+          if (!isLastGroup)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Divider(color: Colors.grey.shade200, height: 1),
+            ),
+        ],
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          mainAxisExtent: crossAxisCount == 3 ? 400 : 300,
         ),
-        if (!isLastGroup)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Divider(color: Colors.grey.shade200, height: 1),
-          ),
-      ],
+        itemCount:
+            groupProducts.length + (isLastGroup && isLoadingMore ? 2 : 0),
+        itemBuilder: (_, i) {
+          if (i >= groupProducts.length) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            );
+          }
+          final product = groupProducts[i];
+          return ProductCard(
+            product: product,
+            isSupplierOpen: isOpen ?? true,
+            onTap: () => onProductTap(product),
+          );
+        },
+      ),
     );
   }
 

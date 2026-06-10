@@ -699,6 +699,7 @@
     "chatClosed": "..................",
     "messages": "الرسائل",
     "typing": "يكتب…",
+    "orderEndedChatClosed": "انتهى الطلب، تم إغلاق المحادثة.",
     "locationServicesDisabledTitle": "خدمة الموقع معطلة",
     "locationServicesDisabledMessage": "يرجى تفعيل خدمة الموقع للمتابعة.",
     "openSettings": "فتح الإعدادات",

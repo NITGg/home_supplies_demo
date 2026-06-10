@@ -11,6 +11,7 @@ import '../../../core/widgets/circel_back_button.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
 import '../../../core/widgets/login_prompt.dart';
+import '../../../core/widgets/phone_number_sheet.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/data/models/multiple_supplier_exception.dart';
 import '../../cart/manager/cart_cubit.dart';
@@ -64,11 +65,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   /// Lazily fetches delivery windows once we know the product's spId.
-  Future<void> _loadDeliveryWindows(int spId) async {
+  Future<void> _loadDeliveryWindows(int spId,int sId) async {
     if (_deliveryWindows != null || _loadingWindows) return;
     setState(() => _loadingWindows = true);
     try {
-      final data = await _windowsRepo.fetchWindows(spId);
+      final data = await _windowsRepo.fetchWindows(spId,sId);
       if (mounted) setState(() => _deliveryWindows = data);
     } catch (_) {
       // silently ignore — the section simply won't show
@@ -95,7 +96,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 // Defer the fetch so it never runs during a build frame.
                 if (product.requiresDeliveryWindows && product.spId != null) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _loadDeliveryWindows(product.spId!);
+                    _loadDeliveryWindows(product.spId!,product.supplierId!);
                   });
                 }
                 final isInOrderWindow = !product.requiresDeliveryWindows ||
@@ -332,6 +333,7 @@ class _AddToCartBarState extends State<_AddToCartBar>
       showGuestLoginPrompt(ctx);
       return;
     }
+    if (!await ensurePhoneNumber(ctx)) return;
     if (_tapLocked) return; // HARD GUARD (instant)
     _tapLocked = true;
 

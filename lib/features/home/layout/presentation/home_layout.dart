@@ -12,10 +12,9 @@ import 'package:tawreedat_go/features/wallet/manager/wallet_cubit.dart';
 import 'package:tawreedat_go/features/wallet/manager/wallet_state.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/utils/socket_service.dart';
-import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/loading_screen.dart';
 import '../../../../core/widgets/login_prompt.dart';
-import '../../../../core/widgets/text_form.dart';
+import '../../../../core/widgets/phone_number_sheet.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../main.dart';
 import '../../../addresses/data/models/governorate_model.dart';
@@ -917,144 +916,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> _showPhoneNumberBottomSheet(BuildContext context) async {
-    final parentContext = context;
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _PhoneNumberSheet(parentContext: parentContext),
-    );
-  }
-}
-
-class _PhoneNumberSheet extends StatefulWidget {
-  final BuildContext parentContext;
-
-  const _PhoneNumberSheet({required this.parentContext});
-
-  @override
-  State<_PhoneNumberSheet> createState() => _PhoneNumberSheetState();
-}
-
-class _PhoneNumberSheetState extends State<_PhoneNumberSheet> {
-  final _phoneController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _loading = false;
-  String? _errorMessage;
-  bool _submitted = false;
-
-  @override
-  void dispose() {
-    _phoneController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() {
-      _loading = true;
-      _errorMessage = null;
-      _submitted = true;
-    });
-    String phone = _phoneController.text.trim();
-    if (!phone.startsWith('+2')) phone = '+2$phone';
-    widget.parentContext.read<ProfileCubit>().changePhone(phone: phone);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
-
-    return BlocListener<ProfileCubit, ProfileState>(
-      bloc: widget.parentContext.read<ProfileCubit>(),
-      listener: (_, state) {
-        if (!_submitted) return;
-        if (state is ProfilePhoneOtpSent) {
-          if (mounted) {
-            Navigator.pop(context);
-            widget.parentContext.push('/auth/verify-otp', extra: {
-              'destination': state.destination,
-              'via': state.via,
-              'isPasswordReset': false,
-            });
-          }
-        } else if (state is ProfileFailure) {
-          if (mounted) {
-            setState(() {
-              _loading = false;
-              _errorMessage = state.message;
-            });
-          }
-        } else if (state is ProfileLoading) {
-          if (mounted) setState(() => _loading = true);
-        }
-      },
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 20,
-          right: 20,
-          top: 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(localizations.enterPhoneNumber, style: AppTextStyles.bold18),
-            const SizedBox(height: 8),
-            Text(
-              localizations.weNeedYourPhoneNumber,
-              style: AppTextStyles.regular14.copyWith(color: Colors.grey),
-            ),
-            const SizedBox(height: 20),
-            Form(
-              key: _formKey,
-              child: AppTextFormField(
-                label: localizations.phone,
-                controller: _phoneController,
-                isPhone: true,
-              ),
-            ),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 14,
-                    color: Colors.red.shade700,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      _errorMessage!,
-                      style: TextStyle(
-                        color: Colors.red.shade700,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 20),
-            AppCustomButton(
-              onPressed: _loading ? () {} : _submit,
-              text: localizations.confirm,
-              isLoading: _loading,
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
+  Future<void> _showPhoneNumberBottomSheet(BuildContext context) =>
+      showPhoneNumberBottomSheet(context);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

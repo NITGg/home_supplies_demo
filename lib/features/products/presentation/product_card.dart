@@ -8,7 +8,8 @@ import '../../../core/widgets/banners.dart';
 import '../../../core/utils/formatDate.dart';
 import '../../../core/widgets/highlighter_widget.dart';
 import '../../../core/widgets/image_with_fallback.dart';
-import '../../../core/widgets/login_prompt.dart';               // ← ADD THIS IMPORT
+import '../../../core/widgets/login_prompt.dart';
+import '../../../core/widgets/phone_number_sheet.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/data/models/multiple_supplier_exception.dart';
 import '../../cart/manager/cart_cubit.dart';
@@ -144,6 +145,7 @@ class _ProductCardState extends State<ProductCard>
     if (_isGuest(ctx)) { _promptLogin(ctx); return; }                 // ← GUARD
     if (widget.product.isOutOfStock || !widget.isSupplierOpen) return;
     if (widget.product.requiresDeliveryWindows && !widget.isOrderingOpen) return;
+    if (!await ensurePhoneNumber(ctx)) return;                        // ← GUARD
     HapticFeedback.lightImpact();
     _triggerBounce();
     try {

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/style/text_styles.dart';
 import '../../../core/widgets/circel_back_button.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
@@ -221,6 +222,7 @@ class _FilterableBulkProductScreenState
               controller: _searchCtrl,
               decoration: InputDecoration(
                 hintText: l10n.searchProducts,
+                hintStyle: AppTextStyles.regular14.copyWith(color: Colors.grey),
                 prefixIcon: const Icon(Icons.search_rounded, size: 20),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
@@ -310,14 +312,11 @@ class _FilterableBulkProductScreenState
                     onTap: () => _selectCategory(null),
                   ),
                   ...visibleCategories.map(
-                        (cat) => Padding(
-                      padding: const EdgeInsets.only(left: 6),
-                      child: _CategoryChip(
-                        label: cat.displayName,
-                        selected: _selectedCategoryId == cat.id,
-                        onTap: () => _selectCategory(cat.id),
-                      ),
-                    ),
+                        (cat) => _CategoryChip(
+                          label: cat.displayName,
+                          selected: _selectedCategoryId == cat.id,
+                          onTap: () => _selectCategory(cat.id),
+                        ),
                   ),
                 ],
               ),

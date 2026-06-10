@@ -1627,6 +1627,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get typing => 'يكتب…';
 
   @override
+  String get orderEndedChatClosed => 'انتهى الطلب، تم إغلاق المحادثة.';
+
+  @override
   String get locationUnavailable => 'Location Unavailable';
 
   @override

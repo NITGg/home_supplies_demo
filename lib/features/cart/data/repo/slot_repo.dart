@@ -19,10 +19,10 @@ class DeliveryWindowsRepository {
   /// The endpoint is on the supplier API host so we build the full URL
   /// explicitly rather than relying on the app's configured baseUrl.
   Future<ProductDeliveryWindowsData> fetchWindows(
-      int supplierProductId) async {
+      int supplierProductId,int supplierId) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
-        '$_supplierBase/supplier/product/get-supplier-product-delivery-windows/$supplierProductId/${AppSettings.platform_supplier_id}',
+        '$_supplierBase/supplier/product/get-supplier-product-delivery-windows/$supplierProductId/$supplierId',
       );
       return ProductDeliveryWindowsData.fromJson(response.data!);
     } on DioException catch (e) {

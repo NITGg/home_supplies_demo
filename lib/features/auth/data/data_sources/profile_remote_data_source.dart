@@ -140,6 +140,26 @@ class ProfileRemoteDataSource {
     }
   }
 
+  /// POST /profile/confirm-otp — confirms the OTP sent for a phone change.
+  Future<Map<String, dynamic>> confirmOtp({
+    required String token,
+    required String code,
+  }) async {
+    try {
+      dLog('📤 POST /profile/confirm-otp — code=$code');
+      final response = await _dio.post(
+        '/profile/confirm-otp?lang=${LocaleManager.currentLocale}',
+        data: {'code': code},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      dLog('📥 /profile/confirm-otp — status: ${response.statusCode} body: ${response.data}');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      dLog('confirmOtp error: $e');
+      rethrow;
+    }
+  }
+
   /// Verifies OTPs sent to both old and new contact values.
   Future<Map<String, dynamic>> verifyContactChange({
     required String token,
