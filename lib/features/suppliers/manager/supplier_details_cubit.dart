@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
 import '../../products/data/repo/product_repo.dart';
+import '../data/models/supplier_models.dart';
+import '../data/models/supplier_response_models.dart';
 import '../data/repo/supplier_repo.dart';
 import 'supplier_states.dart';
 
@@ -11,7 +13,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
   final SupplierRepository _supplierRepository;
   final ProductRepository _productRepository;
 
-  static const int _pageSize = 5;
+  static const int _pageSize = 10;
 
   /// Current search keyword — sent to the products endpoint so the backend
   /// filters this supplier's products server-side.
@@ -33,16 +35,19 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
   Future<void> load(int supplierId, {int? filterCategoryId}) async {
     if (!isClosed) emit(const SupplierDetailLoading());
 
-    var step = 'getSupplierById';
+    var step = 'getSupplierById/getSupplierCategories';
     try {
-      final supplier =
-      await _supplierRepository.getSupplierById(supplierId);
-
-      step = 'getSupplierCategories';
-      final catResponse =
-      await _supplierRepository.getSupplierCategories(supplierId);
+      // These two requests are independent — fire them in parallel instead
+      // of awaiting one after the other.
+      final results = await Future.wait([
+        _supplierRepository.getSupplierById(supplierId),
+        _supplierRepository.getSupplierCategories(supplierId),
+      ]);
 
       if (isClosed) return;
+
+      final supplier = results[0] as SupplierModel;
+      final catResponse = results[1] as SupplierCategoriesResponseModel;
 
       // When opened from a category page, show only that category's section.
       final categories = filterCategoryId != null
@@ -96,6 +101,11 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
     final skip = isInitial ? 0 : section.skip;
 
     // Mark section as loading.
+    // Snapshot the keyword this request is for — if [search] changes it
+    // before the response comes back, the response is stale and discarded
+    // below so it can't clobber a fresher in-flight request's results.
+    final requestKeyword = _keyword;
+
     final updatedSections =
     List<SupplierCategorySection>.from(current.sections);
     updatedSections[idx] = section.copyWith(isLoading: true);
@@ -107,10 +117,11 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
         skip: skip,
         limit: _pageSize,
         supplierId: supplierId,
-        keyword: _keyword,
+        keyword: requestKeyword,
       );
 
       if (isClosed) return;
+      if (_keyword != requestKeyword) return; // superseded by a newer search
 
       final fresh = state;
       if (fresh is! SupplierDetailLoaded) return;
@@ -139,6 +150,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
       dLog('SupplierDetailCubit: Error loading products for category $categoryId: $e');
 
       if (isClosed) return;
+      if (_keyword != requestKeyword) return; // superseded by a newer search
 
       final fresh = state;
       if (fresh is! SupplierDetailLoaded) return;

@@ -181,6 +181,11 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
 
     final skip = isInitial ? 0 : section.skip;
 
+    // Snapshot the keyword this request is for — if [search] changes it
+    // before the response comes back, the response is stale and discarded
+    // below so it can't clobber a fresher in-flight request's results.
+    final requestKeyword = _keyword;
+
     final updatedSections = List<SubCategorySection>.from(current.sections);
     updatedSections[idx] = section.copyWith(isLoading: true);
     if (!isClosed) emit(current.copyWith(sections: updatedSections));
@@ -190,10 +195,12 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
         categoryId: subCategoryId,
         skip: skip,
         limit: _pageSize,
-        keyword: _keyword,
+        keyword: requestKeyword,
       );
 
       if (isClosed) return;
+      if (_keyword != requestKeyword) return; // superseded by a newer search
+
       final fresh = state;
       if (fresh is! CategoryDetailLoaded) return;
 
@@ -218,6 +225,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
     } catch (e) {
       dLog('CategoryDetailCubit: section $subCategoryId failed → $e');
       if (isClosed) return;
+      if (_keyword != requestKeyword) return; // superseded by a newer search
       final fresh = state;
       if (fresh is! CategoryDetailLoaded) return;
       final freshIdx =
@@ -243,16 +251,21 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
 
     if (!isClosed) emit(current.copyWith(directProductsLoading: true));
 
+    // Snapshot the keyword this request is for — discard the response below
+    // if [search] changed it before the response came back.
+    final requestKeyword = _keyword;
+
     try {
       final skip = isInitial ? 0 : current.directProductsSkip;
       final response = await _productRepository.getProducts(
         categoryId: categoryId,
         skip: skip,
         limit: _pageSize,
-        keyword: _keyword,
+        keyword: requestKeyword,
       );
 
       if (isClosed) return;
+      if (_keyword != requestKeyword) return; // superseded by a newer search
       final fresh = state;
       if (fresh is! CategoryDetailLoaded) return;
 
@@ -272,6 +285,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
     } catch (e) {
       dLog('CategoryDetailCubit: direct products failed → $e');
       if (isClosed) return;
+      if (_keyword != requestKeyword) return; // superseded by a newer search
       final fresh = state;
       if (fresh is! CategoryDetailLoaded) return;
       if (!isClosed) emit(fresh.copyWith(directProductsLoading: false));
