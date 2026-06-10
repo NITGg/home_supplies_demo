@@ -6,6 +6,7 @@ import 'package:tawreedat_go/features/ads/ad_manager/ad_cubit.dart';
 import 'package:tawreedat_go/features/products/presentation/product_horizontal_section.dart';
 import 'package:tawreedat_go/features/products/presentation/product_shimmer_scope.dart';
 
+import '../../../core/utils/app_dynamic_settings.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../addresses/presentation/default_address_chip.dart';
 import '../../ads/presentation/widgets/home_ads_carousel.dart';
@@ -190,7 +191,7 @@ class _CategoriesGrid extends StatelessWidget {
   final bool showHeader;
   final bool isGuest;
 
-  static const int _homeGridLimit = 6;
+  static final int _homeGridLimit = AppSettings.home_categories_grid_limit;
 
   const _CategoriesGrid({
     required this.state,
