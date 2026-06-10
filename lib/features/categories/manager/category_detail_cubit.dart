@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
 import '../../products/data/repo/product_repo.dart';
+import '../../suppliers/data/models/supplier_models.dart';
 import '../../suppliers/data/repo/supplier_repo.dart';
 import '../data/repo/category_repo.dart';
 import 'category_detail_states.dart';
@@ -11,7 +12,11 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
   final ProductRepository _productRepository;
   final SupplierRepository _supplierRepository;
 
-  static const int _pageSize = 10;
+  static const int _pageSize = 20;
+
+  /// Current search keyword — sent to the products endpoint so the backend
+  /// filters the already-loaded category's products server-side.
+  String? _keyword;
 
   CategoryDetailCubit({
     CategoryRepository? categoryRepository,
@@ -34,7 +39,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
       // that helper reads state — and state won't be CategoryDetailLoaded until
       // after the category fetch completes. The result is applied below, after
       // the loaded state has been emitted.
-      final suppliersRequest = _supplierRepository.getSuppliers();
+      final suppliersRequest = _fetchAllNearbySuppliers();
 
       // Fetch category detail and its sub-categories in parallel.
       final results = await Future.wait([
@@ -60,11 +65,11 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
 
       // Products + supplier application run in parallel.
       await Future.wait([
-        suppliersRequest.then((r) {
+        suppliersRequest.then((suppliers) {
           if (isClosed) return;
           final current = state;
           if (current is CategoryDetailLoaded) {
-            emit(current.copyWith(suppliers: r.suppliers));
+            emit(current.copyWith(suppliers: suppliers));
           }
         }).catchError((e) {
           dLog('CategoryDetailCubit: suppliers fetch failed → $e');
@@ -81,6 +86,46 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
       dLog('CategoryDetailCubit: ❌ load failed → $e');
       if (!isClosed) emit(CategoryDetailError(extractErrorMessage(e)));
     }
+  }
+
+  // ── Suppliers ────────────────────────────────────────────────────────────
+
+  /// Walks the paginated `/users/suppliers/nearby` endpoint and returns every
+  /// nearby supplier, regardless of category. Replaces the old `limit=10000`
+  /// hack — the result is later trimmed down to the active set via
+  /// [_filterSuppliersToActive], so we still need the full list to match
+  /// against this category's products.
+  Future<List<SupplierModel>> _fetchAllNearbySuppliers() async {
+    const pageSize = 50;
+    const maxPages = 10; // safety cap (500 suppliers)
+
+    // Fetch the first page to learn `totalSuppliers`, then fire every
+    // remaining page in parallel — avoids N sequential round-trips when a
+    // lot of suppliers are nearby.
+    final first = await _supplierRepository.getSuppliers(skip: 0, limit: pageSize);
+
+    final all = <SupplierModel>[...first.suppliers];
+    if (first.suppliers.isEmpty) return all;
+
+    final remainingPages =
+        ((first.totalSuppliers - first.suppliers.length) / pageSize).ceil();
+    final pagesToFetch =
+        remainingPages.clamp(0, maxPages - 1); // respect the safety cap
+
+    if (pagesToFetch > 0) {
+      final responses = await Future.wait(
+        List.generate(pagesToFetch, (i) {
+          final skip = first.suppliers.length + i * pageSize;
+          return _supplierRepository.getSuppliers(skip: skip, limit: pageSize);
+        }),
+      );
+
+      for (final response in responses) {
+        all.addAll(response.suppliers);
+      }
+    }
+
+    return all;
   }
 
   // ── Filter suppliers to those with at least one product here ──────────────
@@ -145,6 +190,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
         categoryId: subCategoryId,
         skip: skip,
         limit: _pageSize,
+        keyword: _keyword,
       );
 
       if (isClosed) return;
@@ -203,6 +249,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
         categoryId: categoryId,
         skip: skip,
         limit: _pageSize,
+        keyword: _keyword,
       );
 
       if (isClosed) return;
@@ -236,6 +283,48 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
     if (current is! CategoryDetailLoaded) return;
     if (current.directProductsLoading || !current.directProductsHasMore) return;
     await _loadDirectProducts(current.category.id);
+  }
+
+  // ── Search ─────────────────────────────────────────────────────────────────
+
+  /// Re-fetches the category's products (sections or direct products) using
+  /// [keyword] as a server-side filter on the products endpoint — mirrors the
+  /// behaviour of [FilterableBulkProductScreen].
+  Future<void> search(String keyword) async {
+    final trimmed = keyword.trim();
+    final newKeyword = trimmed.isEmpty ? null : trimmed;
+    if (newKeyword == _keyword) return;
+    _keyword = newKeyword;
+
+    final current = state;
+    if (current is! CategoryDetailLoaded) return;
+
+    if (current.hasSections) {
+      final resetSections = current.sections
+          .map((s) => s.copyWith(
+                products: const [],
+                isLoading: false,
+                hasMore: true,
+                skip: 0,
+              ))
+          .toList();
+      if (!isClosed) emit(current.copyWith(sections: resetSections));
+      await _loadAllSectionProducts(
+        resetSections.map((s) => s.subCategory.id).toList(),
+      );
+    } else {
+      if (!isClosed) {
+        emit(current.copyWith(
+          directProducts: const [],
+          directProductsLoading: false,
+          directProductsHasMore: true,
+          directProductsSkip: 0,
+        ));
+      }
+      await _loadDirectProducts(current.category.id, isInitial: true);
+    }
+
+    _filterSuppliersToActive();
   }
 
   // ── Refresh ────────────────────────────────────────────────────────────────

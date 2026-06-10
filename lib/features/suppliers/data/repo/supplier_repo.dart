@@ -5,7 +5,11 @@ import '../models/supplier_response_models.dart';
 // ── Abstract ──────────────────────────────────────────────────────────────────
 
 abstract class SupplierRepository {
-  Future<SuppliersResponseModel> getSuppliers({int? categoryId});
+  Future<SuppliersResponseModel> getSuppliers({
+    int? categoryId,
+    int skip = 0,
+    int limit = 20,
+  });
 
   Future<SupplierModel> getSupplierById(int id);
 
@@ -22,8 +26,12 @@ class SupplierRepositoryImpl implements SupplierRepository {
       : _dataSource = dataSource ?? SupplierRemoteDataSourceImpl();
 
   @override
-  Future<SuppliersResponseModel> getSuppliers({int? categoryId}) =>
-      _dataSource.getSuppliers(categoryId: categoryId);
+  Future<SuppliersResponseModel> getSuppliers({
+    int? categoryId,
+    int skip = 0,
+    int limit = 20,
+  }) =>
+      _dataSource.getSuppliers(categoryId: categoryId, skip: skip, limit: limit);
 
   @override
   Future<SupplierModel> getSupplierById(int id) =>

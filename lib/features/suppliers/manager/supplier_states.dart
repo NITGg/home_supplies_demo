@@ -22,10 +22,39 @@ class SuppliersLoading extends SuppliersState {
 class SuppliersLoaded extends SuppliersState {
   final List<SupplierModel> suppliers;
 
-  const SuppliersLoaded({required this.suppliers});
+  /// Number of suppliers already fetched — used as the `skip` for the next page.
+  final int skip;
+
+  /// Whether more pages are available from the backend.
+  final bool hasMore;
+
+  /// Whether the next page is currently being fetched (for a trailing
+  /// loading indicator at the end of the strip).
+  final bool isLoadingMore;
+
+  const SuppliersLoaded({
+    required this.suppliers,
+    this.skip = 0,
+    this.hasMore = false,
+    this.isLoadingMore = false,
+  });
+
+  SuppliersLoaded copyWith({
+    List<SupplierModel>? suppliers,
+    int? skip,
+    bool? hasMore,
+    bool? isLoadingMore,
+  }) {
+    return SuppliersLoaded(
+      suppliers: suppliers ?? this.suppliers,
+      skip: skip ?? this.skip,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    );
+  }
 
   @override
-  List<Object?> get props => [suppliers];
+  List<Object?> get props => [suppliers, skip, hasMore, isLoadingMore];
 }
 
 class SuppliersError extends SuppliersState {

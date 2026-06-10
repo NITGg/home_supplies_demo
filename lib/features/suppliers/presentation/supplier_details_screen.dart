@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -113,38 +115,23 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
   late List<GlobalKey> _sectionKeys;
   int _activePillIndex = 0;
   String _searchQuery = '';
+  Timer? _searchDebounce;
   final Map<int, double> _sectionScrollOffsets = {};
 
   @override
   void initState() {
     super.initState();
-    _rebuildKeys(_filteredSections.length);
+    _rebuildKeys(widget.state.sections.length);
     _scrollController.addListener(_onScroll);
     _searchCtrl.addListener(() {
-      final q = _searchCtrl.text.trim().toLowerCase();
+      final q = _searchCtrl.text.trim();
       if (q == _searchQuery) return;
       setState(() => _searchQuery = q);
+      _searchDebounce?.cancel();
+      _searchDebounce = Timer(const Duration(milliseconds: 450), () {
+        context.read<SupplierDetailCubit>().search(q);
+      });
     });
-  }
-
-  bool _matches(ProductModel product) =>
-      _searchQuery.isEmpty ||
-      product.displayName.toLowerCase().contains(_searchQuery);
-
-  /// Category sections, with each section's products filtered by
-  /// [_searchQuery]. Sections with no matching products are dropped.
-  List<SupplierCategorySection> get _filteredSections {
-    final sections = widget.state.sections;
-    if (_searchQuery.isEmpty) return sections;
-    return sections
-        .map((s) => s.copyWith(
-              products: s.products
-                  .cast<ProductModel>()
-                  .where(_matches)
-                  .toList(),
-            ))
-        .where((s) => s.products.isNotEmpty)
-        .toList();
   }
 
   void _onScroll() {
@@ -187,12 +174,9 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
   }
 
   void _checkAutoLoad() {
-    // Don't fetch more pages while a local search is filtering the results.
-    if (_searchQuery.isNotEmpty) return;
-
     final screenHeight = MediaQuery.of(context).size.height;
     const loadBuffer = 300.0;
-    final sections = _filteredSections;
+    final sections = widget.state.sections;
 
     for (int i = 0; i < _sectionKeys.length; i++) {
       final section = sections[i];
@@ -217,7 +201,7 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
   void didUpdateWidget(_SupplierLoadedView old) {
     super.didUpdateWidget(old);
     if (old.state.sections.length != widget.state.sections.length) {
-      _rebuildKeys(_filteredSections.length);
+      _rebuildKeys(widget.state.sections.length);
     }
   }
 
@@ -226,6 +210,7 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchCtrl.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
@@ -303,17 +288,17 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    final visibleSections = _filteredSections;
+    final visibleSections = state.sections;
     if (_sectionKeys.length != visibleSections.length) {
       _rebuildKeys(visibleSections.length);
     }
     final hasPills = visibleSections.length > 1;
 
-    // No results because the search query filtered everything out (as
-    // opposed to the supplier genuinely having no products).
-    final noSearchResults = _searchQuery.isNotEmpty &&
-        state.sections.isNotEmpty &&
-        visibleSections.isEmpty;
+    // No results because the search query returned nothing from the backend
+    // (as opposed to the supplier genuinely having no products).
+    final allSectionsEmpty = state.sections.isNotEmpty &&
+        state.sections.every((s) => !s.isLoading && s.products.isEmpty);
+    final noSearchResults = _searchQuery.isNotEmpty && allSectionsEmpty;
 
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
@@ -332,13 +317,16 @@ class _SupplierLoadedViewState extends State<_SupplierLoadedView> {
               child: _WorkingHoursBanner(supplier: state.supplier),
             ),
 
-          // ── Local search bar — filters the already-loaded products ────────
+          // ── Search bar — filters this supplier's products server-side ─────
           if (state.sections.isNotEmpty)
             SliverToBoxAdapter(
-              child: LocalSearchField(
-                controller: _searchCtrl,
-                hintText: l10n.searchProducts,
-                hasQuery: _searchQuery.isNotEmpty,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: LocalSearchField(
+                  controller: _searchCtrl,
+                  hintText: l10n.searchProducts,
+                  hasQuery: _searchQuery.isNotEmpty,
+                ),
               ),
             ),
 

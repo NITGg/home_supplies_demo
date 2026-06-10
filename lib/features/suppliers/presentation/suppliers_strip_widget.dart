@@ -40,6 +40,8 @@ class _SuppliersStripWidgetState extends State<SuppliersStripWidget> {
     _cubit.loadSuppliers();
   }
 
+  void _onScrollEnd() => _cubit.loadMore();
+
   @override
   void dispose() {
     _cubit.close();
@@ -76,10 +78,13 @@ class _SuppliersStripWidgetState extends State<SuppliersStripWidget> {
             const SizedBox.shrink(),
             SuppliersLoaded(:final suppliers) when suppliers.isEmpty =>
             const SizedBox.shrink(),
-            SuppliersLoaded(:final suppliers) => _SuppliersStripContent(
-              suppliers: suppliers,
-              onTap: _onSupplierTap,
-            ),
+            SuppliersLoaded(:final suppliers, :final isLoadingMore) =>
+              _SuppliersStripContent(
+                suppliers: suppliers,
+                onTap: _onSupplierTap,
+                isLoadingMore: isLoadingMore,
+                onScrollEnd: _onScrollEnd,
+              ),
           };
         },
       ),
@@ -92,14 +97,20 @@ class _SuppliersStripWidgetState extends State<SuppliersStripWidget> {
 class _SuppliersStripContent extends StatelessWidget {
   final List<SupplierModel> suppliers;
   final void Function(SupplierModel) onTap;
+  final bool isLoadingMore;
+  final VoidCallback onScrollEnd;
 
   const _SuppliersStripContent({
     required this.suppliers,
     required this.onTap,
+    required this.isLoadingMore,
+    required this.onScrollEnd,
   });
 
   @override
   Widget build(BuildContext context) {
+    final itemCount = suppliers.length + (isLoadingMore ? 1 : 0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -131,13 +142,36 @@ class _SuppliersStripContent extends StatelessWidget {
         // ── Horizontal list ───────────────────────────────────────────────
         SizedBox(
           height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: suppliers.length,
-            itemBuilder: (_, i) => SupplierCard(
-              supplier: suppliers[i],
-              onTap: () => onTap(suppliers[i]),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              final metrics = notification.metrics;
+              if (metrics.pixels >= metrics.maxScrollExtent - 120) {
+                onScrollEnd();
+              }
+              return false;
+            },
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: itemCount,
+              itemBuilder: (_, i) {
+                if (i >= suppliers.length) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  );
+                }
+                return SupplierCard(
+                  supplier: suppliers[i],
+                  onTap: () => onTap(suppliers[i]),
+                );
+              },
             ),
           ),
         ),

@@ -13,6 +13,10 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
 
   static const int _pageSize = 5;
 
+  /// Current search keyword — sent to the products endpoint so the backend
+  /// filters this supplier's products server-side.
+  String? _keyword;
+
   SupplierDetailCubit({
     SupplierRepository? supplierRepository,
     ProductRepository? productRepository,
@@ -103,6 +107,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
         skip: skip,
         limit: _pageSize,
         supplierId: supplierId,
+        keyword: _keyword,
       );
 
       if (isClosed) return;
@@ -153,6 +158,41 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
   Future<void> loadMoreSectionProducts(
       int supplierId, int categoryId) =>
       _loadSectionProducts(supplierId, categoryId);
+
+  // ── Search ─────────────────────────────────────────────────────────────────
+
+  /// Re-fetches every category section's products using [keyword] as a
+  /// server-side filter on the products endpoint — mirrors the behaviour of
+  /// [FilterableBulkProductScreen].
+  Future<void> search(String keyword) async {
+    final trimmed = keyword.trim();
+    final newKeyword = trimmed.isEmpty ? null : trimmed;
+    if (newKeyword == _keyword) return;
+    _keyword = newKeyword;
+
+    final current = state;
+    if (current is! SupplierDetailLoaded) return;
+
+    final resetSections = current.sections
+        .map((s) => s.copyWith(
+              products: const [],
+              isLoading: false,
+              hasMore: true,
+              skip: 0,
+            ))
+        .toList();
+    if (!isClosed) emit(current.copyWith(sections: resetSections));
+
+    await Future.wait(
+      resetSections.map(
+        (s) => _loadSectionProducts(
+          current.supplier.id,
+          s.category.id,
+          isInitial: true,
+        ),
+      ),
+    );
+  }
 
   Future<void> refresh(int supplierId, {int? filterCategoryId}) =>
       load(supplierId, filterCategoryId: filterCategoryId);
