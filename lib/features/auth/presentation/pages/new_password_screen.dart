@@ -17,8 +17,9 @@ import '../../manager/auth_state.dart';
 /// Receives `extra: {'otp': String}` from GoRouter.
 class NewPasswordScreen extends StatefulWidget {
   final String otp;
+  final String identifier;
 
-  const NewPasswordScreen({super.key, required this.otp});
+  const NewPasswordScreen({super.key, required this.otp, required this.identifier});
 
   @override
   State<NewPasswordScreen> createState() => _NewPasswordScreenState();
@@ -40,6 +41,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
     dLog('Resetting password with otp: ${widget.otp}');
     context.read<AuthCubit>().resetPassword(
+      identifier: widget.identifier,
       code: widget.otp,
       password: _newPasswordController.text.trim(),
     );

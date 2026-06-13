@@ -189,7 +189,10 @@ Future<GoRouter> createAppRouter({
             path: '/auth/new-password',
             builder: (context, state) {
               final extra = state.extra as Map<String, dynamic>;
-              return NewPasswordScreen(otp: extra['otp'] as String);
+              return NewPasswordScreen(
+                otp: extra['otp'] as String,
+                identifier: extra['identifier'] as String,
+              );
             },
           ),
           // GoRoute(

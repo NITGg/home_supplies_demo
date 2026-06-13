@@ -269,13 +269,14 @@ class AuthRemoteDataSource {
   }
 
   Future<void> resetPassword({
+    required String identifier,
     required String code,
     required String password,
   }) async {
-    dLog('📤 POST /auth/verify-forget-password — code=$code');
+    dLog('📤 POST /auth/verify-forget-password — identifier=$identifier code=$code');
     final response = await _dio.post(
       '/auth/verify-forget-password?lang=${LocaleManager.currentLocale}',
-      data: {'code': code, 'password': password},
+      data: {'identifier': identifier, 'code': code, 'password': password},
       options: Options(
         headers: {'Accept-Language': LocaleManager.currentLocale},
       ),

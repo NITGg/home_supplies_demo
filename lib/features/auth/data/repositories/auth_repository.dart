@@ -159,10 +159,15 @@ class AuthRepository {
   }
 
   Future<void> resetPassword({
+    required String identifier,
     required String code,
     required String password,
   }) async {
-    await _remoteDataSource.resetPassword(code: code, password: password);
+    await _remoteDataSource.resetPassword(
+      identifier: identifier,
+      code: code,
+      password: password,
+    );
   }
 
   Future<void> resendOtp({required String phone}) async {

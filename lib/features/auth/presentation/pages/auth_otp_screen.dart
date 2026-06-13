@@ -97,7 +97,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       _hasNavigated = true;
       context.push(
         '/auth/new-password',
-        extra: {'otp': otp},
+        extra: {'otp': otp, 'identifier': widget.destination},
       );
     } else {
       // Registration flow — verify OTP via the correct channel.
