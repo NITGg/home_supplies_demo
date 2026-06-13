@@ -385,6 +385,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                         return;
                       }
 
+                      if (!await ensurePhoneNumber(context)) return;
+
                       final govState = context.read<GovernorateCubit>().state;
                       final governorates = govState is GovernoratesLoaded
                           ? govState.response
