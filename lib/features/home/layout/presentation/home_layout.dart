@@ -311,7 +311,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                         ChatModule.init(currentUserId: profileState.profile.id);
                       }
 
-                      if (profileState.profile.referralCode == null) {
+                      if (Platform.isAndroid &&
+                          profileState.profile.referralCode == null) {
                         ReferralCaptureService.captureOnFirstLaunch(
                           userId: _userId,
                         ).then((code) {
