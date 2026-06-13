@@ -137,9 +137,8 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
     return BlocListener<OrderCubit, OrderState>(
       listener: (context, state) {
         if (state is OrderCancelled) {
-          Navigator.pop(context, true);
+          if (Navigator.canPop(context)) Navigator.pop(context, true);
         } else if (state is OrderCancelError) {
-          Navigator.pop(context, true);
           showErrorBanner(context, state.message);
         }
       },
@@ -222,7 +221,9 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
         ),
         IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.canPop(context)) Navigator.pop(context);
+          },
           color: Colors.grey.shade600,
         ),
       ],
@@ -390,7 +391,11 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
           children: [
             Expanded(
               child: AppCustomButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: isLoading
+                    ? null
+                    : () {
+                        if (Navigator.canPop(context)) Navigator.pop(context);
+                      },
                 text: l10n.back,
                 isSecondary: true,
               ),
@@ -398,7 +403,7 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
             const SizedBox(width: 12),
             Expanded(
               child: AppCustomButton(
-                enabled: _canSubmit,
+                enabled: _canSubmit && !isLoading,
                 onPressed: _handleCancel,
                 text: l10n.confirm,
                 isDelete: true,

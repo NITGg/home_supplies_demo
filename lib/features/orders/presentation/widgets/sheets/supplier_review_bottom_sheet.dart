@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../../core/style/app_colors.dart';
 import '../../../../../core/style/text_styles.dart';
@@ -62,7 +61,7 @@ class _SupplierReviewBottomSheetState extends State<SupplierReviewBottomSheet> {
       if (response.statusCode == 201 && mounted) {
         navigatedAway = true;
         showSuccessBanner(context, l10n.reviewSubmitted);
-        context.pop();
+        Navigator.pop(context);
       }
     } on DioException catch (e) {
       dLog(
@@ -197,7 +196,7 @@ class _SupplierReviewBottomSheetState extends State<SupplierReviewBottomSheet> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: _isLoading ? null : () => context.pop(),
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       side: BorderSide(color: Colors.grey.shade300),
