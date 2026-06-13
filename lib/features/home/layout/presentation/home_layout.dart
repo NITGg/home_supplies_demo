@@ -342,6 +342,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       final needsGoogle = p.googleId == null;
                       final needsApple = Platform.isIOS && p.appleId == null;
                       if (p.loginType == 'LOCAL' && (needsGoogle || needsApple)) {
+                        if (!context.mounted) return;
                         await showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
