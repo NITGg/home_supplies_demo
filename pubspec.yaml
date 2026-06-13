@@ -45,6 +45,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   dio: ^5.9.0
   sign_in_with_apple: ^7.0.1
+  crypto: ^3.0.6
   google_sign_in: ^7.2.0
   image_picker: ^1.2.0
   image_cropper: ^11.0.0

@@ -299,7 +299,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _repository.linkApple(
         token: token,
         idToken: appleData['token']!,
-        nonce: '',
+        nonce: appleData['nonce']!,
       );
       emit(AuthSocialLinkSuccess(message: 'تم ربط حساب Apple بنجاح'));
     } catch (e) {

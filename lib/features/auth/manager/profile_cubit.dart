@@ -343,7 +343,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       await _authRepository.linkApple(
         token: token,
         idToken: appleData['token']!,
-        nonce: '',
+        nonce: appleData['nonce']!,
       );
       await fetchProfile();
       emit(ProfileLinkSuccess(message: 'تم ربط حساب Apple بنجاح'));
