@@ -70,7 +70,7 @@ class SocialAuthService {
       return {
         'token': identityToken,
         'fullName': fullName,
-        'nonce': rawNonce,
+        'nonce': hashedNonce,
       };
     } catch (e) {
       dLog('❌ Apple Sign-In failed: $e');
