@@ -33,6 +33,12 @@ class CartSummaryBar extends StatelessWidget {
   final bool overCodLimit;
   final double codLimit;
 
+  /// Minimum total order amount (EGP) required by the supplier, if any.
+  final double? minOrderTotal;
+
+  /// Maximum total order amount (EGP) allowed by the supplier, if any.
+  final double? maxOrderTotal;
+
   const CartSummaryBar({
     super.key,
     required this.summary,
@@ -52,6 +58,8 @@ class CartSummaryBar extends StatelessWidget {
     required this.onCheckout,
     this.overCodLimit = false,
     this.codLimit = 0,
+    this.minOrderTotal,
+    this.maxOrderTotal,
   });
 
   @override
@@ -80,6 +88,12 @@ class CartSummaryBar extends StatelessWidget {
         : null;
 
     final double finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
+
+    final bool isUnderMinOrder =
+        minOrderTotal != null && originalTotal < minOrderTotal!;
+    final bool isOverMaxOrder =
+        maxOrderTotal != null && originalTotal > maxOrderTotal!;
+    final bool isOutOfOrderRange = isUnderMinOrder || isOverMaxOrder;
 
     final double rawDeliveryFee = preview?.courierFee ?? 0.0;
     final double? deliveryFeeRounded = preview != null
@@ -283,6 +297,35 @@ class CartSummaryBar extends StatelessWidget {
             isTotal: true,
           ),
 
+          // ── Order total range hint ───────────────────────────────────────
+          if (isOutOfOrderRange) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 13,
+                  color: Colors.red.shade400,
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    isUnderMinOrder
+                        ? l10n.cartBelowMinOrder(
+                            fmtPrice(minOrderTotal! - originalTotal),
+                            fmtPrice(minOrderTotal!),
+                          )
+                        : l10n.cartAboveMaxOrder(fmtPrice(maxOrderTotal!)),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.red.shade400,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
           const SizedBox(height: 16),
 
           // ── Checkout button ──────────────────────────────────────────────
@@ -295,7 +338,7 @@ class CartSummaryBar extends StatelessWidget {
             builder: (context, orderState) {
               final isLoading = orderState is OrderOperationLoading;
               return FilledButton.icon(
-                onPressed: isLoading ? null : onCheckout,
+                onPressed: (isLoading || isOutOfOrderRange) ? null : onCheckout,
                 icon: isLoading
                     ? const SizedBox(
                         width: 18,

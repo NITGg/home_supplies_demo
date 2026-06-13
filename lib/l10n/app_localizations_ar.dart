@@ -1426,6 +1426,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pleaseEnterBudget => 'يرجى إدخال الميزانية';
 
   @override
+  String budgetMustBeBetween(String min, String max) {
+    return 'يجب أن تكون الميزانية بين $min و $max جنيه';
+  }
+
+  @override
+  String cartBelowMinOrder(String amount, String min) {
+    return 'أضف $amount جنيه إضافية للوصول إلى الحد الأدنى للطلب وهو $min جنيه';
+  }
+
+  @override
+  String cartAboveMaxOrder(String max) {
+    return 'الحد الأقصى لقيمة الطلب هو $max جنيه';
+  }
+
+  @override
   String get walletBalanceHintShipping => 'تأكد من أن رصيد محفظتك كافٍ لتغطية رسوم التوصيل';
 
   @override

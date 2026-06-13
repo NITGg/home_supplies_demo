@@ -1426,6 +1426,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseEnterBudget => 'Please enter budget';
 
   @override
+  String budgetMustBeBetween(String min, String max) {
+    return 'Budget must be between $min and $max EGP';
+  }
+
+  @override
+  String cartBelowMinOrder(String amount, String min) {
+    return 'Add $amount EGP more to reach the minimum order value of $min EGP';
+  }
+
+  @override
+  String cartAboveMaxOrder(String max) {
+    return 'The maximum order value is $max EGP';
+  }
+
+  @override
   String get walletBalanceHintShipping => 'Make sure you have enough wallet balance to cover the shipping fee';
 
   @override

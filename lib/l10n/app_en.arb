@@ -609,6 +609,36 @@
   "addressMayBeOutsideArea": "Address may be outside the selected area",
   "pleaseEnterProductDescription": "Please enter product description",
   "pleaseEnterBudget": "Please enter budget",
+  "budgetMustBeBetween": "Budget must be between {min} and {max} EGP",
+  "@budgetMustBeBetween": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "cartBelowMinOrder": "Add {amount} EGP more to reach the minimum order value of {min} EGP",
+  "@cartBelowMinOrder": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "cartAboveMaxOrder": "The maximum order value is {max} EGP",
+  "@cartAboveMaxOrder": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
   "walletBalanceHintShipping": "Make sure you have enough wallet balance to cover the shipping fee",
   "walletBalanceHintShopping": "Make sure you have enough wallet balance if you want to use it to pay for your order",
     "walletBalanceHintOverBudget": "If the budget is higher than",

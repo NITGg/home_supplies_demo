@@ -32,6 +32,8 @@ class AppSettings {
 
   static String? delivery_fee_ratio;
   static String? customer_budget_cash_on_delivery_limit;
+  static String? customer_shopping_min_price_for_one_order;
+  static String? customer_shopping_max_price_for_one_order;
   static String? customer_catalog_cod_limit;
 
   /// Fetch settings from API
@@ -59,6 +61,8 @@ class AppSettings {
         android_url = settings['app_android_url'];
         min_delivery_distance = settings['min_delivery_distance'];
         min_delivery_fee = settings['min_delivery_fee'];
+        customer_shopping_min_price_for_one_order = settings['customer_shopping_min_price_for_one_order'];
+        customer_shopping_max_price_for_one_order = settings['customer_shopping_max_price_for_one_order'];
         delivery_price_for_each_1km = settings['delivery_price_for_each_1km'];
         delivery_fee_ratio = settings['delivery_fee_ratio'];
       } else {

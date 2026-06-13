@@ -1231,6 +1231,10 @@ class _CartScreenState extends State<CartScreen> {
                                   onValidateCoupon: _validateCoupon,
                                   onRemoveCoupon: _removeCoupon,
                                   onCheckout: _checkout,
+                                  minOrderTotal: loadedInner
+                                      .data.supplierLimits.minPriceForOneOrder,
+                                  maxOrderTotal: loadedInner
+                                      .data.supplierLimits.maxPriceForOneOrder,
                                 ),
                               ],
                             ),

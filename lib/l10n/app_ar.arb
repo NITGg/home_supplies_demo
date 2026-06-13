@@ -607,6 +607,36 @@
   "addressMayBeOutsideArea": "قد يكون العنوان خارج المنطقة المحددة",
   "pleaseEnterProductDescription": "يرجى إدخال وصف المنتج",
   "pleaseEnterBudget": "يرجى إدخال الميزانية",
+  "budgetMustBeBetween": "يجب أن تكون الميزانية بين {min} و {max} جنيه",
+  "@budgetMustBeBetween": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "cartBelowMinOrder": "أضف {amount} جنيه إضافية للوصول إلى الحد الأدنى للطلب وهو {min} جنيه",
+  "@cartBelowMinOrder": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "cartAboveMaxOrder": "الحد الأقصى لقيمة الطلب هو {max} جنيه",
+  "@cartAboveMaxOrder": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
   "walletBalanceHintShipping": "تأكد من أن رصيد محفظتك كافٍ لتغطية رسوم التوصيل",
   "walletBalanceHintShopping": "تأكد من أن رصيد محفظتك كافٍ إذا أردت استخدامه للدفع عن طريقه",
   "walletBalanceHintOverBudget": "في حال كانت الميزانية أكبر من",

@@ -2867,6 +2867,24 @@ abstract class AppLocalizations {
   /// **'Please enter budget'**
   String get pleaseEnterBudget;
 
+  /// No description provided for @budgetMustBeBetween.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget must be between {min} and {max} EGP'**
+  String budgetMustBeBetween(String min, String max);
+
+  /// No description provided for @cartBelowMinOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {amount} EGP more to reach the minimum order value of {min} EGP'**
+  String cartBelowMinOrder(String amount, String min);
+
+  /// No description provided for @cartAboveMaxOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'The maximum order value is {max} EGP'**
+  String cartAboveMaxOrder(String max);
+
   /// No description provided for @walletBalanceHintShipping.
   ///
   /// In en, this message translates to:

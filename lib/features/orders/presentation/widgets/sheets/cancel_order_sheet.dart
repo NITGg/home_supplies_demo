@@ -65,7 +65,11 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
     try {
       final response = await ApiClient.instance.dio.get(
         '/admin/cancellation-reason/all-reasons',
-        queryParameters: {'role_id': context.read<ProfileCubit>().currentProfile?.roleId ?? 3, 'page': 1, 'limit': 50},
+        queryParameters: {
+          'role_id': context.read<ProfileCubit>().currentProfile?.roleId ?? 3,
+          'page': 1,
+          'limit': 50,
+        },
       );
 
       final data = response.data['data'] as Map<String, dynamic>;
@@ -270,7 +274,7 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 16),
-          child: CircularProgressIndicator(color: Colors.orange,),
+          child: CircularProgressIndicator(color: Colors.orange),
         ),
       );
     }
@@ -391,11 +395,10 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
           children: [
             Expanded(
               child: AppCustomButton(
-                onPressed: isLoading
-                    ? null
-                    : () {
-                        if (Navigator.canPop(context)) Navigator.pop(context);
-                      },
+                enabled: isLoading,
+                onPressed: () {
+                  if (Navigator.canPop(context)) Navigator.pop(context);
+                },
                 text: l10n.back,
                 isSecondary: true,
               ),

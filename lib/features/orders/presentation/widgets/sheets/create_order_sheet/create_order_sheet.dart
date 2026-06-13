@@ -88,6 +88,25 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   late double _walletBalance;
   late final AddressCubit _initCubit;
 
+  // ── Shopping budget limits ──────────────────────────────────────────────
+  // The settings come from the API as strings representing piasters (cents),
+  // so they're divided by 100 to get EGP values.
+  double get _minShoppingBudget =>
+      (double.tryParse(AppSettings.customer_shopping_min_price_for_one_order ?? '') ?? 0) / 100;
+
+  double get _maxShoppingBudget {
+    final raw = double.tryParse(AppSettings.customer_shopping_max_price_for_one_order ?? '');
+    if (raw == null || raw <= 0) return double.infinity;
+    return raw / 100;
+  }
+
+  bool get _isBudgetOutOfRange {
+    if (!_isShopping) return false;
+    final budget = double.tryParse(_budgetController.text.trim());
+    if (budget == null) return false;
+    return budget < _minShoppingBudget || budget > _maxShoppingBudget;
+  }
+
   bool get _isFormValid {
     final description = _productDescriptionController.text.trim();
     if (description.isEmpty || description.length < 10) return false;
@@ -97,6 +116,7 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
       if (budget.isEmpty || budget == '0' || double.tryParse(budget) == null) {
         return false;
       }
+      if (_isBudgetOutOfRange) return false;
     }
 
     return true;
@@ -1563,8 +1583,17 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                                 if (v == null || v.trim().isEmpty || v == '0') {
                                   return l10n.pleaseEnterBudget;
                                 }
-                                if (double.tryParse(v) == null) {
+                                final value = double.tryParse(v);
+                                if (value == null) {
                                   return l10n.pleaseEnterValidNumber;
+                                }
+                                if (value < _minShoppingBudget || value > _maxShoppingBudget) {
+                                  return l10n.budgetMustBeBetween(
+                                    _minShoppingBudget.toStringAsFixed(0),
+                                    _maxShoppingBudget.isFinite
+                                        ? _maxShoppingBudget.toStringAsFixed(0)
+                                        : '',
+                                  );
                                 }
                                 return null;
                               },
@@ -1607,23 +1636,58 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
                   SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: BlocBuilder<OrderCubit, OrderState>(
-                        buildWhen: (_, s) =>
-                        s is OrderOperationLoading ||
-                            s is OrdersLoaded ||
-                            s is OrderError ||
-                            s is OrderSuccess,
-                        builder: (context, state) {
-                          return AppCustomButton(
-                            enabled: _isFormValid &&
-                                !(_distanceResult == null ||
-                                    (!_pickupNearMe && _pickupAddress == null)) &&
-                                !(_isScheduled && _scheduleAt == null),
-                            onPressed: _submit,
-                            text: l10n.confirm,
-                            isLoading: state is OrderOperationLoading,
-                          );
-                        },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_isBudgetOutOfRange) ...[
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline_rounded,
+                                    size: 13,
+                                    color: Colors.red.shade400,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Expanded(
+                                    child: Text(
+                                      l10n.budgetMustBeBetween(
+                                        _minShoppingBudget.toStringAsFixed(0),
+                                        _maxShoppingBudget.isFinite
+                                            ? _maxShoppingBudget.toStringAsFixed(0)
+                                            : '',
+                                      ),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.red.shade400,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          BlocBuilder<OrderCubit, OrderState>(
+                            buildWhen: (_, s) =>
+                            s is OrderOperationLoading ||
+                                s is OrdersLoaded ||
+                                s is OrderError ||
+                                s is OrderSuccess,
+                            builder: (context, state) {
+                              return AppCustomButton(
+                                enabled: _isFormValid &&
+                                    !(_distanceResult == null ||
+                                        (!_pickupNearMe && _pickupAddress == null)) &&
+                                    !(_isScheduled && _scheduleAt == null),
+                                onPressed: _submit,
+                                text: l10n.confirm,
+                                isLoading: state is OrderOperationLoading,
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ),
