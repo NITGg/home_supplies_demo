@@ -1061,7 +1061,9 @@ class _CartScreenState extends State<CartScreen> {
               },
             ),
           ),
-        );
+        ).then((_) {
+          if (mounted) _cubit.refreshCart();
+        });
       }
     } else if (state is OrderSuccess) {
       if (mounted) {
