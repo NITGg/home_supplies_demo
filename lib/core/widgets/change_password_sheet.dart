@@ -89,8 +89,11 @@ void showChangePasswordBottomSheet(BuildContext context) {
                   onFieldSubmitted: (_) =>
                   FocusScope.of(context).requestFocus(confirmPasswordFocus),
                   validator: (v) {
-                    if (v!.isEmpty) return localizations.enterPassword;
+                    if (v == null || v.isEmpty) return localizations.enterPassword;
                     if (v.length < 6) return localizations.shortPassword;
+                    if (!RegExp(r'[A-Z]').hasMatch(v)) return localizations.passwordNeedsUppercase;
+                    if (!RegExp(r'[a-z]').hasMatch(v)) return localizations.passwordNeedsLowercase;
+                    if (!RegExp(r'[0-9]').hasMatch(v)) return localizations.passwordNeedsNumber;
                     return null;
                   },
                 ),
@@ -112,9 +115,11 @@ void showChangePasswordBottomSheet(BuildContext context) {
                     }
                   },
                   validator: (v) {
-                    if (v != newPasswordController.text) {
-                      return AppLocalizations.of(context)!.passwordMismatch;
-                    }
+                    if (v == null || v.isEmpty) return localizations.enterPassword;
+                    if (v.length < 6) return localizations.shortPassword;
+                    if (!RegExp(r'[A-Z]').hasMatch(v)) return localizations.passwordNeedsUppercase;
+                    if (!RegExp(r'[a-z]').hasMatch(v)) return localizations.passwordNeedsLowercase;
+                    if (!RegExp(r'[0-9]').hasMatch(v)) return localizations.passwordNeedsNumber;
                     return null;
                   },
                 ),
