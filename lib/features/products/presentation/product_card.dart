@@ -409,8 +409,8 @@ class _ProductCardState extends State<ProductCard>
                   bottom: 8,
                   right: 8,
                   child: Container(
-                    width: 28,
-                    height: 28,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white,
@@ -427,8 +427,8 @@ class _ProductCardState extends State<ProductCard>
                       child: ImageWithIconFallback(
                         imageUrl: product.supplierImage!,
                         fit: BoxFit.cover,
-                        width: 24,
-                        height: 24,
+                        width: 30,
+                        height: 30,
                       ),
                     ),
                   ),
