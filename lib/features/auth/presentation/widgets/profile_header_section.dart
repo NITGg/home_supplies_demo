@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -7,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/widgets/banners.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/user_profile_model.dart';
+import '../../manager/auth_cubit.dart';
 
 class ProfileHeaderSection extends StatelessWidget {
   final UserProfileModel profile;
@@ -220,8 +222,7 @@ class ProfileHeaderSection extends StatelessWidget {
 
     if (croppedFile != null && context.mounted) {
       final file = File(croppedFile.path);
-      // Uncomment and use whichever cubit/method handles profile photo updates:
-      // context.read<AuthCubit>().updateProfile(personalPhoto: file);
+      context.read<AuthCubit>().updateProfile(personalPhoto: file);
     }
   }
 }

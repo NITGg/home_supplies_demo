@@ -435,19 +435,9 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                   // ── Drawer header ──────────────────────────
                                   BlocBuilder<WalletCubit, WalletState>(
                                     builder: (context, walletState) {
-                                      final walletCubit = context
-                                          .read<WalletCubit>();
-                                      final badge = walletCubit.currentBadge;
-                                      final isArabic =
-                                          localizations.localeName == 'ar';
-
-                                      final badgeName = badge == null
+                                      final userName = _isGuest
                                           ? null
-                                          : isArabic &&
-                                                (badge.nameAr?.isNotEmpty ??
-                                                    false)
-                                          ? badge.nameAr
-                                          : badge.name;
+                                          : profile?.fullName;
 
                                       return DrawerHeader(
                                         decoration: const BoxDecoration(
@@ -478,9 +468,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                   imageUrl: _isGuest
                                                       ? null
                                                       : profile?.personalPhoto,
-                                                  badgeName: _isGuest
-                                                      ? null
-                                                      : badgeName,
+                                                  badgeName: userName,
                                                 ),
                                               ),
                                               Expanded(
@@ -597,6 +585,17 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
                                           // ── Account items — hidden for guests ──
                                           if (!_isGuest) ...[
+                                            const Divider(),
+                                            ListTile(
+                                              onTap: () => context.push(
+                                                '/ProfileScreen',
+                                              ),
+                                              leading: const Icon(Icons.person),
+                                              title: Text(
+                                                localizations.profile,
+                                                style: AppTextStyles.bold16,
+                                              ),
+                                            ),
                                             if (profileState is ProfileLoaded &&
                                                 profileState.profile.roleId
                                                         .toString() ==
@@ -673,17 +672,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                               ),
                                               title: Text(
                                                 localizations.address,
-                                                style: AppTextStyles.bold16,
-                                              ),
-                                            ),
-                                            const Divider(),
-                                            ListTile(
-                                              onTap: () => context.push(
-                                                '/ProfileScreen',
-                                              ),
-                                              leading: const Icon(Icons.person),
-                                              title: Text(
-                                                localizations.profile,
                                                 style: AppTextStyles.bold16,
                                               ),
                                             ),
@@ -1158,6 +1146,8 @@ class _ProfileAvatar extends StatelessWidget {
             right: 10,
             child: Text(
               badgeName!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 10,

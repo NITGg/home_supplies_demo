@@ -25,6 +25,7 @@
   "password": "Password",
   "confirmPassword": "Confirm Password",
   "phone": "Phone",
+  "newPhone": "New Phone",
   "firstName": "First Name",
   "lastName": "Last Name",
 

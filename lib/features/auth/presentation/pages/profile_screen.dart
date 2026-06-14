@@ -370,7 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 20),
                 AppTextFormField(
-                  label: isPhone ? localizations.phone : localizations.email,
+                  label: isPhone ? localizations.newPhone : localizations.email,
                   controller: controller,
                   isPhone: isPhone,
                   keyboardType:

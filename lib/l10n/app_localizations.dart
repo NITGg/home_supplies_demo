@@ -239,6 +239,12 @@ abstract class AppLocalizations {
   /// **'Phone'**
   String get phone;
 
+  /// No description provided for @newPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'New Phone'**
+  String get newPhone;
+
   /// No description provided for @firstName.
   ///
   /// In en, this message translates to:

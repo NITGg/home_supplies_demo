@@ -81,6 +81,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phone => 'Phone';
 
   @override
+  String get newPhone => 'New Phone';
+
+  @override
   String get firstName => 'First Name';
 
   @override

@@ -244,15 +244,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            Text(
-                              loc.orRegisterwith,
-                              style: AppTextStyles.regular14.copyWith(
-                                color: Colors.grey,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const SocialAuthButtons(),
-                            const SizedBox(height: 16),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -310,6 +301,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         text: loc.register,
                         onPressed: _submit,
                       ),
+                      const SizedBox(height: 16),
+                      Text(
+                        loc.orRegisterwith,
+                        style: AppTextStyles.regular14.copyWith(
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const SocialAuthButtons(),
                       const SizedBox(height: 12),
                       AppTextButton(
                         text: loc.browseAsGuest,

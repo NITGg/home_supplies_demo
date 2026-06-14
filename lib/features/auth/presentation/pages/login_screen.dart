@@ -188,22 +188,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 20),
-                      Text(
-                        loc.orSignInwith,
-                        style: AppTextStyles.regular14.copyWith(
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      SocialAuthButtons(
-                        onSocialAuthStarted: () =>
-                            setState(() => _socialAuthInProgress = true),
-                        onSocialAuthEnded: () =>
-                            setState(() => _socialAuthInProgress = false),
-                      ),
-
                       const SizedBox(height: 28),
 
                       AppCustomButton(
@@ -219,6 +203,22 @@ class _LoginScreenState extends State<LoginScreen> {
                             );
                           }
                         },
+                      ),
+
+                      const SizedBox(height: 20),
+                      Text(
+                        loc.orSignInwith,
+                        style: AppTextStyles.regular14.copyWith(
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      SocialAuthButtons(
+                        onSocialAuthStarted: () =>
+                            setState(() => _socialAuthInProgress = true),
+                        onSocialAuthEnded: () =>
+                            setState(() => _socialAuthInProgress = false),
                       ),
 
                       const SizedBox(height: 12),

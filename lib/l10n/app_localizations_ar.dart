@@ -81,6 +81,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get phone => 'الهاتف';
 
   @override
+  String get newPhone => 'رقم الهاتف الجديد';
+
+  @override
   String get firstName => 'الاسم الأول';
 
   @override
