@@ -39,6 +39,10 @@ class CartSummaryBar extends StatelessWidget {
   /// Maximum total order amount (EGP) allowed by the supplier, if any.
   final double? maxOrderTotal;
 
+  /// Discounted order total (EGP) to compare against [minOrderTotal] and
+  /// [maxOrderTotal].
+  final double orderTotalForLimits;
+
   const CartSummaryBar({
     super.key,
     required this.summary,
@@ -60,6 +64,7 @@ class CartSummaryBar extends StatelessWidget {
     this.codLimit = 0,
     this.minOrderTotal,
     this.maxOrderTotal,
+    required this.orderTotalForLimits,
   });
 
   @override
@@ -90,9 +95,9 @@ class CartSummaryBar extends StatelessWidget {
     final double finalTotal = priceBeforeCoupon - (couponDiscount ?? 0.0);
 
     final bool isUnderMinOrder =
-        minOrderTotal != null && originalTotal < minOrderTotal!;
+        minOrderTotal != null && orderTotalForLimits < minOrderTotal!;
     final bool isOverMaxOrder =
-        maxOrderTotal != null && originalTotal > maxOrderTotal!;
+        maxOrderTotal != null && orderTotalForLimits > maxOrderTotal!;
     final bool isOutOfOrderRange = isUnderMinOrder || isOverMaxOrder;
 
     final double rawDeliveryFee = preview?.courierFee ?? 0.0;
@@ -312,7 +317,7 @@ class CartSummaryBar extends StatelessWidget {
                   child: Text(
                     isUnderMinOrder
                         ? l10n.cartBelowMinOrder(
-                            fmtPrice(minOrderTotal! - originalTotal),
+                            fmtPrice(minOrderTotal! - orderTotalForLimits),
                             fmtPrice(minOrderTotal!),
                           )
                         : l10n.cartAboveMaxOrder(fmtPrice(maxOrderTotal!)),
