@@ -438,6 +438,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                       final userName = _isGuest
                                           ? null
                                           : profile?.fullName;
+                                      final firstName = userName
+                                          ?.trim()
+                                          .split(' ')
+                                          .firstOrNull;
 
                                       return DrawerHeader(
                                         decoration: const BoxDecoration(
@@ -468,7 +472,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                   imageUrl: _isGuest
                                                       ? null
                                                       : profile?.personalPhoto,
-                                                  badgeName: userName,
                                                 ),
                                               ),
                                               Expanded(
@@ -480,7 +483,12 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                   spacing: 10,
                                                   children: [
                                                     Text(
-                                                      localizations.welcome,
+                                                      firstName != null &&
+                                                              firstName
+                                                                  .isNotEmpty
+                                                          ? '${localizations.welcome} $firstName'
+                                                          : localizations
+                                                              .welcome,
                                                       style: AppTextStyles
                                                           .bold16
                                                           .copyWith(
@@ -1097,9 +1105,8 @@ class _BottomNavBar extends StatelessWidget {
 
 class _ProfileAvatar extends StatelessWidget {
   final String? imageUrl;
-  final String? badgeName;
 
-  const _ProfileAvatar({this.imageUrl, this.badgeName});
+  const _ProfileAvatar({this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -1139,23 +1146,6 @@ class _ProfileAvatar extends StatelessWidget {
             ),
           ),
         ),
-        if (badgeName != null && badgeName!.isNotEmpty)
-          Positioned(
-            bottom: -20,
-            left: 10,
-            right: 10,
-            child: Text(
-              badgeName!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
       ],
     );
   }

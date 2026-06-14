@@ -187,21 +187,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       const SizedBox(height: 20),
                     ],
 
-                    if (product.attributes.isNotEmpty) ...[
-                      _SectionTitle(title: l10n.specifications),
-                      const SizedBox(height: 8),
-                      _AttributesTable(attributes: product.attributes),
-                      const SizedBox(height: 20),
-                    ],
+                    // if (product.attributes.isNotEmpty) ...[
+                    //   _SectionTitle(title: l10n.specifications),
+                    //   const SizedBox(height: 8),
+                    //   _AttributesTable(attributes: product.attributes),
+                    //   const SizedBox(height: 20),
+                    // ],
+                    //
+                    // if (product.units.isNotEmpty) ...[
+                    //   _SectionTitle(title: l10n.purchaseUnits),
+                    //   const SizedBox(height: 8),
+                    //   _UnitsRow(units: product.units),
+                    //   const SizedBox(height: 20),
+                    // ],
 
-                    if (product.units.isNotEmpty) ...[
-                      _SectionTitle(title: l10n.purchaseUnits),
-                      const SizedBox(height: 8),
-                      _UnitsRow(units: product.units),
-                      const SizedBox(height: 20),
-                    ],
-
-                    _MetaInfo(product: product),
+                    // _MetaInfo(product: product),
                     const SizedBox(height: 120),
                   ],
                 ),
