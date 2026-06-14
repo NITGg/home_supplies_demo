@@ -54,9 +54,10 @@ class LocationService {
   }
 
   /// Returns `{"lat": "...", "lng": "..."}` when coordinates are available,
-  /// or an empty map when they are not (safe to spread into a request body).
-  Map<String, String> get latLngBody {
-    if (_lat == null || _lng == null) return const {};
+  /// or `null` when they are not — pass directly as a request `data:` so no
+  /// body is sent when there's no location (e.g. guest browsing).
+  Map<String, String>? get latLngBody {
+    if (_lat == null || _lng == null) return null;
     return {'lat': _lat!, 'lng': _lng!};
   }
 

@@ -115,6 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
         },
         child: Directionality(
           textDirection: Directionality.of(context),
+          child: SafeArea(
           child: CustomScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             slivers: [
@@ -125,9 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     children: [
                       const Spacer(),
-
                       AuthHeaderImage(),
-
                       const Divider(),
                       const SizedBox(height: 22),
 
@@ -177,7 +176,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                       ),
-
                       Align(
                         alignment: AlignmentDirectional.centerEnd,
                         child: AppTextButton(
@@ -187,9 +185,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () => context.push('/auth/forgot-password'),
                         ),
                       ),
-
-                      const SizedBox(height: 28),
-
                       AppCustomButton(
                         text: loc.signin,
                         onPressed: () {
@@ -204,8 +199,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           }
                         },
                       ),
-
-                      const SizedBox(height: 20),
                       Text(
                         loc.orSignInwith,
                         style: AppTextStyles.regular14.copyWith(
@@ -213,14 +206,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
                       SocialAuthButtons(
                         onSocialAuthStarted: () =>
                             setState(() => _socialAuthInProgress = true),
                         onSocialAuthEnded: () =>
                             setState(() => _socialAuthInProgress = false),
                       ),
-
                       const SizedBox(height: 12),
                       AppTextButton(
                         text: loc.browseAsGuest,
@@ -228,8 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         underline: true,
                         onPressed: () => context.go('/mainHome'),
                       ),
-                      const SizedBox(height: 24),
-
+                      const SizedBox(height: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -237,7 +227,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             AppLocalizations.of(context)!.iAgreeTo,
                             style: AppTextStyles.regular14,
                           ),
-                          const SizedBox(width: 4),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -270,8 +259,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -288,13 +275,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 32),
                     ],
                   ),
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),

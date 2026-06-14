@@ -77,19 +77,19 @@ class _AppTextFormFieldState extends State<AppTextFormField> {
 
     // 👇 only block empty when field is required
     if (trimmed.isEmpty) {
-      return widget.isRequired ? 'This field is required' : null;
+      return widget.isRequired ? AppLocalizations.of(context)?.required : null;
     }
 
-    if (widget.isPassword) {
-      if (trimmed.length < 6) {
-        return 'Password must be at least 6 characters';
-      }
-    }
+    // if (widget.isPassword) {
+    //   if (trimmed.length < 6) {
+    //     return 'Password must be at least 6 characters';
+    //   }
+    // }
 
     if (widget.isEmail) {
       final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$');
       if (!emailRegex.hasMatch(trimmed)) {
-        return 'Enter a valid email address';
+        return AppLocalizations.of(context)?.invalidEmail;
       }
     }
 

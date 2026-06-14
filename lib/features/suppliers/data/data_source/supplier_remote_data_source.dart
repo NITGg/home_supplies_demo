@@ -45,6 +45,7 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
       queryParameters: queryParams,
       data: LocationService.instance.latLngBody,
     );
+
     dLog('[SupplierDS] getSuppliers → ${response.data}');
 
     return SuppliersResponseModel.fromJson(

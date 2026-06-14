@@ -201,32 +201,34 @@ class _ImageContent extends StatelessWidget {
       builder: (_) {
         return Scaffold(
           backgroundColor: Colors.black,
-          body: Stack(
-            children: [
-              Center(
-                child: PhotoView(
-                  backgroundDecoration:
-                  const BoxDecoration(color: Colors.black),
-                  minScale: PhotoViewComputedScale.contained,
-                  maxScale: PhotoViewComputedScale.covered * 3,
-                  imageProvider: _isLocalFile
-                      ? FileImage(
-                    File(message.content.replaceFirst('file://', '')),
-                  )
-                      : NetworkImage(message.content) as ImageProvider,
+          body: SafeArea(
+            child: Stack(
+              children: [
+                Center(
+                  child: PhotoView(
+                    backgroundDecoration:
+                    const BoxDecoration(color: Colors.black),
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.covered * 3,
+                    imageProvider: _isLocalFile
+                        ? FileImage(
+                      File(message.content.replaceFirst('file://', '')),
+                    )
+                        : NetworkImage(message.content) as ImageProvider,
+                  ),
                 ),
-              ),
 
-              // Close button
-              Positioned(
-                top: 40,
-                right: 20,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                  onPressed: () => Navigator.pop(context),
+                // Close button
+                Positioned(
+                  top: 8,
+                  right: 12,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

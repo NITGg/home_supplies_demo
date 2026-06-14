@@ -106,7 +106,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _fetchOnBoardingData() async {
     try {
-      final response = await ApiClient.instance.dio.get('/on-boarding?sort=sort_id&target_user[in]=["ALL", "CUSTOMER"]');
+      final response = await ApiClient.instance.dio.get(
+        '/on-boarding?sort=sort_id&target_user[in]=["ALL", "CUSTOMER"]',
+      );
       if (mounted) {
         setState(() {
           final List<dynamic> onBoardingJson = response.data['items'];
@@ -205,287 +207,298 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     // Determine if the screen height is small
     final bool isSmallScreen = size.height < 700;
 
-    return Scaffold(
-      body: Column(
-        // The main content area using Expanded to take up available space
-        children: [
-          Expanded(
-            child: Stack(
-              children: [
-                PageView.builder(
-                  reverse: true,
-                  controller: _pageController,
-                  itemCount: _pages.length,
-                  onPageChanged: (index) =>
-                      setState(() => _currentPage = index),
-                  itemBuilder: (context, index) {
-                    final page = _pages[index];
-                    final isSvg = page.imageUrl.toLowerCase().endsWith('.svg');
-                    return Column(
-                      children: [
-                        // Image carousel area
-                        AnnotatedRegion<SystemUiOverlayStyle>(
-                          value: _currentPage == 1
-                              ? SystemUiOverlayStyle.light
-                              : SystemUiOverlayStyle.dark,
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              final double maxWidth = constraints.maxWidth;
-                              final double maxHeight =
-                                  MediaQuery.sizeOf(context).height *
-                                  0.65; // cap height to 60% of screen
+    return Column(
+      // The main content area using Expanded to take up available space
+      children: [
+        Expanded(
+          child: Stack(
+            children: [
+              PageView.builder(
+                reverse: true,
+                controller: _pageController,
+                itemCount: _pages.length,
+                onPageChanged: (index) => setState(() => _currentPage = index),
+                itemBuilder: (context, index) {
+                  final page = _pages[index];
+                  final isSvg = page.imageUrl.toLowerCase().endsWith('.svg');
+                  return LayoutBuilder(
+                    builder: (context, pageConstraints) {
+                      return SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: pageConstraints.maxHeight,
+                          ),
+                          child: Column(
+                            children: [
+                              // Image carousel area
+                              AnnotatedRegion<SystemUiOverlayStyle>(
+                                value: _currentPage == 1
+                                    ? SystemUiOverlayStyle.light
+                                    : SystemUiOverlayStyle.dark,
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final double maxWidth =
+                                        constraints.maxWidth;
+                                    final double maxHeight =
+                                        pageConstraints.maxHeight *
+                                        0.65; // cap height to 65% of the page area
 
-                              return Center(
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    maxWidth: maxWidth,
-                                    maxHeight:
-                                        maxHeight, // prevent over-expanding on tablets
-                                  ),
-                                  child: isSvg
-                                      ? SvgPicture.network(
-                                          page.imageUrl,
-                                          fit: BoxFit.contain,
-                                          width: maxWidth,
-                                          placeholderBuilder: (context) =>
-                                              Center(
-                                                child: SizedBox(
-                                                  height: maxHeight,
-                                                  child: LoadingScreen(
-                                                    isOne: true,
-                                                    asWidget: true,
-                                                  ),
-                                                ),
-                                              ),
-                                          errorBuilder:
-                                              (
-                                                context,
-                                                error,
-                                                stackTrace,
-                                              ) => Container(
-                                                color: Colors.grey.shade200,
-                                                child: const Center(
-                                                  child: Icon(
-                                                    Icons.image_not_supported,
-                                                    size: 64,
-                                                  ),
-                                                ),
-                                              ),
-                                        )
-                                      : Image.network(
-                                          page.imageUrl,
-                                          fit: BoxFit.contain,
-                                          width: maxWidth,
-                                          loadingBuilder:
-                                              (context, child, progress) {
-                                                if (progress == null) {
-                                                  return child;
-                                                }
-                                                return Center(
-                                                  child: SizedBox(
-                                                    height: maxHeight,
-                                                    child: const LoadingScreen(
-                                                      isOne: true,
-                                                      asWidget: true,
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                          errorBuilder:
-                                              (
-                                                context,
-                                                error,
-                                                stackTrace,
-                                              ) => Container(
-                                                color: Colors.grey.shade200,
-                                                child: const Center(
-                                                  child: Icon(
-                                                    Icons.image_not_supported,
-                                                    size: 64,
-                                                  ),
-                                                ),
-                                              ),
+                                    return Center(
+                                      child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxWidth: maxWidth,
+                                          maxHeight:
+                                              maxHeight, // prevent over-expanding on tablets
                                         ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24.0,
-                              ),
-                              child: SizedBox(
-                                width: 230,
-                                child: Column(
-                                  children: [
-                                    SizedBox(height: isSmallScreen ? 10 : 28),
-
-                                    // Dots
-                                    Directionality(textDirection: TextDirection.ltr, child: _buildDots()),
-                                    SizedBox(height: isSmallScreen ? 5 : 14),
-
-                                    // Title
-                                    Text(
-                                      isArabic ? page.titleAr : page.title,
-                                      textAlign: TextAlign.center,
-                                      style: isSmallScreen
-                                          ? AppTextStyles.bold25.copyWith(
-                                              fontSize: 14,
-                                            )
-                                          : AppTextStyles.bold18.copyWith(
-                                              fontSize: 20,
-                                            ),
-                                    ),
-
-                                    SizedBox(height: isSmallScreen ? 5 : 15),
-
-                                    // Subtitle
-                                    Text(
-                                      isArabic
-                                          ? page.subtitleAr
-                                          : page.subtitle,
-                                      textAlign: TextAlign.center,
-                                      style: isSmallScreen
-                                          ? AppTextStyles.bold16.copyWith(
-                                              fontSize: 12,
-                                            )
-                                          : AppTextStyles.bold18,
-                                    ),
-
-                                    const SizedBox(height: 5),
-
-                                    // Content
-                                    Text(
-                                      isArabic ? page.contentAr : page.content,
-                                      textAlign: TextAlign.center,
-                                      style: isSmallScreen
-                                          ? AppTextStyles.medium18.copyWith(
-                                              fontSize: 10,
-                                            )
-                                          : AppTextStyles.medium18.copyWith(
-                                              fontSize: 16,
-                                            ),
-                                    ),
-                                    const SizedBox(height: 50),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                // Positioned 'skip' button
-                Align(
-                  alignment: AlignmentGeometry.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 40.0),
-                    child: Row(
-                      spacing: 100,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AppTextButton(
-                          text: AppLocalizations.of(context)!.skip,
-                          onPressed: _finishOnboarding,
-                          color: Colors.white,
-                          underline: true,
-                        ),
-                        AppTextButton(
-                          text: isArabic ? 'EN' : 'AR',
-                          onPressed: () {
-                            context.read<LocaleCubit>().toggleLocale();
-                          },
-                          color: Colors.white,
-                          underline: true,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Align(
-                  alignment: AlignmentGeometry.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      left: 8,
-                      right: 8,
-                      top: 18,
-                      bottom: 60,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Next / Done button
-                        SizedBox(
-                          width: _currentPage == _pages.length - 1 ? 134 : 54,
-                          height: 45,
-                          child: ElevatedButton(
-                            onPressed: _next,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.kPrimaryColor,
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.only(
-                                  topRight: Radius.circular(18),
-                                  bottomRight: Radius.circular(18),
+                                        child: isSvg
+                                            ? SvgPicture.network(
+                                                page.imageUrl,
+                                                fit: BoxFit.contain,
+                                                width: maxWidth,
+                                                placeholderBuilder: (context) =>
+                                                    Center(
+                                                      child: SizedBox(
+                                                        height: maxHeight,
+                                                        child: LoadingScreen(
+                                                          isOne: true,
+                                                          asWidget: true,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) => Container(
+                                                      color:
+                                                          Colors.grey.shade200,
+                                                      child: const Center(
+                                                        child: Icon(
+                                                          Icons
+                                                              .image_not_supported,
+                                                          size: 64,
+                                                        ),
+                                                      ),
+                                                    ),
+                                              )
+                                            : Image.network(
+                                                page.imageUrl,
+                                                fit: BoxFit.contain,
+                                                width: maxWidth,
+                                                loadingBuilder:
+                                                    (context, child, progress) {
+                                                      if (progress == null) {
+                                                        return child;
+                                                      }
+                                                      return Center(
+                                                        child: SizedBox(
+                                                          height: maxHeight,
+                                                          child:
+                                                              const LoadingScreen(
+                                                                isOne: true,
+                                                                asWidget: true,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    },
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) => Container(
+                                                      color:
+                                                          Colors.grey.shade200,
+                                                      child: const Center(
+                                                        child: Icon(
+                                                          Icons
+                                                              .image_not_supported,
+                                                          size: 64,
+                                                        ),
+                                                      ),
+                                                    ),
+                                              ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 18,
-                                vertical: 12,
-                              ),
-                            ),
-                            child: _currentPage == _pages.length - 1
-                                ? Text(
-                                    AppLocalizations.of(context)!.continue_,
-                                    style: AppTextStyles.bold14,
-                                  )
-                                : const Icon(
-                                    Icons.arrow_back,
-                                    color: Colors.black,
-                                  ),
-                          ),
-                        ),
-                        // Prev button (hidden on first page)
-                        if (!(_currentPage == 0))
-                          SizedBox(
-                            width: 54,
-                            height: 45,
-                            child: ElevatedButton(
-                              onPressed: _currentPage == 0 ? null : _prev,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.kPrimaryColor,
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(18),
-                                    bottomLeft: Radius.circular(18),
-                                  ),
-                                ),
+                              Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 12,
+                                  horizontal: 24.0,
                                 ),
-                                elevation: 0,
+                                child: SizedBox(
+                                  width: 230,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(height: isSmallScreen ? 10 : 28),
+
+                                      // Dots
+                                      Directionality(
+                                        textDirection: TextDirection.ltr,
+                                        child: _buildDots(),
+                                      ),
+                                      SizedBox(height: isSmallScreen ? 5 : 14),
+
+                                      // Title
+                                      Text(
+                                        isArabic ? page.titleAr : page.title,
+                                        textAlign: TextAlign.center,
+                                        style: isSmallScreen
+                                            ? AppTextStyles.bold25.copyWith(
+                                                fontSize: 14,
+                                              )
+                                            : AppTextStyles.bold18.copyWith(
+                                                fontSize: 20,
+                                              ),
+                                      ),
+
+                                      SizedBox(height: isSmallScreen ? 5 : 15),
+
+                                      // Subtitle
+                                      Text(
+                                        isArabic
+                                            ? page.subtitleAr
+                                            : page.subtitle,
+                                        textAlign: TextAlign.center,
+                                        style: isSmallScreen
+                                            ? AppTextStyles.bold16.copyWith(
+                                                fontSize: 12,
+                                              )
+                                            : AppTextStyles.bold18,
+                                      ),
+
+                                      const SizedBox(height: 5),
+
+                                      // Content
+                                      Text(
+                                        isArabic
+                                            ? page.contentAr
+                                            : page.content,
+                                        textAlign: TextAlign.center,
+                                        style: isSmallScreen
+                                            ? AppTextStyles.medium18.copyWith(
+                                                fontSize: 10,
+                                              )
+                                            : AppTextStyles.medium18.copyWith(
+                                                fontSize: 16,
+                                              ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                    ],
+                                  ),
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.arrow_forward,
-                                color: Colors.black,
-                              ),
-                            ),
+                            ],
                           ),
-                      ],
-                    ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+              // Positioned 'skip' button
+              Align(
+                alignment: AlignmentGeometry.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 40.0),
+                  child: Row(
+                    spacing: 100,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AppTextButton(
+                        text: AppLocalizations.of(context)!.skip,
+                        onPressed: _finishOnboarding,
+                        color: Colors.white,
+                        underline: true,
+                      ),
+                      AppTextButton(
+                        text: isArabic ? 'EN' : 'AR',
+                        onPressed: () {
+                          context.read<LocaleCubit>().toggleLocale();
+                        },
+                        color: Colors.white,
+                        underline: true,
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          // Navigation controls at the bottom
-        ],
-      ),
+        ),
+        // Navigation controls pinned to the bottom of the screen so they
+        // never overlap the page content, regardless of text length.
+        Padding(
+          padding: const EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 12,
+            bottom: 12,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Next / Done button
+              SizedBox(
+                width: 54,
+                height: 45,
+                child: ElevatedButton(
+                  onPressed: _next,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.kPrimaryColor,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(18),
+                        bottomRight: Radius.circular(18),
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: _currentPage == _pages.length - 1
+                      ? const Icon(
+                          Icons.keyboard_double_arrow_right,
+                          color: Colors.black,
+                        )
+                      : const Icon(Icons.arrow_back, color: Colors.black),
+                ),
+              ),
+              // Prev button (hidden on first page, placeholder keeps the
+              // Next button's position stable)
+              if (_currentPage != 0)
+                SizedBox(
+                  width: 54,
+                  height: 45,
+                  child: ElevatedButton(
+                    onPressed: _prev,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.kPrimaryColor,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(18),
+                          bottomLeft: Radius.circular(18),
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Icon(Icons.arrow_forward, color: Colors.black),
+                  ),
+                )
+              else
+                const SizedBox(width: 54, height: 45),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

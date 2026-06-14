@@ -955,8 +955,35 @@ class _CartScreenState extends State<CartScreen> {
                     return true;
                   },
                   builder: (context, state) {
+                    final appBar = _buildAppBar(context, state);
                     return Scaffold(
-                      appBar: _buildAppBar(context, state),
+                      appBar: PreferredSize(
+                        preferredSize: appBar.preferredSize,
+                        child: Stack(
+                          children: [
+                            appBar,
+                            // Tapping the app bar while the summary panel is
+                            // expanded closes it instead of triggering the
+                            // app bar's controls.
+                            ValueListenableBuilder<bool>(
+                              valueListenable: _summaryExpanded,
+                              builder: (context, expanded, _) {
+                                if (!expanded) return const SizedBox.shrink();
+                                return Positioned.fill(
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () =>
+                                        _summaryExpanded.value = false,
+                                    child: const ColoredBox(
+                                      color: Colors.transparent,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                       body: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
                         child: switch (state) {
@@ -1143,25 +1170,43 @@ class _CartScreenState extends State<CartScreen> {
 
         // ── Items list ───────────────────────────────────────────────────────
         Expanded(
-          child: RefreshIndicator(
-            onRefresh: _onRefresh,
-            child: ListView.builder(
-              controller: _scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(top: 12, bottom: 8),
-              itemCount: items.length,
-              itemBuilder: (_, index) {
-                final item = items[index];
-                return CartItemTile(
-                  key: ValueKey(item.id),
-                  item: item,
-                  isBusy: state.isItemBusy(item.spId),
-                  onIncrement: () => _handleIncrement(context, item.spId),
-                  onDecrement: () => _handleDecrement(context, item.spId),
-                  onRemove: () => _cubit.removeItem(item.spId),
-                );
-              },
-            ),
+          child: Stack(
+            children: [
+              RefreshIndicator(
+                onRefresh: _onRefresh,
+                child: ListView.builder(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(top: 12, bottom: 8),
+                  itemCount: items.length,
+                  itemBuilder: (_, index) {
+                    final item = items[index];
+                    return CartItemTile(
+                      key: ValueKey(item.id),
+                      item: item,
+                      isBusy: state.isItemBusy(item.spId),
+                      onIncrement: () => _handleIncrement(context, item.spId),
+                      onDecrement: () => _handleDecrement(context, item.spId),
+                      onRemove: () => _cubit.removeItem(item.spId),
+                    );
+                  },
+                ),
+              ),
+              // Tapping outside the expanded summary panel closes it.
+              ValueListenableBuilder<bool>(
+                valueListenable: _summaryExpanded,
+                builder: (context, expanded, _) {
+                  if (!expanded) return const SizedBox.shrink();
+                  return Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _summaryExpanded.value = false,
+                      child: const ColoredBox(color: Colors.transparent),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         ),
 

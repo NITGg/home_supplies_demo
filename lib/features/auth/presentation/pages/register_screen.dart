@@ -37,7 +37,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
-  TextEditingController();
+      TextEditingController();
 
   @override
   void dispose() {
@@ -90,11 +90,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             if (Navigator.of(context, rootNavigator: true).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
             }
-            context.push('/auth/verify-otp', extra: {
-              'destination': state.destination,
-              'via': state.via,
-              'isPasswordReset': false,
-            });
+            context.push(
+              '/auth/verify-otp',
+              extra: {
+                'destination': state.destination,
+                'via': state.via,
+                'isPasswordReset': false,
+              },
+            );
           } else if (state is AuthSuccess) {
             if (Navigator.of(context, rootNavigator: true).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
@@ -108,238 +111,235 @@ class _RegisterScreenState extends State<RegisterScreen> {
           }
         },
         builder: (context, state) {
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(color: AppColors.kBackgroundColor, height: 48),
-                      AuthHeaderImage(),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: 8.0,
-                                bottom: 10,
-                              ),
-                              child: Text(
-                                loc.register,
-                                style: AppTextStyles.bold14,
-                              ),
-                            ),
-                            const Divider(),
-                            const SizedBox(height: 22),
-                            Form(
-                              key: _formKey,
-                              child: Column(
-                                children: [
-                                  AppTextFormField(
-                                    focusNode: firstNameFocus,
-                                    textInputAction: TextInputAction.next,
-                                    onFieldSubmitted: (_) {
-                                      FocusScope.of(
-                                        context,
-                                      ).requestFocus(lastNameFocus);
-                                    },
-                                    label: '${loc.firstName} *',
-                                    controller: firstNameController,
-                                    validator: (v) =>
-                                    v!.isEmpty ? 'Required' : null,
-                                  ),
-                                  const SizedBox(height: 18),
-                                  AppTextFormField(
-                                    focusNode: lastNameFocus,
-                                    textInputAction: TextInputAction.next,
-                                    onFieldSubmitted: (_) {
-                                      FocusScope.of(
-                                        context,
-                                      ).requestFocus(phoneFocus);
-                                    },
-                                    label: '${loc.lastName} *',
-                                    controller: lastNameController,
-                                    validator: (v) =>
-                                    v!.isEmpty ? 'Required' : null,
-                                  ),
-                                  // const SizedBox(height: 18),
-                                  // AppTextFormField(
-                                  //   focusNode: emailFocus,
-                                  //   textInputAction: TextInputAction.next,
-                                  //   onFieldSubmitted: (_) {
-                                  //     FocusScope.of(
-                                  //       context,
-                                  //     ).requestFocus(phoneFocus);
-                                  //   },
-                                  //   label: loc.email,
-                                  //   // controller: emailController,
-                                  //   validator: (v) {
-                                  //     if (v!.isEmpty) return null;
-                                  //     final emailRegex = RegExp(
-                                  //       r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                  //     );
-                                  //     if (!emailRegex.hasMatch(v)) {
-                                  //       return loc.invalidEmail;
-                                  //     }
-                                  //     return null;
-                                  //   },
-                                  // ),
-                                  const SizedBox(height: 18),
-                                  AppTextFormField(
-                                    focusNode: phoneFocus,
-                                    textInputAction: TextInputAction.next,
-                                    onFieldSubmitted: (_) {
-                                      FocusScope.of(
-                                        context,
-                                      ).requestFocus(passwordFocus);
-                                    },
-                                    label: '${loc.phone} *',
-                                    controller: phoneController,
-                                    isPhone: true,
-                                  ),
-                                  const SizedBox(height: 18),
-                                  AppTextFormField(
-                                    focusNode: passwordFocus,
-                                    textInputAction: TextInputAction.next,
-                                    onFieldSubmitted: (_) {
-                                      FocusScope.of(
-                                        context,
-                                      ).requestFocus(confirmPasswordFocus);
-                                    },
-                                    label: loc.password,
-                                    controller: passwordController,
-                                    isPassword: true,
-                                    validator: (v) {
-                                      if (v == null || v.isEmpty) return loc.enterPassword;
-                                      if (v.length < 6) return loc.shortPassword;
-                                      if (!RegExp(r'[A-Z]').hasMatch(v)) return loc.passwordNeedsUppercase;
-                                      if (!RegExp(r'[a-z]').hasMatch(v)) return loc.passwordNeedsLowercase;
-                                      if (!RegExp(r'[0-9]').hasMatch(v)) return loc.passwordNeedsNumber;
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 18),
-                                  AppTextFormField(
-                                    focusNode: confirmPasswordFocus,
-                                    textInputAction: TextInputAction.done,
-                                    onFieldSubmitted: (_) {
-                                      if (_formKey.currentState!.validate()) {
-                                        _submit();
-                                      }
-                                    },
-                                    label: loc.confirmPassword,
-                                    controller: confirmPasswordController,
-                                    isPassword: true,
-                                    validator: (v) {
-                                      if (v != passwordController.text) {
-                                        return loc.passwordMismatch;
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  loc.iAgreeTo,
-                                  style: AppTextStyles.regular14,
+          return SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 16),
+                        AuthHeaderImage(),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 8.0,
+                                  bottom: 10,
                                 ),
-                                const SizedBox(width: 4),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                child: Text(
+                                  loc.register,
+                                  style: AppTextStyles.bold14,
+                                ),
+                              ),
+                              const Divider(),
+                              const SizedBox(height: 22),
+                              Form(
+                                key: _formKey,
+                                child: Column(
                                   children: [
-                                    AppTextButton(
-                                      text: loc.termsAndConditions,
-                                      color: AppColors.kPrimaryColor,
-                                      underline: true,
-                                      onPressed: () =>
-                                          context.push('/Terms'),
+                                    AppTextFormField(
+                                      focusNode: firstNameFocus,
+                                      textInputAction: TextInputAction.next,
+                                      onFieldSubmitted: (_) {
+                                        FocusScope.of(
+                                          context,
+                                        ).requestFocus(lastNameFocus);
+                                      },
+                                      label: '${loc.firstName} *',
+                                      controller: firstNameController,
+                                      validator: (v) =>
+                                          v!.isEmpty ? 'Required' : null,
                                     ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                      ),
-                                      child: Text(
-                                        '&',
-                                        style: AppTextStyles.regular14,
-                                      ),
+                                    const SizedBox(height: 18),
+                                    AppTextFormField(
+                                      focusNode: lastNameFocus,
+                                      textInputAction: TextInputAction.next,
+                                      onFieldSubmitted: (_) {
+                                        FocusScope.of(
+                                          context,
+                                        ).requestFocus(phoneFocus);
+                                      },
+                                      label: '${loc.lastName} *',
+                                      controller: lastNameController,
+                                      validator: (v) =>
+                                          v!.isEmpty ? 'Required' : null,
                                     ),
-                                    AppTextButton(
-                                      text: loc.privecyPolicy,
-                                      color: AppColors.kPrimaryColor,
-                                      underline: true,
-                                      onPressed: () =>
-                                          context.push('/PrivacyPage'),
+                                    // const SizedBox(height: 18),
+                                    // AppTextFormField(
+                                    //   focusNode: emailFocus,
+                                    //   textInputAction: TextInputAction.next,
+                                    //   onFieldSubmitted: (_) {
+                                    //     FocusScope.of(
+                                    //       context,
+                                    //     ).requestFocus(phoneFocus);
+                                    //   },
+                                    //   label: loc.email,
+                                    //   // controller: emailController,
+                                    //   validator: (v) {
+                                    //     if (v!.isEmpty) return null;
+                                    //     final emailRegex = RegExp(
+                                    //       r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                    //     );
+                                    //     if (!emailRegex.hasMatch(v)) {
+                                    //       return loc.invalidEmail;
+                                    //     }
+                                    //     return null;
+                                    //   },
+                                    // ),
+                                    const SizedBox(height: 18),
+                                    AppTextFormField(
+                                      focusNode: phoneFocus,
+                                      textInputAction: TextInputAction.next,
+                                      onFieldSubmitted: (_) {
+                                        FocusScope.of(
+                                          context,
+                                        ).requestFocus(passwordFocus);
+                                      },
+                                      label: '${loc.phone} *',
+                                      controller: phoneController,
+                                      isPhone: true,
+                                    ),
+                                    const SizedBox(height: 18),
+                                    AppTextFormField(
+                                      focusNode: passwordFocus,
+                                      textInputAction: TextInputAction.next,
+                                      onFieldSubmitted: (_) {
+                                        FocusScope.of(
+                                          context,
+                                        ).requestFocus(confirmPasswordFocus);
+                                      },
+                                      label: loc.password,
+                                      controller: passwordController,
+                                      isPassword: true,
+                                      validator: (v) {
+                                        if (v == null || v.isEmpty)
+                                          return loc.enterPassword;
+                                        if (v.length < 6)
+                                          return loc.shortPassword;
+                                        if (!RegExp(r'[A-Z]').hasMatch(v))
+                                          return loc.passwordNeedsUppercase;
+                                        if (!RegExp(r'[a-z]').hasMatch(v))
+                                          return loc.passwordNeedsLowercase;
+                                        if (!RegExp(r'[0-9]').hasMatch(v))
+                                          return loc.passwordNeedsNumber;
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 18),
+                                    AppTextFormField(
+                                      focusNode: confirmPasswordFocus,
+                                      textInputAction: TextInputAction.done,
+                                      onFieldSubmitted: (_) {
+                                        if (_formKey.currentState!.validate()) {
+                                          _submit();
+                                        }
+                                      },
+                                      label: loc.confirmPassword,
+                                      controller: confirmPasswordController,
+                                      isPassword: true,
+                                      validator: (v) {
+                                        if (v != passwordController.text) {
+                                          return loc.passwordMismatch;
+                                        }
+                                        return null;
+                                      },
                                     ),
                                   ],
                                 ),
-                              ],
+                              ),
+                              const SizedBox(height: 16),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    loc.iAgreeTo,
+                                    style: AppTextStyles.regular14,
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      AppTextButton(
+                                        text: loc.termsAndConditions,
+                                        color: AppColors.kPrimaryColor,
+                                        underline: true,
+                                        onPressed: () => context.push('/Terms'),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                        ),
+                                        child: Text(
+                                          '&',
+                                          style: AppTextStyles.regular14,
+                                        ),
+                                      ),
+                                      AppTextButton(
+                                        text: loc.privecyPolicy,
+                                        color: AppColors.kPrimaryColor,
+                                        underline: true,
+                                        onPressed: () =>
+                                            context.push('/PrivacyPage'),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        AppCustomButton(text: loc.register, onPressed: _submit),
+                        Text(
+                          loc.orRegisterwith,
+                          style: AppTextStyles.regular14.copyWith(
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const SocialAuthButtons(),
+                        const SizedBox(height: 12),
+                        AppTextButton(
+                          text: loc.browseAsGuest,
+                          color: AppColors.kPrimaryColor,
+                          underline: true,
+                          onPressed: () => context.go('/mainHome'),
+                        ),
+                        Row(
+                          spacing: 5,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(loc.haveAccount, style: AppTextStyles.bold14),
+                            AppTextButton(
+                              text: loc.signin,
+                              color: AppColors.kPrimaryColor,
+                              underline: true,
+                              onPressed: () => context.go('/auth/login'),
                             ),
-                            const SizedBox(height: 16),
                           ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      AppCustomButton(
-                        text: loc.register,
-                        onPressed: _submit,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        loc.orRegisterwith,
-                        style: AppTextStyles.regular14.copyWith(
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const SocialAuthButtons(),
-                      const SizedBox(height: 12),
-                      AppTextButton(
-                        text: loc.browseAsGuest,
-                        color: AppColors.kPrimaryColor,
-                        underline: true,
-                        onPressed: () => context.go('/mainHome'),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        spacing: 5,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            loc.haveAccount,
-                            style: AppTextStyles.bold14,
-                          ),
-                          AppTextButton(
-                            text: loc.signin,
-                            color: AppColors.kPrimaryColor,
-                            underline: true,
-                            onPressed: () => context.go('/auth/login'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 40),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
