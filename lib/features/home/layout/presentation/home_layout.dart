@@ -505,6 +505,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                           .copyWith(
                                                             color: Colors.white,
                                                           ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                      maxLines: 1,
                                                     ),
                                                     Text(
                                                       localizations
