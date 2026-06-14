@@ -1236,7 +1236,7 @@ class _CartScreenState extends State<CartScreen> {
                                   maxOrderTotal: loadedInner
                                       .data.supplierLimits.maxPriceForOneOrder,
                                   orderTotalForLimits:
-                                      _computeDisplayTotal(loadedInner),
+                                      _priceBeforeCoupon(loadedInner),
                                 ),
                               ],
                             ),

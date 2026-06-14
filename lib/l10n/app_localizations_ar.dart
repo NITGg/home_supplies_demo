@@ -1441,6 +1441,9 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get cartOrderLimitBeforeCoupon => '(قبل تطبيق كوبون الخصم)';
+
+  @override
   String get walletBalanceHintShipping => 'تأكد من أن رصيد محفظتك كافٍ لتغطية رسوم التوصيل';
 
   @override

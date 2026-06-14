@@ -1441,6 +1441,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get cartOrderLimitBeforeCoupon => '(before coupon discount)';
+
+  @override
   String get walletBalanceHintShipping => 'Make sure you have enough wallet balance to cover the shipping fee';
 
   @override

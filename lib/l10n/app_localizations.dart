@@ -2885,6 +2885,12 @@ abstract class AppLocalizations {
   /// **'The maximum order value is {max} EGP'**
   String cartAboveMaxOrder(String max);
 
+  /// No description provided for @cartOrderLimitBeforeCoupon.
+  ///
+  /// In en, this message translates to:
+  /// **'(before coupon discount)'**
+  String get cartOrderLimitBeforeCoupon;
+
   /// No description provided for @walletBalanceHintShipping.
   ///
   /// In en, this message translates to:

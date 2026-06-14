@@ -315,12 +315,16 @@ class CartSummaryBar extends StatelessWidget {
                 const SizedBox(width: 5),
                 Expanded(
                   child: Text(
-                    isUnderMinOrder
-                        ? l10n.cartBelowMinOrder(
-                            fmtPrice(minOrderTotal! - orderTotalForLimits),
-                            fmtPrice(minOrderTotal!),
-                          )
-                        : l10n.cartAboveMaxOrder(fmtPrice(maxOrderTotal!)),
+                    [
+                      isUnderMinOrder
+                          ? l10n.cartBelowMinOrder(
+                              fmtPrice(minOrderTotal! - orderTotalForLimits),
+                              fmtPrice(minOrderTotal!),
+                            )
+                          : l10n.cartAboveMaxOrder(fmtPrice(maxOrderTotal!)),
+                      if (appliedCoupon != null)
+                        l10n.cartOrderLimitBeforeCoupon,
+                    ].join(' '),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.red.shade400,

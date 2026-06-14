@@ -639,6 +639,8 @@
       }
     }
   },
+  "cartOrderLimitBeforeCoupon": "(before coupon discount)",
+  "@cartOrderLimitBeforeCoupon": {},
   "walletBalanceHintShipping": "Make sure you have enough wallet balance to cover the shipping fee",
   "walletBalanceHintShopping": "Make sure you have enough wallet balance if you want to use it to pay for your order",
     "walletBalanceHintOverBudget": "If the budget is higher than",
