@@ -33,6 +33,7 @@ import '../../../auth/manager/auth_state.dart';
 import '../../../auth/manager/profile_cubit.dart';
 import '../../../auth/manager/profile_states.dart';
 import '../../../cart/manager/cart_cubit.dart';
+import '../../../cart/manager/cart_state.dart';
 import '../../../categories/presentation/categories_screen.dart';
 import '../../../chat/config/chat_injection.dart';
 import '../../../coupons/presentation/coupons_ticker_title.dart';
@@ -341,7 +342,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       final p = profileState.profile;
                       final needsGoogle = p.googleId == null;
                       final needsApple = Platform.isIOS && p.appleId == null;
-                      if (p.loginType == 'LOCAL' && (needsGoogle || needsApple)) {
+                      if (p.loginType == 'LOCAL' &&
+                          (needsGoogle || needsApple)) {
                         if (!context.mounted) return;
                         await showModalBottomSheet(
                           context: context,
@@ -359,7 +361,6 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
                       if (!mounted) return;
                       _showPendingNotificationDialog();
-
                     },
                   ),
                 ],
@@ -386,6 +387,16 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       }
 
                       if (!await ensurePhoneNumber(context)) return;
+                      if (!context.mounted) return;
+
+                      // If the cart already has items, go to the cart instead
+                      // of opening the create-order sheet.
+                      final cartState = context.read<CartCubit>().state;
+                      if (cartState is CartLoaded &&
+                          cartState.data.cartItems.isNotEmpty) {
+                        context.push('/cart');
+                        return;
+                      }
 
                       final govState = context.read<GovernorateCubit>().state;
                       final governorates = govState is GovernoratesLoaded
@@ -398,7 +409,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       final walletCubit = context.read<WalletCubit>();
                       final balance =
                           walletCubit.cachedWalletData?.wallet.balance ?? 0.0;
-                      if(!context.mounted) return;
+                      if (!context.mounted) return;
                       showModalBottomSheet<Order>(
                         context: context,
                         isScrollControlled: true,
@@ -488,7 +499,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                                   .isNotEmpty
                                                           ? '${localizations.welcome} $firstName'
                                                           : localizations
-                                                              .welcome,
+                                                                .welcome,
                                                       style: AppTextStyles
                                                           .bold16
                                                           .copyWith(
@@ -649,9 +660,16 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                             ),
                                             const Divider(),
                                             ListTile(
-                                              onTap: () => context.push('/refunds'),
-                                              leading: const Icon(Icons.assignment_return_outlined),
-                                              title: Text(localizations.myRefunds, style: AppTextStyles.bold16),
+                                              onTap: () =>
+                                                  context.push('/refunds'),
+                                              leading: const Icon(
+                                                Icons
+                                                    .assignment_return_outlined,
+                                              ),
+                                              title: Text(
+                                                localizations.myRefunds,
+                                                style: AppTextStyles.bold16,
+                                              ),
                                             ),
                                             const Divider(),
                                             ListTile(
@@ -819,7 +837,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                       ConnectionState.waiting) {
                                     return const Expanded(
                                       child: Center(
-                                        child: LoadingScreen(asWidget: true, isOne: true,),
+                                        child: LoadingScreen(
+                                          asWidget: true,
+                                          isOne: true,
+                                        ),
                                       ),
                                     );
                                   } else if (snapshot.hasData &&

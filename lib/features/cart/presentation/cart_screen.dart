@@ -48,7 +48,10 @@ class _CartScreenState extends State<CartScreen> {
 
   int? _currentDefaultAddressId;
 
-  String _paymentMethod = 'CASH';
+  String _paymentMethod =
+      (AppSettings.kashier_enabled == true || AppSettings.paymob_enabled == true)
+          ? 'CARD'
+          : 'CASH';
 
   // ── Schedule ───────────────────────────────────────────────────────────────
   bool _isScheduled = false;
@@ -319,16 +322,31 @@ class _CartScreenState extends State<CartScreen> {
       }
     }
 
-    // CARD: ask which provider before placing the order
-    if (_paymentMethod == 'CARD') {
-      _showCardProviderSheet();
-      return;
-    }
-
     // Window-scheduling always sends scheduleAt; normal flow only when _isScheduled
     final effectiveScheduleAt = _requiresWindowScheduling
         ? _scheduleAt
         : (_isScheduled ? _scheduleAt : null);
+
+    // CARD: ask which provider before placing the order, unless only one is enabled
+    if (_paymentMethod == 'CARD') {
+      final enabledProviders = [
+        if (AppSettings.kashier_enabled == true) 'kashier',
+        if (AppSettings.paymob_enabled == true) 'paymob',
+      ];
+
+      if (enabledProviders.length == 1) {
+        await context.read<OrderCubit>().createCatalogOrder(
+          paymentMethod: 'CARD',
+          provider: enabledProviders.first,
+          couponCode: _appliedCoupon?.code,
+          scheduleAt: effectiveScheduleAt,
+        );
+        return;
+      }
+
+      _showCardProviderSheet();
+      return;
+    }
 
     await context.read<OrderCubit>().createCatalogOrder(
       paymentMethod: _paymentMethod,

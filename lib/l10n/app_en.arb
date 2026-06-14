@@ -531,7 +531,7 @@
   "minimumTopUp": "Min: 10 EGP | Max: 5000 EGP",
   "selectPaymentMethod": "Select Payment Method",
   "creditDebitCard": "Credit/Debit Card",
-  "onlinePayment": "Online Payment",
+  "onlinePayment": "Online \n Payment",
   "mobileWalletInstaPay": "Mobile Wallet / InstaPay",
   "mobileWallet": "Mobile Wallet",
 

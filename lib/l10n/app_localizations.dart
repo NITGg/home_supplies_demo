@@ -2492,7 +2492,7 @@ abstract class AppLocalizations {
   /// No description provided for @onlinePayment.
   ///
   /// In en, this message translates to:
-  /// **'Online Payment'**
+  /// **'Online \n Payment'**
   String get onlinePayment;
 
   /// No description provided for @mobileWalletInstaPay.

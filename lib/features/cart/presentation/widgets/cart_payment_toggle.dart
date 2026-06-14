@@ -87,7 +87,7 @@ class CartPaymentToggle extends StatelessWidget {
                     onTap: cashDisabled ? null : () => onChanged('CASH'),
                     child: _PaymentOption(
                       icon: Icons.payments_outlined,
-                      label: l10n.cod,
+                      label: l10n.codN,
                       selected: paymentMethod == 'CASH',
                       disabled: cashDisabled,
                     ),
@@ -161,6 +161,7 @@ class _PaymentOption extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
+            textAlign: TextAlign.center,
             label,
             style: selected && !disabled
                 ? AppTextStyles.bold14.copyWith(fontSize: 10)

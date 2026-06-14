@@ -1229,7 +1229,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get creditDebitCard => 'Credit/Debit Card';
 
   @override
-  String get onlinePayment => 'Online Payment';
+  String get onlinePayment => 'Online \n Payment';
 
   @override
   String get mobileWalletInstaPay => 'Mobile Wallet / InstaPay';

@@ -533,7 +533,7 @@
       "minimumTopUp": "الحد الأدنى: 10 ج.م | الحد الأقصى: 5000 ج.م",
       "selectPaymentMethod": "اختر طريقة الدفع",
       "creditDebitCard": "بطاقة الدفع",
-      "onlinePayment": "الدفع عبر الإنترنت",
+      "onlinePayment": "الدفع \n عبر الانترنت",
       "mobileWalletInstaPay": "محفظة موبايل / InstaPay",
       "mobileWallet": "محفظة موبايل",
       "transferToOurNumbers": "التحويل إلى أرقامنا",

@@ -1229,7 +1229,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get creditDebitCard => 'بطاقة الدفع';
 
   @override
-  String get onlinePayment => 'الدفع عبر الإنترنت';
+  String get onlinePayment => 'الدفع \n عبر الانترنت';
 
   @override
   String get mobileWalletInstaPay => 'محفظة موبايل / InstaPay';
