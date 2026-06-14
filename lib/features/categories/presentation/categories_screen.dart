@@ -49,8 +49,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             .firstOrNull
             ?.id ?? state.addresses.firstOrNull?.id;
 
-        if (_hadAddress && newDefault != _lastDefaultAddressId) {
-          // Default address changed (including null → new after deletion) —
+        if (newDefault != _lastDefaultAddressId &&
+            (_hadAddress ||
+                (_lastDefaultAddressId == null && newDefault != null))) {
+          // Default address changed (including null → new after deletion,
+          // or a first address being created for a brand-new user) —
           // refresh so products reflect the new delivery location.
           _categoriesKey.currentState?.refresh();
         }
