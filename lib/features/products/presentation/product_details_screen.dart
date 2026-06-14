@@ -1176,20 +1176,26 @@ class _SupplierSection extends StatelessWidget {
         child: Row(
           children: [
             // ── Avatar ────────────────────────────────────────────────────────
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              backgroundImage:
-                  photoUrl != null ? NetworkImage(photoUrl) : null,
-              child: photoUrl == null
-                  ? Text(
-                      initials,
-                      style: TextStyle(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
+            ClipOval(
+              child: (photoUrl != null && photoUrl.isNotEmpty)
+                  ? ImageWithIconFallback(
+                      imageUrl: photoUrl,
+                      width: 44,
+                      height: 44,
+                      fit: BoxFit.cover,
+                      isCircle: true,
                     )
-                  : null,
+                  : CircleAvatar(
+                      radius: 22,
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      child: Text(
+                        initials,
+                        style: TextStyle(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
             ),
             const SizedBox(width: 12),
 

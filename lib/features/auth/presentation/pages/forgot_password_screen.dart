@@ -58,11 +58,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           if (state is AuthForgotPasswordOtpSent) {
             context.read<AuthCubit>().reset();
             context.push(
-              '/auth/verify-otp',
+              '/auth/new-password',
               extra: {
+                'identifier': state.destination,
                 'destination': state.destination,
                 'via': state.via,
-                'isPasswordReset': true,
               },
             );
           } else if (state is AuthFailure) {

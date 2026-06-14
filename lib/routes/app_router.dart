@@ -165,7 +165,6 @@ Future<GoRouter> createAppRouter({
               return OtpVerificationScreen(
                 via: (extra['via'] as String?) ?? 'phone',
                 destination: extra['destination'] as String,
-                isPasswordReset: (extra['isPasswordReset'] as bool?) ?? false,
               );
             },
           ),
@@ -190,8 +189,9 @@ Future<GoRouter> createAppRouter({
             builder: (context, state) {
               final extra = state.extra as Map<String, dynamic>;
               return NewPasswordScreen(
-                otp: extra['otp'] as String,
                 identifier: extra['identifier'] as String,
+                destination: extra['destination'] as String,
+                via: extra['via'] as String,
               );
             },
           ),

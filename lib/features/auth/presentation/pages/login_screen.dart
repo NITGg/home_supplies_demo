@@ -85,7 +85,6 @@ class _LoginScreenState extends State<LoginScreen> {
             context.push('/auth/verify-otp', extra: {
               'destination': state.destination,
               'via': state.via,
-              'isPasswordReset': false,
             });
           } else if (state is AuthRoleNotAllowed) {
             showErrorBanner(context, state.message);

@@ -95,7 +95,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               extra: {
                 'destination': state.destination,
                 'via': state.via,
-                'isPasswordReset': false,
               },
             );
           } else if (state is AuthSuccess) {
