@@ -114,12 +114,11 @@ void showChangePasswordBottomSheet(BuildContext context) {
                       );
                     }
                   },
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return localizations.enterPassword;
-                    if (v.length < 6) return localizations.shortPassword;
-                    if (!RegExp(r'[A-Z]').hasMatch(v)) return localizations.passwordNeedsUppercase;
-                    if (!RegExp(r'[a-z]').hasMatch(v)) return localizations.passwordNeedsLowercase;
-                    if (!RegExp(r'[0-9]').hasMatch(v)) return localizations.passwordNeedsNumber;
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return localizations.enterPassword;
+                    if (value != confirmNewPasswordController.text) {
+                      return localizations.passwordMismatch;
+                    }
                     return null;
                   },
                 ),
