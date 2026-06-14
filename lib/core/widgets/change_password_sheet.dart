@@ -90,7 +90,7 @@ void showChangePasswordBottomSheet(BuildContext context) {
                   FocusScope.of(context).requestFocus(confirmPasswordFocus),
                   validator: (v) {
                     if (v == null || v.isEmpty) return localizations.enterPassword;
-                    if (v.length < 6) return localizations.shortPassword;
+                    if (v.length < 8) return localizations.shortPassword;
                     if (!RegExp(r'[A-Z]').hasMatch(v)) return localizations.passwordNeedsUppercase;
                     if (!RegExp(r'[a-z]').hasMatch(v)) return localizations.passwordNeedsLowercase;
                     if (!RegExp(r'[0-9]').hasMatch(v)) return localizations.passwordNeedsNumber;

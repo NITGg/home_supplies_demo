@@ -219,7 +219,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       validator: (v) {
                                         if (v == null || v.isEmpty)
                                           return loc.enterPassword;
-                                        if (v.length < 6)
+                                        if (v.length < 8)
                                           return loc.shortPassword;
                                         if (!RegExp(r'[A-Z]').hasMatch(v))
                                           return loc.passwordNeedsUppercase;
