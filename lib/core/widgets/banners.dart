@@ -1,5 +1,7 @@
 // ── Banners ─────────────────────────────────────────────────────────────────
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -58,6 +60,9 @@ class _ErrorToastState extends State<_ErrorToast>
   late final AnimationController _ctrl;
   late final Animation<double> _slide;
   late final Animation<double> _fade;
+  Timer? _autoDismissTimer;
+
+  static const Duration _autoDismissDelay = Duration(seconds: 10);
 
   @override
   void initState() {
@@ -71,15 +76,19 @@ class _ErrorToastState extends State<_ErrorToast>
     );
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
     _ctrl.forward();
+
+    _autoDismissTimer = Timer(_autoDismissDelay, _dismiss);
   }
 
   @override
   void dispose() {
+    _autoDismissTimer?.cancel();
     _ctrl.dispose();
     super.dispose();
   }
 
   void _dismiss() {
+    _autoDismissTimer?.cancel();
     _ctrl.reverse().then((_) => widget.onDismiss());
   }
 
@@ -189,11 +198,11 @@ void showInfoBanner(BuildContext context, String message) {
 }
 
 void showSuccessBanner(
-  BuildContext context,
-  String message, {
-  String? actionLabel,
-  VoidCallback? onAction,
-}) {
+    BuildContext context,
+    String message, {
+      String? actionLabel,
+      VoidCallback? onAction,
+    }) {
   if (!context.mounted) return;
 
   ScaffoldMessenger.of(context)
@@ -225,10 +234,10 @@ void showSuccessBanner(
         duration: const Duration(seconds: 4),
         action: (actionLabel != null && onAction != null)
             ? SnackBarAction(
-                label: actionLabel,
-                textColor: Colors.white,
-                onPressed: onAction,
-              )
+          label: actionLabel,
+          textColor: Colors.white,
+          onPressed: onAction,
+        )
             : null,
       ),
     );

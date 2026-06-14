@@ -1027,7 +1027,6 @@ class _CartScreenState extends State<CartScreen> {
       if (state.coupon != null) {
         _cubit.refreshPreview(couponCode: state.coupon!.code);
       }
-      showSuccessBanner(context, l10n.couponRedeemed);
     } else if (state is CouponInvalid) {
       setState(() => _couponValidating = false);
       showErrorBanner(context, state.message);
