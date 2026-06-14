@@ -32,8 +32,8 @@ ProductModel _makeProduct({int? supplierId}) => ProductModel(
   isBestSeller: false,
   sortId: 0,
   slug: 'test-product',
-  attributes: const [],
-  units: const [],
+  // attributes: const [],
+  // units: const [],
 );
 
 SupplierModel _makeSupplier() => const SupplierModel(

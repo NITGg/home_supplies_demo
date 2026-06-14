@@ -39,14 +39,15 @@ class ProductModel {
   final double? discountValueTotal;
   final double? priceOutSite;
   final String? refundPolicy;
+  final String? supplierImage;
   final bool? refundable;
   final int? refundablePeriod;
   final int? maxAmountForOneOrder;
   final int? minAmountForOneOrder;
   final String slug;
   final String? synonyms;
-  final List<ProductAttributeModel> attributes;
-  final List<ProductUnitModel> units;
+  // final List<ProductAttributeModel> attributes;
+  // final List<ProductUnitModel> units;
 
   // ── Supplier-context fields ───────────────────────────────────────────────
   final int? spId;
@@ -102,9 +103,10 @@ class ProductModel {
     this.minAmountForOneOrder,
     required this.slug,
     this.synonyms,
-    required this.attributes,
-    required this.units,
+    // required this.attributes,
+    // required this.units,
     this.spId,
+    this.supplierImage,
     this.maxAmountForOneUser,
     this.minAmountForOneUser,
     this.reservedInCartsAmount,
@@ -226,17 +228,18 @@ class ProductModel {
       deletedAt: json['deleted_at'] != null
           ? DateTime.tryParse(json['deleted_at'] as String)
           : null,
-      attributes: (json['attributes'] as List<dynamic>?)
-          ?.map((e) =>
-          ProductAttributeModel.fromJson(e as Map<String, dynamic>))
-          .toList() ??
-          [],
-      units: (json['units'] as List<dynamic>?)
-          ?.map((e) =>
-          ProductUnitModel.fromJson(e as Map<String, dynamic>))
-          .toList() ??
-          [],
+      // attributes: (json['attributes'] as List<dynamic>?)
+      //     ?.map((e) =>
+      //     ProductAttributeModel.fromJson(e as Map<String, dynamic>))
+      //     .toList() ??
+      //     [],
+      // units: (json['units'] as List<dynamic>?)
+      //     ?.map((e) =>
+      //     ProductUnitModel.fromJson(e as Map<String, dynamic>))
+      //     .toList() ??
+      //     [],
 
+      supplierImage: json['supplier_image'] as String?,
       // ── Pricing & stock from supplier_data ───────────────────────────────
       spId:         _parseInt(sp?['id']),
       supplierId:   _parseInt(sp?['supplier_id']),
@@ -324,6 +327,7 @@ class ProductModel {
       deletedAt: p['deleted_at'] != null
           ? DateTime.tryParse(p['deleted_at'] as String)
           : null,
+      supplierImage: p['supplier_image'] as String?,
 
       // ── Pricing & stock from supplier_product ─────────────────────────────
       spId:         _parseInt(sp['id']),
@@ -353,8 +357,8 @@ class ProductModel {
       offerValidTo:      null,
       discountValueTotal: null,
       priceOutSite:      null,
-      attributes: [],
-      units:      [],
+      // attributes: [],
+      // units:      [],
     );
   }
 
@@ -422,6 +426,7 @@ class ProductModel {
       refundPolicy: null,
       refundable: null,
       refundablePeriod: null,
+      supplierImage: json['supplier_image'] as String?,
 
       createdAt:
       DateTime.tryParse(json['created_at']?.toString() ?? '') ??
@@ -433,8 +438,8 @@ class ProductModel {
 
       deletedAt: null,
 
-      attributes: const [],
-      units: const [],
+      // attributes: const [],
+      // units: const [],
 
       spId: _parseInt(supplierData?['id']),
       supplierId: _parseInt(supplier?['id']),
