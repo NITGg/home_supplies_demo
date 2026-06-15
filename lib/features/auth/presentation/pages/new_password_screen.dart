@@ -7,6 +7,7 @@ import 'package:pinput/pinput.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
+import '../../../../core/utils/app_dynamic_settings.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/widgets/banners.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -40,7 +41,7 @@ class NewPasswordScreen extends StatefulWidget {
 }
 
 class _NewPasswordScreenState extends State<NewPasswordScreen> {
-  static const int _otpLength = 4;
+  late final int _otpLength = AppSettings.otp_length;
 
   final _otpController = TextEditingController();
   final _otpFocusNode = FocusNode();
@@ -48,7 +49,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  int _secondsRemaining = 60;
+  int _secondsRemaining = AppSettings.otp_resend_duration_seconds;
   bool _canResend = false;
   Timer? _timer;
 
@@ -71,7 +72,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   void _startTimer() {
     _timer?.cancel();
     setState(() {
-      _secondsRemaining = 60;
+      _secondsRemaining = AppSettings.otp_resend_duration_seconds;
       _canResend = false;
     });
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {

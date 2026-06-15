@@ -15,6 +15,8 @@ class AppSettings {
   static String? android_version;
   static int platform_supplier_id = 9;
   static int home_categories_grid_limit = 6;
+  static int otp_length = 4;
+  static int otp_resend_duration_seconds = 60;
   static String? ios_url;
   static bool? chat_enable_send_images;
   static bool? paymob_enabled;
@@ -50,6 +52,8 @@ class AppSettings {
         android_version = settings['app_android_version'];
         ios_url = settings['app_ios_url'];
         platform_supplier_id = (settings['platform_supplier_id'] as int?) ?? 9;
+        otp_resend_duration_seconds = (settings['otp_resend_duration_seconds'] as int?) ?? 60;
+        otp_length = (settings['otp_length'] as int?) ?? 4;
         home_categories_grid_limit = (settings['home_categories_grid_limit'] as int?) ?? 6;
         chat_enable_send_images = settings['chat_enable_send_images'] as bool?;
         kashier_enabled = settings['kashier_enabled'] as bool?;

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pinput/pinput.dart';
+import 'package:tawreedat_go/core/utils/app_dynamic_settings.dart';
 
 import '../../../../core/style/app_colors.dart';
 import '../../../../core/style/text_styles.dart';
@@ -43,8 +44,7 @@ class ProfileOtpScreen extends StatefulWidget {
 }
 
 class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
-  static const int _otpLength = 4;
-
+  late final int _otpLength = AppSettings.otp_length;
   final _oldOtpController = TextEditingController();
   final _newOtpController = TextEditingController();
   final _oldFocusNode     = FocusNode();
@@ -53,7 +53,7 @@ class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
   bool get _hasOldContact =>
       widget.oldDestination != null && widget.oldDestination!.isNotEmpty;
 
-  int  _secondsRemaining = 60;
+  int  _secondsRemaining = AppSettings.otp_resend_duration_seconds;
   bool _canResend        = false;
   Timer? _timer;
 
@@ -76,7 +76,7 @@ class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
   void _startTimer() {
     _timer?.cancel();
     setState(() {
-      _secondsRemaining = 60;
+      _secondsRemaining = AppSettings.otp_resend_duration_seconds;
       _canResend        = false;
     });
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
