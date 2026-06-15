@@ -89,7 +89,7 @@ class SupplierCard extends StatelessWidget {
             // ── DIST ──────────────────────────────────────────────────────
             Text(
               supplier.distanceKm < 10
-                  ? '${AppLocalizations.of(context)!.far} ${supplier.distanceKm.floor()} ${AppLocalizations.of(context)!.km}'
+                  ? '${AppLocalizations.of(context)!.far} ${supplier.distanceKm.round()} ${AppLocalizations.of(context)!.km}'
                   : "${AppLocalizations.of(context)!.far} 10+ ${AppLocalizations.of(context)!.km}",
               style: AppTextStyles.regular14.copyWith(fontSize: 10,color: AppColors.kPrimaryColor),
               textAlign: TextAlign.center,
