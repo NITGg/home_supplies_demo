@@ -65,6 +65,20 @@ class _TopUpScreenState extends State<TopUpScreen> {
       return;
     }
 
+    final enabledProviders = [
+      if (AppSettings.kashier_enabled == true) 'kashier',
+      if (AppSettings.paymob_enabled == true) 'paymob',
+    ];
+
+    // Auto-select the only available provider without showing the sheet
+    if (enabledProviders.length == 1) {
+      context.read<WalletCubit>().initiateOnlineTopUp(
+        amount: _selectedAmount! * 100,
+        provider: enabledProviders.first == 'kashier' ? 'kashier' : null,
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
