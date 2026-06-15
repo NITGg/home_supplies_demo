@@ -30,7 +30,7 @@ Future<void> showPhoneNumberBottomSheet(BuildContext context) async {
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    isDismissible: false,
+    isDismissible: true,
     enableDrag: false,
     backgroundColor: Colors.white,
     shape: const RoundedRectangleBorder(

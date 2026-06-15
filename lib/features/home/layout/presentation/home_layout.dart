@@ -329,11 +329,11 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       if (_firstOrderChecked) return;
                       _firstOrderChecked = true;
 
-                      if (profileState.profile.phone == null &&
-                          !_phoneSheetShown) {
-                        _phoneSheetShown = true;
-                        await _showPhoneNumberBottomSheet(context);
-                      }
+                      // if (profileState.profile.phone == null &&
+                      //     !_phoneSheetShown) {
+                      //   _phoneSheetShown = true;
+                      //   await _showPhoneNumberBottomSheet(context);
+                      // }
 
                       if (!mounted) return;
 
