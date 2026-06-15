@@ -1,11 +1,12 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/utils/safe_emit_mixin.dart';
 import 'notification_states.dart';
 
-class NotificationsCubit extends Cubit<NotificationsState> {
+class NotificationsCubit extends Cubit<NotificationsState> with SafeEmitMixin<NotificationsState> {
   final String userId;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   StreamSubscription<QuerySnapshot>? _notificationsSubscription;
@@ -15,7 +16,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   void loadNotifications() {
     if (isClosed) return;
 
-    emit(NotificationsLoading());
+    safeEmit(NotificationsLoading());
 
     _notificationsSubscription?.cancel();
     _notificationsSubscription = _firestore
@@ -31,12 +32,12 @@ class NotificationsCubit extends Cubit<NotificationsState> {
             return data != null && !(data['is_read'] ?? false);
           }).length;
 
-          emit(NotificationsLoaded(snapshot.docs, unreadCount));
+          safeEmit(NotificationsLoaded(snapshot.docs, unreadCount));
         }
       },
       onError: (error) {
         if (!isClosed) {
-          emit(NotificationsError('Error loading notifications'));
+          safeEmit(NotificationsError('Error loading notifications'));
         }
       },
     );

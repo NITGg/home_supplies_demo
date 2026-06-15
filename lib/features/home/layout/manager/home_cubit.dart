@@ -1,9 +1,11 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../../core/utils/safe_emit_mixin.dart';
 
 part 'home_state.dart';
 
-class HomeCubit extends Cubit<HomeState> {
+class HomeCubit extends Cubit<HomeState> with SafeEmitMixin<HomeState> {
   static const int ordersTabIndex = 1;
 
   int currentIndex = 0;
@@ -14,13 +16,13 @@ class HomeCubit extends Cubit<HomeState> {
   void changeTab(int index) {
     if (index == currentIndex) return;
     currentIndex = index;
-    emit(HomeTabChanged(index));
+    safeEmit(HomeTabChanged(index));
   }
 
   void requestHistoryTab() {
     currentIndex = ordersTabIndex;
     pendingHistoryTab = true;
-    emit(HomeHistoryTabRequested());
+    safeEmit(HomeHistoryTabRequested());
   }
 
   void consumePendingHistoryTab() {
@@ -32,7 +34,7 @@ class HomeCubit extends Cubit<HomeState> {
   void requestActiveTab() {
     currentIndex = ordersTabIndex;
     pendingActiveTab = true;
-    emit(HomeActiveTabRequested());
+    safeEmit(HomeActiveTabRequested());
   }
 
   void consumePendingActiveTab() {

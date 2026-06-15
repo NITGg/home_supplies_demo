@@ -1,9 +1,10 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../data/models/chat_model.dart';
 import '../data/models/message_model.dart';
 import '../data/repo/chat_repository.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import 'inbox_state.dart';
 
 /// Manages the Inbox screen: chat list, unread badges, and last messages.
@@ -11,7 +12,7 @@ import 'inbox_state.dart';
 /// This cubit should live as long as the app is running (typically provided
 /// at the top of the widget tree after login) so that it can react to
 /// [chat:new_message] events even when the user is not inside a chat screen.
-class InboxCubit extends Cubit<InboxState> {
+class InboxCubit extends Cubit<InboxState> with SafeEmitMixin<InboxState> {
   final ChatRepository _repo;
   final int currentUserId;
 
@@ -37,19 +38,19 @@ class InboxCubit extends Cubit<InboxState> {
   void setActiveChat(int? chatId) {
     _activeChatId = chatId;
     if (chatId != null && state is InboxLoaded) {
-      emit((state as InboxLoaded).clearUnread(chatId));
+      safeEmit((state as InboxLoaded).clearUnread(chatId));
     }
   }
 
   // ─── Load Inbox ───────────────────────────────────────────────────────────
 
   Future<void> loadChats() async {
-    emit(const InboxLoading());
+    safeEmit(const InboxLoading());
     try {
       final chats = await _repo.getMyChats();
-      emit(InboxLoaded(chats));
+      safeEmit(InboxLoaded(chats));
     } catch (e) {
-      emit(InboxError(_friendlyError(e)));
+      safeEmit(InboxError(_friendlyError(e)));
     }
   }
 
@@ -57,7 +58,7 @@ class InboxCubit extends Cubit<InboxState> {
 
   void upsertChat(ChatModel chat) {
     if (state is InboxLoaded) {
-      emit((state as InboxLoaded).upsertChat(chat));
+      safeEmit((state as InboxLoaded).upsertChat(chat));
     }
   }
 
@@ -68,7 +69,7 @@ class InboxCubit extends Cubit<InboxState> {
     final updated = (state as InboxLoaded).chats.map((c) {
       return c.id == chatId ? c.copyWith(isClosed: true) : c;
     }).toList();
-    emit(InboxLoaded(updated));
+    safeEmit(InboxLoaded(updated));
   }
 
   // ─── Global new-message listener (updates last message + unread count) ────
@@ -105,7 +106,7 @@ class InboxCubit extends Cubit<InboxState> {
         next = next.incrementUnread(chatId);
       }
 
-      emit(next);
+      safeEmit(next);
     });
   }
 

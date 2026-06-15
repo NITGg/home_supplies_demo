@@ -1,13 +1,14 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/location_service.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/utils/secure_storage_service.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../data/models/address_model.dart';
 import '../data/repo/address_repo.dart';
 import 'address_states.dart';
 
-class AddressCubit extends Cubit<AddressState> {
+class AddressCubit extends Cubit<AddressState> with SafeEmitMixin<AddressState> {
   final AddressRepository _repository;
   bool _isGuest = false;
   void setGuestMode(bool value) => _isGuest = value;
@@ -20,19 +21,19 @@ class AddressCubit extends Cubit<AddressState> {
     if (_isGuest) return;
     final token = await SecureStorageService().getToken();
     if (token == null || token.isEmpty) return;
-    emit(AddressLoading());
+    safeEmit(AddressLoading());
     try {
       dLog('AddressCubit: Loading addresses');
       final response = await _repository.getAddresses();
       dLog('AddressCubit: Loaded ${response.addresses.length} addresses');
       if (!isClosed) {
         await _syncDefaultLocation(response.addresses);
-        emit(AddressesLoaded(response.addresses));
+        safeEmit(AddressesLoaded(response.addresses));
       }
     } catch (e) {
       dLog('AddressCubit: Error loading addresses: $e');
       if (!isClosed) {
-        emit(AddressError(extractErrorMessage(e)));
+        safeEmit(AddressError(extractErrorMessage(e)));
       }
     }
   }
@@ -60,13 +61,13 @@ class AddressCubit extends Cubit<AddressState> {
   }
 
   Future<void> createAddress(Address address) async {
-    emit(AddressLoading());
+    safeEmit(AddressLoading());
     try {
       dLog('AddressCubit: Creating address');
       final response = await _repository.createAddress(address);
       dLog('AddressCubit: Address created successfully');
       if (!isClosed) {
-        emit(
+        safeEmit(
           AddressOperationSuccess(
             message: response.message,
             address: response.address,
@@ -79,19 +80,19 @@ class AddressCubit extends Cubit<AddressState> {
     } catch (e) {
       dLog('AddressCubit: Error creating address: $e');
       if (!isClosed) {
-        emit(AddressError(extractErrorMessage(e)));
+        safeEmit(AddressError(extractErrorMessage(e)));
       }
     }
   }
 
   Future<void> updateAddress(int addressId, Address address) async {
-    emit(AddressLoading());
+    safeEmit(AddressLoading());
     try {
       dLog('AddressCubit: Updating address $addressId');
       final response = await _repository.updateAddress(addressId, address);
       dLog('AddressCubit: Address updated successfully');
       if (!isClosed) {
-        emit(
+        safeEmit(
           AddressOperationSuccess(
             message: response.message,
             address: response.address,
@@ -104,19 +105,19 @@ class AddressCubit extends Cubit<AddressState> {
     } catch (e) {
       dLog('AddressCubit: Error updating address: $e');
       if (!isClosed) {
-        emit(AddressError(extractErrorMessage(e)));
+        safeEmit(AddressError(extractErrorMessage(e)));
       }
     }
   }
 
   Future<void> deleteAddress(int addressId) async {
-    emit(AddressLoading());
+    safeEmit(AddressLoading());
     try {
       dLog('AddressCubit: Deleting address $addressId');
       await _repository.deleteAddress(addressId);
       dLog('AddressCubit: Address deleted successfully');
       if (!isClosed) {
-        emit(
+        safeEmit(
           const AddressOperationSuccess(
             message: 'Address deleted successfully',
           ),
@@ -128,7 +129,7 @@ class AddressCubit extends Cubit<AddressState> {
     } catch (e) {
       dLog('AddressCubit: Error deleting address: $e');
       if (!isClosed) {
-        emit(AddressError(extractErrorMessage(e)));
+        safeEmit(AddressError(extractErrorMessage(e)));
       }
     }
   }

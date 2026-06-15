@@ -1,9 +1,10 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../data/data_source/cart_remote_data_source.dart';
 import '../data/models/cart_item_model.dart';
 import '../data/models/cart_response_model.dart';
@@ -23,7 +24,7 @@ class _PendingSync {
 
 // ── CartCubit ─────────────────────────────────────────────────────────────────
 
-class CartCubit extends Cubit<CartState> {
+class CartCubit extends Cubit<CartState> with SafeEmitMixin<CartState> {
   final CartRepository _repository;
 
   static const _kDebounce = Duration(milliseconds: 600);
@@ -44,7 +45,7 @@ class CartCubit extends Cubit<CartState> {
 
   void _safeEmit(CartState state) {
     if (isClosed) return;
-    emit(state);
+    safeEmit(state);
   }
 
   CartLoaded? get _loaded => state is CartLoaded ? state as CartLoaded : null;

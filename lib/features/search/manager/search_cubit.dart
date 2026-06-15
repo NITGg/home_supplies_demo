@@ -1,14 +1,15 @@
-// search_cubit.dart
+﻿// search_cubit.dart
 
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../data/models/search_models.dart';
 import '../data/repo/search_repo.dart';
 import 'search_states.dart';
 
 
-class SearchCubit extends Cubit<SearchState> {
+class SearchCubit extends Cubit<SearchState> with SafeEmitMixin<SearchState> {
   final SearchRepository _repository;
   Timer? _debounce;
 
@@ -27,21 +28,21 @@ class SearchCubit extends Cubit<SearchState> {
 
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
-      emit(SearchInitial());
+      safeEmit(SearchInitial());
       return;
     }
 
-    emit(SearchLoading());
+    safeEmit(SearchLoading());
 
     _debounce = Timer(const Duration(milliseconds: 400), () async {
       try {
         final result = await _repository.search(trimmed);
         if (isClosed) return;
         _lastResult = result;
-        result.isEmpty ? emit(SearchEmpty()) : emit(SearchSuccess(result));
+        result.isEmpty ? safeEmit(SearchEmpty()) : safeEmit(SearchSuccess(result));
       } catch (e) {
         if (isClosed) return;
-        emit(SearchError(e.toString()));
+        safeEmit(SearchError(e.toString()));
       }
     });
   }
@@ -54,7 +55,7 @@ class SearchCubit extends Cubit<SearchState> {
     final result = _lastResult;
     if (result == null) return;
     if (isClosed) return;
-    emit(SearchSuccess(result, selectedCategoryId: categoryId));
+    safeEmit(SearchSuccess(result, selectedCategoryId: categoryId));
   }
 
   // ── Reset ──────────────────────────────────────────────────────────────────
@@ -62,7 +63,7 @@ class SearchCubit extends Cubit<SearchState> {
   void reset() {
     _debounce?.cancel();
     _lastResult = null;
-    emit(SearchInitial());
+    safeEmit(SearchInitial());
   }
 
   @override

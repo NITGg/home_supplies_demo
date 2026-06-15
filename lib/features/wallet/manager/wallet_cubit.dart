@@ -1,4 +1,4 @@
-// lib/features/wallet/manager/wallet_cubit.dart
+﻿// lib/features/wallet/manager/wallet_cubit.dart
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
@@ -6,9 +6,10 @@ import '../../../core/utils/logger.dart';
 import '../data/models/transaction_penality_models.dart';
 import '../data/models/wallet_model.dart';
 import '../data/repositories/wallet_repo.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import 'wallet_state.dart';
 
-class WalletCubit extends Cubit<WalletState> {
+class WalletCubit extends Cubit<WalletState> with SafeEmitMixin<WalletState> {
   final WalletRepository repository;
 
   // Caches
@@ -35,14 +36,14 @@ class WalletCubit extends Cubit<WalletState> {
 
   // ==================== Wallet ====================
   Future<void> fetchWalletData() async {
-    emit(WalletLoading());
+    safeEmit(WalletLoading());
     try {
       final walletData = await repository.getWalletData();
       _cachedWalletData = walletData;
 
-      emit(WalletLoaded(walletData: walletData));
+      safeEmit(WalletLoaded(walletData: walletData));
     } catch (e) {
-      emit(WalletError(message: extractErrorMessage(e)));
+      safeEmit(WalletError(message: extractErrorMessage(e)));
     }
   }
 
@@ -50,9 +51,9 @@ class WalletCubit extends Cubit<WalletState> {
     try {
       final walletData = await repository.getWalletData();
       _cachedWalletData = walletData;
-      emit(WalletLoaded(walletData: walletData));
+      safeEmit(WalletLoaded(walletData: walletData));
     } catch (e) {
-      emit(WalletError(message: extractErrorMessage(e)));
+      safeEmit(WalletError(message: extractErrorMessage(e)));
     }
   }
 
@@ -61,9 +62,9 @@ class WalletCubit extends Cubit<WalletState> {
     if (page == 1) {
       _cachedTransactions = [];
       _transactionsPagination = null;
-      emit(TransactionsLoading());
+      safeEmit(TransactionsLoading());
     } else if (_transactionsPagination != null) {
-      emit(TransactionsLoaded(
+      safeEmit(TransactionsLoaded(
         transactions: _cachedTransactions,
         pagination: _transactionsPagination!,
         isLoadingMore: true,
@@ -89,13 +90,13 @@ class WalletCubit extends Cubit<WalletState> {
 
       _transactionsPagination = pagination;
 
-      emit(TransactionsLoaded(
+      safeEmit(TransactionsLoaded(
         transactions: _cachedTransactions,
         pagination: pagination,
         isLoadingMore: false,
       ));
     } catch (e) {
-      emit(TransactionsError(message: extractErrorMessage(e)));
+      safeEmit(TransactionsError(message: extractErrorMessage(e)));
     }
   }
 
@@ -104,9 +105,9 @@ class WalletCubit extends Cubit<WalletState> {
     if (page == 1) {
       _cachedPenalties = [];
       _penaltiesPagination = null;
-      emit(PenaltiesLoading());
+      safeEmit(PenaltiesLoading());
     } else if (_penaltiesPagination != null) {
-      emit(PenaltiesLoaded(
+      safeEmit(PenaltiesLoaded(
         totalPenaltyAmount: 0,
         penalties: _cachedPenalties,
         pagination: _penaltiesPagination!,
@@ -133,28 +134,28 @@ class WalletCubit extends Cubit<WalletState> {
 
       _penaltiesPagination = pagination;
 
-      emit(PenaltiesLoaded(
+      safeEmit(PenaltiesLoaded(
         totalPenaltyAmount: totalPenaltyAmount,
         penalties: _cachedPenalties,
         pagination: pagination,
         isLoadingMore: false,
       ));
     } catch (e) {
-      emit(PenaltiesError(message: extractErrorMessage(e)));
+      safeEmit(PenaltiesError(message: extractErrorMessage(e)));
     }
   }
 
   // ==================== Top-Up ====================
   Future<void> initiateOnlineTopUp({required int amount, String? provider}) async {
     dLog('💳 initiateOnlineTopUp: amount=$amount, provider=$provider');
-    emit(TopUpLoading());
+    safeEmit(TopUpLoading());
     try {
       final response = await repository.initiateRecharge(amount, provider: provider);
       dLog('✅ initiateRecharge success: provider=${response.provider}, transactionId=${response.transactionId}, checkoutUrl=${response.checkoutUrl}');
-      emit(TopUpInitiated(response: response));
+      safeEmit(TopUpInitiated(response: response));
     } catch (e, st) {
       dLog('❌ initiateRecharge error: $e\n$st');
-      emit(TopUpError(message: extractErrorMessage(e)));
+      safeEmit(TopUpError(message: extractErrorMessage(e)));
     }
   }
 }

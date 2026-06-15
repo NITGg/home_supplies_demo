@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -10,12 +10,13 @@ import 'package:tawreedat_go/features/auth/data/repositories/auth_repository.dar
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/utils/social_auth_service.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import 'auth_state.dart';
 
 String kAuthtoken = '';
 String kUserId = '';
 
-class AuthCubit extends Cubit<AuthState> {
+class AuthCubit extends Cubit<AuthState> with SafeEmitMixin<AuthState> {
   final AuthRepository _repository;
 
   // Stored during register() so verifyRegistrationOtp() can resolve the next
@@ -25,7 +26,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   AuthCubit(this._repository) : super(AuthInitial());
 
-  void reset() => emit(AuthInitial());
+  void reset() => safeEmit(AuthInitial());
 
   Future<void> _registerFCMToken() async {
     try {
@@ -66,7 +67,7 @@ class AuthCubit extends Cubit<AuthState> {
     String? email,
     String? gender,
   }) async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       dLog('📝 register: phone=$phone email=$email');
       final result = await _repository.register(
@@ -86,10 +87,10 @@ class AuthCubit extends Cubit<AuthState> {
           ? (_registeredEmail ?? phone)
           : (_registeredPhone ?? phone);
       dLog('📲 emitting AuthOtpRequired: destination=$destination via=${result.via}');
-      emit(AuthOtpRequired(destination: destination, via: result.via));
+      safeEmit(AuthOtpRequired(destination: destination, via: result.via));
     } catch (e) {
       dLog('❌ register error: $e');
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
@@ -99,7 +100,7 @@ class AuthCubit extends Cubit<AuthState> {
     String? email,
     required String code,
   }) async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     dLog('🔐 verifyRegistrationOtp: phone=$phone email=$email code=$code');
     try {
       final result = await _repository.verifyAccount(
@@ -117,14 +118,14 @@ class AuthCubit extends Cubit<AuthState> {
       if (result.fullyVerified || emailOnlyPending) {
         dLog('🎉 verified — initializing session (emailOnlyPending=$emailOnlyPending)');
         await _initializeUserSession();
-        emit(AuthSuccess());
+        safeEmit(AuthSuccess());
       } else {
         // One channel verified, another non-email channel is still pending.
         final nextChannel = result.unverified.isNotEmpty
             ? result.unverified.first
             : '';
         dLog('⏭️ partial verification — next channel: $nextChannel');
-        emit(AuthNextOtpRequired(
+        safeEmit(AuthNextOtpRequired(
           destination: nextChannel == 'email'
               ? (_registeredEmail ?? '')
               : (_registeredPhone ?? ''),
@@ -133,21 +134,21 @@ class AuthCubit extends Cubit<AuthState> {
       }
     } catch (e) {
       dLog('❌ verifyRegistrationOtp error: $e');
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
   /// Resend OTP during registration verification.
   Future<void> resendRegistrationOtp({String? phone, String? email}) async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     dLog('🔄 resendRegistrationOtp: phone=$phone email=$email');
     try {
       await _repository.requestVerification(phone: phone, email: email);
       dLog('✅ OTP resent');
-      emit(AuthOtpResent(message: 'OTP resent successfully'));
+      safeEmit(AuthOtpResent(message: 'OTP resent successfully'));
     } catch (e) {
       dLog('❌ resendRegistrationOtp error: $e');
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
@@ -156,7 +157,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String password,
     String locale = 'en',
   }) async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       final result = await _repository.login(
         phone: phone,
@@ -166,13 +167,13 @@ class AuthCubit extends Cubit<AuthState> {
 
       final userRole = result.user.role ?? '';
       // if (userRole == 'Courier' || userRole == 'Admin') {
-      //   emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
+      //   safeEmit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
       //   SecureStorageService().deleteToken();
       //   return;
       // }
 
       await _initializeUserSession();
-      emit(AuthSuccess(shortAuthResponse: result));
+      safeEmit(AuthSuccess(shortAuthResponse: result));
     } catch (e) {
       // 403 means the account exists but a channel is unverified.
       // Only redirect to OTP when unverified channels are explicitly listed.
@@ -188,7 +189,7 @@ class AuthCubit extends Cubit<AuthState> {
           if (unverified.isNotEmpty) {
             final channel = unverified.first;
             dLog('⚠️ login 403 — unverified: $unverified → redirecting to OTP ($channel)');
-            emit(AuthOtpRequired(
+            safeEmit(AuthOtpRequired(
               destination: channel == 'email' ? '' : phone,
               via: channel,
             ));
@@ -196,45 +197,45 @@ class AuthCubit extends Cubit<AuthState> {
           }
         }
       }
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
   Future<void> deleteProfile() async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       final token = await _repository.getSavedToken();
       final response = await _repository.deleteProfile(token ?? '');
-      emit(AuthProfileDeleted(response.message));
+      safeEmit(AuthProfileDeleted(response.message));
     } catch (e) {
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
   Future<void> signInWithGoogle() async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       final idToken = await SocialAuthService.signInWithGoogle();
       if (idToken != null) {
         final result = await _repository.verifyGoogleToken(idToken);
         final userRole = result.user.role ?? '';
         if (userRole == 'Courier' || userRole == 'Admin') {
-          emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
+          safeEmit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
           SecureStorageService().deleteToken();
           return;
         }
         await _initializeUserSession();
-        emit(AuthSuccess(longAuthResponse: result));
+        safeEmit(AuthSuccess(longAuthResponse: result));
       } else {
-        emit(AuthFailure('Google sign-in was cancelled.'));
+        safeEmit(AuthFailure('Google sign-in was cancelled.'));
       }
     } catch (e) {
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
   Future<void> signInWithApple() async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       final appleData = await SocialAuthService.signInWithApple();
       if (appleData != null) {
@@ -242,7 +243,7 @@ class AuthCubit extends Cubit<AuthState> {
         final fullName = appleData['fullName'];
 
         if (token == null) {
-          emit(AuthFailure('فشل الحصول على بيانات Apple'));
+          safeEmit(AuthFailure('فشل الحصول على بيانات Apple'));
           SecureStorageService().deleteToken();
           return;
         }
@@ -250,50 +251,50 @@ class AuthCubit extends Cubit<AuthState> {
         final result = await _repository.verifyAppleToken(token, fullName);
         final userRole = result.user.role ?? '';
         if (userRole == 'Courier' || userRole == 'Admin') {
-          emit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
+          safeEmit(AuthRoleNotAllowed('هذا التطبيق مخصص للعميل وليس للمندوب'));
           return;
         }
         await _initializeUserSession();
-        emit(AuthSuccess(longAuthResponse: result));
+        safeEmit(AuthSuccess(longAuthResponse: result));
       } else {
-        emit(AuthFailure('تم إلغاء تسجيل الدخول بواسطة Apple'));
+        safeEmit(AuthFailure('تم إلغاء تسجيل الدخول بواسطة Apple'));
       }
     } catch (e) {
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
   Future<void> linkWithGoogle() async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       final token = await _repository.getSavedToken();
       if (token == null || token.isEmpty) {
-        emit(AuthFailure('لا يوجد رمز مصادقة'));
+        safeEmit(AuthFailure('لا يوجد رمز مصادقة'));
         return;
       }
       final idToken = await SocialAuthService.signInWithGoogle();
       if (idToken == null) {
-        emit(AuthFailure('تم إلغاء تسجيل الدخول بواسطة Google'));
+        safeEmit(AuthFailure('تم إلغاء تسجيل الدخول بواسطة Google'));
         return;
       }
       await _repository.linkGoogle(token: token, idToken: idToken);
-      emit(AuthSocialLinkSuccess(message: 'تم ربط حساب Google بنجاح'));
+      safeEmit(AuthSocialLinkSuccess(message: 'تم ربط حساب Google بنجاح'));
     } catch (e) {
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
   Future<void> linkWithApple() async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       final token = await _repository.getSavedToken();
       if (token == null || token.isEmpty) {
-        emit(AuthFailure('لا يوجد رمز مصادقة'));
+        safeEmit(AuthFailure('لا يوجد رمز مصادقة'));
         return;
       }
       final appleData = await SocialAuthService.signInWithApple();
       if (appleData == null) {
-        emit(AuthFailure('تم إلغاء تسجيل الدخول بواسطة Apple'));
+        safeEmit(AuthFailure('تم إلغاء تسجيل الدخول بواسطة Apple'));
         return;
       }
       await _repository.linkApple(
@@ -301,9 +302,9 @@ class AuthCubit extends Cubit<AuthState> {
         idToken: appleData['token']!,
         nonce: appleData['nonce']!,
       );
-      emit(AuthSocialLinkSuccess(message: 'تم ربط حساب Apple بنجاح'));
+      safeEmit(AuthSocialLinkSuccess(message: 'تم ربط حساب Apple بنجاح'));
     } catch (e) {
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
@@ -313,7 +314,7 @@ class AuthCubit extends Cubit<AuthState> {
     String? lang,
     File? personalPhoto,
   }) async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       final token = await _repository.getSavedToken();
       final result = await _repository.updateProfile(
@@ -323,9 +324,9 @@ class AuthCubit extends Cubit<AuthState> {
         lang: lang,
         personalPhoto: personalPhoto,
       );
-      emit(AuthUpdateSuccess(updatedUser: result.user));
+      safeEmit(AuthUpdateSuccess(updatedUser: result.user));
     } catch (e) {
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
@@ -334,7 +335,7 @@ class AuthCubit extends Cubit<AuthState> {
       String newPassword,
       var context,
       ) async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       final token = await _repository.getSavedToken();
       await _repository.changePassword(
@@ -343,23 +344,23 @@ class AuthCubit extends Cubit<AuthState> {
         oldPassword: oldPassword,
         newPassword: newPassword,
       );
-      emit(AuthUpdateSuccess());
+      safeEmit(AuthUpdateSuccess());
     } catch (e) {
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
   Future<void> forgotPassword({String? phone, String? email}) async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       final via = await _repository.forgotPassword(phone: phone, email: email);
-      emit(AuthForgotPasswordOtpSent(
+      safeEmit(AuthForgotPasswordOtpSent(
         destination: phone ?? email ?? '',
         message: 'OTP sent successfully',
         via: via,
       ));
     } catch (e) {
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
@@ -368,37 +369,37 @@ class AuthCubit extends Cubit<AuthState> {
     required String code,
     required String password,
   }) async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       await _repository.resetPassword(
         identifier: identifier,
         code: code,
         password: password,
       );
-      emit(AuthUpdateSuccess());
+      safeEmit(AuthUpdateSuccess());
     } catch (e) {
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
   Future<void> logout() async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       await _repository.logout();
-      emit(AuthLoggedOut());
+      safeEmit(AuthLoggedOut());
     } catch (e) {
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 
   /// Resend OTP — delegates to requestVerification (new endpoint).
   Future<void> resendPhoneOtp({required String phone}) async {
-    emit(AuthLoading());
+    safeEmit(AuthLoading());
     try {
       await _repository.requestVerification(phone: phone);
-      emit(AuthOtpResent(message: 'OTP resent successfully'));
+      safeEmit(AuthOtpResent(message: 'OTP resent successfully'));
     } catch (e) {
-      emit(AuthFailure(extractErrorMessage(e)));
+      safeEmit(AuthFailure(extractErrorMessage(e)));
     }
   }
 }

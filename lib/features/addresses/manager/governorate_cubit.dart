@@ -1,10 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../data/repo/governorate_repo.dart';
 import 'governorate_states.dart';
 
-class GovernorateCubit extends Cubit<GovernorateState> {
+class GovernorateCubit extends Cubit<GovernorateState> with SafeEmitMixin<GovernorateState> {
   final GovernorateRepository _repository;
 
   GovernorateCubit({GovernorateRepository? repository})
@@ -13,7 +14,7 @@ class GovernorateCubit extends Cubit<GovernorateState> {
 
   Future<void> loadGovernorates() async {
     if (!isClosed) {
-      emit(GovernorateLoading());
+      safeEmit(GovernorateLoading());
     }
     try {
       dLog('GovernorateCubit: Loading governorates with areas');
@@ -22,12 +23,12 @@ class GovernorateCubit extends Cubit<GovernorateState> {
         'GovernorateCubit: Loaded ${response.governorates.length} governorates',
       );
       if (!isClosed) {
-        emit(GovernoratesLoaded(response));
+        safeEmit(GovernoratesLoaded(response));
       }
     } catch (e) {
       dLog('GovernorateCubit: Error loading governorates: $e');
       if (!isClosed) {
-        emit(GovernorateError(extractErrorMessage(e)));
+        safeEmit(GovernorateError(extractErrorMessage(e)));
       }
     }
   }

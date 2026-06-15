@@ -1,11 +1,12 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/features/reviews/manager/reviews_states.dart';
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
 import '../data/models/reviews_model.dart';
 import '../data/repositories/reviews_repo.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 
-class ReviewsCubit extends Cubit<ReviewsState> {
+class ReviewsCubit extends Cubit<ReviewsState> with SafeEmitMixin<ReviewsState> {
   final ReviewsRepository _repository;
 
   ReviewsCubit(this._repository) : super(ReviewsInitial());
@@ -16,7 +17,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
   bool _isFetchingMore = false;
 
   Future<void> fetchReviews() async {
-    emit(ReviewsLoading());
+    safeEmit(ReviewsLoading());
     _reviews = [];
     _currentPage = 0;
 
@@ -26,14 +27,14 @@ class ReviewsCubit extends Cubit<ReviewsState> {
         limit: _limit,
       );
       _reviews = response.reviews;
-      emit(ReviewsLoaded(
+      safeEmit(ReviewsLoaded(
         reviews: List.unmodifiable(_reviews),
         totalReviews: response.totalReviews,
         totalPages: response.totalPages,
         hasMore: _reviews.length < response.totalReviews,
       ));
     } catch (e) {
-      emit(ReviewsFailure(extractErrorMessage(e)));
+      safeEmit(ReviewsFailure(extractErrorMessage(e)));
     }
   }
 
@@ -51,7 +52,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
         limit: _limit,
       );
       _reviews.addAll(response.reviews);
-      emit(ReviewsLoaded(
+      safeEmit(ReviewsLoaded(
         reviews: List.unmodifiable(_reviews),
         totalReviews: response.totalReviews,
         totalPages: response.totalPages,

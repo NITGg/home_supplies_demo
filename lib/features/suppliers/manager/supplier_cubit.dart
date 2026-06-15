@@ -1,10 +1,11 @@
-
+﻿
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
 import '../data/models/supplier_models.dart';
 import '../data/repo/supplier_repo.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import 'supplier_states.dart';
 
 /// Manages the flat list of suppliers shown in the horizontal strip.
@@ -17,7 +18,7 @@ import 'supplier_states.dart';
 /// Leave [categoryIds] empty (or omit it) to fetch all suppliers.
 ///
 /// All suppliers are shown equally — there is no platform-level exclusion.
-class SuppliersCubit extends Cubit<SuppliersState> {
+class SuppliersCubit extends Cubit<SuppliersState> with SafeEmitMixin<SuppliersState> {
   final SupplierRepository _repository;
 
   /// The category ids used to filter suppliers.  Empty means "no filter".
@@ -33,12 +34,12 @@ class SuppliersCubit extends Cubit<SuppliersState> {
 
   Future<void> loadSuppliers({bool refresh = false}) async {
     if (!refresh && state is SuppliersLoading) return;
-    if (!isClosed) emit(const SuppliersLoading());
+    if (!isClosed) safeEmit(const SuppliersLoading());
 
     try {
       final result = await _fetchPage(skip: 0);
       if (!isClosed) {
-        emit(SuppliersLoaded(
+        safeEmit(SuppliersLoaded(
           suppliers: result.suppliers,
           skip: result.suppliers.length,
           hasMore: result.hasMore,
@@ -46,7 +47,7 @@ class SuppliersCubit extends Cubit<SuppliersState> {
       }
     } catch (e) {
       dLog('SuppliersCubit: Error loading suppliers: $e');
-      if (!isClosed) emit(SuppliersError(extractErrorMessage(e)));
+      if (!isClosed) safeEmit(SuppliersError(extractErrorMessage(e)));
     }
   }
 
@@ -56,7 +57,7 @@ class SuppliersCubit extends Cubit<SuppliersState> {
     if (current is! SuppliersLoaded) return;
     if (!current.hasMore || current.isLoadingMore) return;
 
-    if (!isClosed) emit(current.copyWith(isLoadingMore: true));
+    if (!isClosed) safeEmit(current.copyWith(isLoadingMore: true));
 
     try {
       final result = await _fetchPage(skip: current.skip);
@@ -71,7 +72,7 @@ class SuppliersCubit extends Cubit<SuppliersState> {
         ...result.suppliers.where((s) => seen.add(s.id)),
       ];
 
-      emit(current.copyWith(
+      safeEmit(current.copyWith(
         suppliers: merged,
         skip: current.skip + result.suppliers.length,
         hasMore: result.hasMore,
@@ -79,7 +80,7 @@ class SuppliersCubit extends Cubit<SuppliersState> {
       ));
     } catch (e) {
       dLog('SuppliersCubit: Error loading more suppliers: $e');
-      if (!isClosed) emit(current.copyWith(isLoadingMore: false));
+      if (!isClosed) safeEmit(current.copyWith(isLoadingMore: false));
     }
   }
 

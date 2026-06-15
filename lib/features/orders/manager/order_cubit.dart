@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../../../core/utils/secure_storage_service.dart';
 import '../data/models/order_model.dart';
 import '../data/repositories/order_repo.dart';
@@ -9,7 +10,7 @@ import 'order_states.dart';
 
 enum OrderViewMode { active, history }
 
-class OrderCubit extends Cubit<OrderState> {
+class OrderCubit extends Cubit<OrderState> with SafeEmitMixin<OrderState> {
   final OrderRepository _repository;
   bool _isGuest = false;
   void setGuestMode(bool value) => _isGuest = value;
@@ -519,10 +520,5 @@ class OrderCubit extends Cubit<OrderState> {
     _historyFilter = 'all';
 
     safeEmit(OrderInitial());
-  }
-
-
-  void safeEmit(OrderState state) {
-    if (!isClosed) emit(state);
   }
 }

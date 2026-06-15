@@ -4,10 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/utils/logger.dart';
 import '../../core/utils/secure_storage_service.dart';
 import '../../features/auth/data/repositories/profile_repository.dart';
+import '../../core/utils/safe_emit_mixin.dart';
 
 part 'locale_state.dart';
 
-class LocaleCubit extends Cubit<LocaleState> {
+class LocaleCubit extends Cubit<LocaleState> with SafeEmitMixin<LocaleState> {
   final SecureStorageService _storage;
   ProfileRepository? profileRepository;
 
@@ -18,7 +19,7 @@ class LocaleCubit extends Cubit<LocaleState> {
   Future<void> _loadSavedLocale() async {
     final savedLocale = await _storage.getLocale();
     if (savedLocale != null && !isClosed) {
-      emit(LocaleState(Locale(savedLocale)));
+      safeEmit(LocaleState(Locale(savedLocale)));
     }
   }
 
@@ -27,7 +28,7 @@ class LocaleCubit extends Cubit<LocaleState> {
     final locale = Locale(lang.toLowerCase());
     if (state.locale == locale) return;
     await _storage.saveLocale(locale.languageCode);
-    emit(LocaleState(locale));
+    safeEmit(LocaleState(locale));
     dLog('LocaleCubit: locale synced from profile → ${locale.languageCode}');
   }
 
@@ -38,7 +39,7 @@ class LocaleCubit extends Cubit<LocaleState> {
         : const Locale('en');
 
     await _storage.saveLocale(newLocale.languageCode);
-    emit(LocaleState(newLocale));
+    safeEmit(LocaleState(newLocale));
 
     try {
       final token = await _storage.getToken() ?? '';

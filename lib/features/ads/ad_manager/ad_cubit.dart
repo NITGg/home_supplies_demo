@@ -3,17 +3,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
 import '../../../../../../core/utils/api_client.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../data/models/ad_model.dart';
 import 'ad_state.dart';
 
-class AdsCubit extends Cubit<AdsState> {
+class AdsCubit extends Cubit<AdsState> with SafeEmitMixin<AdsState> {
   final Dio _dio = ApiClient.instance.dio;
 
   AdsCubit() : super(AdsInitial());
 
   Future<void> getHomeAds() async {
     if (!isClosed) {
-      emit(AdsLoading());
+      safeEmit(AdsLoading());
     }
     try {
       dLog("loading ADS");
@@ -37,7 +38,7 @@ class AdsCubit extends Cubit<AdsState> {
       );
       final data3 = AdsResponse.fromJson(response3.data);
       if (!isClosed) {
-        emit(
+        safeEmit(
           AdsSuccess(
             homeAds: data.ads,
             popupAds: data2.ads,
@@ -49,7 +50,7 @@ class AdsCubit extends Cubit<AdsState> {
     } catch (e) {
       dLog('ads error : $e');
       if (!isClosed) {
-        emit(AdsFailure(e.toString()));
+        safeEmit(AdsFailure(e.toString()));
       }
     }
   }

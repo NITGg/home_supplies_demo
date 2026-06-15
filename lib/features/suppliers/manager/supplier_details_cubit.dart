@@ -1,4 +1,4 @@
-
+﻿
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
@@ -7,9 +7,10 @@ import '../../products/data/repo/product_repo.dart';
 import '../data/models/supplier_models.dart';
 import '../data/models/supplier_response_models.dart';
 import '../data/repo/supplier_repo.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import 'supplier_states.dart';
 
-class SupplierDetailCubit extends Cubit<SupplierDetailState> {
+class SupplierDetailCubit extends Cubit<SupplierDetailState> with SafeEmitMixin<SupplierDetailState> {
   final SupplierRepository _supplierRepository;
   final ProductRepository _productRepository;
 
@@ -33,7 +34,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
   /// [filterCategoryId] — when non-null (opened from a category page) only
   /// that one category section is shown, ignoring all others.
   Future<void> load(int supplierId, {int? filterCategoryId}) async {
-    if (!isClosed) emit(const SupplierDetailLoading());
+    if (!isClosed) safeEmit(const SupplierDetailLoading());
 
     var step = 'getSupplierById/getSupplierCategories';
     try {
@@ -61,7 +62,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
           .toList();
 
       if (!isClosed) {
-        emit(SupplierDetailLoaded(supplier: supplier, sections: sections));
+        safeEmit(SupplierDetailLoaded(supplier: supplier, sections: sections));
       }
 
       // Kick off initial product load for every section in parallel.
@@ -74,7 +75,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
       }
     } catch (e) {
       dLog('SupplierDetailCubit: ❌ Failed at "$step" for supplier $supplierId → $e');
-      if (!isClosed) emit(SupplierDetailError(extractErrorMessage(e)));
+      if (!isClosed) safeEmit(SupplierDetailError(extractErrorMessage(e)));
     }
   }
 
@@ -109,7 +110,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
     final updatedSections =
     List<SupplierCategorySection>.from(current.sections);
     updatedSections[idx] = section.copyWith(isLoading: true);
-    if (!isClosed) emit(current.copyWith(sections: updatedSections));
+    if (!isClosed) safeEmit(current.copyWith(sections: updatedSections));
 
     try {
       final response = await _productRepository.getProducts(
@@ -145,7 +146,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
         skip: newSkip,
       );
 
-      if (!isClosed) emit(fresh.copyWith(sections: newSections));
+      if (!isClosed) safeEmit(fresh.copyWith(sections: newSections));
     } catch (e) {
       dLog('SupplierDetailCubit: Error loading products for category $categoryId: $e');
 
@@ -163,7 +164,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
       List<SupplierCategorySection>.from(fresh.sections);
       newSections[freshIdx] =
           newSections[freshIdx].copyWith(isLoading: false);
-      if (!isClosed) emit(fresh.copyWith(sections: newSections));
+      if (!isClosed) safeEmit(fresh.copyWith(sections: newSections));
     }
   }
 
@@ -193,7 +194,7 @@ class SupplierDetailCubit extends Cubit<SupplierDetailState> {
               skip: 0,
             ))
         .toList();
-    if (!isClosed) emit(current.copyWith(sections: resetSections));
+    if (!isClosed) safeEmit(current.copyWith(sections: resetSections));
 
     await Future.wait(
       resetSections.map(

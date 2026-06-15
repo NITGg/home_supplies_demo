@@ -1,13 +1,14 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
 import '../../products/data/repo/product_repo.dart';
 import '../../suppliers/data/models/supplier_models.dart';
 import '../../suppliers/data/repo/supplier_repo.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../data/repo/category_repo.dart';
 import 'category_detail_states.dart';
 
-class CategoryDetailCubit extends Cubit<CategoryDetailState> {
+class CategoryDetailCubit extends Cubit<CategoryDetailState> with SafeEmitMixin<CategoryDetailState> {
   final CategoryRepository _categoryRepository;
   final ProductRepository _productRepository;
   final SupplierRepository _supplierRepository;
@@ -30,7 +31,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
   // ── Load ───────────────────────────────────────────────────────────────────
 
   Future<void> load(int categoryId) async {
-    if (!isClosed) emit(const CategoryDetailLoading());
+    if (!isClosed) safeEmit(const CategoryDetailLoading());
 
     try {
       // Fire the suppliers HTTP request immediately so it runs in parallel with
@@ -61,7 +62,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
           .toList();
 
       // State is now CategoryDetailLoaded — safe to apply suppliers when ready.
-      if (!isClosed) emit(CategoryDetailLoaded(category: category, sections: sections));
+      if (!isClosed) safeEmit(CategoryDetailLoaded(category: category, sections: sections));
 
       // Products + supplier application run in parallel.
       await Future.wait([
@@ -69,7 +70,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
           if (isClosed) return;
           final current = state;
           if (current is CategoryDetailLoaded) {
-            emit(current.copyWith(suppliers: suppliers));
+            safeEmit(current.copyWith(suppliers: suppliers));
           }
         }).catchError((e) {
           dLog('CategoryDetailCubit: suppliers fetch failed → $e');
@@ -84,7 +85,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
       _filterSuppliersToActive();
     } catch (e) {
       dLog('CategoryDetailCubit: ❌ load failed → $e');
-      if (!isClosed) emit(CategoryDetailError(extractErrorMessage(e)));
+      if (!isClosed) safeEmit(CategoryDetailError(extractErrorMessage(e)));
     }
   }
 
@@ -146,13 +147,13 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
     };
 
     if (activeIds.isEmpty) {
-      emit(current.copyWith(suppliers: [], suppliersReady: true));
+      safeEmit(current.copyWith(suppliers: [], suppliersReady: true));
       return;
     }
 
     final filtered =
         current.suppliers.where((s) => activeIds.contains(s.id)).toList();
-    emit(current.copyWith(suppliers: filtered, suppliersReady: true));
+    safeEmit(current.copyWith(suppliers: filtered, suppliersReady: true));
   }
 
   // ── Section products ───────────────────────────────────────────────────────
@@ -188,7 +189,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
 
     final updatedSections = List<SubCategorySection>.from(current.sections);
     updatedSections[idx] = section.copyWith(isLoading: true);
-    if (!isClosed) emit(current.copyWith(sections: updatedSections));
+    if (!isClosed) safeEmit(current.copyWith(sections: updatedSections));
 
     try {
       final response = await _productRepository.getProducts(
@@ -221,7 +222,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
         hasMore: newSkip < response.totalProducts,
         skip: newSkip,
       );
-      if (!isClosed) emit(fresh.copyWith(sections: newSections));
+      if (!isClosed) safeEmit(fresh.copyWith(sections: newSections));
     } catch (e) {
       dLog('CategoryDetailCubit: section $subCategoryId failed → $e');
       if (isClosed) return;
@@ -233,7 +234,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
       if (freshIdx == -1) return;
       final newSections = List<SubCategorySection>.from(fresh.sections);
       newSections[freshIdx] = newSections[freshIdx].copyWith(isLoading: false);
-      if (!isClosed) emit(fresh.copyWith(sections: newSections));
+      if (!isClosed) safeEmit(fresh.copyWith(sections: newSections));
     }
   }
 
@@ -249,7 +250,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
     if (current is! CategoryDetailLoaded) return;
     if (current.directProductsLoading) return;
 
-    if (!isClosed) emit(current.copyWith(directProductsLoading: true));
+    if (!isClosed) safeEmit(current.copyWith(directProductsLoading: true));
 
     // Snapshot the keyword this request is for — discard the response below
     // if [search] changed it before the response came back.
@@ -275,7 +276,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
       final newSkip = skip + response.products.length;
 
       if (!isClosed) {
-        emit(fresh.copyWith(
+        safeEmit(fresh.copyWith(
           directProducts: newProducts,
           directProductsLoading: false,
           directProductsHasMore: newSkip < response.totalProducts,
@@ -288,7 +289,7 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
       if (_keyword != requestKeyword) return; // superseded by a newer search
       final fresh = state;
       if (fresh is! CategoryDetailLoaded) return;
-      if (!isClosed) emit(fresh.copyWith(directProductsLoading: false));
+      if (!isClosed) safeEmit(fresh.copyWith(directProductsLoading: false));
     }
   }
 
@@ -322,13 +323,13 @@ class CategoryDetailCubit extends Cubit<CategoryDetailState> {
                 skip: 0,
               ))
           .toList();
-      if (!isClosed) emit(current.copyWith(sections: resetSections));
+      if (!isClosed) safeEmit(current.copyWith(sections: resetSections));
       await _loadAllSectionProducts(
         resetSections.map((s) => s.subCategory.id).toList(),
       );
     } else {
       if (!isClosed) {
-        emit(current.copyWith(
+        safeEmit(current.copyWith(
           directProducts: const [],
           directProductsLoading: false,
           directProductsHasMore: true,

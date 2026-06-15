@@ -1,12 +1,13 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tawreedat_go/features/products/manager/product_details_states.dart';
 
 import '../../../core/utils/extract_error_message.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../../suppliers/data/models/supplier_models.dart';
 import '../../suppliers/data/repo/supplier_repo.dart';
 import '../data/repo/product_repo.dart';
 
-class ProductDetailCubit extends Cubit<ProductDetailState> {
+class ProductDetailCubit extends Cubit<ProductDetailState> with SafeEmitMixin<ProductDetailState> {
   final ProductRepository _repository;
   final SupplierRepository _supplierRepository;
 
@@ -17,7 +18,7 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
 
   Future<void> load(int productId, {int? supplierId}) async {
     if (!isClosed) {
-      emit(const ProductDetailLoading());
+      safeEmit(const ProductDetailLoading());
     }
     try {
       final product = await _repository.getProductById(
@@ -41,7 +42,7 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
       }
 
       if (!isClosed) {
-        emit(ProductDetailLoaded(
+        safeEmit(ProductDetailLoaded(
           product,
           isSupplierOpen: isSupplierOpen,
           supplier: supplier,
@@ -49,7 +50,7 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
       }
     } catch (e) {
       if (!isClosed) {
-        emit(ProductDetailError(extractErrorMessage(e)));
+        safeEmit(ProductDetailError(extractErrorMessage(e)));
       }
     }
   }

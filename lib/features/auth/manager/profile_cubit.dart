@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,8 +12,9 @@ import '../../../l10n/manager/locale_cubit.dart';
 import '../data/models/user_profile_model.dart';
 import '../data/repositories/profile_repository.dart';
 import '../data/repositories/auth_repository.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 
-class ProfileCubit extends Cubit<ProfileState> {
+class ProfileCubit extends Cubit<ProfileState> with SafeEmitMixin<ProfileState> {
   final ProfileRepository _profileRepository;
   final AuthRepository _authRepository;
   UserProfileModel? _currentProfile;
@@ -35,7 +36,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         final cachedProfile = await secureStorage.getUserProfile();
         if (cachedProfile != null) {
           _currentProfile = UserProfileModel.fromJson(cachedProfile);
-          emit(ProfileLoaded(profile: _currentProfile!));
+          safeEmit(ProfileLoaded(profile: _currentProfile!));
           dLog('ProfileCubit: Loaded cached profile');
         }
       }
@@ -49,14 +50,14 @@ class ProfileCubit extends Cubit<ProfileState> {
   Future<void> fetchProfile() async {
     // Don't show loading if we already have a profile (for refresh)
     if (_currentProfile == null) {
-      emit(ProfileLoading());
+      safeEmit(ProfileLoading());
     }
 
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {
         dLog('ProfileCubit: No token found');
-        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        safeEmit(ProfileFailure('لا يوجد رمز مصادقة'));
         return;
       }
 
@@ -67,17 +68,17 @@ class ProfileCubit extends Cubit<ProfileState> {
       await SecureStorageService().saveUserProfile(result.user.toJson());
       // Sync local locale to match profile lang (no backend call).
       await LocaleManager.syncFromProfile(_currentProfile?.lang??'AR');
-      emit(ProfileLoaded(profile: result.user));
+      safeEmit(ProfileLoaded(profile: result.user));
       dLog('ProfileCubit: Profile loaded successfully');
     } on DioException catch (e) {
       dLog('ProfileCubit fetchProfile DioException: $e');
       dLog('Response data: ${e.response?.data}');
       dLog('Status code: ${e.response?.statusCode}');
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     } catch (e, stackTrace) {
       dLog('ProfileCubit fetchProfile error: $e');
       dLog('Stack trace: $stackTrace');
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
@@ -89,11 +90,11 @@ class ProfileCubit extends Cubit<ProfileState> {
     String? phone,
     String? extraPhones, // 👈 new
   }) async {
-    emit(ProfileLoading());
+    safeEmit(ProfileLoading());
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {
-        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        safeEmit(ProfileFailure('لا يوجد رمز مصادقة'));
         return;
       }
 
@@ -108,13 +109,13 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       _currentProfile = result.user;
       await fetchProfile();
-      emit(ProfileUpdateSuccess(message: result.message));
+      safeEmit(ProfileUpdateSuccess(message: result.message));
     } on DioException catch (e) {
       dLog('ProfileCubit updateProfile DioException: $e');
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
       dLog('ProfileCubit updateProfile error: $e');
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
@@ -126,11 +127,11 @@ class ProfileCubit extends Cubit<ProfileState> {
     File? personalPhoto,
     String? extraPhones,
   }) async {
-    emit(ProfileLoading());
+    safeEmit(ProfileLoading());
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {
-        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        safeEmit(ProfileFailure('لا يوجد رمز مصادقة'));
         return;
       }
 
@@ -145,13 +146,13 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       _currentProfile = result.user;
       await fetchProfile();
-      emit(ProfileUpdateSuccess(message: result.message));
+      safeEmit(ProfileUpdateSuccess(message: result.message));
     } on DioException catch (e) {
       dLog('ProfileCubit updateProfileWithPhoto DioException: $e');
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     } catch (e, stackTrace) {
       dLog('ProfileCubit updateProfileWithPhoto error: $e\n$stackTrace');
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
@@ -161,19 +162,19 @@ class ProfileCubit extends Cubit<ProfileState> {
     required String type,
     required String value,
   }) async {
-    emit(ProfileLoading());
+    safeEmit(ProfileLoading());
     try {
       await _authRepository.requestVerification(
         phone: type == 'phone' ? value : null,
         email: type == 'email' ? value : null,
       );
-      emit(type == 'email'
+      safeEmit(type == 'email'
           ? ProfileChangeEmailSuccess(message: '')
           : ProfileChangePhoneSuccess(message: ''));
     } on DioException catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
@@ -184,7 +185,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     String? email,
     required String code,
   }) async {
-    emit(ProfileLoading());
+    safeEmit(ProfileLoading());
     try {
       final result = await _authRepository.verifyAccount(
         phone: phone,
@@ -192,11 +193,11 @@ class ProfileCubit extends Cubit<ProfileState> {
         code: code,
       );
       await fetchProfile();
-      emit(ProfileOtpConfirmSuccess(message: result.message));
+      safeEmit(ProfileOtpConfirmSuccess(message: result.message));
     } on DioException catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
@@ -204,35 +205,35 @@ class ProfileCubit extends Cubit<ProfileState> {
   /// Emits [ProfilePhoneOtpSent] on success so the caller can navigate to the
   /// OTP screen (same flow as auth registration).
   Future<void> changePhone({required String phone}) async {
-    emit(ProfileLoading());
+    safeEmit(ProfileLoading());
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {
-        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        safeEmit(ProfileFailure('لا يوجد رمز مصادقة'));
         return;
       }
       final result = await _profileRepository.changePhone(
         token: token,
         phone: phone,
       );
-      emit(ProfilePhoneOtpSent(
+      safeEmit(ProfilePhoneOtpSent(
         destination: phone,
         message: result['message'] as String? ?? '',
       ));
     } on DioException catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
   /// POST /profile/confirm-otp — confirms the OTP sent by [changePhone].
   Future<void> confirmPhoneOtp({required String code}) async {
-    emit(ProfileLoading());
+    safeEmit(ProfileLoading());
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {
-        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        safeEmit(ProfileFailure('لا يوجد رمز مصادقة'));
         return;
       }
       final result = await _profileRepository.confirmOtp(
@@ -240,11 +241,11 @@ class ProfileCubit extends Cubit<ProfileState> {
         code: code,
       );
       await fetchProfile();
-      emit(ProfileOtpConfirmSuccess(message: result['message'] as String? ?? ''));
+      safeEmit(ProfileOtpConfirmSuccess(message: result['message'] as String? ?? ''));
     } on DioException catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
@@ -254,11 +255,11 @@ class ProfileCubit extends Cubit<ProfileState> {
     required String type,
     required String newValue,
   }) async {
-    emit(ProfileLoading());
+    safeEmit(ProfileLoading());
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {
-        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        safeEmit(ProfileFailure('لا يوجد رمز مصادقة'));
         return;
       }
       final result = await _profileRepository.changeContactInfo(
@@ -266,13 +267,13 @@ class ProfileCubit extends Cubit<ProfileState> {
         type: type,
         newValue: newValue,
       );
-      emit(type == 'email'
+      safeEmit(type == 'email'
           ? ProfileChangeEmailSuccess(message: result['message'] as String? ?? '')
           : ProfileChangePhoneSuccess(message: result['message'] as String? ?? ''));
     } on DioException catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
@@ -280,11 +281,11 @@ class ProfileCubit extends Cubit<ProfileState> {
     required String oldCode,
     required String newCode,
   }) async {
-    emit(ProfileLoading());
+    safeEmit(ProfileLoading());
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {
-        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        safeEmit(ProfileFailure('لا يوجد رمز مصادقة'));
         return;
       }
       final result = await _profileRepository.verifyContactChange(
@@ -293,51 +294,51 @@ class ProfileCubit extends Cubit<ProfileState> {
         newCode: newCode,
       );
       await fetchProfile();
-      emit(ProfileOtpConfirmSuccess(
+      safeEmit(ProfileOtpConfirmSuccess(
         message: result['message'] as String? ?? '',
       ));
     } on DioException catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
 
   Future<void> linkWithGoogle() async {
-    emit(ProfileLoading());
+    safeEmit(ProfileLoading());
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {
-        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        safeEmit(ProfileFailure('لا يوجد رمز مصادقة'));
         return;
       }
       final idToken = await SocialAuthService.signInWithGoogle();
       if (idToken == null) {
-        emit(ProfileFailure('تم إلغاء تسجيل الدخول بواسطة Google'));
+        safeEmit(ProfileFailure('تم إلغاء تسجيل الدخول بواسطة Google'));
         return;
       }
       await _authRepository.linkGoogle(token: token, idToken: idToken);
       await fetchProfile();
-      emit(ProfileLinkSuccess(message: 'تم ربط حساب Google بنجاح'));
+      safeEmit(ProfileLinkSuccess(message: 'تم ربط حساب Google بنجاح'));
     } on DioException catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
   Future<void> linkWithApple() async {
-    emit(ProfileLoading());
+    safeEmit(ProfileLoading());
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {
-        emit(ProfileFailure('لا يوجد رمز مصادقة'));
+        safeEmit(ProfileFailure('لا يوجد رمز مصادقة'));
         return;
       }
       final appleData = await SocialAuthService.signInWithApple();
       if (appleData == null) {
-        emit(ProfileFailure('تم إلغاء تسجيل الدخول بواسطة Apple'));
+        safeEmit(ProfileFailure('تم إلغاء تسجيل الدخول بواسطة Apple'));
         return;
       }
       await _authRepository.linkApple(
@@ -346,16 +347,16 @@ class ProfileCubit extends Cubit<ProfileState> {
         nonce: appleData['nonce']!,
       );
       await fetchProfile();
-      emit(ProfileLinkSuccess(message: 'تم ربط حساب Apple بنجاح'));
+      safeEmit(ProfileLinkSuccess(message: 'تم ربط حساب Apple بنجاح'));
     } on DioException catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     } catch (e) {
-      emit(ProfileFailure(extractErrorMessage(e)));
+      safeEmit(ProfileFailure(extractErrorMessage(e)));
     }
   }
 
   void reset() {
     _currentProfile = null;
-    emit(ProfileInitial());
+    safeEmit(ProfileInitial());
   }
 }

@@ -1,15 +1,16 @@
-
+﻿
 import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../data/models/refund_model.dart';
 import '../data/repo/refund_repo.dart';
 import 'refund_states.dart';
 
-class RefundCubit extends Cubit<RefundState> {
+class RefundCubit extends Cubit<RefundState> with SafeEmitMixin<RefundState> {
   final RefundRepository _repo;
 
   List<Refund> _refunds = [];
@@ -98,6 +99,6 @@ class RefundCubit extends Cubit<RefundState> {
   }
 
   void _safeEmit(RefundState s) {
-    if (!isClosed) emit(s);
+    if (!isClosed) safeEmit(s);
   }
 }

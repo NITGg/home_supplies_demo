@@ -1,12 +1,13 @@
-
+﻿
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../data/repo/category_repo.dart';
 import 'category_states.dart';
 
-class CategoriesCubit extends Cubit<CategoriesState> {
+class CategoriesCubit extends Cubit<CategoriesState> with SafeEmitMixin<CategoriesState> {
   final CategoryRepository _repository;
 
   static const int _pageSize = 10000;
@@ -19,11 +20,11 @@ class CategoriesCubit extends Cubit<CategoriesState> {
   Future<void> loadCategories({bool refresh = false}) async {
     if (refresh) {
       _currentSkip = 0;
-      if (!isClosed) emit(const CategoriesLoading());
+      if (!isClosed) safeEmit(const CategoriesLoading());
     } else if (state is CategoriesLoading) {
       return;
     } else {
-      if (!isClosed) emit(const CategoriesLoading());
+      if (!isClosed) safeEmit(const CategoriesLoading());
     }
 
     try {
@@ -35,7 +36,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
       _currentSkip = response.categories.length;
 
       if (!isClosed) {
-        emit(CategoriesLoaded(
+        safeEmit(CategoriesLoaded(
           categories: response.categories,
           totalCount: response.totalCount,
           hasMore: _currentSkip < response.totalCount,
@@ -43,7 +44,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
       }
     } catch (e) {
       dLog('CategoriesCubit: Error loading categories: $e');
-      if (!isClosed) emit(CategoriesError(extractErrorMessage(e)));
+      if (!isClosed) safeEmit(CategoriesError(extractErrorMessage(e)));
     }
   }
 
@@ -54,7 +55,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
       return;
     }
 
-    if (!isClosed) emit(current.copyWith(isLoadingMore: true));
+    if (!isClosed) safeEmit(current.copyWith(isLoadingMore: true));
 
     try {
       final response = await _repository.getCategories(
@@ -65,7 +66,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
       _currentSkip += response.categories.length;
 
       if (!isClosed) {
-        emit(current.copyWith(
+        safeEmit(current.copyWith(
           categories: [...current.categories, ...response.categories],
           hasMore: _currentSkip < response.totalCount,
           isLoadingMore: false,
@@ -73,7 +74,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
       }
     } catch (e) {
       dLog('CategoriesCubit: Error loading more categories: $e');
-      if (!isClosed) emit(current.copyWith(isLoadingMore: false));
+      if (!isClosed) safeEmit(current.copyWith(isLoadingMore: false));
     }
   }
 }

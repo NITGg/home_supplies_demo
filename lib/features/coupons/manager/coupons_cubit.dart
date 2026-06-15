@@ -1,10 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../data/models/coupons_model.dart';
 import '../data/repositories/coupons_repo.dart';
 import 'coupons_states.dart';
 
-class CouponCubit extends Cubit<CouponState> {
+class CouponCubit extends Cubit<CouponState> with SafeEmitMixin<CouponState> {
   final CouponRepository _repository;
   String? pendingFirstOrderCouponCode;
   bool _firstOrderCheckDone = false;
@@ -18,7 +19,7 @@ class CouponCubit extends Cubit<CouponState> {
       super(CouponInitial());
 
   Future<void> loadCoupons() async {
-    emit(CouponLoading());
+    safeEmit(CouponLoading());
     try {
       final response = await _repository.getCoupons();
       final loaded = CouponsLoaded(
@@ -27,9 +28,9 @@ class CouponCubit extends Cubit<CouponState> {
         totalPages: response.totalPages,
       );
       _lastLoadedState = loaded; // ← cache it
-      emit(loaded);
+      safeEmit(loaded);
     } catch (e) {
-      emit(CouponError(e.toString().replaceFirst('Exception: ', '')));
+      safeEmit(CouponError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
 

@@ -1,15 +1,16 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../config/chat_feature_config.dart';
 import '../data/models/chat_model.dart';
 import '../data/models/message_model.dart';
 import '../data/repo/chat_repository.dart';
 import 'chat_state.dart';
 
-class ChatCubit extends Cubit<ChatState> {
+class ChatCubit extends Cubit<ChatState> with SafeEmitMixin<ChatState> {
   final ChatRepository _repo;
   final int currentUserId;
 
@@ -31,7 +32,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   Future<void> joinExistingChat(int chatId) async {
     dLog('🔵 [ChatCubit] joinExistingChat(chatId: $chatId)');
-    emit(const ChatLoading());
+    safeEmit(const ChatLoading());
     try {
       final chats = await _repo.getMyChats();
       final knownChat = chats.cast<ChatModel?>().firstWhere(
@@ -50,7 +51,7 @@ class ChatCubit extends Cubit<ChatState> {
       _repo.markRead(effectiveChat.id);
       _subscribeToEvents(effectiveChat.id);
 
-      emit(
+      safeEmit(
         ChatLoaded(
           chat: effectiveChat,
           messages: messages,
@@ -60,7 +61,7 @@ class ChatCubit extends Cubit<ChatState> {
       );
     } catch (e, st) {
       dLog('🔴 [ChatCubit] joinExistingChat error: $e\n$st');
-      emit(ChatError(e.toString()));
+      safeEmit(ChatError(e.toString()));
     }
   }
 
@@ -68,7 +69,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   Future<void> openChat(int targetUserId, {int? orderId}) async {
     dLog('🔵 [ChatCubit] openChat(targetUserId: $targetUserId, orderId: $orderId)');
-    emit(const ChatLoading());
+    safeEmit(const ChatLoading());
     try {
       final existingChats = await _repo.getMyChats();
       ChatModel? existingChat;
@@ -95,7 +96,7 @@ class ChatCubit extends Cubit<ChatState> {
       _repo.markRead(chat.id);
       _subscribeToEvents(chat.id);
 
-      emit(
+      safeEmit(
         ChatLoaded(
           chat: chat,
           messages: messages,
@@ -105,7 +106,7 @@ class ChatCubit extends Cubit<ChatState> {
       );
     } catch (e, st) {
       dLog('🔴 [ChatCubit] openChat error: $e\n$st');
-      emit(ChatError(e.toString()));
+      safeEmit(ChatError(e.toString()));
     }
   }
 
@@ -126,7 +127,7 @@ class ChatCubit extends Cubit<ChatState> {
       type: MessageType.text,
     );
 
-    emit(loaded.copyWith(messages: [...loaded.messages, optimistic]));
+    safeEmit(loaded.copyWith(messages: [...loaded.messages, optimistic]));
     _stopMyTyping(loaded.chat.id);
 
     try {
@@ -141,7 +142,7 @@ class ChatCubit extends Cubit<ChatState> {
 
       if (state is! ChatLoaded) return;
       final current = state as ChatLoaded;
-      emit(
+      safeEmit(
         current.copyWith(
           messages: current.messages.map((m) {
             if (m.localId != optimistic.localId) return m;
@@ -155,7 +156,7 @@ class ChatCubit extends Cubit<ChatState> {
     } catch (e) {
       dLog('❌ [ChatCubit] sendTextMessage failed: $e');
       if (_isOrderEndedError(e)) {
-        emit(const ChatOrderEnded());
+        safeEmit(const ChatOrderEnded());
         return;
       }
       _markFailed(optimistic.localId, 'Failed to send message. Tap to retry.');
@@ -179,7 +180,7 @@ class ChatCubit extends Cubit<ChatState> {
     dLog(
       '📤 [ChatCubit] sendImageMessage — optimistic localId: ${optimistic.localId}',
     );
-    emit(loaded.copyWith(messages: [...loaded.messages, optimistic]));
+    safeEmit(loaded.copyWith(messages: [...loaded.messages, optimistic]));
 
     try {
       final confirmed = await _repo.sendImageMessage(
@@ -192,7 +193,7 @@ class ChatCubit extends Cubit<ChatState> {
 
       if (state is! ChatLoaded) return;
       final current = state as ChatLoaded;
-      emit(
+      safeEmit(
         current.copyWith(
           messages: current.messages.map((m) {
             if (m.localId != optimistic.localId) return m;
@@ -213,7 +214,7 @@ class ChatCubit extends Cubit<ChatState> {
     } catch (e) {
       dLog('❌ [ChatCubit] sendImageMessage failed: $e');
       if (_isOrderEndedError(e)) {
-        emit(const ChatOrderEnded());
+        safeEmit(const ChatOrderEnded());
         return;
       }
       _markFailed(optimistic.localId, 'Failed to send image. Tap to retry.');
@@ -240,7 +241,7 @@ class ChatCubit extends Cubit<ChatState> {
           ? m.copyWith(status: MessageStatus.sending)
           : m;
     }).toList();
-    emit(raw.copyWith(messages: updated));
+    safeEmit(raw.copyWith(messages: updated));
 
     try {
       if (failed.type == MessageType.image) {
@@ -250,7 +251,7 @@ class ChatCubit extends Cubit<ChatState> {
         );
         if (state is! ChatLoaded) return;
         final current = state as ChatLoaded;
-        emit(
+        safeEmit(
           current.copyWith(
             messages: current.messages.map((m) {
               if (m.localId != localId) return m;
@@ -276,7 +277,7 @@ class ChatCubit extends Cubit<ChatState> {
         );
         if (state is! ChatLoaded) return;
         final current = state as ChatLoaded;
-        emit(
+        safeEmit(
           current.copyWith(
             messages: current.messages.map((m) {
               if (m.localId != localId) return m;
@@ -291,11 +292,11 @@ class ChatCubit extends Cubit<ChatState> {
     } catch (e) {
       dLog('❌ [ChatCubit] retryMessage failed: $e');
       if (_isOrderEndedError(e)) {
-        emit(const ChatOrderEnded());
+        safeEmit(const ChatOrderEnded());
         return;
       }
       if (state is! ChatLoaded) return;
-      emit(
+      safeEmit(
         MessageSendFailed(
           currentState: state as ChatLoaded,
           failedMessageLocalId: localId,
@@ -312,7 +313,7 @@ class ChatCubit extends Cubit<ChatState> {
     final loaded = state as ChatLoaded;
     if (loaded.isLoadingMore || !loaded.hasMore) return;
 
-    emit(loaded.copyWith(isLoadingMore: true));
+    safeEmit(loaded.copyWith(isLoadingMore: true));
     try {
       final older = await _repo.loadMoreMessages(
         loaded.chat.id,
@@ -325,7 +326,7 @@ class ChatCubit extends Cubit<ChatState> {
           .reversed
           .where((m) => !existingIds.contains(m.localId))
           .toList();
-      emit(
+      safeEmit(
         current.copyWith(
           messages: [...newOnes, ...current.messages],
           isLoadingMore: false,
@@ -336,7 +337,7 @@ class ChatCubit extends Cubit<ChatState> {
     } catch (e, st) {
       dLog('🔴 [ChatCubit] loadMoreMessages error: $e\n$st');
       if (state is ChatLoaded) {
-        emit((state as ChatLoaded).copyWith(isLoadingMore: false));
+        safeEmit((state as ChatLoaded).copyWith(isLoadingMore: false));
       }
     }
   }
@@ -362,7 +363,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   void closeChatForOrder() {
     if (state is! ChatLoaded) return;
-    emit((state as ChatLoaded).copyWith(isClosed: true));
+    safeEmit((state as ChatLoaded).copyWith(isClosed: true));
   }
 
   void leaveChat() {
@@ -421,7 +422,7 @@ class ChatCubit extends Cubit<ChatState> {
             serverId: msg.serverId,
             status: MessageStatus.sent,
           );
-          emit(current.copyWith(messages: updated));
+          safeEmit(current.copyWith(messages: updated));
           _repo.markRead(chatId);
           return;
         }
@@ -435,7 +436,7 @@ class ChatCubit extends Cubit<ChatState> {
         return;
       }
 
-      emit(current.copyWith(messages: [...current.messages, msg]));
+      safeEmit(current.copyWith(messages: [...current.messages, msg]));
       _repo.markRead(chatId);
     });
 
@@ -449,7 +450,7 @@ class ChatCubit extends Cubit<ChatState> {
       if (userId == null || userId == currentUserId) return;
 
       final current = state as ChatLoaded;
-      emit(
+      safeEmit(
         current.copyWith(
           typingUserIds: Set<int>.from(current.typingUserIds)..add(userId),
         ),
@@ -489,7 +490,7 @@ class ChatCubit extends Cubit<ChatState> {
         return m;
       }).toList();
 
-      emit(current.copyWith(messages: updated));
+      safeEmit(current.copyWith(messages: updated));
     });
   }
 
@@ -507,7 +508,7 @@ class ChatCubit extends Cubit<ChatState> {
           ? m.copyWith(status: MessageStatus.failed)
           : m;
     }).toList();
-    emit(
+    safeEmit(
       MessageSendFailed(
         currentState: current.copyWith(messages: updated),
         failedMessageLocalId: localId,
@@ -544,7 +545,7 @@ class ChatCubit extends Cubit<ChatState> {
   void _removeTypingUser(int userId) {
     if (state is! ChatLoaded) return;
     final current = state as ChatLoaded;
-    emit(
+    safeEmit(
       current.copyWith(
         typingUserIds: Set<int>.from(current.typingUserIds)..remove(userId),
       ),

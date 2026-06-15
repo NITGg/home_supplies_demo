@@ -1,8 +1,9 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/safe_emit_mixin.dart';
 import '../../products/data/models/product_model.dart';
 import '../../products/data/repo/product_repo.dart';
 
@@ -70,7 +71,7 @@ class HomeProductsError extends HomeProductsState {
 ///
 /// Provide via [BlocProvider] above [CategoriesGridWidget] so it survives
 /// navigation and the data is ready when the user returns to home.
-class HomeProductsCubit extends Cubit<HomeProductsState> {
+class HomeProductsCubit extends Cubit<HomeProductsState> with SafeEmitMixin<HomeProductsState> {
   final ProductRepository _repo;
   final bool isGuest;
 
@@ -86,7 +87,7 @@ class HomeProductsCubit extends Cubit<HomeProductsState> {
   /// Loads all sections in parallel. Safe to call on refresh.
   Future<void> load({bool refresh = false}) async {
     if (!refresh && state is HomeProductsLoaded) return;
-    if (!isClosed) emit(const HomeProductsLoading());
+    if (!isClosed) safeEmit(const HomeProductsLoading());
 
     try {
       // ✅ All four requests fire simultaneously — total wait time equals the
@@ -103,7 +104,7 @@ class HomeProductsCubit extends Cubit<HomeProductsState> {
 
       if (isClosed) return;
 
-      emit(HomeProductsLoaded(HomeProductsData(
+      safeEmit(HomeProductsLoaded(HomeProductsData(
         offered: futures[0]?.products ?? [],
         bestSelling: futures[1]?.products ?? [],
         featured: futures[2]?.products ?? [],
@@ -111,7 +112,7 @@ class HomeProductsCubit extends Cubit<HomeProductsState> {
       )));
     } catch (e) {
       dLog('[HomeProductsCubit] load error: $e');
-      if (!isClosed) emit(HomeProductsError(extractErrorMessage(e)));
+      if (!isClosed) safeEmit(HomeProductsError(extractErrorMessage(e)));
     }
   }
 
@@ -142,7 +143,7 @@ class HomeProductsCubit extends Cubit<HomeProductsState> {
       if (isClosed) return;
 
       final data = current.data;
-      emit(HomeProductsLoaded(switch (section) {
+      safeEmit(HomeProductsLoaded(switch (section) {
         _Section.offered =>
             data.copyWith(offered: [...data.offered, ...response.products]),
         _Section.bestSelling => data.copyWith(
