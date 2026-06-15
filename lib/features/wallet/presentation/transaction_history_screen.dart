@@ -401,7 +401,7 @@ class _TransactionCard extends StatelessWidget {
         return Colors.green.shade600;
       case 'WITHDRAWAL':
         return const Color(0xFF6C5CE7);
-      case 'ESCROW_RELEASE':
+      case 'ESCROW_RELEASE' || 'ESCROW_REMOVE':
         return Colors.green.shade600;
       case 'PENALTY':
         return const Color(0xFFE17055);
@@ -412,7 +412,9 @@ class _TransactionCard extends StatelessWidget {
       case 'MANUAL_DECREASE':
         return const Color(0xFFFF6B6B);
       case 'COUPON_PURCHASE':
-        return const Color(0xFFFF6B6B);
+        return Colors.green.shade600;
+      case 'CARD_PAYMENT_RECEIVED':
+        return const Color(0xFF185FA5);
       default:
         return Colors.grey;
     }
@@ -422,16 +424,16 @@ class _TransactionCard extends StatelessWidget {
     switch (transaction.type) {
       case 'TOPUP' || 'MANUAL_INCREASE':
         return Icons.add_circle_outline;
-      case 'WITHDRAWAL' || 'MANUAL_DECREASE' || 'COUPON_PURCHASE':
+      case 'WITHDRAWAL' || 'MANUAL_DECREASE':
         return Icons.remove_circle_outline;
-      case 'ESCROW_RELEASE':
+      case 'ESCROW_RELEASE' || 'ESCROW_REMOVE' || 'COUPON_PURCHASE':
         return Icons.payments_outlined;
       case 'PENALTY':
         return Icons.warning_amber_outlined;
-      case 'COMMISSION_DEDUCTION':
+      case 'COMMISSION_DEDUCTION' || 'PLATFORM_COD_COMMISSION':
         return Icons.percent;
-      case 'PLATFORM_COD_COMMISSION':
-        return Icons.percent;
+      case 'CARD_PAYMENT_RECEIVED':
+        return Icons.credit_card_outlined;
       default:
         return Icons.receipt_long;
     }
@@ -457,7 +459,8 @@ class _TransactionCard extends StatelessWidget {
       case 'WITHDRAWAL':
         return l10n.withdrawal;
       case 'ESCROW_RELEASE':
-        return l10n.escrowRelease;case 'ESCROW_REMOVE':
+        return l10n.escrowRelease;
+      case 'ESCROW_REMOVE':
         return l10n.escrowRelease;
       case 'ESCROW_HOLD':
         return l10n.escrowHold;
@@ -467,6 +470,10 @@ class _TransactionCard extends StatelessWidget {
         return l10n.topup;
       case 'MANUAL_DECREASE':
         return l10n.withdrawal;
+      case 'COUPON_PURCHASE':
+        return l10n.couponRedeemed;
+      case 'CARD_PAYMENT_RECEIVED':
+        return l10n.cardPaymentReceived;
       default:
         return transaction.type;
     }
