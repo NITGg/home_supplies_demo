@@ -172,6 +172,33 @@ class _ProductCardState extends State<ProductCard>
       _promptLogin(ctx);
       return;
     } // ← GUARD
+
+    // Guard: block increment if it would exceed supplier's max order value.
+    final cartState = ctx.read<CartCubit>().state;
+    if (cartState is CartLoaded) {
+      final maxTotal = cartState.data.supplierLimits.maxPriceForOneOrder;
+      if (maxTotal != null) {
+        final spId = widget.product.spId ?? widget.product.id;
+        final item = cartState.data.cartItems
+            .where((i) => i.spId == spId)
+            .firstOrNull;
+        if (item != null) {
+          final currentTotal = cartState.data.summary.originalTotal -
+              cartState.data.summary.totalDiscount;
+          if (currentTotal + item.unitPrice > maxTotal) {
+            if (ctx.mounted) {
+              _showError(
+                ctx,
+                AppLocalizations.of(ctx)!
+                    .cartAboveMaxOrder(maxTotal.toStringAsFixed(2)),
+              );
+            }
+            return;
+          }
+        }
+      }
+    }
+
     HapticFeedback.selectionClick();
     _triggerBounce();
     try {
@@ -336,18 +363,22 @@ class _ProductCardState extends State<ProductCard>
                         Positioned(
                           bottom: 8,
                           right: 8,
-                          child: _CartControl(
-                            cartState: cartState,
-                            product: product,
-                            bounceScale: _bounceScale,
-                            primaryColor: primaryColor,
-                            isSupplierOpen: widget.isSupplierOpen,
-                            isOrderingOpen: widget.isOrderingOpen,
-                            onAdd: () => _handleAdd(ctx),
-                            onIncrement: () =>
-                                _handleIncrement(ctx, cartState.quantity),
-                            onDecrement: () =>
-                                _handleDecrement(ctx, cartState.quantity),
+                          // Absorbs taps that miss +/- during AnimatedSwitcher transitions.
+                          child: GestureDetector(
+                            onTap: () {},
+                            child: _CartControl(
+                              cartState: cartState,
+                              product: product,
+                              bounceScale: _bounceScale,
+                              primaryColor: primaryColor,
+                              isSupplierOpen: widget.isSupplierOpen,
+                              isOrderingOpen: widget.isOrderingOpen,
+                              onAdd: () => _handleAdd(ctx),
+                              onIncrement: () =>
+                                  _handleIncrement(ctx, cartState.quantity),
+                              onDecrement: () =>
+                                  _handleDecrement(ctx, cartState.quantity),
+                            ),
                           ),
                         ),
                       ],

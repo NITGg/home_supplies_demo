@@ -1440,7 +1440,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String cartAboveMaxOrder(String max) {
-    return 'The maximum order value is $max EGP';
+    return 'The maximum order value is $max EGP, set by this supplier';
   }
 
   @override

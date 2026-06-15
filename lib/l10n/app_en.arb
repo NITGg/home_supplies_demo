@@ -632,7 +632,7 @@
       }
     }
   },
-  "cartAboveMaxOrder": "The maximum order value is {max} EGP",
+  "cartAboveMaxOrder": "The maximum order value is {max} EGP, set by this supplier",
   "@cartAboveMaxOrder": {
     "placeholders": {
       "max": {

@@ -1440,7 +1440,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String cartAboveMaxOrder(String max) {
-    return 'الحد الأقصى لقيمة الطلب هو $max جنيه';
+    return 'الحد الأقصى لقيمة الطلب هو $max جنيه (محدد من قِبل المورد)';
   }
 
   @override

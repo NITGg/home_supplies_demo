@@ -116,10 +116,18 @@ class CartCubit extends Cubit<CartState> with SafeEmitMixin<CartState> {
       final item = await _repository.addItem(spId: spId, quantity: quantity);
       if (_loaded != null) {
         final current = _loaded!;
+        final wasEmpty = current.data.cartItems.isEmpty;
         final busy = Set<int>.from(current.busyItemIds)..remove(spId);
         _safeEmit(current.copyWith(busyItemIds: busy));
         _applyItemAdd(item);
-        unawaited(_fetchPreviewSilently());
+        // When adding to an empty cart the supplier may have changed, so we
+        // need a full refresh to pick up the new supplier's limits.
+        // _silentRefresh already calls _fetchPreviewSilently internally.
+        if (wasEmpty) {
+          unawaited(_silentRefresh());
+        } else {
+          unawaited(_fetchPreviewSilently());
+        }
       } else {
         await fetchCart();
       }
@@ -287,6 +295,8 @@ class CartCubit extends Cubit<CartState> with SafeEmitMixin<CartState> {
     try {
       await _repository.clearCart();
       await addItem(spId: spId, quantity: quantity);
+      // Load the new supplier's limits — addItem only refreshes items/summary.
+      unawaited(_silentRefresh());
     } catch (e) {
       dLog('[CartCubit] clearAndAddItem error: $e');
       await fetchCart();

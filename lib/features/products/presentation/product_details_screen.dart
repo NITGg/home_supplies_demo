@@ -365,8 +365,34 @@ class _AddToCartBarState extends State<_AddToCartBar>
       return;
     } // ← GUARD
     if (_tapLocked) return;
-    _tapLocked = true;
 
+    // Guard: block increment if it would exceed supplier's max order value.
+    final cartState = ctx.read<CartCubit>().state;
+    if (cartState is CartLoaded) {
+      final maxTotal = cartState.data.supplierLimits.maxPriceForOneOrder;
+      if (maxTotal != null) {
+        final spId = widget.product.spId ?? widget.product.id;
+        final item = cartState.data.cartItems
+            .where((i) => i.spId == spId)
+            .firstOrNull;
+        if (item != null) {
+          final currentTotal = cartState.data.summary.originalTotal -
+              cartState.data.summary.totalDiscount;
+          if (currentTotal + item.unitPrice > maxTotal) {
+            if (ctx.mounted) {
+              showErrorBanner(
+                ctx,
+                AppLocalizations.of(ctx)!
+                    .cartAboveMaxOrder(maxTotal.toStringAsFixed(2)),
+              );
+            }
+            return;
+          }
+        }
+      }
+    }
+
+    _tapLocked = true;
     HapticFeedback.selectionClick();
     _bounceCtrl.forward(from: 0);
 

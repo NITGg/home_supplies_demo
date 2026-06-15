@@ -1320,6 +1320,30 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _handleIncrement(BuildContext context, int spId) async {
+    // Guard: block increment if it would exceed supplier's max order value.
+    final cartState = _cubit.state;
+    if (cartState is CartLoaded) {
+      final maxTotal = cartState.data.supplierLimits.maxPriceForOneOrder;
+      if (maxTotal != null) {
+        final item = cartState.data.cartItems
+            .where((i) => i.spId == spId)
+            .firstOrNull;
+        if (item != null) {
+          final currentTotal = cartState.data.summary.originalTotal -
+              cartState.data.summary.totalDiscount;
+          if (currentTotal + item.unitPrice > maxTotal) {
+            if (context.mounted) {
+              showErrorBanner(
+                context,
+                AppLocalizations.of(context)!
+                    .cartAboveMaxOrder(maxTotal.toStringAsFixed(2)),
+              );
+            }
+            return;
+          }
+        }
+      }
+    }
     try {
       await _cubit.incrementItem(spId);
     } catch (_) {

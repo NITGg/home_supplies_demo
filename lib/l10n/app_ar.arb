@@ -630,7 +630,7 @@
       }
     }
   },
-  "cartAboveMaxOrder": "الحد الأقصى لقيمة الطلب هو {max} جنيه",
+  "cartAboveMaxOrder": "الحد الأقصى لقيمة الطلب هو {max} جنيه (محدد من قِبل المورد)",
   "@cartAboveMaxOrder": {
     "placeholders": {
       "max": {
