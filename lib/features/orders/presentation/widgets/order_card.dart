@@ -82,7 +82,7 @@ class OrderCard extends StatelessWidget {
       case 'DELIVERED':
         return Icons.check_circle;
       case 'CANCELLED':
-        return Icons.cancel;
+        return Icons.remove_circle;
       default:
         return Icons.info;
     }

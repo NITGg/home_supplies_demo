@@ -90,7 +90,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentPage = 0;
   List<OnBoardingData> _pages = [];
   bool _isLoading = true;
-  String? _error;
 
   @override
   void dispose() {
@@ -120,15 +119,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           _isLoading = false;
         });
       }
-    } on DioException catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _error = "Failed to load data: ${e.message}";
-        });
-      }
-    } catch (e) {
-      // Handle other exceptions
+    } on DioException catch (_) {
+      if (mounted) _finishOnboarding();
+    } catch (_) {
+      if (mounted) _finishOnboarding();
     }
   }
 
@@ -194,8 +188,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Scaffold(
         body: _isLoading
             ? const Center(child: LoadingScreen())
-            : _error != null
-            ? Center(child: Text(_error!))
             : _buildOnboardingContent(context),
       ),
     );
