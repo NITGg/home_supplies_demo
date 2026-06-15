@@ -372,6 +372,7 @@ class _OrderCancelBottomSheetState extends State<OrderCancelBottomSheet> {
       label: l10n.reason,
       controller: _noteController,
       prefixIcon: const Icon(Icons.note_alt_outlined),
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       onChanged: (_) => setState(() {}),
       validator: (value) {
         if (!_isOtherSelected && _reasonsError == null) return null;
