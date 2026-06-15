@@ -267,9 +267,7 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
           '📍 Location picked: ${result['administrativeArea']} - area selected : ${_governoratesResponse?.findAreaById(_selectedAreaId!)?.nameAr}',
         );
 
-        if (_detailedAddressController.text.isEmpty &&
-            result['address'] != null &&
-            result['address']!.isNotEmpty) {
+        if (result['address'] != null && result['address']!.isNotEmpty) {
           _detailedAddressController.text = result['address']!;
         }
 
