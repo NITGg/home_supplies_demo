@@ -413,7 +413,7 @@ class _TransactionCard extends StatelessWidget {
         return const Color(0xFFFF6B6B);
       case 'COUPON_PURCHASE':
         return Colors.green.shade600;
-      case 'CARD_PAYMENT_RECEIVED':
+      case 'ORDER_PAYMENT':
         return const Color(0xFF185FA5);
       default:
         return Colors.grey;
@@ -432,7 +432,7 @@ class _TransactionCard extends StatelessWidget {
         return Icons.warning_amber_outlined;
       case 'COMMISSION_DEDUCTION' || 'PLATFORM_COD_COMMISSION':
         return Icons.percent;
-      case 'CARD_PAYMENT_RECEIVED':
+      case 'ORDER_PAYMENT':
         return Icons.credit_card_outlined;
       default:
         return Icons.receipt_long;
@@ -472,7 +472,7 @@ class _TransactionCard extends StatelessWidget {
         return l10n.withdrawal;
       case 'COUPON_PURCHASE':
         return l10n.couponRedeemed;
-      case 'CARD_PAYMENT_RECEIVED':
+      case 'ORDER_PAYMENT':
         return l10n.cardPaymentReceived;
       default:
         return transaction.type;
