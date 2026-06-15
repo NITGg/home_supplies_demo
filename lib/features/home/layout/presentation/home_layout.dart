@@ -839,10 +839,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                       ConnectionState.waiting) {
                                     return const Expanded(
                                       child: Center(
-                                        child: LoadingScreen(
-                                          asWidget: true,
-                                          isOne: true,
-                                        ),
+                                        child: CircularProgressIndicator(color: Colors.orange,),
                                       ),
                                     );
                                   } else if (snapshot.hasData &&
