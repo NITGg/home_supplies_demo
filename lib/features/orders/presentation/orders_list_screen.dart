@@ -11,6 +11,7 @@ import 'package:tawreedat_go/features/orders/presentation/widgets/status_banner.
 import '../../../core/style/app_colors.dart';
 import '../../../core/style/text_styles.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/secure_storage_service.dart';
 import '../../../core/utils/socket_service.dart';
 import '../../../core/widgets/banners.dart';
 import '../../../l10n/app_localizations.dart';
@@ -55,6 +56,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   bool _isLoadingMore = false;
 
   final Set<int> _ordersWithNewOffers = {};
+  Set<int> _hiddenOrderIds = {};
 
   Timer? _expirationTimer;
   bool _expirationReloadPending = false;
@@ -71,6 +73,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
   @override
   void initState() {
     super.initState();
+    SecureStorageService().getHiddenOrderIds().then((ids) {
+      if (mounted) setState(() => _hiddenOrderIds = ids);
+    });
     context.read<OrderCubit>().loadActiveOrders();
     _scrollController.addListener(_onScroll);
     _setupSocketListeners();
@@ -603,12 +608,18 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
         return [SliverFillRemaining(child: _buildShimmerView())];
       }
 
-      final orders = state.orders;
+      final orders = _viewMode == ViewMode.history
+          ? state.orders
+              .where((o) => o.id != null && !_hiddenOrderIds.contains(o.id))
+              .toList()
+          : state.orders;
 
       if (orders.isEmpty) {
         return [
           if (_viewMode == ViewMode.history)
-            SliverToBoxAdapter(child: _buildFilterChips(context)),
+            SliverToBoxAdapter(
+              child: _buildFilterChips(context, visibleOrders: const []),
+            ),
           SliverFillRemaining(child: OrderEmptyState(viewMode: _viewMode)),
         ];
       }
@@ -620,7 +631,9 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
       return [
         // Filter chips (history only)
         if (_viewMode == ViewMode.history)
-          SliverToBoxAdapter(child: _buildFilterChips(context)),
+          SliverToBoxAdapter(
+            child: _buildFilterChips(context, visibleOrders: orders),
+          ),
 
         // Status banner (active only)
         if (_viewMode == ViewMode.active)
@@ -675,7 +688,7 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
               }
 
               final order = orders[index];
-              return OrderCard(
+              final card = OrderCard(
                 roleId: context.read<ProfileCubit>().currentProfile?.roleId,
                 order: order,
                 hasNewOffer: _ordersWithNewOffers.contains(order.id),
@@ -688,6 +701,50 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                 onCancel: () => _showCancelSheet(order),
                 onRetrySuccess: () => _onTabChanged(ViewMode.active),
                 currentUserId: context.read<ProfileCubit>().currentProfile!.id,
+              );
+
+              if (_viewMode != ViewMode.history || order.id == null) {
+                return card;
+              }
+
+              return Dismissible(
+                key: ValueKey('order_${order.id}'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: AlignmentDirectional.centerEnd,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade400,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                confirmDismiss: (_) async {
+                  final l10n = AppLocalizations.of(context)!;
+                  final hiddenId = order.id!;
+
+                  setState(() => _hiddenOrderIds.add(hiddenId));
+                  await SecureStorageService().addHiddenOrderId(hiddenId);
+
+                  if (mounted) {
+                    showSuccessBanner(
+                      context,
+                      l10n.orderHidden,
+                      actionLabel: l10n.undo,
+                      onAction: () async {
+                        await SecureStorageService().removeHiddenOrderId(hiddenId);
+                        if (mounted) setState(() => _hiddenOrderIds.remove(hiddenId));
+                      },
+                    );
+                  }
+                  return false; // filtering does the hiding; keep Dismissible in tree
+                },
+                child: card,
               );
             },
           ),
@@ -771,12 +828,14 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
   // ── filter chips ─────────────────────────────────────────────────────────
 
-  Widget _buildFilterChips(BuildContext context) {
+  Widget _buildFilterChips(
+    BuildContext context, {
+    required List<Order> visibleOrders,
+  }) {
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -787,40 +846,107 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
           ),
         ],
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            Text(
-              l10n.filterBy,
-              style: AppTextStyles.medium18.copyWith(
-                color: Colors.grey.shade700,
-                fontSize: 14,
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Filters row ──────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              children: [
+                Text(
+                  l10n.filterBy,
+                  style: AppTextStyles.medium18.copyWith(
+                    color: Colors.grey.shade700,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                _buildFilterChip(
+                  label: l10n.all,
+                  value: 'all',
+                  icon: Icons.all_inclusive,
+                ),
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  label: l10n.delivered,
+                  value: 'DELIVERED',
+                  icon: Icons.check_circle_outline,
+                  color: Colors.green,
+                ),
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  label: l10n.cancelled,
+                  value: 'CANCELLED',
+                  icon: Icons.cancel_outlined,
+                  color: Colors.red,
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            _buildFilterChip(
-              label: l10n.all,
-              value: 'all',
-              icon: Icons.all_inclusive,
+          ),
+
+          // ── Actions row: swipe hint + clear all ──────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.swipe_left_rounded,
+                  size: 14,
+                  color: Colors.grey.shade400,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  l10n.swipeToHide,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                ),
+                const Spacer(),
+                if (visibleOrders.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => _clearAllHistory(context, visibleOrders),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.delete_sweep_rounded,
+                          size: 14,
+                          color: Colors.grey.shade500,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          l10n.clearAll,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(width: 8),
-            _buildFilterChip(
-              label: l10n.delivered,
-              value: 'DELIVERED',
-              icon: Icons.check_circle_outline,
-              color: Colors.green,
-            ),
-            const SizedBox(width: 8),
-            _buildFilterChip(
-              label: l10n.cancelled,
-              value: 'CANCELLED',
-              icon: Icons.cancel_outlined,
-              color: Colors.red,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  void _clearAllHistory(BuildContext context, List<Order> visibleOrders) {
+    final l10n = AppLocalizations.of(context)!;
+    final ids = visibleOrders.map((o) => o.id!).toSet();
+
+    setState(() => _hiddenOrderIds.addAll(ids));
+    Future.wait(ids.map(SecureStorageService().addHiddenOrderId));
+
+    showSuccessBanner(
+      context,
+      l10n.allOrdersHidden,
+      actionLabel: l10n.undo,
+      onAction: () async {
+        await Future.wait(ids.map(SecureStorageService().removeHiddenOrderId));
+        if (mounted) setState(() => _hiddenOrderIds.removeAll(ids));
+      },
     );
   }
 

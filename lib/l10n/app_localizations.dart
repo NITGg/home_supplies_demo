@@ -3880,6 +3880,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This feature is not available for your account'**
   String get featureNotAvailable;
+
+  /// No description provided for @orderHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Order hidden from history'**
+  String get orderHidden;
+
+  /// No description provided for @allOrdersHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'All orders hidden from history'**
+  String get allOrdersHidden;
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @swipeToHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe left on an order to hide it'**
+  String get swipeToHide;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

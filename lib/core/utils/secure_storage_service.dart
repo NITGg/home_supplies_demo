@@ -208,4 +208,42 @@ class SecureStorageService {
   Future<void> deleteValue(String key) async {
     await _storage.delete(key: key);
   }
+
+  // ── Hidden order IDs (soft-delete from history) ───────────────────────────
+
+  static const String _hiddenOrderIdsKey = 'hidden_order_ids';
+
+  Future<Set<int>> getHiddenOrderIds() async {
+    final raw = await _guardedRead(
+      () async => _storage.read(key: _hiddenOrderIdsKey),
+    );
+    if (raw == null || raw.isEmpty) return {};
+    return raw
+        .split(',')
+        .map((e) => int.tryParse(e))
+        .whereType<int>()
+        .toSet();
+  }
+
+  Future<void> addHiddenOrderId(int orderId) async {
+    final existing = await getHiddenOrderIds();
+    existing.add(orderId);
+    await _guardedWrite(() async {
+      await _storage.write(
+        key: _hiddenOrderIdsKey,
+        value: existing.join(','),
+      );
+    });
+  }
+
+  Future<void> removeHiddenOrderId(int orderId) async {
+    final existing = await getHiddenOrderIds();
+    existing.remove(orderId);
+    await _guardedWrite(() async {
+      await _storage.write(
+        key: _hiddenOrderIdsKey,
+        value: existing.join(','),
+      );
+    });
+  }
 }

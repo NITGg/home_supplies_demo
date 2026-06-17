@@ -200,7 +200,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get markAllAsRead => 'تحديد الكل كمقروءة';
 
   @override
-  String get clearAll => 'حذف الكل';
+  String get clearAll => 'مسح الكل';
 
   @override
   String get clear => 'مسح';
@@ -1965,4 +1965,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get featureNotAvailable => 'هذه الميزة غير متاحة لحسابك';
+
+  @override
+  String get orderHidden => 'تم إخفاء الطلب من السجل';
+
+  @override
+  String get allOrdersHidden => 'تم إخفاء جميع الطلبات من السجل';
+
+  @override
+  String get undo => 'تراجع';
+
+  @override
+  String get swipeToHide => 'اسحب لليمين على الطلب لإخفائه';
 }

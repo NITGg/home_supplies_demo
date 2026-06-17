@@ -1965,4 +1965,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featureNotAvailable => 'This feature is not available for your account';
+
+  @override
+  String get orderHidden => 'Order hidden from history';
+
+  @override
+  String get allOrdersHidden => 'All orders hidden from history';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get swipeToHide => 'Swipe left on an order to hide it';
 }

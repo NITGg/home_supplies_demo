@@ -965,5 +965,11 @@
   "outsideOrderWindowButton": "خارج وقت الطلب",
   "@outsideOrderWindowButton": { "description": "Disabled add-to-cart button label when outside order window" },
 
-  "featureNotAvailable": "هذه الميزة غير متاحة لحسابك"
+  "featureNotAvailable": "هذه الميزة غير متاحة لحسابك",
+
+  "orderHidden": "تم إخفاء الطلب من السجل",
+  "allOrdersHidden": "تم إخفاء جميع الطلبات من السجل",
+  "undo": "تراجع",
+  "clearAll": "مسح الكل",
+  "swipeToHide": "اسحب لليمين على الطلب لإخفائه"
 }
