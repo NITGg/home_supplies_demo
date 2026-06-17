@@ -971,5 +971,6 @@
   "allOrdersHidden": "تم إخفاء جميع الطلبات من السجل",
   "undo": "تراجع",
   "clearAll": "مسح الكل",
-  "swipeToHide": "اسحب لليمين على الطلب لإخفائه"
+  "swipeToHide": "اسحب لليمين على الطلب لحذفه",
+  "clearAllOrdersConfirmation": "هل أنت متأكد أنك تريد مسح كل سجل الطلبات؟."
 }

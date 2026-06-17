@@ -1976,5 +1976,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
-  String get swipeToHide => 'Swipe left on an order to hide it';
+  String get swipeToHide => 'Swipe left on an order to delete it';
+
+  @override
+  String get clearAllOrdersConfirmation => 'Are you sure you want to clear all order history?';
 }

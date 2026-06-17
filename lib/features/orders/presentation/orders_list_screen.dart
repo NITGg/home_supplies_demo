@@ -934,19 +934,43 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
 
   void _clearAllHistory(BuildContext context, List<Order> visibleOrders) {
     final l10n = AppLocalizations.of(context)!;
-    final ids = visibleOrders.map((o) => o.id!).toSet();
 
-    setState(() => _hiddenOrderIds.addAll(ids));
-    Future.wait(ids.map(SecureStorageService().addHiddenOrderId));
-
-    showSuccessBanner(
-      context,
-      l10n.allOrdersHidden,
-      actionLabel: l10n.undo,
-      onAction: () async {
-        await Future.wait(ids.map(SecureStorageService().removeHiddenOrderId));
-        if (mounted) setState(() => _hiddenOrderIds.removeAll(ids));
-      },
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(l10n.clearAll),
+        content: Text(l10n.clearAllOrdersConfirmation),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogCtx).pop();
+              final ids = visibleOrders.map((o) => o.id!).toSet();
+              setState(() => _hiddenOrderIds.addAll(ids));
+              Future.wait(ids.map(SecureStorageService().addHiddenOrderId));
+              showSuccessBanner(
+                context,
+                l10n.allOrdersHidden,
+                actionLabel: l10n.undo,
+                onAction: () async {
+                  await Future.wait(
+                    ids.map(SecureStorageService().removeHiddenOrderId),
+                  );
+                  if (mounted) setState(() => _hiddenOrderIds.removeAll(ids));
+                },
+              );
+            },
+            child: Text(
+              l10n.clearAll,
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

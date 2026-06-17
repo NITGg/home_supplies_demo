@@ -3902,8 +3902,14 @@ abstract class AppLocalizations {
   /// No description provided for @swipeToHide.
   ///
   /// In en, this message translates to:
-  /// **'Swipe left on an order to hide it'**
+  /// **'Swipe left on an order to delete it'**
   String get swipeToHide;
+
+  /// No description provided for @clearAllOrdersConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear all order history?'**
+  String get clearAllOrdersConfirmation;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1976,5 +1976,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get undo => 'تراجع';
 
   @override
-  String get swipeToHide => 'اسحب لليمين على الطلب لإخفائه';
+  String get swipeToHide => 'اسحب لليمين على الطلب لحذفه';
+
+  @override
+  String get clearAllOrdersConfirmation => 'هل أنت متأكد أنك تريد مسح كل سجل الطلبات؟.';
 }

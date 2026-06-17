@@ -974,5 +974,6 @@
   "allOrdersHidden": "All orders hidden from history",
   "undo": "Undo",
   "clearAll": "Clear All",
-  "swipeToHide": "Swipe left on an order to hide it"
+  "swipeToHide": "Swipe left on an order to delete it",
+  "clearAllOrdersConfirmation": "Are you sure you want to clear all order history?"
 }
