@@ -24,7 +24,9 @@ class CartPaymentToggle extends StatelessWidget {
 
   /// CARD is shown only when at least one card provider is enabled.
   static bool get _cardEnabled =>
-      AppSettings.kashier_enabled == true || AppSettings.paymob_enabled == true;
+      AppSettings.kashier_enabled == true ||
+      AppSettings.paymob_enabled == true ||
+      AppSettings.easykash_enabled == true;
 
   List<String> get _options =>
       _cardEnabled ? ['CASH', 'WALLET', 'CARD'] : ['CASH', 'WALLET'];

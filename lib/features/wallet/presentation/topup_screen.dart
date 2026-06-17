@@ -49,7 +49,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
     if (_selectedAmount == null || _selectedAmount! <= 0) {
       return l10n.pleaseEnterAmount;
     }
-    if (_selectedAmount! < 10) {
+    if (_selectedAmount! < 5) {
       return l10n.minimumTopUpIs;
     }
     if (_selectedAmount! > 5000) {
@@ -68,13 +68,14 @@ class _TopUpScreenState extends State<TopUpScreen> {
     final enabledProviders = [
       if (AppSettings.kashier_enabled == true) 'kashier',
       if (AppSettings.paymob_enabled == true) 'paymob',
+      if (AppSettings.easykash_enabled == true) 'easykash',
     ];
 
     // Auto-select the only available provider without showing the sheet
     if (enabledProviders.length == 1) {
       context.read<WalletCubit>().initiateOnlineTopUp(
         amount: _selectedAmount! * 100,
-        provider: enabledProviders.first == 'kashier' ? 'kashier' : null,
+        provider: enabledProviders.first,
       );
       return;
     }
@@ -96,6 +97,13 @@ class _TopUpScreenState extends State<TopUpScreen> {
           Navigator.pop(sheetContext);
           context.read<WalletCubit>().initiateOnlineTopUp(
             amount: _selectedAmount! * 100,
+          );
+        },
+        onEasykashPayment: () {
+          Navigator.pop(sheetContext);
+          context.read<WalletCubit>().initiateOnlineTopUp(
+            amount: _selectedAmount! * 100,
+            provider: 'easykash',
           );
         },
         onManualTransfer: () {
@@ -296,12 +304,14 @@ class _PaymentMethodSheet extends StatelessWidget {
   final int amount;
   final VoidCallback onKashierPayment;
   final VoidCallback onPaymobPayment;
+  final VoidCallback onEasykashPayment;
   final VoidCallback onManualTransfer;
 
   const _PaymentMethodSheet({
     required this.amount,
     required this.onKashierPayment,
     required this.onPaymobPayment,
+    required this.onEasykashPayment,
     required this.onManualTransfer,
   });
 
@@ -356,8 +366,19 @@ class _PaymentMethodSheet extends StatelessWidget {
               onTap: onPaymobPayment,
             ),
           ],
+          if (AppSettings.easykash_enabled == true) ...[
+            const SizedBox(height: 24),
+            _PaymentMethodTile(
+              asset: 'assets/images/easykash.png',
+              title: l10n.mobileWallet,
+              subtitle: l10n.onlinePayment,
+              color: AppColors.kSecondaryColor,
+              onTap: onEasykashPayment,
+            ),
+          ],
           if (AppSettings.paymob_enabled == false &&
-              AppSettings.kashier_enabled == false) ...[
+              AppSettings.kashier_enabled == false &&
+              AppSettings.easykash_enabled == false) ...[
             const SizedBox(height: 12),
             _PaymentMethodTile(
               asset: 'assets/images/InstaPayVodaCash.png',
@@ -405,7 +426,7 @@ class _PaymentMethodTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Image.asset(

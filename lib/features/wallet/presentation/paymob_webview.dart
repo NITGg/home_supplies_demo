@@ -37,12 +37,11 @@ class PaymobWebViewScreen extends StatefulWidget {
 
 class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
   late final WebViewController _controller;
-  bool _canPop = true;
+  bool get _canPop => !_locked;
+  bool _locked = false;
   bool _isLoading = true;
-  // True once the user has navigated away from the initial payment page
-  // (i.e. they submitted their card data). Only after this point do we lock
-  // the back button, because before submission there is nothing to lose.
   bool _paymentSubmitted = false;
+  String? _easykashConfirmUrl;
 
   @override
   void initState() {
@@ -60,6 +59,14 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
           onPageFinished: (url) {
             dLog("✅ Page finished loading: $url");
             setState(() => _isLoading = false);
+            // EasyKash confirm URL must load so the backend processes the
+            // payment. We detect success/failure after the page finishes.
+            if (_easykashConfirmUrl != null && url == _easykashConfirmUrl) {
+              _easykashConfirmUrl = null;
+              final uri = Uri.parse(url);
+              final status = uri.queryParameters['status']?.toUpperCase();
+              _handlePaymentResult(success: status == 'PAID');
+            }
           },
           onNavigationRequest: (request) async {
             dLog("🔗 Navigation request: ${request.url}");
@@ -75,8 +82,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
               return NavigationDecision.prevent;
             }
 
-            // Detect Kashier redirect — Kashier appends paymentStatus to the
-            // merchant callback URL which is outside the kashier.io domain.
+            // Detect Kashier redirect — appends paymentStatus to callback URL.
             if (widget.provider == 'kashier' &&
                 request.url.contains('paymentStatus')) {
               final uri = Uri.parse(request.url);
@@ -85,15 +91,26 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
               return NavigationDecision.prevent;
             }
 
+            // EasyKash confirm URL must be loaded so the backend processes the
+            // payment. Store it and let the WebView navigate; we handle the
+            // result in onPageFinished after the backend call completes.
+            if (widget.provider == 'easykash' &&
+                request.url.contains('easykash') &&
+                request.url.contains('status=')) {
+              _easykashConfirmUrl = request.url;
+              return NavigationDecision.navigate;
+            }
+
             // Once the user navigates away from the initial page (form
             // submission, 3DS redirect, etc.) lock the back button so they
             // cannot accidentally abort mid-transaction.
-            if (!_paymentSubmitted &&
+            if (widget.provider != 'easykash' &&
+                !_paymentSubmitted &&
                 request.url != widget.paymentUrl &&
                 request.isMainFrame) {
               setState(() {
                 _paymentSubmitted = true;
-                _canPop = false;
+                _locked = true;
               });
             }
 
@@ -125,7 +142,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
         );
       }
     } else {
-      setState(() => _canPop = true);
+      setState(() => _locked = false);
       if (widget.onPaymentFailed != null) {
         widget.onPaymentFailed!();
       } else {

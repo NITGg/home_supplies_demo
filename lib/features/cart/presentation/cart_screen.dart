@@ -49,7 +49,9 @@ class _CartScreenState extends State<CartScreen> {
   int? _currentDefaultAddressId;
 
   String _paymentMethod =
-      (AppSettings.kashier_enabled == true || AppSettings.paymob_enabled == true)
+      (AppSettings.kashier_enabled == true ||
+              AppSettings.paymob_enabled == true ||
+              AppSettings.easykash_enabled == true)
           ? 'CARD'
           : 'CASH';
 
@@ -332,6 +334,7 @@ class _CartScreenState extends State<CartScreen> {
       final enabledProviders = [
         if (AppSettings.kashier_enabled == true) 'kashier',
         if (AppSettings.paymob_enabled == true) 'paymob',
+        if (AppSettings.easykash_enabled == true) 'easykash',
       ];
 
       if (enabledProviders.length == 1) {
@@ -1558,6 +1561,14 @@ class _CardProviderSheet extends StatelessWidget {
               asset: 'assets/images/Paymob.jpg',
               name: l10n.creditDebitCard,
               onTap: () => onProviderSelected('paymob'),
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (AppSettings.easykash_enabled == true) ...[
+            _ProviderTile(
+              asset: 'assets/images/easykash.png',
+              name: l10n.mobileWallet,
+              onTap: () => onProviderSelected('easykash'),
             ),
             const SizedBox(height: 12),
           ],
