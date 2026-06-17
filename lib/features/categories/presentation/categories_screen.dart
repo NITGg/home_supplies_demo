@@ -3,10 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/style/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../ads/presentation/widgets/popups.dart';
 import '../../addresses/manager/address_cubit.dart';
 import '../../addresses/manager/address_states.dart';
 import '../../addresses/presentation/default_address_chip.dart';
+import '../../auth/manager/profile_cubit.dart';
+import '../../auth/manager/profile_states.dart';
 import '../../cart/presentation/widgets/cart_button.dart';
 import '../../home/layout/manager/guest_cubit.dart';
 import '../../search/presentation/search_dialog.dart';
@@ -46,6 +49,31 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profileState = context.watch<ProfileCubit>().state;
+    final isSupplier = profileState is ProfileLoaded &&
+        profileState.profile.roleId == 6;
+
+    if (isSupplier) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.lock_rounded, size: 64, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            Text(
+              AppLocalizations.of(context)!.featureNotAvailable,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
     return BlocListener<AddressCubit, AddressState>(
       listener: (context, state) {
         if (state is! AddressesLoaded) return;

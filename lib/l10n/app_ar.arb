@@ -963,5 +963,7 @@
   "@outsideOrderWindowBanner": { "description": "Warning banner shown when outside order window" },
 
   "outsideOrderWindowButton": "خارج وقت الطلب",
-  "@outsideOrderWindowButton": { "description": "Disabled add-to-cart button label when outside order window" }
+  "@outsideOrderWindowButton": { "description": "Disabled add-to-cart button label when outside order window" },
+
+  "featureNotAvailable": "هذه الميزة غير متاحة لحسابك"
 }

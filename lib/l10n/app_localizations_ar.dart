@@ -1962,4 +1962,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get outsideOrderWindowButton => 'خارج وقت الطلب';
+
+  @override
+  String get featureNotAvailable => 'هذه الميزة غير متاحة لحسابك';
 }

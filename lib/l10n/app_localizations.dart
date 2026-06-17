@@ -2888,7 +2888,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartAboveMaxOrder.
   ///
   /// In en, this message translates to:
-  /// **'The maximum order value is {max} EGP'**
+  /// **'The maximum order value is {max} EGP, set by this supplier'**
   String cartAboveMaxOrder(String max);
 
   /// No description provided for @cartOrderLimitBeforeCoupon.
@@ -3874,6 +3874,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Outside Order Time'**
   String get outsideOrderWindowButton;
+
+  /// No description provided for @featureNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is not available for your account'**
+  String get featureNotAvailable;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

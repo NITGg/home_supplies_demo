@@ -966,5 +966,7 @@
   "@outsideOrderWindowBanner": { "description": "Warning banner shown when outside order window" },
 
   "outsideOrderWindowButton": "Outside Order Time",
-  "@outsideOrderWindowButton": { "description": "Disabled add-to-cart button label when outside order window" }
+  "@outsideOrderWindowButton": { "description": "Disabled add-to-cart button label when outside order window" },
+
+  "featureNotAvailable": "This feature is not available for your account"
 }

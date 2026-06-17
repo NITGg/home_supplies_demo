@@ -8,10 +8,12 @@ part 'home_state.dart';
 class HomeCubit extends Cubit<HomeState> with SafeEmitMixin<HomeState> {
   static const int ordersTabIndex = 1;
 
-  int currentIndex = 0;
+  int currentIndex;
   bool pendingHistoryTab = false; // 👈 persists across missed emissions
 
-  HomeCubit() : super(HomeInitial());
+  HomeCubit({int initialIndex = 0})
+      : currentIndex = initialIndex,
+        super(HomeInitial());
 
   void changeTab(int index) {
     if (index == currentIndex) return;

@@ -67,7 +67,11 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   bool _isGuest = false;
 
   String _userId = '';
-  late final HomeCubit _homeCubit = HomeCubit();
+  late final HomeCubit _homeCubit = HomeCubit(
+    initialIndex: context.read<ProfileCubit>().currentProfile?.roleId == 6
+        ? HomeCubit.ordersTabIndex
+        : 0,
+  );
   late final CouponCubit _couponCubit = CouponCubit()..loadCoupons();
   bool _firstOrderChecked = false;
   bool _phoneSheetShown = false;
@@ -329,6 +333,11 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       if (_firstOrderChecked) return;
                       _firstOrderChecked = true;
 
+                      // Suppliers cannot access the categories tab — redirect to orders.
+                      if (profileState.profile.roleId == 6) {
+                        _homeCubit.changeTab(HomeCubit.ordersTabIndex);
+                      }
+
                       // if (profileState.profile.phone == null &&
                       //     !_phoneSheetShown) {
                       //   _phoneSheetShown = true;
@@ -374,6 +383,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       userId: _userId,
                       categoriesEmpty: _categoriesEmpty,
                       isGuest: _isGuest,
+                      isSupplier: profile?.roleId == 6,
                     ),
                   ),
                   floatingActionButtonLocation:
@@ -635,18 +645,21 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                 ),
                                               ),
                                             ],
-                                            const Divider(),
-                                            ListTile(
-                                              onTap: () =>
-                                                  context.push('/cart'),
-                                              leading: const Icon(
-                                                Icons.shopping_cart_rounded,
+                                            if (profileState is! ProfileLoaded ||
+                                                profileState.profile.roleId != 6) ...[
+                                              const Divider(),
+                                              ListTile(
+                                                onTap: () =>
+                                                    context.push('/cart'),
+                                                leading: const Icon(
+                                                  Icons.shopping_cart_rounded,
+                                                ),
+                                                title: Text(
+                                                  localizations.cart,
+                                                  style: AppTextStyles.bold16,
+                                                ),
                                               ),
-                                              title: Text(
-                                                localizations.cart,
-                                                style: AppTextStyles.bold16,
-                                              ),
-                                            ),
+                                            ],
                                             const Divider(),
                                             ListTile(
                                               onTap: () =>
@@ -915,10 +928,19 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                     userId: _userId,
                     localizations: localizations,
                     isGuest: _isGuest,
+                    isSupplier: profile?.roleId == 6,
                     onOrdersTap: () => cubit.changeTab(1),
                     onCategoriesTap: () => cubit.changeTab(0),
                     onGuestRestrictedTap: () {
                       showGuestLoginPrompt(context);
+                    },
+                    onSupplierRestrictedTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(localizations.featureNotAvailable),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
                     },
                     onNotificationsTap: () => showNotificationsDialog(
                       context,
@@ -949,23 +971,28 @@ class _BottomNavBar extends StatelessWidget {
   final String userId;
   final AppLocalizations localizations;
   final bool isGuest;
+  final bool isSupplier;
   final VoidCallback onOrdersTap;
   final VoidCallback onCategoriesTap;
   final VoidCallback onNotificationsTap;
 
-  /// Called instead of [onOrdersTap] when the session is a guest, so the
-  /// parent can show a login prompt rather than switching tabs.
+  /// Called instead of [onOrdersTap] when the session is a guest.
   final VoidCallback onGuestRestrictedTap;
+
+  /// Called instead of [onCategoriesTap] when the user is a supplier.
+  final VoidCallback onSupplierRestrictedTap;
 
   const _BottomNavBar({
     required this.currentIndex,
     required this.userId,
     required this.localizations,
     required this.isGuest,
+    required this.isSupplier,
     required this.onOrdersTap,
     required this.onCategoriesTap,
     required this.onNotificationsTap,
     required this.onGuestRestrictedTap,
+    required this.onSupplierRestrictedTap,
   });
 
   @override
@@ -1008,29 +1035,57 @@ class _BottomNavBar extends StatelessWidget {
                     // ── Categories tab ───────────────────────────────────────
                     Expanded(
                       child: InkWell(
-                        onTap: onCategoriesTap,
+                        onTap: isSupplier
+                            ? onSupplierRestrictedTap
+                            : onCategoriesTap,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              currentIndex == 0
-                                  ? Icons.shopping_bag
-                                  : Icons.shopping_bag_outlined,
-                              color: currentIndex == 0
-                                  ? AppColors.kPrimaryColor
-                                  : Colors.grey,
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Icon(
+                                  currentIndex == 0
+                                      ? Icons.shopping_bag
+                                      : Icons.shopping_bag_outlined,
+                                  color: isSupplier
+                                      ? Colors.grey.shade400
+                                      : currentIndex == 0
+                                          ? AppColors.kPrimaryColor
+                                          : Colors.grey,
+                                ),
+                                if (isSupplier)
+                                  Positioned(
+                                    right: -6,
+                                    top: -4,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade400,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.lock_rounded,
+                                        size: 8,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             Text(
                               localizations.shopping,
                               style: TextStyle(
                                 height: 2,
                                 fontSize: 10,
-                                fontWeight: currentIndex == 0
+                                fontWeight: (!isSupplier && currentIndex == 0)
                                     ? FontWeight.w700
                                     : FontWeight.w500,
-                                color: currentIndex == 0
-                                    ? AppColors.kPrimaryColor
-                                    : Colors.grey,
+                                color: isSupplier
+                                    ? Colors.grey.shade400
+                                    : currentIndex == 0
+                                        ? AppColors.kPrimaryColor
+                                        : Colors.grey,
                               ),
                             ),
                           ],
@@ -1185,6 +1240,9 @@ class AppLayoutAppBar extends StatefulWidget {
   /// guest users see a clean browsing experience.
   final bool isGuest;
 
+  /// When true the coupon ticker is hidden (supplier accounts cannot use coupons).
+  final bool isSupplier;
+
   const AppLayoutAppBar({
     super.key,
     required this.localizations,
@@ -1192,6 +1250,7 @@ class AppLayoutAppBar extends StatefulWidget {
     required this.userId,
     required this.categoriesEmpty,
     this.isGuest = false,
+    this.isSupplier = false,
   });
 
   @override
@@ -1255,13 +1314,13 @@ class _AppLayoutAppBarState extends State<AppLayoutAppBar>
               ),
             ],
 
-            // ── Address chip / coupon ticker — hidden for guests ──────────────
+            // ── Address chip / coupon ticker — hidden for guests/suppliers ────
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: ValueListenableBuilder<bool>(
                   valueListenable: widget.categoriesEmpty,
-                  builder: (_, isEmpty, __) => isEmpty
+                  builder: (_, isEmpty, __) => isEmpty || widget.isSupplier
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
