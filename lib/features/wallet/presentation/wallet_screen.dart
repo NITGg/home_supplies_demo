@@ -6,6 +6,8 @@ import 'package:tawreedat_go/features/wallet/presentation/widgets/section_header
 import 'package:tawreedat_go/features/wallet/presentation/widgets/transaction_card.dart';
 import 'package:tawreedat_go/features/wallet/presentation/widgets/wallet_shimmer.dart';
 import '../../../core/widgets/circel_back_button.dart';
+import '../../auth/manager/profile_cubit.dart';
+import '../../auth/manager/profile_states.dart';
 import '../manager/wallet_cubit.dart';
 import '../manager/wallet_state.dart';
 import 'widgets/balance_card.dart';
@@ -127,6 +129,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         totalUnpaid: 0,
                         totalPenalties: totalFines,
                         availableBalance: wallet.balance - totalFines,
+                        hidePoints: context.read<ProfileCubit>().currentProfile?.roleId == 6,
                       ),
                       const SizedBox(height: 24),
                       WalletBadgeProgressSection(
@@ -154,24 +157,44 @@ class _WalletScreenState extends State<WalletScreen> {
                         onTap: () => context.push('/wallet/topup'),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child:
-                      BlocBuilder<WalletCubit, WalletState>(
-                        buildWhen: (_, curr) => curr is WalletLoaded || curr is WalletLoading,
-                        builder: (context, state) {
-                          final points = context.read<WalletCubit>().cachedWalletData?.wallet.points;
-                          final isReady = points != null;
-                          return _QuickActionButton(
-                            icon: isReady ? Icons.stars_rounded : Icons.hourglass_empty_rounded,
-                            label: _isArabic ? 'النقاط' : 'Points',
-                            color: isReady ? Colors.amber.shade700 : Colors.grey.shade400,
-                            onTap: isReady
-                                ? () => context.push('/wallet/points')
-                                : () {}, // no-op while loading
-                          );
-                        },
-                      ),
+                    BlocBuilder<ProfileCubit, ProfileState>(
+                      builder: (context, profileState) {
+                        final isSupplier = profileState is ProfileLoaded &&
+                            profileState.profile.roleId == 6;
+                        if (isSupplier) return const SizedBox.shrink();
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: BlocBuilder<WalletCubit, WalletState>(
+                                buildWhen: (_, curr) =>
+                                    curr is WalletLoaded || curr is WalletLoading,
+                                builder: (context, state) {
+                                  final points = context
+                                      .read<WalletCubit>()
+                                      .cachedWalletData
+                                      ?.wallet
+                                      .points;
+                                  final isReady = points != null;
+                                  return _QuickActionButton(
+                                    icon: isReady
+                                        ? Icons.stars_rounded
+                                        : Icons.hourglass_empty_rounded,
+                                    label: _isArabic ? 'النقاط' : 'Points',
+                                    color: isReady
+                                        ? Colors.amber.shade700
+                                        : Colors.grey.shade400,
+                                    onTap: isReady
+                                        ? () => context.push('/wallet/points')
+                                        : () {},
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),

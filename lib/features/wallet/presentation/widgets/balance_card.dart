@@ -11,6 +11,7 @@ class WalletBalanceCard extends StatelessWidget {
   final double totalUnpaid;
   final double totalPenalties;
   final double availableBalance;
+  final bool hidePoints;
 
   const WalletBalanceCard({
     super.key,
@@ -21,6 +22,7 @@ class WalletBalanceCard extends StatelessWidget {
     required this.totalUnpaid,
     required this.totalPenalties,
     required this.availableBalance,
+    this.hidePoints = false,
   });
 
   @override
@@ -87,15 +89,17 @@ class WalletBalanceCard extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '+ ${points.toStringAsFixed(0)} ${AppLocalizations.of(context)!.point}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    if (!hidePoints) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '+ ${points.toStringAsFixed(0)} ${AppLocalizations.of(context)!.point}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

@@ -673,19 +673,22 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                                 style: AppTextStyles.bold16,
                                               ),
                                             ),
-                                            const Divider(),
-                                            ListTile(
-                                              onTap: () =>
-                                                  context.push('/refunds'),
-                                              leading: const Icon(
-                                                Icons
-                                                    .assignment_return_outlined,
+                                            if (profileState is! ProfileLoaded ||
+                                                profileState.profile.roleId != 6) ...[
+                                              const Divider(),
+                                              ListTile(
+                                                onTap: () =>
+                                                    context.push('/refunds'),
+                                                leading: const Icon(
+                                                  Icons
+                                                      .assignment_return_outlined,
+                                                ),
+                                                title: Text(
+                                                  localizations.myRefunds,
+                                                  style: AppTextStyles.bold16,
+                                                ),
                                               ),
-                                              title: Text(
-                                                localizations.myRefunds,
-                                                style: AppTextStyles.bold16,
-                                              ),
-                                            ),
+                                            ],
                                             const Divider(),
                                             ListTile(
                                               onTap: () {
