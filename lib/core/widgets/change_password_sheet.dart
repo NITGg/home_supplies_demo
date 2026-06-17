@@ -136,6 +136,7 @@ void showChangePasswordBottomSheet(BuildContext context) {
                         }
                       },
                       text: AppLocalizations.of(context)!.confirm,
+                      isLoading: state is AuthLoading,
                     );
                   },
                 ),

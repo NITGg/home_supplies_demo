@@ -150,7 +150,7 @@ class _ProductHorizontalSectionState extends State<ProductHorizontalSection> {
   }
 
   Future<void> _load() async {
-    if (_isLoading || !_hasMore) return;
+    if (_isLoading || !_hasMore || !mounted) return;
     if (widget.requiresAuth) {
       if (widget.isGuest) return;
       // Extra guard: check token in case guest flag lags behind storage.
