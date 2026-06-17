@@ -250,7 +250,11 @@ class _ProfileOtpScreenState extends State<ProfileOtpScreen> {
 
                   _canResend
                       ? TextButton(
-                          onPressed: isLoading ? null : _startTimer,
+                          onPressed: isLoading ? null : () {
+                            _oldOtpController.clear();
+                            _newOtpController.clear();
+                            _startTimer();
+                          },
                           child: Text(
                             loc.resendOtp,
                             style: AppTextStyles.bold14.copyWith(
