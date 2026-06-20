@@ -120,6 +120,7 @@ class _ProductHorizontalSectionState extends State<ProductHorizontalSection> {
     super.didUpdateWidget(old);
     if (widget.requiresAuth && old.isGuest && !widget.isGuest) {
       // User just logged in — reset and fetch.
+      if (!mounted) return;
       setState(() {
         _products = [];
         _skip = 0;
@@ -158,6 +159,7 @@ class _ProductHorizontalSectionState extends State<ProductHorizontalSection> {
       if (token == null || token.isEmpty) return;
     }
 
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
