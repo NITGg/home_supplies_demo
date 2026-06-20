@@ -25,6 +25,7 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
   late TextEditingController _nameController;
   late TextEditingController _extraPhoneController;
   bool isMale = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -127,8 +128,7 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
                             const SizedBox(width: 12),
                             Flexible(
                               child: AppCustomButton(
-                                isLoading: context.watch<ProfileCubit>().state
-                                is ProfileLoading,
+                                isLoading: _isLoading,
                                 onPressed: _saveChanges,
                                 text: localizations.confirm,
                               ),
@@ -198,6 +198,7 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
   Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() => _isLoading = true);
     final cubit      = context.read<ProfileCubit>();
     final extraPhone = _extraPhoneController.text.trim();
 
@@ -206,5 +207,6 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
       gender:      isMale ? 'MALE' : 'FEMALE',
       extraPhones: extraPhone.isEmpty ? null : extraPhone,
     );
+    if (mounted) setState(() => _isLoading = false);
   }
 }

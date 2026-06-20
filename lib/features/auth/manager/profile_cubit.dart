@@ -90,7 +90,7 @@ class ProfileCubit extends Cubit<ProfileState> with SafeEmitMixin<ProfileState> 
     String? phone,
     String? extraPhones, // 👈 new
   }) async {
-    safeEmit(ProfileLoading());
+    if (_currentProfile == null) safeEmit(ProfileLoading());
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {
@@ -127,7 +127,7 @@ class ProfileCubit extends Cubit<ProfileState> with SafeEmitMixin<ProfileState> 
     File? personalPhoto,
     String? extraPhones,
   }) async {
-    safeEmit(ProfileLoading());
+    if (_currentProfile == null) safeEmit(ProfileLoading());
     try {
       final token = await _authRepository.getSavedToken();
       if (token == null || token.isEmpty) {

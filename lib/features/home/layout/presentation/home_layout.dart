@@ -292,7 +292,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
             builder: (context, profileState) {
               final profile = profileState is ProfileLoaded
                   ? profileState.profile
-                  : null;
+                  : context.read<ProfileCubit>().currentProfile;
 
               return MultiBlocListener(
                 listeners: [
