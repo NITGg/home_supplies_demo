@@ -22,6 +22,7 @@ class UserProfileModel {
   final DateTime? updatedAt;
   final DateTime? deletedAt;
   final RoleModel? role;
+  final SupplierProfileModel? supplier;
 
   UserProfileModel({
     required this.id,
@@ -47,6 +48,7 @@ class UserProfileModel {
     this.updatedAt,
     this.deletedAt,
     this.role,
+    this.supplier,
   });
 
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
@@ -86,6 +88,9 @@ class UserProfileModel {
       role: user['role'] != null && user['role'] is Map<String, dynamic>
           ? RoleModel.fromJson(user['role'])
           : null,
+      supplier: user['supplier'] != null && user['supplier'] is Map<String, dynamic>
+          ? SupplierProfileModel.fromJson(user['supplier'])
+          : null,
     );
   }
 
@@ -113,10 +118,30 @@ class UserProfileModel {
       "updated_at": updatedAt?.toIso8601String(),
       "deleted_at": deletedAt?.toIso8601String(),
       "role": role?.toJson(),
+      "supplier": supplier?.toJson(),
     };
   }
 }
 
+
+class SupplierProfileModel {
+  final String? shoppingMinPrice;
+  final String? shoppingMaxPrice;
+
+  SupplierProfileModel({this.shoppingMinPrice, this.shoppingMaxPrice});
+
+  factory SupplierProfileModel.fromJson(Map<String, dynamic> json) {
+    return SupplierProfileModel(
+      shoppingMinPrice: json['shopping_min_price_for_one_order']?.toString(),
+      shoppingMaxPrice: json['shopping_max_price_for_one_order']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'shopping_min_price_for_one_order': shoppingMinPrice,
+        'shopping_max_price_for_one_order': shoppingMaxPrice,
+      };
+}
 
 class RoleModel {
   final String name;

@@ -18,7 +18,7 @@ import '../../../../../addresses/data/models/address_model.dart';
 import '../../../../../addresses/data/models/governorate_model.dart';
 import '../../../../../addresses/manager/address_cubit.dart';
 import '../../../../../addresses/manager/address_states.dart';
-// import '../../../../../auth/manager/profile_cubit.dart'; // TODO: coupon
+import '../../../../../auth/manager/profile_cubit.dart';
 // import '../../../../../auth/manager/profile_states.dart'; // TODO: coupon
 import '../../../../../cart/data/models/order_preview_model.dart';
 // import '../../../../../coupons/manager/coupons_cubit.dart'; // TODO: coupon
@@ -89,13 +89,22 @@ class _CreateOrderBottomSheetState extends State<CreateOrderBottomSheet> {
   late final AddressCubit _initCubit;
 
   // ── Shopping budget limits ──────────────────────────────────────────────
-  // The settings come from the API as strings representing piasters (cents),
-  // so they're divided by 100 to get EGP values.
-  double get _minShoppingBudget =>
-      (double.tryParse(AppSettings.customer_shopping_min_price_for_one_order ?? '') ?? 0) / 100;
+  // Values are in piasters (cents) and divided by 100 to get EGP.
+  // Suppliers use their own per-account limits from the profile; everyone
+  // else falls back to the global AppSettings values.
+  double get _minShoppingBudget {
+    final supplier = context.read<ProfileCubit>().currentProfile?.supplier;
+    final raw = supplier != null
+        ? double.tryParse(supplier.shoppingMinPrice ?? '')
+        : double.tryParse(AppSettings.customer_shopping_min_price_for_one_order ?? '');
+    return (raw ?? 0) / 100;
+  }
 
   double get _maxShoppingBudget {
-    final raw = double.tryParse(AppSettings.customer_shopping_max_price_for_one_order ?? '');
+    final supplier = context.read<ProfileCubit>().currentProfile?.supplier;
+    final raw = supplier != null
+        ? double.tryParse(supplier.shoppingMaxPrice ?? '')
+        : double.tryParse(AppSettings.customer_shopping_max_price_for_one_order ?? '');
     if (raw == null || raw <= 0) return double.infinity;
     return raw / 100;
   }
