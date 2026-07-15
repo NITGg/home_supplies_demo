@@ -67,7 +67,7 @@ class _LoadingScreenState extends State<LoadingScreen>
                 opacity: _fadeAnimation,
                 child: SvgPicture.asset(
                   'assets/images/appbar/logo.svg',
-                  height: 70,
+                  height: 200,
                 ),
               ),
               const SizedBox(height: 24),

@@ -766,14 +766,14 @@ class _AddressFormBottomSheetState extends State<AddressFormBottomSheet> {
                                     Icon(
                                       Icons.info_outline,
                                       size: 14,
-                                      color: Colors.orange.shade700,
+                                      color: Colors.blue.shade700,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       l10n.locationRequired,
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.orange.shade700,
+                                        color: Colors.blue.shade700,
                                       ),
                                     ),
                                   ],

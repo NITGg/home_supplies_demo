@@ -79,7 +79,7 @@ class ProfileHeaderSection extends StatelessWidget {
                   child: const Icon(
                     Icons.camera_alt,
                     size: 14,
-                    color: Colors.orange,
+                    color: Colors.blue,
                   ),
                 ),
               ),
@@ -143,7 +143,7 @@ class ProfileHeaderSection extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.orange),
+              leading: const Icon(Icons.camera_alt, color: Colors.blue),
               title: Text(localizations.camera),
               onTap: () async {
                 Navigator.pop(context);
@@ -151,7 +151,7 @@ class ProfileHeaderSection extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: Colors.orange),
+              leading: const Icon(Icons.photo_library, color: Colors.blue),
               title: Text(localizations.gallery),
               onTap: () async {
                 Navigator.pop(context);

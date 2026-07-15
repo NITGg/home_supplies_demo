@@ -65,7 +65,7 @@ class _DateRangeSelectorState extends State<DateRangeSelector> {
           // Header
           Row(
             children: [
-              Icon(Icons.date_range, color: Colors.orangeAccent, size: 20),
+              Icon(Icons.date_range, color: Colors.blueAccent, size: 20),
               const SizedBox(width: 8),
               Text(
                 widget.isArabic ? 'الفترة' : 'Date Range',
@@ -161,7 +161,7 @@ class _DateRangeSelectorState extends State<DateRangeSelector> {
                       style: const TextStyle(fontSize: 13),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orangeAccent,
+                      backgroundColor: Colors.blueAccent,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -191,7 +191,7 @@ class _DateRangeSelectorState extends State<DateRangeSelector> {
           _applyPreset(preset);
         }
       },
-      selectedColor: Colors.orangeAccent,
+      selectedColor: Colors.blueAccent,
       labelStyle: TextStyle(
         color: isSelected ? Colors.white : const Color(0xFF666666),
         fontSize: 13,
@@ -216,7 +216,7 @@ class _DateRangeSelectorState extends State<DateRangeSelector> {
           color: const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: date != null ? Colors.orangeAccent : const Color(0xFFE0E0E0),
+            color: date != null ? Colors.blueAccent : const Color(0xFFE0E0E0),
             width: 1,
           ),
         ),
@@ -304,7 +304,7 @@ class _DateRangeSelectorState extends State<DateRangeSelector> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: Colors.orangeAccent),
+            colorScheme: const ColorScheme.light(primary: Colors.blueAccent),
           ),
           child: child!,
         );

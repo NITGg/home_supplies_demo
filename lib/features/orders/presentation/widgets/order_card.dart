@@ -1056,7 +1056,7 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                       child: Icon(
                         Icons.arrow_forward,
                         size: 16,
-                        color: Colors.orange.shade700,
+                        color: Colors.blue.shade700,
                       ),
                     ),
                     Expanded(
@@ -1067,7 +1067,7 @@ class _PriceAdjustmentFooter extends StatelessWidget {
                             l10n.newBudget,
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.orange.shade700,
+                              color: Colors.blue.shade700,
                             ),
                           ),
                           const SizedBox(height: 2),

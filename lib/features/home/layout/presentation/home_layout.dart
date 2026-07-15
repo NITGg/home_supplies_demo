@@ -386,62 +386,62 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       isSupplier: profile?.roleId == 6,
                     ),
                   ),
-                  floatingActionButtonLocation:
-                      FloatingActionButtonLocation.centerDocked,
-                  floatingActionButton: FloatingActionButton.large(
-                    onPressed: () async {
-                      // Guests cannot create orders — show login prompt instead.
-                      if (_isGuest) {
-                        showGuestLoginPrompt(context);
-                        return;
-                      }
-
-                      if (!await ensurePhoneNumber(context)) return;
-                      if (!context.mounted) return;
-
-                      // If the cart already has items, go to the cart instead
-                      // of opening the create-order sheet.
-                      final cartState = context.read<CartCubit>().state;
-                      if (cartState is CartLoaded &&
-                          cartState.data.cartItems.isNotEmpty) {
-                        context.push('/cart');
-                        return;
-                      }
-
-                      final govState = context.read<GovernorateCubit>().state;
-                      final governorates = govState is GovernoratesLoaded
-                          ? govState.response
-                          : GovernoratesResponse(
-                              governorates: [],
-                              totalCount: 0,
-                              totalPages: 0,
-                            );
-                      final walletCubit = context.read<WalletCubit>();
-                      final balance =
-                          walletCubit.cachedWalletData?.wallet.balance ?? 0.0;
-                      if (!context.mounted) return;
-                      showModalBottomSheet<Order>(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => BlocProvider.value(
-                          value: _couponCubit,
-                          child: CreateOrderBottomSheet(
-                            governorates: governorates,
-                            walletBalance: balance,
-                            // initialCouponCode: '',
-                          ),
-                        ),
-                      ).then((order) {
-                        if (order != null && mounted) {
-                          _homeCubit.changeTab(1);
-                        }
-                      });
-                    },
-                    backgroundColor: AppColors.kSecondaryColor,
-                    shape: const CircleBorder(),
-                    child: AnimatedGoButton(),
-                  ),
+                  // floatingActionButtonLocation:
+                  //     FloatingActionButtonLocation.centerDocked,
+                  // floatingActionButton: FloatingActionButton.large(
+                  //   onPressed: () async {
+                  //     // Guests cannot create orders — show login prompt instead.
+                  //     if (_isGuest) {
+                  //       showGuestLoginPrompt(context);
+                  //       return;
+                  //     }
+                  //
+                  //     if (!await ensurePhoneNumber(context)) return;
+                  //     if (!context.mounted) return;
+                  //
+                  //     // If the cart already has items, go to the cart instead
+                  //     // of opening the create-order sheet.
+                  //     final cartState = context.read<CartCubit>().state;
+                  //     if (cartState is CartLoaded &&
+                  //         cartState.data.cartItems.isNotEmpty) {
+                  //       context.push('/cart');
+                  //       return;
+                  //     }
+                  //
+                  //     final govState = context.read<GovernorateCubit>().state;
+                  //     final governorates = govState is GovernoratesLoaded
+                  //         ? govState.response
+                  //         : GovernoratesResponse(
+                  //             governorates: [],
+                  //             totalCount: 0,
+                  //             totalPages: 0,
+                  //           );
+                  //     final walletCubit = context.read<WalletCubit>();
+                  //     final balance =
+                  //         walletCubit.cachedWalletData?.wallet.balance ?? 0.0;
+                  //     if (!context.mounted) return;
+                  //     showModalBottomSheet<Order>(
+                  //       context: context,
+                  //       isScrollControlled: true,
+                  //       backgroundColor: Colors.transparent,
+                  //       builder: (_) => BlocProvider.value(
+                  //         value: _couponCubit,
+                  //         child: CreateOrderBottomSheet(
+                  //           governorates: governorates,
+                  //           walletBalance: balance,
+                  //           // initialCouponCode: '',
+                  //         ),
+                  //       ),
+                  //     ).then((order) {
+                  //       if (order != null && mounted) {
+                  //         _homeCubit.changeTab(1);
+                  //       }
+                  //     });
+                  //   },
+                  //   backgroundColor: AppColors.kSecondaryColor,
+                  //   shape: const CircleBorder(),
+                  //   child: AnimatedGoButton(),
+                  // ),
                   endDrawer: Drawer(
                     backgroundColor: AppColors.kBackgroundColor,
                     child: SafeArea(

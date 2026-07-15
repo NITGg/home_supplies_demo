@@ -27,7 +27,7 @@ class ErrorScreenConfig {
     this.assetType,
     this.backgroundColor = const Color(0xFFF5F5F5),
     this.textColor = const Color(0xFF333333),
-    this.buttonColor = Colors.orange,
+    this.buttonColor = Colors.blue,
     this.buttonTextColor = Colors.black,
     this.titleStyle,
     this.messageStyle,

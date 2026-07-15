@@ -10,7 +10,7 @@ class AuthHeaderImage extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.black,
+        color: Colors.white,
       ),
       child: AspectRatio(
         aspectRatio: 3,

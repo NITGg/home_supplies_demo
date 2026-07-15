@@ -76,7 +76,7 @@ class _SuppliersStripWidgetState extends State<SuppliersStripWidget> {
             SuppliersError() =>
             // Silent failure — don't break the page for a non-critical strip.
             const SizedBox.shrink(),
-            SuppliersLoaded(:final suppliers) when suppliers.isEmpty =>
+            SuppliersLoaded(:final suppliers) when suppliers.length<=1 =>
             const SizedBox.shrink(),
             SuppliersLoaded(:final suppliers, :final isLoadingMore) =>
               _SuppliersStripContent(
