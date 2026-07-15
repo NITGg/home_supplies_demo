@@ -1,4 +1,5 @@
 ﻿
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/extract_error_message.dart';
@@ -26,6 +27,15 @@ class SuppliersCubit extends Cubit<SuppliersState> with SafeEmitMixin<SuppliersS
 
   static const int _pageSize = 20;
 
+  /// App-wide cached flag — defaults to false (hidden) so supplier images
+  /// never flash before we actually know the total supplier count. Flips to
+  /// true only once the unfiltered (categoryIds empty) fetch confirms there's
+  /// more than one supplier. Widgets that just need a yes/no (e.g.
+  /// ProductCard) can read/listen to this directly instead of wiring their
+  /// own SuppliersCubit + BlocBuilder.
+  static final ValueNotifier<bool> showSupplierImage = ValueNotifier(false);
+
+
   SuppliersCubit({
     SupplierRepository? repository,
     this.categoryIds = const [],
@@ -38,6 +48,10 @@ class SuppliersCubit extends Cubit<SuppliersState> with SafeEmitMixin<SuppliersS
 
     try {
       final result = await _fetchPage(skip: 0);
+      if (categoryIds.isEmpty) {                                  // ← ADD
+        showSupplierImage.value =                                  // ← ADD
+        result.suppliers.length > 1 || result.hasMore;         // ← ADD
+      }
       if (!isClosed) {
         safeEmit(SuppliersLoaded(
           suppliers: result.suppliers,

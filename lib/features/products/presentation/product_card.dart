@@ -16,6 +16,7 @@ import '../../cart/manager/cart_cubit.dart';
 import '../../cart/manager/cart_state.dart';
 import '../../cart/presentation/widgets/multiple_supplier_dialog.dart';
 import '../../home/layout/manager/guest_cubit.dart';
+import '../../suppliers/manager/supplier_cubit.dart';
 import '../data/models/product_model.dart';
 
 // ── Price formatting helper ───────────────────────────────────────────────────
@@ -183,14 +184,16 @@ class _ProductCardState extends State<ProductCard>
             .where((i) => i.spId == spId)
             .firstOrNull;
         if (item != null) {
-          final currentTotal = cartState.data.summary.originalTotal -
+          final currentTotal =
+              cartState.data.summary.originalTotal -
               cartState.data.summary.totalDiscount;
           if (currentTotal + item.unitPrice > maxTotal) {
             if (ctx.mounted) {
               _showError(
                 ctx,
-                AppLocalizations.of(ctx)!
-                    .cartAboveMaxOrder(maxTotal.toStringAsFixed(2)),
+                AppLocalizations.of(
+                  ctx,
+                )!.cartAboveMaxOrder(maxTotal.toStringAsFixed(2)),
               );
             }
             return;
@@ -246,225 +249,233 @@ class _ProductCardState extends State<ProductCard>
         return GestureDetector(
           onTap: widget.onTap,
           child: Stack(
-            children: [Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.07),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Image + cart control ──────────────────────────────────
-                  Expanded(
-                    flex: 5,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        _ProductImage(imageUrl: product.primaryImage),
-                        if (product.requiresDeliveryWindows)
-                          const Positioned(
-                            bottom: 8,
-                            left: 8,
-                            child: _DeliveryWindowBadge(),
-                          )
-                        else if (product.pickupReadyDurationFrom != null)
-                          Positioned(
-                            bottom: 8,
-                            left: 8,
-                            child: _ReadyTimePill(
-                              minutes: product.pickupReadyDurationFrom!,
-                              minutesTo: product.pickupReadyDurationTo,
-                            ),
-                          ),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 56,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.22),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        if (product.isBestSeller)
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: _Badge(
-                              label: l10n.bestSeller,
-                              color: Colors.amber.shade700,
-                              icon: Icons.star_rounded,
-                            ),
-                          ),
-
-                        if (product.hasOffer)
-                          Positioned(
-                            top: 8,
-                            left: 8,
-                            child: product.discountPercent != null
-                                ? _Badge(
-                                    label: l10n.percentOff(
-                                      product.discountPercent!,
-                                    ),
-                                    color: AppColors.kDiscountColor,
-                                    icon: Icons.card_giftcard,
-                                  )
-                                : _Badge(
-                                    label: l10n.offer,
-                                    color: AppColors.kDiscountColor,
-                                    icon: Icons.card_giftcard,
-                                  ),
-                          ),
-
-                        if (product.isOutOfStock)
-                          Positioned.fill(
-                            child: ColoredBox(
-                              color: Colors.black.withOpacity(0.50),
-                              child: Center(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.92),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    l10n.outOfStock,
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                        Positioned(
-                          bottom: 8,
-                          right: 8,
-                          // Absorbs taps that miss +/- during AnimatedSwitcher transitions.
-                          child: GestureDetector(
-                            onTap: () {},
-                            child: _CartControl(
-                              cartState: cartState,
-                              product: product,
-                              bounceScale: _bounceScale,
-                              primaryColor: primaryColor,
-                              isSupplierOpen: widget.isSupplierOpen,
-                              isOrderingOpen: widget.isOrderingOpen,
-                              onAdd: () => _handleAdd(ctx),
-                              onIncrement: () =>
-                                  _handleIncrement(ctx, cartState.quantity),
-                              onDecrement: () =>
-                                  _handleDecrement(ctx, cartState.quantity),
-                            ),
-                          ),
-                        ),
-                      ],
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.07),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-
-                  // ── Info ──────────────────────────────────────────────────
-                  Expanded(
-                    flex: 2,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Image + cart control ──────────────────────────────────
+                    Expanded(
+                      flex: 5,
+                      child: Stack(
+                        fit: StackFit.expand,
                         children: [
-                          Text(
-                            product.displayName,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                              color: Colors.black87,
-                              height: 1.3,
+                          _ProductImage(imageUrl: product.primaryImage),
+                          if (product.requiresDeliveryWindows)
+                            const Positioned(
+                              bottom: 8,
+                              left: 8,
+                              child: _DeliveryWindowBadge(),
+                            )
+                          else if (product.pickupReadyDurationFrom != null)
+                            Positioned(
+                              bottom: 8,
+                              left: 8,
+                              child: _ReadyTimePill(
+                                minutes: product.pickupReadyDurationFrom!,
+                                minutesTo: product.pickupReadyDurationTo,
+                              ),
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: 56,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.22),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
 
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              if (product.totalReviews > 0) ...[
-                                _RatingPill(
-                                  rating: product.rating,
-                                  reviewCount: product.totalReviews,
-                                ),
-                                const SizedBox(width: 5),
-                              ],
-                              Expanded(
-                                child: Align(
-                                  alignment: AlignmentDirectional.centerEnd,
-                                  child: _PriceRow(
-                                    product: product,
-                                    primaryColor: primaryColor,
+                          if (product.isBestSeller)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: _Badge(
+                                label: l10n.bestSeller,
+                                color: Colors.amber.shade700,
+                                icon: Icons.star_rounded,
+                              ),
+                            ),
+
+                          if (product.hasOffer)
+                            Positioned(
+                              top: 8,
+                              left: 8,
+                              child: product.discountPercent != null
+                                  ? _Badge(
+                                      label: l10n.percentOff(
+                                        product.discountPercent!,
+                                      ),
+                                      color: AppColors.kDiscountColor,
+                                      icon: Icons.card_giftcard,
+                                    )
+                                  : _Badge(
+                                      label: l10n.offer,
+                                      color: AppColors.kDiscountColor,
+                                      icon: Icons.card_giftcard,
+                                    ),
+                            ),
+
+                          if (product.isOutOfStock)
+                            Positioned.fill(
+                              child: ColoredBox(
+                                color: Colors.black.withOpacity(0.50),
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.92),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      l10n.outOfStock,
+                                      style: const TextStyle(
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 11,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ],
+                            ),
+
+                          Positioned(
+                            bottom: 8,
+                            right: 8,
+                            // Absorbs taps that miss +/- during AnimatedSwitcher transitions.
+                            child: GestureDetector(
+                              onTap: () {},
+                              child: _CartControl(
+                                cartState: cartState,
+                                product: product,
+                                bounceScale: _bounceScale,
+                                primaryColor: primaryColor,
+                                isSupplierOpen: widget.isSupplierOpen,
+                                isOrderingOpen: widget.isOrderingOpen,
+                                onAdd: () => _handleAdd(ctx),
+                                onIncrement: () =>
+                                    _handleIncrement(ctx, cartState.quantity),
+                                onDecrement: () =>
+                                    _handleDecrement(ctx, cartState.quantity),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
+
+                    // ── Info ──────────────────────────────────────────────────
+                    Expanded(
+                      flex: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              product.displayName,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                color: Colors.black87,
+                                height: 1.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                if (product.totalReviews > 0) ...[
+                                  _RatingPill(
+                                    rating: product.rating,
+                                    reviewCount: product.totalReviews,
+                                  ),
+                                  const SizedBox(width: 5),
+                                ],
+                                Expanded(
+                                  child: Align(
+                                    alignment: AlignmentDirectional.centerEnd,
+                                    child: _PriceRow(
+                                      product: product,
+                                      primaryColor: primaryColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
               if (product.supplierImage != null &&
                   product.supplierImage!.isNotEmpty)
                 Positioned(
                   bottom: 8,
                   right: 8,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
+                  child: ValueListenableBuilder<bool>(
+                    // ← WRAP
+                    valueListenable: SuppliersCubit.showSupplierImage,
+                    builder: (context, showImage, _) {
+                      if (!showImage) return const SizedBox.shrink();
+                      return Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(2),
-                    child: ClipOval(
-                      child: ImageWithIconFallback(
-                        imageUrl: product.supplierImage!,
-                        fit: BoxFit.cover,
-                        width: 30,
-                        height: 30,
-                      ),
-                    ),
+                        padding: const EdgeInsets.all(2),
+                        child: ClipOval(
+                          child: ImageWithIconFallback(
+                            imageUrl: product.supplierImage!,
+                            fit: BoxFit.cover,
+                            width: 30,
+                            height: 30,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
-            ]
+            ],
           ),
         );
       },

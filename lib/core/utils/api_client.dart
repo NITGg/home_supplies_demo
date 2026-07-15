@@ -14,7 +14,7 @@ class ApiClient {
   // late final Dio dioDEV;
 
   static const String baseUrl =
-      'https://tawreedat.nitg-eg.com/admin_apis/api/v1';
+      'https://tawreedat.nitg-eg.com/home_supplies/admin/api/v1';
   // static const String baseUrlDev = 'https://adminapis-dev.nitg-eg.com/api/v1';
 
   void init() {

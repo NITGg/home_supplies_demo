@@ -22,6 +22,7 @@ import '../../home/layout/manager/guest_cubit.dart';
 import '../../cart/data/models/slot_model.dart';
 import '../../cart/data/repo/slot_repo.dart';
 import '../../suppliers/data/models/supplier_models.dart';
+import '../../suppliers/manager/supplier_cubit.dart';
 import '../data/models/product_model.dart';
 import '../manager/product_detail_cubit.dart';
 import '../manager/product_details_states.dart';
@@ -65,11 +66,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   /// Lazily fetches delivery windows once we know the product's spId.
-  Future<void> _loadDeliveryWindows(int spId,int sId) async {
+  Future<void> _loadDeliveryWindows(int spId, int sId) async {
     if (_deliveryWindows != null || _loadingWindows) return;
     setState(() => _loadingWindows = true);
     try {
-      final data = await _windowsRepo.fetchWindows(spId,sId);
+      final data = await _windowsRepo.fetchWindows(spId, sId);
       if (mounted) setState(() => _deliveryWindows = data);
     } catch (_) {
       // silently ignore — the section simply won't show
@@ -92,14 +93,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               product: widget.product,
               onRetry: () => _cubit.load(_id, supplierId: _supplierId),
             ),
-            ProductDetailLoaded(:final product, :final isSupplierOpen, :final supplier) => () {
+            ProductDetailLoaded(
+              :final product,
+              :final isSupplierOpen,
+              :final supplier,
+            ) =>
+              () {
                 // Defer the fetch so it never runs during a build frame.
                 if (product.requiresDeliveryWindows && product.spId != null) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _loadDeliveryWindows(product.spId!,product.supplierId!);
+                    _loadDeliveryWindows(product.spId!, product.supplierId!);
                   });
                 }
-                final isInOrderWindow = !product.requiresDeliveryWindows ||
+                final isInOrderWindow =
+                    !product.requiresDeliveryWindows ||
                     _deliveryWindows == null ||
                     _deliveryWindows!.isCurrentlyInOrderWindow;
                 return _buildLoaded(
@@ -376,14 +383,16 @@ class _AddToCartBarState extends State<_AddToCartBar>
             .where((i) => i.spId == spId)
             .firstOrNull;
         if (item != null) {
-          final currentTotal = cartState.data.summary.originalTotal -
+          final currentTotal =
+              cartState.data.summary.originalTotal -
               cartState.data.summary.totalDiscount;
           if (currentTotal + item.unitPrice > maxTotal) {
             if (ctx.mounted) {
               showErrorBanner(
                 ctx,
-                AppLocalizations.of(ctx)!
-                    .cartAboveMaxOrder(maxTotal.toStringAsFixed(2)),
+                AppLocalizations.of(
+                  ctx,
+                )!.cartAboveMaxOrder(maxTotal.toStringAsFixed(2)),
               );
             }
             return;
@@ -1187,90 +1196,99 @@ class _SupplierSection extends StatelessWidget {
         ? supplier.displayName.trim()[0].toUpperCase()
         : '?';
 
-    return GestureDetector(
-      onTap: () => context.push(
-        '/suppliers/${supplier.id}',
-        extra: {'supplier': supplier},
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            // ── Avatar ────────────────────────────────────────────────────────
-            ClipOval(
-              child: (photoUrl != null && photoUrl.isNotEmpty)
-                  ? ImageWithIconFallback(
-                      imageUrl: photoUrl,
-                      width: 44,
-                      height: 44,
-                      fit: BoxFit.cover,
-                      isCircle: true,
-                    )
-                  : CircleAvatar(
-                      radius: 22,
-                      backgroundColor: theme.colorScheme.primaryContainer,
-                      child: Text(
-                        initials,
-                        style: TextStyle(
-                          color: theme.colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-            ),
-            const SizedBox(width: 12),
+    return ValueListenableBuilder<bool>(
+      valueListenable: SuppliersCubit.showSupplierImage,
+      builder: (context, showImage, _) {
+        if (!showImage) return const SizedBox.shrink();
 
-            // ── Name + open/closed badge ──────────────────────────────────────
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    supplier.displayName,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
+        return GestureDetector(
+          onTap: () => context.push(
+            '/suppliers/${supplier.id}',
+            extra: {'supplier': supplier},
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: theme.colorScheme.outlineVariant),
+            ),
+            child: Row(
+              children: [
+                // ── Avatar ────────────────────────────────────────────────────────
+                ClipOval(
+                  child: (photoUrl != null && photoUrl.isNotEmpty)
+                      ? ImageWithIconFallback(
+                          imageUrl: photoUrl,
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                          isCircle: true,
+                        )
+                      : CircleAvatar(
+                          radius: 22,
+                          backgroundColor: theme.colorScheme.primaryContainer,
+                          child: Text(
+                            initials,
+                            style: TextStyle(
+                              color: theme.colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 12),
+
+                // ── Name + open/closed badge ──────────────────────────────────────
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: isOpen ? Colors.green : Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
                       Text(
-                        isOpen ? l10n.openNow : l10n.closed,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: isOpen ? Colors.green.shade700 : Colors.red.shade700,
-                          fontWeight: FontWeight.w500,
+                        supplier.displayName,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: isOpen ? Colors.green : Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            isOpen ? l10n.openNow : l10n.closed,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isOpen
+                                  ? Colors.green.shade700
+                                  : Colors.red.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            // ── Chevron ───────────────────────────────────────────────────────
-            Icon(
-              Icons.chevron_right_rounded,
-              color: theme.colorScheme.outline,
+                // ── Chevron ───────────────────────────────────────────────────────
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.outline,
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -1584,7 +1602,8 @@ class _DeliveryWindowsSection extends StatelessWidget {
       );
     }
 
-    if (data == null || !data!.requiresDeliveryWindows) return const SizedBox.shrink();
+    if (data == null || !data!.requiresDeliveryWindows)
+      return const SizedBox.shrink();
 
     final isInWindow = data!.isCurrentlyInOrderWindow;
     final dayNames = [
@@ -1612,7 +1631,11 @@ class _DeliveryWindowsSection extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded, size: 16, color: Colors.orange.shade700),
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: Colors.orange.shade700,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -1717,7 +1740,11 @@ class _WindowPanel extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             hint,
-            style: TextStyle(fontSize: 10, color: Colors.grey.shade600, height: 1.4),
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey.shade600,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 10),
 
@@ -1747,13 +1774,18 @@ class _WindowPanel extends StatelessWidget {
                     Wrap(
                       spacing: 4,
                       runSpacing: 4,
-                      children: windows.map((w) => _TimeChip(
-                        label: format12hRange(
-                          w.timeFrom, w.timeTo,
-                          isArabic: isArabic,
-                        ),
-                        color: color,
-                      )).toList(),
+                      children: windows
+                          .map(
+                            (w) => _TimeChip(
+                              label: format12hRange(
+                                w.timeFrom,
+                                w.timeTo,
+                                isArabic: isArabic,
+                              ),
+                              color: color,
+                            ),
+                          )
+                          .toList(),
                     ),
                   ],
                 ),
@@ -1782,7 +1814,11 @@ class _TimeChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
       ),
     );
   }
