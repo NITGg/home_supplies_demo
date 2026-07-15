@@ -1,0 +1,154 @@
+enum CustomerCouponType {
+  ORDER_DISCOUNT // Applies discount directly on an order total
+  WALLET_CREDIT // Credits wallet balance and/or points
+}
+
+enum DiscountType {
+  PERCENT // Discount calculated as a percentage of order total
+  FIXED_CENTS // Discount applied as a fixed amount in cents
+}
+
+enum CouponScope {
+  ORDER_TOTAL // current behavior — applies on full budget
+  DELIVERY_FEE // applies only on the delivery fee
+  PRODUCTS_ONLY // applies only on the product/budget portion (budget - delivery_fee)
+  NOT_APPLICABLE // Specifically for standalone wallet credits
+}
+
+model CustomerCoupon {
+  id   Int    @id @default(autoincrement())
+  code String @unique // Unique coupon code entered by the customer
+
+  title          String // Coupon title (EN)
+  title_ar       String? // Coupon title (AR)
+  description    String? // Coupon description (EN)
+  description_ar String? // Coupon description (AR)
+
+  type     CustomerCouponType // Defines how the coupon is applied (order discount or wallet credit)
+  scope    CouponScope        @default(NOT_APPLICABLE) // Defines which part of the order the coupon applies to
+  is_first Boolean            @default(false)
+
+  image          String? // URL to the image (S3/Cloudinary)
+  button_text    String? // Custom CTA like "Claim Now" or "Buy for 100pts"
+  button_text_ar String? // Custom CTA like "Claim Now" or "Buy for 100pts"
+
+  start_at DateTime? // Coupon becomes valid from this date
+  end_at   DateTime? // Coupon expires after this date
+
+  is_active  Boolean // Enables or disables the coupon
+  deleted_at DateTime? // Soft delete flag
+
+  max_total_uses Int? // Maximum number of times this coupon can be used globally
+  max_user_uses  Int? // Maximum number of times a single user can use this coupon
+
+  min_orders_count Int // Minimum completed orders required to be eligible
+
+  discount_type         DiscountType? // Discount calculation type (percent or fixed)
+  discount_value        Int? // Discount value (percentage or fixed cents)
+  max_discount_cents    Int? // Maximum discount amount when using percentage
+  min_order_total_cents Int? // Minimum order total required to apply coupon
+
+  wallet_amount_cents Int @default(0) // Wallet balance credited when coupon type is wallet credit
+  wallet_points       Int @default(0) // Wallet points credited when coupon type is wallet credit
+
+  is_purchasable       Boolean @default(false)
+  purchase_price_cents Int?
+  // purchased_points_cost Int?
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  usages        CustomerCouponUsage[] // List of coupon redemptions
+  orders        Order[]
+  transactions  Transaction[]
+  walletEntries WalletEntry[]
+
+  @@map("customer_coupon")
+}
+
+enum CustomerCouponUsageContext {
+  ORDER
+  WALLET
+}
+
+model CustomerCouponUsage {
+  id        Int                        @id @default(autoincrement())
+  user_id   Int?
+  coupon_id Int
+  context   CustomerCouponUsageContext @default(ORDER)
+
+  order_id       Int?
+  discount_cents Int  @default(0)
+
+  created_at DateTime @default(now())
+
+  user   User?          @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  coupon CustomerCoupon @relation(fields: [coupon_id], references: [id])
+  // pointsTransaction PointsTransaction?
+
+  @@index([user_id])
+  @@index([coupon_id])
+  @@index([order_id])
+  @@map("customer_coupon_usage")
+}
+
+model CourierCoupon {
+  id                Int       @id @default(autoincrement())
+  title             String    @db.VarChar(255)
+  title_ar          String?   @db.VarChar(255)
+  description       String?   @db.Text
+  description_ar    String?   @db.Text
+  price             Decimal   @db.Decimal(10, 2)
+  bonus_courier_fee Decimal   @db.Decimal(10, 2)
+  duration_days     Int
+  is_active         Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+
+  usages        CourierCouponUsage[]
+  walletEntries WalletEntry[]
+
+  @@map("courier_coupon")
+}
+
+model CourierCouponUsage {
+  id                         Int       @id @default(autoincrement())
+  user_id                    Int?
+  coupon_id                  Int
+  start_date                 DateTime
+  end_date                   DateTime
+  snapshot_price             Decimal   @db.Decimal(10, 2)
+  snapshot_bonus_courier_fee Decimal   @db.Decimal(10, 2)
+  created_at                 DateTime  @default(now())
+  expiry_reminder_3d_sent_at DateTime?
+  expiry_reminder_1d_sent_at DateTime?
+
+  coupon CourierCoupon @relation(fields: [coupon_id], references: [id])
+  user   User?         @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([coupon_id])
+  @@index([user_id])
+  @@map("courier_coupon_usage")
+}
+
+model Offer {
+  id                  Int           @id @default(autoincrement())
+  supplier_product_id Int?
+  offer_type          DiscountType? // Used the Enum here
+  offer_value         Decimal?
+  start_date          DateTime?     @db.Date
+  end_date            DateTime?     @db.Date
+  is_active           Boolean?      @default(true)
+  created_by_role     String?       @default("ADMIN") // "ADMIN" | "SUPPLIER"
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  // Relations
+  supplierProduct SupplierProduct? @relation(fields: [supplier_product_id], references: [id])
+  orderItems      OrderItem[]
+
+  @@map("offer")
+}

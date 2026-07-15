@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "created": "FAQ created successfully.",
+    "updated": "FAQ updated successfully.",
+    "deleted": "FAQ deleted successfully."
+  },
+  "errors": {
+    "not_found": "FAQ not found."
+  }
+}

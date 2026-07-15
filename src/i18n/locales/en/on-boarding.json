@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "created": "On-boarding item created successfully.",
+    "updated": "On-boarding item updated successfully.",
+    "deleted": "On-boarding item deleted successfully."
+  },
+  "errors": {
+    "not_found": "On-boarding item not found."
+  }
+}

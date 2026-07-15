@@ -1,0 +1,27 @@
+{
+  "errors": {
+    "not_found": "External app not found.",
+    "inactive": "This external app is inactive.",
+    "invalid_credentials": "Invalid client credentials.",
+    "no_active_contract": "This partner has no active contract.",
+    "contract_expired": "The partner contract has expired.",
+    "vehicle_not_in_contract": "This vehicle type is not covered by the partner contract.",
+    "no_eligible_vehicle_for_distance": "No eligible vehicle type was found for this distance.",
+    "distance_below_minimum": "The distance is below the minimum allowed for this vehicle type.",
+    "distance_above_maximum": "The distance exceeds the maximum allowed for this vehicle type.",
+    "wallet_not_found": "Wallet not found for this external app.",
+    "wallet_not_active": "This external app's wallet is not active.",
+    "insufficient_wallet_balance": "Insufficient wallet balance.",
+    "recharge_amount_invalid": "Invalid recharge amount.",
+    "recharge_init_failed": "Failed to initiate wallet recharge.",
+    "paymob_disabled": "Paymob payments are currently disabled.",
+    "kashier_disabled": "Kashier payments are currently disabled.",
+    "easykash_disabled": "EasyKash payments are currently disabled."
+  },
+  "messages": {
+    "created": "External app created successfully.",
+    "updated": "External app updated successfully.",
+    "deleted": "External app deleted successfully.",
+    "recharge_initiated": "Wallet recharge initiated."
+  }
+}

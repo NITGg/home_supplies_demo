@@ -1,0 +1,75 @@
+enum AdType {
+  BANNER
+  POPUP
+  SPLASH
+}
+
+enum AdStatus {
+  ACTIVE
+  INACTIVE
+  SCHEDULED
+  EXPIRED
+}
+
+enum AdPlacement {
+  HOME
+  ORDER_LIST
+  ORDER_DETAIL
+}
+
+enum PopupSize {
+  SMALL
+  MEDIUM
+  LARGE
+  FULL_SCREEN
+}
+
+model Ad {
+  id Int @id @default(autoincrement())
+
+  ad_type AdType?
+  source  String?  @db.VarChar(255)
+  budget  Decimal? @db.Decimal(12, 2)
+
+  title          String? @db.Text
+  title_ar       String? @db.Text
+  description    String? @db.Text
+  description_ar String? @db.Text
+
+  priority Int?
+  status   AdStatus?
+
+  image_url  String? @db.VarChar(255)
+  target_url String? @db.VarChar(255)
+
+  placement  AdPlacement?
+  popup_size PopupSize?
+  closable   Boolean?
+
+  mobile_screen String? @db.Text
+
+  start_date DateTime?
+  end_date   DateTime?
+
+  // time_slots       Json? // LONGTEXT JSON
+  time_slots String? @db.LongText // JSON of time slots
+
+  duration_seconds Int?
+  shown_seconds    Int?
+  first_shown_at   DateTime?
+  last_shown_at    DateTime?
+
+  target_customer_badge_id Int?
+
+  sort_id Int @default(0)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  userBadge     UserBadge? @relation(fields: [user_badge_id], references: [id])
+  user_badge_id Int?
+
+  @@index([target_customer_badge_id])
+  @@map("ad")
+}

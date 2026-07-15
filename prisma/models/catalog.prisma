@@ -1,0 +1,192 @@
+// Product & Categories
+
+model Category {
+  id                 Int       @id @default(autoincrement())
+  name               String    @unique
+  slug               String?   @unique
+  name_ar            String?
+  description        String?   @db.LongText
+  description_ar     String?   @db.LongText
+  image_url          String?
+  icon_url           String?
+  parent_id          Int?
+  is_active          Boolean
+  product_attributes Json?
+  synonyms           String?   @db.VarChar(191)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  deleted_at         DateTime?
+  sort_id            Int       @default(0)
+  has_window         Boolean   @default(false)
+
+  // relations
+  brands    BrandCategory[]
+  parent    Category?          @relation("CategoryHierarchy", fields: [parent_id], references: [id])
+  children  Category[]         @relation("CategoryHierarchy")
+  products  Product[]
+  suppliers SupplierCategory[]
+
+  @@index([sort_id], map: "categories_sortId_idx")
+  @@index([parent_id])
+  @@fulltext([name, name_ar, description, description_ar], map: "categories_name_nameAr_description_descriptionAr_idx")
+  @@map("category")
+}
+
+model SupplierCategory {
+  supplier_id Int
+  category_id Int
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  // Relations
+  supplier Supplier @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@id([supplier_id, category_id]) // Composite primary key
+  @@map("supplier_category")
+}
+
+model BrandCategory {
+  id          Int      @id @default(autoincrement())
+  brand_id    Int
+  category_id Int
+  created_at  DateTime @default(now())
+  brand       Brand    @relation(fields: [brand_id], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@unique([brand_id, category_id])
+  @@index([category_id], map: "brand_categories_categoryId_fkey")
+  @@map("brand_category")
+}
+
+model Brand {
+  id             Int       @id @default(autoincrement())
+  name           String    @unique
+  slug           String    @unique
+  name_ar        String?
+  logo_url       String?
+  cover_url      String?
+  is_active      Boolean   @default(true)
+  is_popular     Boolean   @default(false)
+  description    String?   @db.LongText
+  description_ar String?   @db.LongText
+  up_to          Int?
+  sort_id        Int       @default(0)
+  synonyms       String?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime? @updatedAt
+  deleted_at     DateTime?
+
+  // Relations
+  categories BrandCategory[]
+  products   Product[]
+
+  @@index([sort_id])
+  @@fulltext([name, name_ar, synonyms, description, description_ar])
+  @@map("brand")
+}
+
+model ProductAttribute {
+  id         Int     @id @default(autoincrement())
+  key        String
+  value      String
+  product_id Int
+  value_ar   String?
+  product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_id, key])
+  @@index([product_id])
+  @@map("product_attribute")
+}
+
+model Product {
+  id             Int     @id @default(autoincrement())
+  name           String
+  name_ar        String?
+  description    String? @db.LongText
+  description_ar String? @db.LongText
+  sku            String  @unique
+  barcode        String? @unique
+  slug           String? @unique
+  synonyms       String?
+  images         String? @db.LongText
+  weight         Float?
+  dimensions     String?
+  category_id    Int
+  brand_id       Int?
+  sort_id        Int     @default(0)
+  color          String?
+
+  refund_policy     String?  @db.Text
+  refundable        Boolean?
+  refundable_period Decimal?
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  // Relations
+  suppliers SupplierProduct[] // Link to the junction table
+  brand     Brand?            @relation(fields: [brand_id], references: [id])
+
+  category    Category           @relation(fields: [category_id], references: [id])
+  attributes  ProductAttribute[]
+  orderItems  OrderItem[]
+  refundItems RefundItem[]
+
+  // Note: We removed supplier_id and the index for it from here
+  @@index([brand_id])
+  @@index([category_id])
+  @@map("product")
+}
+
+model SupplierProduct {
+  id             Int     @id @default(autoincrement())
+  supplier_id    Int
+  product_id     Int
+  // address_id  Int?
+  price          Float?
+  cost_price     Float? // platform bounce price
+  stock          Int     @default(0)
+  min_stock      Int     @default(5)
+  is_active      Boolean @default(true)
+  is_featured    Boolean @default(false)
+  is_best_seller Boolean @default(false)
+  rating         Float?  @default(0)
+  total_reviews  Int     @default(0)
+
+  max_amount_for_one_order Decimal?
+  max_amount_for_one_user  Decimal?
+  min_amount_for_one_order Decimal?
+  min_amount_for_one_user  Decimal?
+  reserved_in_carts_amount Decimal?
+
+  // Duration in minutes
+  pickup_ready_duration Int?
+  estimated_time_from   Int?
+  estimated_time_to     Int?
+
+  // order type 3 (delivery windows)
+  requires_delivery_windows Boolean @default(false)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  // Relations
+  supplier        Supplier                        @relation(fields: [supplier_id], references: [id])
+  product         Product                         @relation(fields: [product_id], references: [id])
+  // address        SupplierStoreAddress? @relation(fields: [address_id], references: [id])
+  offers          Offer[]
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  deliveryWindows SupplierProductDeliveryWindow[]
+
+  // @@unique([supplier_id, product_id, address_id])
+  @@unique([supplier_id, product_id])
+  @@index([supplier_id])
+  @@index([product_id])
+  @@map("supplier_product")
+}

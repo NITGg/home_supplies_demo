@@ -1,0 +1,23 @@
+{
+  "errors": {
+    "wallet_not_found": "المحفظة غير موجودة",
+    "order_not_found": "الطلب غير موجود",
+    "insufficient_balance": "رصيد غير كافٍ",
+    "platform_wallet_not_found": "محفظة المنصة غير موجودة",
+    "user_not_admin": "المستخدم ليس مشرفاً",
+    "user_already_has_wallet": "هذا المستخدم لديه محفظة بالفعل",
+    "user_not_found": "المستخدم غير موجود",
+    "insufficient_platform_money": "رصيد المنصة غير كافٍ",
+    "invalid_date_range": "فترة غير صحيحة"
+  },
+  "messages": {
+    "ok": "تم بنجاح",
+    "balance_adjusted": "تم تعديل رصيد المحفظة بنجاح",
+    "platform_wallet_created": "تم إنشاء محفظة المنصة بنجاح",
+    "platform_wallet_exists": "محفظة المنصة موجودة بالفعل",
+    "platform_wallet_topped_up": "تم شحن محفظة المنصة بنجاح",
+    "platform_wallet_updated": "تم تحديث محفظة المنصة بنجاح",
+    "balance_already_zero": "تم تسوية الرصيد بالفعل",
+    "done": "تم"
+  }
+}

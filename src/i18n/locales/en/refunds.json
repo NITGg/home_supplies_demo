@@ -1,0 +1,49 @@
+{
+  "notifications": {
+    "requested": {
+      "admin": {
+        "title": "New Refund Request",
+        "body": "A new refund request has been submitted for Order #{{orderNumber}} and requires review."
+      }
+    },
+    "approved": {
+      "customer": {
+        "title": "Refund Approved",
+        "body": "Your refund for Order #{{orderNumber}} has been approved. An amount of {{amount}} EGP has been credited back to your wallet balance."
+      },
+      "admin": {
+        "title": "Refund Handled Successfully",
+        "body": "Refund for Order #{{orderNumber}} was approved for an amount of {{amount}} EGP."
+      }
+    },
+    "rejected": {
+      "title": "Refund Request Declined",
+      "body": "Your refund claim for Order #{{orderNumber}} has been reviewed and declined. Check your order details folder for structural comments.",
+      "admin": {
+        "title": "Refund Claim Declined",
+        "body": "Refund request for Order #{{orderNumber}} has been marked as rejected."
+      }
+    },
+    "deduction": {
+      "supplier": {
+        "title": "Account Balance Deducted",
+        "body": "An financial adjustment debit was posted to your supplier account earnings linked to a product defect on Order #{{orderNumber}}."
+      },
+      "courier": {
+        "title": "Account Balance Deducted",
+        "body": "A delivery penalty debit was processed against your courier account earnings linked to problems handling Order #{{orderNumber}}."
+      }
+    }
+  },
+  "errors": {
+    "order_not_eligible": "This order is not eligible for a refund request.",
+    "item_already_refunded_or_pending": "One or more selected items are already pending review or refunded.",
+    "item_not_found": "Requested order line item could not be found.",
+    "product_not_refundable": "This product configuration is marked as non-refundable.",
+    "refund_period_expired": "The structural eligible refund time window has expired.",
+    "invalid_quantity": "Requested refund volume exceeds original checkout balance values.",
+    "not_found": "Refund tracking ticket record not found.",
+    "cannot_cancel": "This refund ticket state cannot be cancelled.",
+    "already_processed": "This refund payload data has already been evaluated and processed."
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "errors": {
+    "full_name_min": "يجب ألا يقل الاسم الكامل عن حرفين",
+    "full_name_max": "يجب ألا يزيد الاسم الكامل عن 100 حرف",
+    "email_invalid": "البريد الإلكتروني غير صحيح",
+    "phone_min": "رقم الهاتف قصير جدًا",
+    "phone_max": "رقم الهاتف طويل جدًا",
+    "password_min": "يجب ألا تقل كلمة المرور عن 6 أحرف",
+    "password_max": "يجب ألا تزيد كلمة المرور عن 255 حرف",
+    "password_invalid_format": "يجب أن تحتوي كلمة المرور على حرف كبير وحرف صغير ورقم واحد على الأقل",
+
+    "role_id_invalid": "معرّف الدور غير صحيح",
+    "badge_id_invalid": "معرّف الشارة غير صحيح",
+    "user_id_invalid": "معرّف المستخدم غير صحيح",
+    "ids_min_1": "يرجى إدخال معرّف مستخدم واحد على الأقل",
+    "id_min_1": "يجب أن يكون المعرّف أكبر من أو يساوي 1",
+
+    "email_exists": "البريد الإلكتروني مستخدم بالفعل",
+    "phone_exists": "رقم الهاتف مستخدم بالفعل",
+    "user_not_found": "المستخدم غير موجود",
+
+    "role_not_found": "الدور غير موجود",
+    "invalid_role": "المستخدم ليس لديه الدور المطلوب",
+    "badge_not_found": "الشارة غير موجودة",
+    "badge_role_mismatch": "الشارة لا تتبع الدور المحدد",
+
+    "image_upload_failed": "فشل رفع الصورة",
+
+    "supplier_not_found": "المورد غير موجود",
+    "account_already_deleted": "الحساب محذوف بالفعل",
+    "cannot_delete_active_orders": "لا يمكن حذف الحساب بسبب وجود طلبات نشطة",
+    "cannot_delete_unpaid_commissions": "لا يمكن حذف الحساب بسبب وجود عمولات غير مدفوعة",
+    "cannot_delete_wallet_balance": "لا يمكن حذف الحساب بسبب وجود رصيد في المحفظة",
+    "cannot_delete_escrow_funds": "لا يمكن حذف الحساب بسبب وجود أموال في الضمان",
+    "cannot_delete_pending_refunds": "لا يمكن حذف الحساب بسبب وجود طلبات استرداد معلقة"
+  },
+  "messages": {
+    "user_created": "تم إنشاء المستخدم",
+    "user_updated": "تم تحديث المستخدم",
+    "users_archived": "تم أرشفة المستخدمين",
+    "users_deleted": "تم حذف المستخدمين",
+    "user_archived": "تم أرشفة المستخدم",
+    "user_deleted": "تم حذف المستخدم"
+  }
+}

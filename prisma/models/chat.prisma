@@ -1,0 +1,68 @@
+enum ChatMessageType {
+  TEXT
+  IMAGE
+  FILE
+  VOICE
+}
+
+model Chat {
+  id         Int       @id @default(autoincrement())
+  name       String?   @db.VarChar(100) // group name (null for private chats)
+  is_group   Boolean   @default(false)
+  created_by Int
+  // step: claude: "delete order user chat notifications" — link chat to the order it
+  // belongs to so we can find and delete the entire chat (messages + participants) when
+  // an order is deleted or when an admin explicitly clears order chat history.
+  order_id   Int?      @unique // null for non-order chats; unique = one chat per order
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  // relations
+  creator      User              @relation("ChatCreator", fields: [created_by], references: [id], onDelete: Cascade)
+  order        Order?            @relation(fields: [order_id], references: [id], onDelete: SetNull)
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+
+  @@index([created_by])
+  @@index([order_id])
+  @@map("chat")
+}
+
+model ChatMessage {
+  id         Int             @id @default(autoincrement())
+  chat_id    Int
+  sender_id  Int
+  content    String          @db.Text
+  type       ChatMessageType @default(TEXT)
+  is_read    Boolean         @default(false)
+  read_at    DateTime?
+  created_at DateTime        @default(now())
+  updated_at DateTime?       @updatedAt
+  deleted_at DateTime?
+
+  // relations
+  chat   Chat @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  sender User @relation("MessageSender", fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([chat_id])
+  @@index([sender_id])
+  @@map("chat_message")
+}
+
+model ChatParticipant {
+  id        Int       @id @default(autoincrement())
+  chat_id   Int
+  user_id   Int
+  joined_at DateTime  @default(now())
+  left_at   DateTime?
+
+  // relations
+  chat Chat @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  user User @relation("ChatParticipant", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([chat_id, user_id])
+  @@index([chat_id])
+  @@index([user_id])
+  @@map("chat_participant")
+}

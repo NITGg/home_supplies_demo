@@ -1,0 +1,13 @@
+{
+  "messages": {
+    "ok": "OK",
+    "vehicle_created": "Vehicle created successfully",
+    "vehicle_updated": "Vehicle updated successfully",
+    "vehicle_deleted": "Vehicle deleted successfully"
+  },
+  "errors": {
+    "vehicle_not_found": "Vehicle not found",
+    "icon_required": "Icon image required",
+    "vehicle_exist": "Vehicle already exist"
+  }
+}

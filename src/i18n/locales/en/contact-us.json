@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "created": "Message sent successfully.",
+    "updated": "Message updated successfully.",
+    "deleted": "Message deleted successfully."
+  },
+  "errors": {
+    "not_found": "Message not found."
+  }
+}

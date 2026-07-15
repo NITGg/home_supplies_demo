@@ -1,0 +1,11 @@
+{
+  "messages": {
+    "created": "Area created successfully.",
+    "updated": "Area updated successfully.",
+    "deleted": "Area deleted successfully."
+  },
+  "errors": {
+    "not_found": "Area not found.",
+    "governorate_not_found": "Governorate not found."
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "errors": {
+    "internal": "حدث خطأ غير متوقع، يرجى المحاولة لاحقاً.",
+    "unauthorized": "غير مصرح",
+    "phone_invalid": "رقم الهاتف غير صحيح",
+    "validation": "فشل التحقق",
+    "database_schema_mismatch": "الخدمة قيد التحديث حالياً. يرجى المحاولة بعد قليل.",
+    "conflict": "هذا السجل موجود بالفعل.",
+    "upload": {
+      "file_too_large": "حجم الملف كبير جدًا",
+      "unexpected_field": "حقل الملف غير متوقع",
+      "too_many_files": "تم رفع عدد كبير جدًا من الملفات",
+      "too_many_fields": "عدد الحقول كبير جدًا",
+      "too_many_parts": "عدد أجزاء الرفع كبير جدًا",
+      "field_name_too_long": "اسم الحقل طويل جدًا",
+      "field_value_too_long": "قيمة الحقل طويلة جدًا",
+      "failed": "فشل رفع الملف"
+    }
+  },
+  "zod": {
+    "invalid_type": "نوع القيمة غير صالح",
+    "too_small": "القيمة صغيرة جداً",
+    "too_big": "القيمة كبيرة جداً",
+    "invalid_string": "نص غير صالح"
+  },
+  "search": {
+    "errors": {
+      "query_required": "يرجى إدخال كلمة البحث."
+    },
+    "messages": {
+      "success": "تم جلب نتائج البحث بنجاح."
+    }
+  }
+}

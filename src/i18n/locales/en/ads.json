@@ -1,0 +1,16 @@
+{
+  "messages": {
+    "created": "Ad created successfully",
+    "updated": "Ad updated successfully",
+    "deleted": "Ad deleted successfully",
+    "reordered": "Ads reordered successfully"
+  },
+  "errors": {
+    "not_found": "Ad not found",
+    "invalid_id": "Invalid ad ID",
+    "invalid_budget": "Budget must be a valid decimal number (e.g. 10.00)",
+    "invalid_target_url": "Target URL must be a valid URL",
+    "invalid_time_slots": "time_slots must be valid JSON",
+    "delete_failed": "Failed to delete ad"
+  }
+}

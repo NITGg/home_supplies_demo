@@ -1,0 +1,27 @@
+{
+  "errors": {
+    "not_found": "التطبيق الخارجي غير موجود.",
+    "inactive": "هذا التطبيق الخارجي غير مفعل.",
+    "invalid_credentials": "بيانات الاعتماد غير صحيحة.",
+    "no_active_contract": "لا يوجد عقد نشط لهذا الشريك.",
+    "contract_expired": "انتهت صلاحية عقد الشريك.",
+    "vehicle_not_in_contract": "نوع المركبة هذا غير مشمول في عقد الشريك.",
+    "no_eligible_vehicle_for_distance": "لا يوجد نوع مركبة مناسب لهذه المسافة.",
+    "distance_below_minimum": "المسافة أقل من الحد الأدنى المسموح به لهذا النوع من المركبات.",
+    "distance_above_maximum": "المسافة تتجاوز الحد الأقصى المسموح به لهذا النوع من المركبات.",
+    "wallet_not_found": "لم يتم العثور على محفظة لهذا التطبيق الخارجي.",
+    "wallet_not_active": "محفظة هذا التطبيق الخارجي غير مفعلة.",
+    "insufficient_wallet_balance": "رصيد المحفظة غير كافٍ.",
+    "recharge_amount_invalid": "قيمة الشحن غير صالحة.",
+    "recharge_init_failed": "تعذر بدء عملية شحن المحفظة.",
+    "paymob_disabled": "الدفع عبر Paymob غير متاح حالياً.",
+    "kashier_disabled": "الدفع عبر Kashier غير متاح حالياً.",
+    "easykash_disabled": "الدفع عبر EasyKash غير متاح حالياً."
+  },
+  "messages": {
+    "created": "تم إنشاء التطبيق الخارجي بنجاح.",
+    "updated": "تم تحديث التطبيق الخارجي بنجاح.",
+    "deleted": "تم حذف التطبيق الخارجي بنجاح.",
+    "recharge_initiated": "تم بدء عملية شحن المحفظة."
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "messages": {
+    "created": "Brand created successfully",
+    "updated": "Brand updated successfully",
+    "deleted": "Brand(s) deleted successfully",
+    "reordered": "Brands reordered successfully"
+  },
+  "errors": {
+    "not_found": "Brand not found",
+    "invalid_id": "Invalid brand ID"
+  }
+}

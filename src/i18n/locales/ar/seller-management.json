@@ -1,0 +1,11 @@
+{
+  "errors": {
+    "already_seller": "انت بالفعل بائع",
+    "seller_role_not_found": "دور البائع غير موجود"
+  },
+  "messages": {
+    "ok": "نجاح",
+    "customer_converted_to_seller": "تم تحويل العميل إلى بائع بنجاح",
+    "referral_code_updated": "تم تحديث كود الدعوة بنجاح"
+  }
+}

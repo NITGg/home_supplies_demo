@@ -1,0 +1,186 @@
+enum ProfileUpdateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CommissionType {
+  FIXED_PER_ORDER // مبلغ ثابت على كل أوردر (مثلاً 2 جنيه)
+  PERCENTAGE // نسبة مئوية من إجمالي الأوردرات (مثلاً 10%)
+}
+
+model Courier {
+  id                      Int       @id @default(autoincrement())
+  user_id                 Int       @unique // courier belongs to a user account
+  vehicle_id              Int?
+  courier_office_id       Int?
+  national_id_photo_front String?   @db.VarChar(255)
+  national_id_photo_back  String?   @db.VarChar(255)
+  national_id_number      String?   @db.VarChar(40)
+  vehicle_plate           String?   @db.VarChar(20)
+  vehicle_license_front   String?   @db.VarChar(255)
+  vehicle_license_back    String?   @db.VarChar(255)
+  courier_license_front   String?   @db.VarChar(255)
+  courier_license_back    String?   @db.VarChar(255)
+  courier_criminal_record String?   @db.VarChar(255)
+  is_approved             Boolean   @default(false)
+  reject_reason           String?   @db.VarChar(255)
+  lat                     Decimal?  @db.Decimal(11, 8) // current latitude
+  lng                     Decimal?  @db.Decimal(11, 8) // current longitude
+  last_location_update    DateTime?
+  min_order_price         Decimal?  @default(0) @db.Decimal(10, 2)
+  max_order_price         Decimal?  @default(100000) @db.Decimal(10, 2)
+  created_at              DateTime  @default(now())
+  updated_at              DateTime? @updatedAt
+  deleted_at              DateTime?
+
+  // relations
+  user             User                        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  vehicle          Vehicle?                    @relation(fields: [vehicle_id], references: [id])
+  courierOffice    CourierOffice?              @relation(fields: [courier_office_id], references: [id])
+  selectedAreas    CourierSelectedArea[]
+  stat             CourierStat?
+  //   dailyStats       CourierDailyStat[]
+  proposals        OrderProposal[]
+  //   receivedNotifications Notification[]
+  //   notificationSettings NotificationSetting?
+  orders           Order[]                     @relation("OrderCourier")
+  issues           OrderIssue[]                @relation("OrderIssues")
+  customerReviews  CourierReviewFromCustomer[]
+  customerReviewed CustomerReviewFromCourier[]
+  supplierReviews  CourierReviewFromSupplier[]
+  supplierReviewed SupplierReviewFromCourier[]
+
+  @@map("courier")
+}
+
+model CourierOffice {
+  id               Int       @id @default(autoincrement())
+  name             String    @db.VarChar(255)
+  address          String?   @db.VarChar(255)
+  phone            String?   @db.VarChar(20)
+  email            String?   @db.VarChar(255)
+  website          String?   @db.VarChar(255)
+  description      String?   @db.Text
+  created_at       DateTime  @default(now())
+  updated_at       DateTime? @updatedAt
+  deleted_at       DateTime?
+  commission_value Decimal   @default(0.00) @db.Decimal(10, 2) // قيمة العمولة (سواء جنيهات أو نسبة)
+
+  // relations
+  couriers        Courier[]
+  commission_type CommissionType @default(FIXED_PER_ORDER) // نوع العمولة
+
+  @@map("courier_office")
+}
+
+model ProfileUpdateRequest {
+  id            Int                 @id @default(autoincrement())
+  user_id       Int
+  data          Json // { courier_license, vehicle_license, Vehicle_plate, Vehicle_type, national_id_photo }
+  status        ProfileUpdateStatus @default(PENDING)
+  reject_reason String?             @db.VarChar(255)
+  created_at    DateTime            @default(now())
+  updated_at    DateTime?           @updatedAt
+  deleted_at    DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("profile_update_request")
+}
+
+model CourierSelectedArea {
+  id         Int @id @default(autoincrement())
+  courier_id Int
+  area_id    Int
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  courier Courier @relation(fields: [courier_id], references: [id], onDelete: Cascade)
+  area    Area    @relation(fields: [area_id], references: [id])
+
+  @@index([courier_id])
+  @@index([area_id])
+  @@map("courier_selected_area")
+}
+
+model CourierStat {
+  id         Int @id @default(autoincrement())
+  courier_id Int @unique
+
+  total_completed_orders Int @default(0)
+  total_cancelled_orders Int @default(0)
+
+  total_earnings Decimal @default(0) @db.Decimal(12, 2)
+  average_rating Decimal @default(0) @db.Decimal(2, 1)
+  total_reviews  Int     @default(0)
+
+  acceptance_rate Decimal @default(0) @db.Decimal(5, 2)
+  completion_rate Decimal @default(0) @db.Decimal(5, 2)
+
+  avg_delivery_time Int @default(0)
+
+  updated_at DateTime? @updatedAt
+
+  courier Courier @relation(fields: [courier_id], references: [id], onDelete: Cascade)
+
+  @@map("courier_stat")
+}
+
+// model CourierDailyStat {
+//   id                     Int      @id @default(autoincrement())
+//   courier_id             Int
+//   date                   DateTime @db.Date
+
+//   total_completed_orders Int      @default(0)
+//   total_cancelled_orders Int      @default(0)
+
+//   total_earnings         Decimal  @default(0) @db.Decimal(10, 2)
+//   working_hours          Decimal  @default(0) @db.Decimal(4, 2)
+
+//   created_at             DateTime @default(now())
+//   updated_at             DateTime? @updatedAt
+//   deleted_at             DateTime?
+
+//   courier                Courier  @relation(fields: [courier_id], references: [id])
+
+//   @@index([courier_id])
+//   @@unique([courier_id, date])
+//   @@map("courier_daily_stat")
+// }
+
+model Vehicle {
+  id                  Int      @id @default(autoincrement())
+  name                String   @unique @db.VarChar(50)
+  name_ar             String   @unique @db.VarChar(50)
+  price_per_km        Decimal  @default(5) @db.Decimal(10, 2)
+  min_distance_per_km Decimal? @db.Decimal(10, 2)
+  max_distance_per_km Decimal? @db.Decimal(10, 2)
+  icon                String?  @db.VarChar(255)
+
+  // Delivery settings (can override application defaults)
+  min_delivery_fee           Decimal @default(0) @db.Decimal(10, 2)
+  delivery_price_for_each_1m Decimal @default(0.01) @db.Decimal(10, 2)
+  delivery_fee_ratio         Decimal @default(50) @db.Decimal(10, 2)
+  total_fines                Decimal @default(0) @db.Decimal(10, 2)
+
+  // new fields
+  fee_base_distance_km      Int @default(2) // after this base we calc with this new fields 
+  fee_extra_platform_per_km Int @default(100) // extra platform per km beyond threshold
+  fee_extra_courier_per_km  Int @default(100) // extra courier per km beyond threshold
+  peak_time_fee_ratio       Int @default(20) // additional % added to totalFee during peak hours
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  // relations
+  couriers                Courier[]
+  orderProposals          OrderProposal[]
+  orders                  Order[]
+  partnerContractVehicles PartnerContractVehicle[]
+
+  @@map("vehicle")
+}

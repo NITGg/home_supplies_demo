@@ -1,0 +1,44 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+
+# Node
+node_modules
+dist
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Prisma
+prisma/migrations
+generated/prisma
+prisma/seeds
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+
+/test-scripts
+/postman
+/firebase
+uploads/*
+!uploads/**/.gitkeep
+
+Code_Quality_Report.md
+check_user.ts
+
+**.test.ts
+vitest.config.ts
+/src/tests
+/tests

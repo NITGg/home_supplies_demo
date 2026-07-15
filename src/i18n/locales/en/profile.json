@@ -1,0 +1,45 @@
+{
+  "errors": {
+    "old_password_required": "Old password is required",
+    "old_password_wrong": "Old password is incorrect",
+    "no_password_set": "No password set for this account",
+
+    "area_id_invalid": "Invalid area id",
+    "address_id_invalid": "Invalid address id",
+    "address_not_found": "Address not found",
+    "address_min": "Address is too short",
+    "address_max": "Address is too long",
+    "fcm_required": "fcmToken is required",
+    "recharge_amount_invalid": "Recharge amount is invalid",
+    "recharge_invalid_transaction": "Invalid Paymob transaction id",
+    "recharge_invalid_hmac": "Invalid Paymob callback signature",
+    "recharge_customer_only": "Wallet recharge is only available for customers",
+    "recharge_init_failed": "Failed to initialize wallet recharge",
+    "recharge_verify_failed": "Failed to verify Paymob transaction",
+    "recharge_not_found": "Recharge transaction not found",
+    "recharge_not_successful": "Recharge transaction is not successful",
+    "recharge_amount_mismatch": "Recharge amount mismatch"
+  },
+  "messages": {
+    "profile_retrieved": "Profile retrieved",
+    "profile_updated": "Profile updated",
+    "supplier_not_found": "Supplier not found",
+    "supplier_store_address_not_found": "Supplier store address not found",
+    "documents_pending": "Documents pending approval",
+    "no_document_changes": "No document changes",
+    "badge_progress_retrieved": "Badge progress retrieved",
+    "account_deletion_marked": "Account marked for deletion",
+    "account_deleted": "Account deleted",
+    "otp_sent": "OTP sent",
+    "contact_updated": "Email/phone updated",
+    "password_changed": "Password changed",
+
+    "address_created": "Address created",
+    "address_updated": "Address updated",
+    "address_deleted": "Address deleted",
+    "fcm_updated": "FCM token updated",
+    "recharge_initiated": "Wallet recharge initiated",
+    "recharge_completed": "Wallet recharge completed",
+    "recharge_already_applied": "Wallet recharge already applied"
+  }
+}

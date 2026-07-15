@@ -1,0 +1,14 @@
+{
+  "messages": {
+    "ok": "OK",
+    "courier_approved": "Courier approved successfully",
+    "courier_rejected": "Courier rejected successfully",
+    "profile_update_approved": "Courier document update approved successfully",
+    "profile_update_rejected": "Courier document update rejected successfully"
+  },
+  "errors": {
+    "courier_not_found": "Courier not found.",
+    "profile_update_request_not_found": "Document update request not found",
+    "profile_update_request_already_processed": "This document update request has already been processed"
+  }
+}

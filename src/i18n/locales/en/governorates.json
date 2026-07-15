@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "created": "Governorate created successfully.",
+    "updated": "Governorate updated successfully.",
+    "deleted": "Governorate deleted successfully."
+  },
+  "errors": {
+    "not_found": "Governorate not found."
+  }
+}

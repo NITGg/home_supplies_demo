@@ -1,0 +1,12 @@
+{
+  "messages": {
+    "ok": "تم",
+    "updated": "تم تحديث الترجمات بنجاح"
+  },
+  "errors": {
+    "app_not_found": "التطبيق غير موجود",
+    "namespace_not_found": "ملف الترجمة غير موجود",
+    "remote_app_error": "التطبيق المستهدف أرجع خطأ",
+    "remote_app_unreachable": "تعذر الوصول إلى التطبيق المستهدف"
+  }
+}

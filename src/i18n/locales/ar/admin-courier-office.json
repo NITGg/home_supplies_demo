@@ -1,0 +1,13 @@
+{
+  "messages": {
+    "ok": "تم",
+    "courier_office_created": "تم إنشاء مكتب المندوب بنجاح",
+    "courier_added_to_office": "تم إضافة المندوب إلى المكتب بنجاح",
+    "courier_office_deleted": "تم حذف مكتب المندوب بنجاح",
+    "courier_removed_from_office": "تم إزالة المندوب من المكتب بنجاح"
+  },
+  "errors": {
+    "courier_office_not_found": "لم يتم العثور على مكتب المندوب",
+    "courier_already_in_office": "المندوب مسجل في مكتب آخر"
+  }
+}

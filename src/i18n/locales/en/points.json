@@ -1,0 +1,23 @@
+{
+  "errors": {
+    "settings_not_found": "Application settings not found",
+    "coupon_not_found": "Coupon not found",
+    "already_has_active_coupon": "You already have an active coupon",
+    "wallet_not_found": "Wallet not found",
+    "insufficient_points": "Insufficient points",
+    "no_fines_to_pay": "No fines to pay",
+    "invalid_points_amount": "Invalid points amount",
+    "insufficient_points_for_conversion": "Not enough points to convert to at least 1 EGP",
+    "invalid_conversion_rate": "Invalid points conversion rate in settings",
+    "insufficient_balance": "Insufficient balance to pay fines"
+  },
+  "messages": {
+    "points_retrieved": "Points rules retrieved successfully",
+    "points_progress_retrieved": "Points progress retrieved successfully",
+    "coupon_purchased_with_points": "Coupon purchased successfully using points",
+    "fines_paid_with_points": "Fines paid successfully using points",
+    "points_converted_to_money": "Points converted to wallet balance successfully",
+    "points_processed_successfully": "Points processed successfully for recent orders",
+    "fines_paid": "Fines paid successfully"
+  }
+}

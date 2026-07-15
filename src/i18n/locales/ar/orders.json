@@ -1,0 +1,117 @@
+{
+  "errors": {
+    "insufficient_wallet_balance_for_fee": "رصيد المحفظة غير كافٍ لتغطية رسوم التوصيل",
+    "order_not_found": "الطلب غير موجود",
+    "pickup_area_not_found": "منطقة الاستلام غير موجودة",
+    "delivery_area_not_found": "منطقة التسليم غير موجودة",
+    "forbidden": "غير مسموح",
+    "cannot_cancel_delivered": "لا يمكن إلغاء طلب تم تسليمه",
+    "already_cancelled": "الطلب ملغي بالفعل",
+    "already_delivered": "الطلب تم تسليمه بالفعل",
+    "order_not_in_progress": "الطلب ليس قيد التنفيذ",
+    "courier_mismatch": "المندوب لا يتطابق مع هذا الطلب",
+    "order_not_open_for_proposals": "الطلب غير مفتوح لاستقبال عروض",
+    "proposal_already_exists": "لقد قمت بتقديم عرض لهذا الطلب بالفعل",
+    "order_not_open_for_accept": "الطلب ليس في مرحلة اتخاذ القرار بشأن العروض",
+    "proposal_not_found": "العرض غير موجود",
+    "proposal_not_pending": "العرض ليس قيد الانتظار",
+    "qr_or_fields_required": "رمز QR أو بيانات الطلب/المندوب مطلوبة",
+    "qr_invalid": "بيانات رمز QR غير صالحة",
+    "qr_payload_invalid": "حمولة رمز QR غير صالحة",
+    "order_not_recoverable": "الطلب ليس في حالة قابلة للاسترداد.",
+    "courier_not_found": "المندوب غير موجود.",
+    "courier_not_active": "المندوب غير نشط حالياً.",
+    "order_issue": {
+      "create_failed": "فشل في الإبلاغ عن المشكلة",
+      "not_found": "المشكلة غير موجودة",
+      "dismissed": "تم تجاهل المشكلة",
+      "invalid_order": "لا يمكن الإبلاغ عن هذا الطلب",
+      "already_exists": "تم الإبلاغ عن مشكلة لهذا الطلب مسبقاً"
+    },
+    "max_retry_reached": "تم الوصول إلى الحد الأقصى لإعادة المحاولة",
+    "cart_multiple_suppliers": "يجب أن تكون جميع المنتجات في السلة من نفس المورد. يرجى إفراغ السلة للتبديل إلى مورد آخر.",
+    "supplier_closed_now": "المورّد غير متاح حالياً.",
+    "store_closed": "المتجر مغلق",
+    "outside_working_hours": "خارج ساعات العمل",
+    "slot_full": "تم الوصول للحد الأقصى للطلبات في هذه الفترة",
+    "schedule_too_early": "الوقت المحدد مبكر جدًا. يرجى اختيار وقت لاحق.",
+    "order_schedule_required": "يجب تحديد وقت التوصيل لهذا الطلب.",
+    "outside_order_window": "الطلب غير متاح في هذا الوقت. يرجى الطلب خلال الأوقات المسموح بها.",
+    "outside_delivery_window": "وقت التوصيل المحدد غير متاح. يرجى اختيار فترة متاحة.",
+    "delivery_slot_full": "تم حجز هذه الفترة بالكامل. يرجى اختيار فترة أخرى.",
+    "product_windows_not_configured": "هذا المنتج غير متاح للطلب حالياً.",
+    "products_total_too_low": "إجمالي قيمة المنتجات في السلة أقل من الحد الأدنى للطلب المطلوب من قبل المورد ({{min_price_for_one_order}} ج.م).",
+    "products_total_too_high": "إجمالي قيمة المنتجات في السلة أعلى من الحد الأقصى للطلب المسموح به من قبل المورد ({{max_price_for_one_order}} ج.م).",
+    "budget_out_of_range": "الميزانية خارج النطاق المسموح به ({{min}} - {{max}}) ج.م."
+  },
+  "messages": {
+    "order_created": "تم إنشاء الطلب",
+    "order_cancelled": "تم إلغاء الطلب",
+    "proposal_created": "تم إنشاء العرض",
+    "proposal_accepted": "تم قبول العرض",
+    "proposal_rejected": "تم رفض العرض",
+    "delivery_confirmed": "تم تأكيد التسليم",
+    "order_updated": "تم تحديث الطلب",
+    "proposal_updated": "تم تحديث العرض",
+    "order_delivered_courier_title": "تم تسليم الطلب",
+    "order_delivered_courier_body": "تم تسليم الطلب رقم {{orderId}} بنجاح.",
+    "order_delivered_admin_title": "تم تسليم الطلب",
+    "order_delivered_admin_body": "تم تسليم الطلب رقم {{orderId}} بواسطة المندوب.",
+    "unpaid_dues_threshold_title": "اقتربت من حد الدفع",
+    "unpaid_dues_threshold_body": "مستحقاتك الحالية {{amount}} ج.م. الحد الأقصى هو {{maxAmount}} ج.م. يرجى الدفع قريباً.",
+    "unpaid_dues_exceeded_title": "تم تجاوز حد الدفع",
+    "unpaid_dues_exceeded_body": "مستحقاتك الحالية {{amount}} ج.م وتجاوزت الحد المسموح به ({{maxAmount}}). يرجى الدفع الآن.",
+    "manual_assign": "تم تعيين الطلب للمندوب بنجاح.",
+    "order_retried": "تم إعادة فتح الطلب للمزايدة.",
+    "soft_cancelled": "تم إلغاء الطلب واسترداد المبلغ للعميل.",
+    "order_issue": {
+      "created_success": "تم الإبلاغ عن المشكلة بنجاح",
+      "resolved": "تم حل المشكلة",
+      "not_responding": {
+        "title": "🚨 المندوب لا يستجيب",
+        "body": "المندوب في الطلب رقم {{orderId}} لا يرد على الرسائل أو المكالمات."
+      },
+      "late_pickup": {
+        "title": "⏰ تنبيه: تأخر الاستلام",
+        "body": "الطلب رقم {{orderId}} متأخر. المندوب لم يصل إلى موقع الاستلام بعد."
+      },
+      "late_delivery": {
+        "title": "⏳ تنبيه: تأخر التوصيل",
+        "body": "المندوب يستغرق وقتًا أطول من المتوقع لتوصيل الطلب رقم {{orderId}}."
+      },
+      "wrong_location": {
+        "title": "📍 موقع خاطئ",
+        "body": "يبدو أن مندوب الطلب رقم {{orderId}} خارج المسار أو في منطقة خاطئة."
+      },
+      "other": {
+        "title": "⚠️ مشكلة جديدة في طلب",
+        "body": "تم الإبلاغ عن مشكلة جديدة في الطلب رقم {{orderId}}. يرجى المراجعة اليدوية."
+      }
+    },
+    "soft_cancel_customer": {
+      "title": "تم إلغاء طلبك",
+      "body": "للأسف، لم يتوفر أي مندوب لطلبك رقم #{{orderId}}. تم استرداد مبلغ دفعتك. نعتذر عن هذا الإزعاج."
+    },
+    "no_proposals": {
+      "title": "لم يتم استقبال عروض",
+      "body": "لم يرسل أي مندوب عروضاً للطلب رقم {{title}}. تم تحويل الطلب لمراجعة الإدارة."
+    },
+    "no_proposals_customer": {
+      "title": "جاري البحث عن مندوب",
+      "body": "لم يتم تلقي عروض للطلب رقم {{title}} حتى الآن. فريقنا يعمل حالياً على إيجاد أفضل مندوب لك يدوياً."
+    },
+    "order_expired_admin": {
+      "title": "🚫 فشل البحث",
+      "body": "انتهت صلاحية الطلب رقم {{orderId}}. لم يتم العثور على مناديب بعد جميع محاولات إعادة الطلب."
+    },
+    "order_expired_customer": {
+      "title": "انتهت صلاحية الطلب",
+      "body": "للأسف، لم نتمكن من العثور على مندوب متاح للطلب رقم {{orderId}} في الوقت الحالي. تم إغلاق الطلب، ولكن يمكنك محاولة إرساله مرة أخرى لاحقاً."
+    },
+    "count_retrieved": "تم استرداد عدد الطلبات بنجاح",
+    "low_stock_supplier_title": "تنبيه: مخزون منتج منخفض",
+    "low_stock_supplier_body": "المنتجات التالية وصلت لمستوى مخزون منخفض: {{products}}. يرجى إعادة التزويد.",
+    "low_stock_admin_title": "تنبيه مخزون مورد",
+    "low_stock_admin_body": "المورد #{{supplierId}} لديه منتجات بمخزون منخفض: {{products}}"
+  }
+}

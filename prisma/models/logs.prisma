@@ -1,0 +1,30 @@
+enum LogService {
+  ADMIN_CUSTOMER
+  COURIER
+  SUPPLIER
+}
+
+model Log {
+  id          Int        @id @default(autoincrement())
+  service     LogService @default(ADMIN_CUSTOMER)
+  method      String
+  path        String     @db.Text
+  status_code Int
+  duration    Int
+
+  ip      String?
+  user_id Int?
+
+  query Json?
+  body  Json?
+
+  created_at DateTime @default(now())
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([path(length: 255)])
+  @@index([status_code])
+  @@index([created_at])
+  @@index([service])
+}

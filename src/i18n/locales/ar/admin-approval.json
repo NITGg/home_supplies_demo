@@ -1,0 +1,14 @@
+{
+  "messages": {
+    "ok": "تم",
+    "courier_approved": "تم الموافقة على بيانات المندوب بنجاح",
+    "courier_rejected": "تم رفض بيانات المندوب بنجاح",
+    "profile_update_approved": "تم الموافقة على تحديث وثائق المندوب بنجاح",
+    "profile_update_rejected": "تم رفض تحديث وثائق المندوب بنجاح"
+  },
+  "errors": {
+    "courier_not_found": "لم يتم العثور على المندوب",
+    "profile_update_request_not_found": "طلب تحديث الوثائق غير موجود",
+    "profile_update_request_already_processed": "تمت معالجة طلب تحديث الوثائق هذا مسبقًا"
+  }
+}

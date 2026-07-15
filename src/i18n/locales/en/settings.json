@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "updated": "Settings updated successfully"
+  },
+  "errors": {
+    "not_found": "Settings not found",
+    "empty_payload": "No fields provided to update",
+    "at_least_one_gateway_enabled": "At least one payment gateway must remain enabled"
+  }
+}

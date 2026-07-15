@@ -1,0 +1,23 @@
+﻿{
+  "errors": {
+    "not_found": "المراجعة غير موجودة",
+    "forbidden": "غير مصرح",
+    "order_not_found": "الطلب غير موجود",
+    "order_not_delivered": "الطلب غير مُسلَّم",
+    "order_has_no_courier": "لا يوجد مندوب مُعيَّن لهذا الطلب",
+    "courier_mismatch": "المندوب لا يطابق الطلب",
+    "already_reviewed": "تم تقييم المندوب لهذا الطلب مسبقًا",
+    "courier_not_found": "المندوب غير موجود",
+    "courier_id_required": "حقل courier_id مطلوب عند عدم إرسال order_id",
+    "courier_profile_not_found": "ملف المندوب غير موجود",
+    "order_has_no_supplier": "لا يوجد مورد لهذا الطلب",
+    "supplier_already_reviewed": "تم تقييم المورد لهذا الطلب مسبقًا",
+    "supplier_not_found": "المورد غير موجود"
+  },
+  "messages": {
+    "created": "تم إنشاء تقييم المندوب",
+    "deleted": "تم حذف تقييم المندوب",
+    "supplier_created": "تم إنشاء تقييم المورد",
+    "supplier_deleted": "تم حذف تقييم المورد"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "messages": {
+    "ok": "OK",
+    "updated": "Translations updated successfully"
+  },
+  "errors": {
+    "app_not_found": "Application not found",
+    "namespace_not_found": "Translation namespace not found",
+    "remote_app_error": "The target application returned an error",
+    "remote_app_unreachable": "Could not reach the target application"
+  }
+}

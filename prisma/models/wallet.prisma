@@ -1,0 +1,106 @@
+// ===============================================
+// ===============================================
+// Wallet
+// ===============================================
+// ===============================================
+
+enum WalletOwnerType {
+  CUSTOMER
+  COURIER
+  SUPPLIER
+  PLATFORM
+  EXTERNAL_APP
+}
+
+enum WalletStatus {
+  ACTIVE
+  FROZEN
+}
+
+model Wallet {
+  id                Int             @id @default(autoincrement())
+  user_id           Int?            @unique
+  external_app_id   Int?            @unique // ← partner wallet
+  owner_type        WalletOwnerType
+  balance           Int             @default(0)
+  platform_money    Int             @default(0)
+  platform_earnings Int             @default(0)
+  courier_cash      Int             @default(0)
+  courier_earnings  Int             @default(0)
+  supplier_cash     Int             @default(0)
+  supplier_earnings Int             @default(0)
+  points            Int             @default(0) // NEW
+  status            WalletStatus    @default(ACTIVE)
+  freeze_reason     String?         @db.VarChar(255)
+  frozen_at         DateTime?
+  frozen_by         Int?
+  created_at        DateTime        @default(now())
+  updated_at        DateTime?       @updatedAt
+  deleted_at        DateTime?
+
+  user          User?         @relation("UserWallet", fields: [user_id], references: [id], onDelete: SetNull)
+  externalApp   ExternalApp?  @relation(fields: [external_app_id], references: [id], onDelete: SetNull)
+  frozenBy      User?         @relation("WalletFrozenBy", fields: [frozen_by], references: [id], onDelete: SetNull)
+  escrows       Escrow[]
+  transactions  Transaction[] // Relation to Transaction
+  walletEntries WalletEntry[]
+  settlements   Settlement[]
+
+  // pointsTransactions PointsTransaction[]
+
+  @@map("wallet")
+}
+
+// ===============================================
+// WalletEntry — auto-populated by DB trigger on every wallet.balance change
+// ===============================================
+model WalletEntry {
+  id                   Int       @id @default(autoincrement())
+  wallet_id            Int
+  amount               Int // signed delta: +credit, -debit (cents)
+  order_id             Int?
+  penalty_id           Int?
+  unpaid_commission_id Int?
+  customer_coupon_id   Int?
+  courier_coupon_id    Int?
+  points_to_money      Decimal?  @db.Decimal(10, 2)
+  notes                String?   @db.Text
+  is_settled           Boolean   @default(false)
+  settled_at           DateTime?
+  settlement_id        Int?
+  created_at           DateTime  @default(now())
+
+  wallet           Wallet            @relation(fields: [wallet_id], references: [id], onDelete: Cascade)
+  settlement       Settlement?       @relation(fields: [settlement_id], references: [id])
+  order            Order?            @relation(fields: [order_id], references: [id])
+  penalty          Penalty?          @relation(fields: [penalty_id], references: [id])
+  unpaidCommission UnpaidCommission? @relation(fields: [unpaid_commission_id], references: [id])
+  customerCoupon   CustomerCoupon?   @relation(fields: [customer_coupon_id], references: [id])
+  courierCoupon    CourierCoupon?    @relation(fields: [courier_coupon_id], references: [id])
+
+  @@index([wallet_id, is_settled, created_at])
+  @@map("wallet_entry")
+}
+
+// ===============================================
+// Settlement — groups wallet entries settled in one operation
+// ===============================================
+model Settlement {
+  id            Int              @id @default(autoincrement())
+  wallet_id     Int? // NULL for bulk (owner_type) settlements
+  processed_by  Int?
+  owner_type    WalletOwnerType?
+  period_from   DateTime?
+  period_to     DateTime?
+  total_amount  Int // net sum of settled entries (cents)
+  wallets_count Int              @default(1)
+  note          String?          @db.VarChar(500)
+  created_at    DateTime         @default(now())
+
+  wallet      Wallet?       @relation(fields: [wallet_id], references: [id], onDelete: SetNull)
+  processedBy User?         @relation("SettlementProcessedBy", fields: [processed_by], references: [id], onDelete: SetNull)
+  entries     WalletEntry[]
+
+  @@index([wallet_id])
+  @@map("settlement")
+}

@@ -1,0 +1,13 @@
+{
+  "messages": {
+    "ok": "تم",
+    "vehicle_created": "تم إنشاء المركبة بنجاح",
+    "vehicle_updated": "تم تحديث المركبة بنجاح",
+    "vehicle_deleted": "تم حذف المركبة بنجاح"
+  },
+  "errors": {
+    "vehicle_not_found": "المركبة غير موجودة",
+    "icon_required": "صورة المركبة مطلوبة",
+    "vehicle_exist": "المركبة موجودة بالفعل"
+  }
+}

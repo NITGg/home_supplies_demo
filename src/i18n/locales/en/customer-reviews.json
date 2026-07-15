@@ -1,0 +1,23 @@
+﻿{
+  "errors": {
+    "not_found": "Review not found",
+    "forbidden": "Forbidden",
+    "order_not_found": "Order not found",
+    "order_not_delivered": "Order is not delivered",
+    "order_has_no_courier": "Order has no assigned courier",
+    "courier_mismatch": "Courier does not match order",
+    "already_reviewed": "Courier already reviewed for this order",
+    "courier_not_found": "Courier not found",
+    "courier_id_required": "courier_id is required when order_id is not provided",
+    "courier_profile_not_found": "Courier profile not found",
+    "order_has_no_supplier": "Order has no supplier",
+    "supplier_already_reviewed": "Supplier already reviewed for this order",
+    "supplier_not_found": "Supplier not found"
+  },
+  "messages": {
+    "created": "Courier review created",
+    "deleted": "Courier review deleted",
+    "supplier_created": "Supplier review created",
+    "supplier_deleted": "Supplier review deleted"
+  }
+}

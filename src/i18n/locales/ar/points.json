@@ -1,0 +1,23 @@
+{
+  "errors": {
+    "settings_not_found": "إعدادات التطبيق غير موجودة",
+    "coupon_not_found": "الكوبون غير موجود",
+    "already_has_active_coupon": "لديك كوبون نشط بالفعل",
+    "wallet_not_found": "المحفظة غير موجودة",
+    "insufficient_points": "النقاط غير كافية",
+    "no_fines_to_pay": "لا توجد غرامات للدفع",
+    "invalid_points_amount": "عدد النقاط غير صالح",
+    "insufficient_points_for_conversion": "النقاط غير كافية للتحويل إلى 1 جنيه على الأقل",
+    "invalid_conversion_rate": "معدل تحويل النقاط غير صالح في الإعدادات",
+    "insufficient_balance": "الرصيد غير كافٍ لدفع الغرامات"
+  },
+  "messages": {
+    "points_retrieved": "تم استرجاع قواعد النقاط بنجاح",
+    "points_progress_retrieved": "تم استرجاع تقدم النقاط بنجاح",
+    "coupon_purchased_with_points": "تم شراء الكوبون بنجاح باستخدام النقاط",
+    "fines_paid_with_points": "تم دفع الغرامات بنجاح باستخدام النقاط",
+    "points_converted_to_money": "تم تحويل النقاط إلى رصيد المحفظة بنجاح",
+    "points_processed_successfully": "تم معالجة النقاط بنجاح للطلبات الحديثة",
+    "fines_paid": "تم دفع الغرامات بنجاح"
+  }
+}

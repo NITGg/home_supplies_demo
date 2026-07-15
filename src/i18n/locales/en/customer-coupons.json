@@ -1,0 +1,33 @@
+{
+  "messages": {
+    "created": "Customer coupon created successfully",
+    "updated": "Customer coupon updated successfully",
+    "deleted": "Customer coupon deleted successfully"
+  },
+  "errors": {
+    "not_found": "Customer coupon not found",
+    "code_exists": "Coupon code already exists",
+    "code_generation_failed": "Failed to generate a unique coupon code",
+    "invalid_period": "End date must be after start date",
+    "discount_type_required": "Discount type is required",
+    "discount_value_required": "Discount value is required",
+    "percent_out_of_range": "Percent discount must be between 1 and 100",
+    "wallet_reward_required": "Wallet amount or points must be greater than zero",
+    "not_started": "This coupon is not active yet",
+    "expired": "This coupon has expired",
+    "not_eligible_orders_count": "You are not eligible for this coupon yet",
+    "max_total_uses_reached": "This coupon reached its total usage limit",
+    "max_user_uses_reached": "You reached your usage limit for this coupon",
+    "invalid_coupon_scope_for_order_type": "This coupon cannot be applied to this type of order."
+  },
+  "notifications": {
+    "created": {
+      "title": "New coupon available",
+      "body": "A new coupon is available now: {{title}} ({{code}})"
+    },
+    "updated": {
+      "title": "Coupon updated",
+      "body": "A coupon has been updated: {{title}} ({{code}})"
+    }
+  }
+}

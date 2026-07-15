@@ -1,0 +1,43 @@
+{
+  "errors": {
+    "old_password_required": "كلمة المرور القديمة مطلوبة",
+    "old_password_wrong": "كلمة المرور القديمة غير صحيحة",
+    "no_password_set": "لا توجد كلمة مرور مسجلة لهذا الحساب",
+    "area_id_invalid": "معرّف المنطقة غير صحيح",
+    "address_id_invalid": "معرّف العنوان غير صحيح",
+    "address_not_found": "العنوان غير موجود",
+    "address_min": "العنوان قصير جدًا",
+    "address_max": "العنوان طويل جدًا",
+    "fcm_required": "حقل fcmToken مطلوب",
+    "recharge_amount_invalid": "مبلغ شحن المحفظة غير صحيح",
+    "recharge_invalid_transaction": "معرف عملية Paymob غير صحيح",
+    "recharge_invalid_hmac": "توقيع استدعاء Paymob غير صالح",
+    "recharge_customer_only": "شحن المحفظة متاح للعملاء فقط",
+    "recharge_init_failed": "فشل بدء عملية شحن المحفظة",
+    "recharge_verify_failed": "فشل التحقق من عملية Paymob",
+    "recharge_not_found": "لم يتم العثور على عملية الشحن",
+    "recharge_not_successful": "عملية الشحن غير ناجحة",
+    "recharge_amount_mismatch": "مبلغ الشحن غير متطابق"
+  },
+  "messages": {
+    "profile_retrieved": "تم استرجاع الملف الشخصي",
+    "profile_updated": "تم تحديث الملف الشخصي",
+    "supplier_not_found": "المورد غير موجود",
+    "supplier_store_address_not_found": "عنوان متجر المورد غير موجود",
+    "documents_pending": "الوثائق قيد الانتظار",
+    "no_document_changes": "لم يتم إجراء تغييرات على الوثائق",
+    "badge_progress_retrieved": "تم استرجاع تقدم الشارة",
+    "account_deletion_marked": "تم تحديد الحساب للحذف",
+    "account_deleted": "تم حذف الحساب",
+    "otp_sent": "تم إرسال رمز التحقق",
+    "contact_updated": "تم تحديث البريد/الهاتف",
+    "password_changed": "تم تغيير كلمة المرور",
+    "address_created": "تم إنشاء العنوان",
+    "address_updated": "تم تحديث العنوان",
+    "address_deleted": "تم حذف العنوان",
+    "fcm_updated": "تم تحديث رمز الإشعارات",
+    "recharge_initiated": "تم بدء شحن المحفظة",
+    "recharge_completed": "تم شحن المحفظة بنجاح",
+    "recharge_already_applied": "تم تطبيق عملية الشحن مسبقًا"
+  }
+}

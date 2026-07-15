@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "created": "Article created successfully.",
+    "updated": "Article updated successfully.",
+    "deleted": "Article deleted successfully."
+  },
+  "errors": {
+    "not_found": "Article not found."
+  }
+}

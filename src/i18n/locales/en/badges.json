@@ -1,0 +1,31 @@
+{
+  "errors": {
+    "role_id_invalid": "Invalid role id",
+    "badge_id_invalid": "Invalid badge id",
+    "role_not_found": "Role not found",
+    "badge_not_found": "Badge not found",
+    "badge_in_use": "This badge is used by users and cannot be deleted",
+    "image_upload_failed": "Image upload failed",
+    "image_required": "Badge image is required",
+    "name_min": "Name must be at least 2 characters",
+    "name_max": "Name must be at most 100 characters",
+    "name_ar_min": "Arabic name must be at least 2 characters",
+    "name_ar_max": "Arabic name must be at most 100 characters",
+    "desc_max": "Description must be at most 100 characters",
+    "desc_ar_max": "Arabic description must be at most 100 characters",
+    "min_count_invalid": "Invalid min count",
+    "max_count_invalid": "Invalid max count",
+    "ratio_invalid": "Invalid ratio",
+    "max_less_than_min": "Max count must be greater than or equal to min count",
+    "ids_min_1": "Please provide at least one badge id",
+    "range_overlap": "This badge range overlaps with another badge for this role",
+    "min_gt_max": "Min count must be less than or equal to max count",
+    "invalid_range": "Invalid range values"
+  },
+  "messages": {
+    "badge_created": "Badge created",
+    "badge_updated": "Badge updated",
+    "badge_deleted": "Badge deleted",
+    "badges_deleted": "Badges deleted"
+  }
+}

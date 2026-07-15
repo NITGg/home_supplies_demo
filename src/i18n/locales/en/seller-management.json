@@ -1,0 +1,11 @@
+{
+  "errors": {
+    "already_seller": "You are already a seller",
+    "seller_role_not_found": "Seller role not found"
+  },
+  "messages": {
+    "ok": "Success",
+    "customer_converted_to_seller": "Customer converted to seller successfully",
+    "referral_code_updated": "Referral code updated successfully"
+  }
+}

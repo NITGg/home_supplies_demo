@@ -1,0 +1,14 @@
+{
+  "messages": {
+    "success": "Offer retrieved successfully",
+    "created": "Offer created successfully",
+    "updated": "Offer updated successfully",
+    "deleted": "Offer deleted successfully"
+  },
+  "errors": {
+    "not_found": "Offer not found",
+    "supplier_product_not_found": "Supplier product not found",
+    "overlapping_offer": "An active offer already exists for this product in the given date range",
+    "end_date_before_start": "End date must be after start date"
+  }
+}

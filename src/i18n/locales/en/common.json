@@ -1,0 +1,34 @@
+{
+  "errors": {
+    "internal": "Internal server error",
+    "unauthorized": "Unauthorized",
+    "phone_invalid": "Invalid phone number",
+    "validation": "Validation error",
+    "database_schema_mismatch": "The service is currently updating. Please try again in a moment.",
+    "conflict": "This record already exists.",
+    "upload": {
+      "file_too_large": "File is too large",
+      "unexpected_field": "Unexpected file field",
+      "too_many_files": "Too many files uploaded",
+      "too_many_fields": "Too many fields",
+      "too_many_parts": "Too many upload parts",
+      "field_name_too_long": "Field name is too long",
+      "field_value_too_long": "Field value is too long",
+      "failed": "File upload failed"
+    }
+  },
+  "zod": {
+    "invalid_type": "Invalid value type",
+    "too_small": "Value is too small",
+    "too_big": "Value is too big",
+    "invalid_string": "Invalid text"
+  },
+  "search": {
+    "errors": {
+      "query_required": "Please provide a search keyword."
+    },
+    "messages": {
+      "success": "Search results retrieved successfully."
+    }
+  }
+}

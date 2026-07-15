@@ -1,0 +1,11 @@
+model PeakTime {
+  id         Int       @id @default(autoincrement())
+  day        Int // 0=Sunday, 1=Monday … 6=Saturday
+  start_time String    @db.VarChar(5) // "HH:mm" e.g. "11:00"
+  end_time   String    @db.VarChar(5) // "HH:mm" e.g. "14:00"
+  is_active  Boolean   @default(true)
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  @@map("peak_time")
+}

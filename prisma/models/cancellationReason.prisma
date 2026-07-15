@@ -1,0 +1,14 @@
+model CancellationReason {
+  id         Int       @id @default(autoincrement())
+  role_id    Int
+  reason_en  String    @db.VarChar(255)
+  reason_ar  String    @db.VarChar(255)
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  // relations
+  userRole UserRole @relation(fields: [role_id], references: [id])
+
+  @@map("cancellation_reason")
+}

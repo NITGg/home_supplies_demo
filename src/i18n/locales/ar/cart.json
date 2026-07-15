@@ -1,0 +1,20 @@
+{
+  "messages": {
+    "success": "تم جلب السلة بنجاح",
+    "item_added": "تمت إضافة المنتج إلى السلة",
+    "item_updated": "تم تحديث عنصر السلة",
+    "item_removed": "تمت إزالة المنتج من السلة",
+    "cleared": "تم مسح السلة"
+  },
+  "warnings": {
+    "quantity_adjusted": "تم تعديل الكمية وفقاً للمخزون المتاح"
+  },
+  "errors": {
+    "unit_not_found": "المنتج أو الوحدة غير موجودة",
+    "item_not_found": "عنصر السلة غير موجود",
+    "insufficient_stock": "المخزون غير كافٍ",
+    "multiple_suppliers_not_allowed": "يجب أن تكون جميع المنتجات في السلة من نفس المورد. يرجى إفراغ السلة للتبديل إلى مورد آخر.",
+    "no_order_windows_today": "لا توجد نوافذ طلب متاحة اليوم",
+    "outside_order_window": "الطلب خارج نافذة الطلب"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "messages": {
+    "success": "Cart fetched successfully",
+    "item_added": "Item added to cart",
+    "item_updated": "Cart item updated",
+    "item_removed": "Item removed from cart",
+    "cleared": "Cart cleared"
+  },
+  "warnings": {
+    "quantity_adjusted": "Quantity adjusted to available stock"
+  },
+  "errors": {
+    "unit_not_found": "Product or unit not found",
+    "item_not_found": "Cart item not found",
+    "insufficient_stock": "Insufficient stock available",
+    "multiple_suppliers_not_allowed": "Cart items must all come from the same supplier. Please clear your cart to switch suppliers.",
+    "no_order_windows_today": "No order windows available today",
+    "outside_order_window": "Not within order window"
+  }
+}

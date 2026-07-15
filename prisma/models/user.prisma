@@ -1,0 +1,207 @@
+// ===== Enums =====
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum LoginType {
+  LOCAL
+  GOOGLE
+  APPLE
+}
+
+enum Language {
+  AR
+  EN
+}
+
+model User {
+  id                    Int       @id @default(autoincrement())
+  role_id               Int
+  badge_id              Int?
+  full_name             String    @db.VarChar(100)
+  email                 String?   @unique @db.VarChar(150)
+  phone                 String?   @unique @db.VarChar(50)
+  extra_phones          Json?
+  password              String?   @db.VarChar(255)
+  personal_photo        String?   @db.VarChar(255)
+  is_email_verified     Boolean   @default(false)
+  is_phone_verified     Boolean   @default(false)
+  is_active             Boolean   @default(true)
+  fcm_token             String?   @db.VarChar(255)
+  lang                  Language  @default(AR)
+  google_id             String?   @db.VarChar(150)
+  apple_id              String?   @db.VarChar(150)
+  last_login_at         DateTime?
+  login_type            LoginType
+  password_last_updated DateTime?
+  gender                Gender    @default(MALE)
+  referral_code         String?   @db.VarChar(100)
+  created_at            DateTime  @default(now())
+  updated_at            DateTime? @updatedAt
+  deleted_at            DateTime?
+
+  // relations
+  role                       UserRole                    @relation(fields: [role_id], references: [id])
+  badge                      UserBadge?                  @relation(fields: [badge_id], references: [id])
+  userVerifies               UserVerify[]
+  phoneEmailChangeRequests   PhoneEmailChangeRequest[]
+  addresses                  CustomerAddress[]
+  courier                    Courier?
+  orders                     Order[]
+  notificationSetting        NotificationSetting?
+  courierReviewFromCustomers CourierReviewFromCustomer[]
+  customerReviewFromCouriers CustomerReviewFromCourier[]
+  seller                     Seller?                     @relation("UserSeller")
+
+  // Wallet & Payment Relations
+  wallet                      Wallet?                      @relation("UserWallet")
+  paymentMethods              PaymentMethod[]
+  unpaidCommissions           UnpaidCommission[]           @relation("UserUnpaidCommissions")
+  penalties                   Penalty[]                    @relation("UserPenalties")
+  createdPenalties            Penalty[]                    @relation("PenaltyCreatedBy")
+  waivedPenalties             Penalty[]                    @relation("PenaltyWaivedBy")
+  frozenWallets               Wallet[]                     @relation("WalletFrozenBy")
+  processedTransactions       Transaction[]                @relation("TransactionProcessedBy")
+  couponUsages                CourierCouponUsage[]
+  customerCoupons             CustomerCouponUsage[]
+  courierPointBatches         CourierPointBatch[]
+  customerPointBatches        CustomerPointBatch[]
+  unavailableAreaRequests     UnavailableAreaRequest[]
+  adminAssignedOrders         Order[]                      @relation("AdminAssignments")
+  reportedIssues              OrderIssue[]                 @relation("CustomerIssueReports")
+  resolvedIssues              OrderIssue[]                 @relation("AdminResolvedIssues")
+  cart                        Cart?
+  requestedRefunds            Refund[]                     @relation("RefundRequestedBy")
+  reviewedRefunds             Refund[]                     @relation("RefundReviewedBy")
+  supplierReviewFromCustomers SupplierReviewFromCustomer[]
+  supplier                    Supplier?
+  createdChats                Chat[]                       @relation("ChatCreator")
+  chatParticipations          ChatParticipant[]            @relation("ChatParticipant")
+  sentMessages                ChatMessage[]                @relation("MessageSender")
+  profileUpdateRequests       ProfileUpdateRequest[]
+  logs                        Log[]
+  processedSettlements        Settlement[]                 @relation("SettlementProcessedBy")
+
+  @@index([role_id])
+  @@index([badge_id])
+  @@map("user")
+}
+
+model UserRole {
+  id             Int     @id @default(autoincrement())
+  name           String  @db.VarChar(100)
+  name_ar        String  @db.VarChar(100)
+  description    String? @db.VarChar(100)
+  description_ar String? @db.VarChar(100)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  users               User[]
+  badges              UserBadge[]
+  cancellationReasons CancellationReason[]
+
+  @@unique([name])
+  @@map("user_role")
+}
+
+enum VerifyType {
+  VERIFY
+  RESET_PASSWORD
+  FORGET_PASSWORD
+  CHANGE_EMAIL
+  CHANGE_PHONE
+}
+
+model UserVerify {
+  id              Int        @id @default(autoincrement())
+  user_id         Int
+  code            String     @unique @db.VarChar(20)
+  type            VerifyType @default(VERIFY)
+  phone           String?    @db.VarChar(20)
+  email           String?    @db.VarChar(100)
+  target_phone    String?    @db.VarChar(20)
+  target_email    String?    @db.VarChar(100)
+  failed_attempts Int        @default(0) // brute-force guard: invalidated after too many wrong attempts
+  consumed_at     DateTime? // set once successfully used, kept until expiry to make retries idempotent
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("user_verify")
+}
+
+// One row per phone/email change request (the /change-phone-email endpoint).
+// UserVerify rows are deleted on every request, so they can't be used to count
+// attempts over time — this table is an append-only log used by the anti-abuse
+// guard that auto-freezes a wallet after too many changes in a rolling window.
+model PhoneEmailChangeRequest {
+  id         Int        @id @default(autoincrement())
+  user_id    Int
+  type       VerifyType // CHANGE_EMAIL | CHANGE_PHONE
+  created_at DateTime   @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, created_at])
+  @@map("phone_email_change_request")
+}
+
+model UserBadge {
+  id      Int @id @default(autoincrement())
+  role_id Int
+
+  name    String @db.VarChar(100)
+  name_ar String @db.VarChar(100)
+  image   String @db.VarChar(255)
+
+  description    String? @db.VarChar(100)
+  description_ar String? @db.VarChar(100)
+
+  min_count Float
+  max_count Float
+  ratio     Float
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  role  UserRole @relation(fields: [role_id], references: [id])
+  users User[] // users currently assigned this badge
+
+  ads                Ad[]
+  partner_fee_splits PartnerFeeSplit[]
+
+  @@unique([role_id, name])
+  @@unique([role_id, name_ar])
+  @@index([role_id])
+  @@map("user_badge")
+}
+
+model CustomerAddress {
+  id          Int  @id @default(autoincrement())
+  customer_id Int? // docs: FK, NULL
+  area_id     Int?
+
+  address_lat  Decimal? @db.Decimal(10, 8)
+  address_long Decimal? @db.Decimal(11, 8)
+  name         String?  @db.VarChar(30)
+  is_default   Boolean  @default(false)
+
+  detailed_address String @db.VarChar(1000)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  customer User? @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  area     Area? @relation(fields: [area_id], references: [id], onDelete: SetNull)
+
+  @@index([customer_id])
+  @@index([area_id])
+  @@map("customer_address")
+}

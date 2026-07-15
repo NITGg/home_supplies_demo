@@ -1,0 +1,147 @@
+model Supplier {
+  id                               Int      @id @default(autoincrement())
+  user_id                          Int      @unique // courier belongs to a user account
+  type_id                          Int?     @default(1)
+  national_id_photo_front          String?  @db.VarChar(255)
+  national_id_photo_back           String?  @db.VarChar(255)
+  national_id_number               String?  @db.VarChar(40)
+  supplier_criminal_record         String?  @db.VarChar(255)
+  synonyms                         String?  @db.VarChar(191)
+  tax_card                         String   @db.VarChar(191)
+  commercial_register              String   @db.VarChar(191)
+  is_approved                      Boolean? @default(false)
+  markup_ratio                     Float?   @default(1.3) // selling price = cost_price × markup_ratio
+  min_price_for_one_order          Decimal? @default(5000) @db.Decimal(10, 2)
+  max_price_for_one_order          Decimal? @default(100000) @db.Decimal(10, 2)
+  shopping_min_price_for_one_order Decimal? @default(5000) @db.Decimal(10, 2)
+  shopping_max_price_for_one_order Decimal? @default(100000) @db.Decimal(10, 2)
+  shopping_budget_fee              Float?   @default(5)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  // relations
+  user                        User                         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  type                        SupplierType?                @relation(fields: [type_id], references: [id])
+  addresses                   SupplierStoreAddress[]
+  contracts                   Contract[]
+  stats                       SupplierStat?
+  courierReviewsFromSupplier  CourierReviewFromSupplier[]
+  supplierReviewsFromCustomer SupplierReviewFromCustomer[]
+  supplierReviewsFromCourier  SupplierReviewFromCourier[]
+  orders                      Order[]
+  products                    SupplierProduct[] // Link to the junction table
+  categories                  SupplierCategory[]
+  // complaints            Complaint[]
+  // handoverConfirmations SupplierHandoverConfirmation[]
+
+  @@map("supplier")
+}
+
+model SupplierType {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique @db.VarChar(191)
+  description String?    @db.VarChar(191)
+  synonyms    String?    @db.VarChar(191)
+  created_at  DateTime   @default(now())
+  updated_at  DateTime?  @updatedAt
+  deleted_at  DateTime?
+  suppliers   Supplier[]
+
+  @@map("supplier_type")
+}
+
+model Contract {
+  id                 Int             @id @default(autoincrement())
+  supplier_id        Int?
+  details            String?         @db.VarChar(191)
+  min_discount_ratio Decimal?
+  max_discount_ratio Decimal?
+  start_date         DateTime?       @db.Date
+  end_date           DateTime?       @db.Date
+  status             ContractStatus?
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @updatedAt
+  deleted_at         DateTime?
+  supplier           Supplier?       @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+
+  @@map("contract")
+}
+
+enum ContractStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}
+
+model SupplierStat {
+  supplier_id            Int       @id @default(autoincrement())
+  total_customers        Int?
+  total_orders           Int?
+  total_delivered_orders Int?
+  total_cancelled_orders Int?
+  total_active_products  Int?
+  last_order_date        DateTime?
+  category_stat          Json?
+  brand_stat             Json?
+  total_products_rating  Json?
+  sales_history          Json?
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+  supplier               Supplier  @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+
+  @@map("supplier_stat")
+}
+
+model SupplierStoreAddress {
+  id                 Int      @id @default(autoincrement())
+  supplier_id        Int
+  area_id            Int?
+  default_max_orders Int? // baseline max orders for all slots (null = no limit)
+  address_line_1     String?  @db.VarChar(191)
+  address_line_2     String?  @db.VarChar(191)
+  city               String?  @db.VarChar(191)
+  state              String?  @db.VarChar(191)
+  country            String?  @default("Egypt") @db.VarChar(191)
+  google_map_link    String?  @db.VarChar(191)
+  latitude           Decimal? @db.Decimal(10, 8)
+  longitude          Decimal? @db.Decimal(11, 8)
+  contact_name       String?  @db.VarChar(191)
+  contact_phone      String?  @db.VarChar(191)
+  working_hours      Json?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  // Relations
+  supplier      Supplier?              @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+  area          Area?                  @relation(fields: [area_id], references: [id])
+  // pickupAssignments OrderAssignment[] @relation("PickupAddress")
+  // orderAssignments OrderAssignment[]
+  orders        Order[]
+  slotMaxOrders SupplierSlotMaxOrder[]
+
+  @@map("supplier_store_address")
+}
+
+// working_hours example:-
+// {
+//   "timezone": "Africa/Cairo",
+//   "days": {
+//     "0": { "is_closed": true, "slots": [] },
+//     "1": {
+//       "is_closed": false,
+//       "slots": [
+//         { "open": "09:00", "close": "13:00" },
+//         { "open": "17:00", "close": "22:00" }
+//       ]
+//     },
+//     "2": {
+//       "is_closed": false,
+//       "slots": [
+//         { "open": "09:00", "close": "18:00" }
+//       ]
+//     }
+//   }
+// }

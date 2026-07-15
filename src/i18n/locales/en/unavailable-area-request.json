@@ -1,0 +1,13 @@
+{
+  "messages": {
+    "created": "Your request has been logged. We will work on expanding our coverage.",
+    "deleted": "Request deleted successfully."
+  },
+  "errors": {
+    "not_found": "Request not found.",
+    "invalid_id": "Invalid request ID.",
+    "invalid_request_type": "Request type must be PICKUP or DELIVERY.",
+    "area_too_long": "Area name must not exceed 255 characters.",
+    "governorate_too_long": "Governorate name must not exceed 255 characters."
+  }
+}

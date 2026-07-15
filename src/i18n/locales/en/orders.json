@@ -1,0 +1,117 @@
+{
+  "errors": {
+    "insufficient_wallet_balance_for_fee": "Insufficient wallet balance to cover the delivery fee",
+    "order_not_found": "Order not found",
+    "pickup_area_not_found": "Pickup area not found",
+    "delivery_area_not_found": "Delivery area not found",
+    "forbidden": "Forbidden",
+    "cannot_cancel_delivered": "Cannot cancel a delivered order",
+    "already_cancelled": "Order already cancelled",
+    "already_delivered": "Order already delivered",
+    "order_not_in_progress": "Order is not in progress",
+    "courier_mismatch": "Courier does not match this order",
+    "order_not_open_for_proposals": "Order is not open for proposals",
+    "proposal_already_exists": "You already submitted a proposal for this order",
+    "order_not_open_for_accept": "Order is not open for proposal decisions",
+    "proposal_not_found": "Proposal not found",
+    "proposal_not_pending": "Proposal is not pending",
+    "qr_or_fields_required": "QR code or order/courier fields are required",
+    "qr_invalid": "Invalid QR data",
+    "qr_payload_invalid": "Invalid QR payload",
+    "order_not_recoverable": "Order is not in a recoverable state.",
+    "courier_not_found": "Courier not found.",
+    "courier_not_active": "Courier is not currently active.",
+    "order_issue": {
+      "create_failed": "Failed to report issue",
+      "not_found": "Issue not found",
+      "dismissed": "Issue has been dismissed",
+      "invalid_order": "Invalid order for issue reporting",
+      "already_exists": "You already reported an issue for this order"
+    },
+    "max_retry_reached": "Maximum retry attempts reached",
+    "cart_multiple_suppliers": "Cart items must all come from the same supplier. Please clear your cart to switch suppliers.",
+    "supplier_closed_now": "The supplier is not available at the moment.",
+    "store_closed":"Store closed",
+    "outside_working_hours":"Outside working hours",
+    "slot_full":"Slot full",
+    "schedule_too_early":"Scheduled time is too early. Please choose a later time.",
+    "order_schedule_required":"A delivery time is required for this order.",
+    "outside_order_window":"Ordering is not available at this time. Please order during the allowed hours.",
+    "outside_delivery_window":"The selected delivery time is not available. Please choose an available slot.",
+    "delivery_slot_full":"This delivery slot is fully booked. Please choose another slot.",
+    "product_windows_not_configured":"This product is not available for ordering right now.",
+    "products_total_too_low": "The order total is below the minimum order value required by the supplier ({{min_price_for_one_order}}) EGP.",
+    "products_total_too_high":"The order total is above the maximum order value allowed by the supplier ({{max_price_for_one_order}}) EGP.",
+    "budget_out_of_range": "The budget is out of the allowed range ({{min}} - {{max}}) EGP."
+  },
+  "messages": {
+    "order_created": "Order created",
+    "order_cancelled": "Order cancelled",
+    "proposal_created": "Proposal created",
+    "proposal_accepted": "Proposal accepted",
+    "proposal_rejected": "Proposal rejected",
+    "delivery_confirmed": "Delivery confirmed",
+    "order_updated": "Order updated",
+    "proposal_updated": "Proposal updated",
+    "order_delivered_courier_title": "Order delivered",
+    "order_delivered_courier_body": "Order #{{orderId}} has been delivered successfully.",
+    "order_delivered_admin_title": "Order delivered",
+    "order_delivered_admin_body": "Order #{{orderId}} has been delivered by the courier.",
+    "unpaid_dues_threshold_title": "Payment limit approaching",
+    "unpaid_dues_threshold_body": "You owe {{amount}} EGP. The limit is {{maxAmount}} EGP. Please pay soon.",
+    "unpaid_dues_exceeded_title": "Payment limit exceeded",
+    "unpaid_dues_exceeded_body": "You owe {{amount}} EGP and exceeded the limit ({{maxAmount}}). Please pay now.",
+    "manual_assign": "Order successfully assigned to courier.",
+    "order_retried": "Order re-opened for bidding.",
+    "soft_cancelled": "Order cancelled and customer refunded.",
+    "order_issue": {
+      "created_success": "Issue reported successfully",
+      "resolved": "Issue has been resolved",
+      "not_responding": {
+        "title": "🚨 Courier Not Responding",
+        "body": "Courier on Order #{{orderId}} is not replying to messages or calls."
+      },
+      "late_pickup": {
+        "title": "⏰ Late Pickup Alert",
+        "body": "Order #{{orderId}} is delayed. Courier has not arrived at the pickup location."
+      },
+      "late_delivery": {
+        "title": "⏳ Late Delivery Alert",
+        "body": "Courier is taking longer than expected to deliver Order #{{orderId}}."
+      },
+      "wrong_location": {
+        "title": "📍 Wrong Location Detected",
+        "body": "The courier for Order #{{orderId}} appears to be off-route or in the wrong area."
+      },
+      "other": {
+        "title": "⚠️ New Order Issue",
+        "body": "A new issue has been reported for Order #{{orderId}}. Manual review required."
+      }
+    },
+    "soft_cancel_customer": {
+      "title": "Your order has been cancelled",
+      "body": "Unfortunately, no couriers were available for order #{{orderId}}. Your payment has been refunded. We're sorry for the inconvenience."
+    },
+    "no_proposals": {
+      "title": "No offers received",
+      "body": "No couriers sent offers for order #{{title}}. It has been moved to admin review."
+    },
+    "no_proposals_customer": {
+      "title": "Finding the best courier",
+      "body": "No offers were received for order #{{title}} yet. Our team is now manually finding the best courier for you."
+    },
+    "order_expired_admin": {
+      "title": "🚫 Search Failed",
+      "body": "Order #{{orderId}} has expired. No couriers were found after all retry attempts."
+    },
+    "order_expired_customer": {
+      "title": "Order Expired",
+      "body": "Unfortunately, we couldn't find an available courier for Order #{{orderId}} at this time. The order has been closed, but you can try placing it again shortly."
+    },
+    "count_retrieved": "Order count retrieved successfully",
+    "low_stock_supplier_title": "Alert: Low Product Stock",
+    "low_stock_supplier_body": "The following products have reached low stock levels: {{products}}. Please restock.",
+    "low_stock_admin_title": "Supplier Stock Alert",
+    "low_stock_admin_body": "Supplier #{{supplierId}} has products with low stock: {{products}}"
+  }
+}

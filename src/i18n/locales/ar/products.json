@@ -1,0 +1,21 @@
+{
+  "messages": {
+    "success": "تمت العملية بنجاح",
+    "created": "تم إنشاء المنتج بنجاح",
+    "updated": "تم تحديث المنتج بنجاح",
+    "deleted": "تم حذف المنتج (المنتجات) بنجاح",
+    "archived": "تم أرشفة المنتج بنجاح",
+    "reordered": "تم إعادة ترتيب المنتجات بنجاح",
+    "supplier_product_created": "تم ربط المنتج بالمورد بنجاح.",
+    "supplier_product_deleted": "تم حذف ارتباط المورد بنجاح."
+  },
+  "errors": {
+    "not_found": "المنتج غير موجود",
+    "category_required": "الفئة مطلوبة",
+    "category_not_found": "الفئة غير موجودة",
+    "sku_exists": "رمز SKU موجود بالفعل",
+    "barcode_exists": "الباركود موجود بالفعل",
+    "supplier_product_exists": "هذا المنتج مرتبط بالفعل بهذا المورد.",
+    "supplier_product_not_found": "ارتباط المنتج بهذا المورد غير موجود."
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "messages": {
+    "reason_created_successfully": "تم إنشاء السبب بنجاح",
+    "reason_updated_successfully": "تم تحديث السبب بنجاح",
+    "reason_details_retrieved": "تم الحصول على تفاصيل السبب",
+    "all_reasons_retrieved": "تم الحصول على جميع الأسباب",
+    "reason_deleted_successfully": "تم حذف السبب بنجاح"
+  },
+  "errors": {
+    "reason_not_found": "السبب غير موجود"
+  }
+}

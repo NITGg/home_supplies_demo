@@ -1,0 +1,21 @@
+{
+  "messages": {
+    "success": "Success",
+    "created": "Product created successfully",
+    "updated": "Product updated successfully",
+    "deleted": "Product(s) deleted successfully",
+    "archived": "Product archived successfully",
+    "reordered": "Products reordered successfully",
+    "supplier_product_created": "Product successfully linked to the supplier.",
+    "supplier_product_deleted": "Supplier link removed successfully."
+  },
+  "errors": {
+    "not_found": "Product not found",
+    "category_required": "Category is required",
+    "category_not_found": "Category not found",
+    "sku_exists": "SKU already exists",
+    "barcode_exists": "Barcode already exists",
+    "supplier_product_exists": "This product is already linked to this supplier.",
+    "supplier_product_not_found": "The link between this product and supplier was not found."
+  }
+}

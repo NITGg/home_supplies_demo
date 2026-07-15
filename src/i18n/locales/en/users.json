@@ -1,0 +1,45 @@
+{
+  "errors": {
+    "full_name_min": "Full name must be at least 2 characters",
+    "full_name_max": "Full name must be at most 100 characters",
+    "email_invalid": "Invalid email address",
+    "phone_min": "Phone number is too short",
+    "phone_max": "Phone number is too long",
+    "password_min": "Password must be at least 6 characters",
+    "password_max": "Password must be at most 255 characters",
+    "password_invalid_format": "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+
+    "role_id_invalid": "Invalid role id",
+    "badge_id_invalid": "Invalid badge id",
+    "user_id_invalid": "Invalid user id",
+    "ids_min_1": "Please provide at least one user id",
+    "id_min_1": "Id must be at least 1",
+
+    "email_exists": "Email already exists",
+    "phone_exists": "Phone already exists",
+    "user_not_found": "User not found",
+
+    "role_not_found": "Role not found",
+    "invalid_role": "User does not have the required role",
+    "badge_not_found": "Badge not found",
+    "badge_role_mismatch": "Badge does not belong to the selected role",
+
+    "image_upload_failed": "Image upload failed",
+
+    "supplier_not_found": "Supplier not found",
+    "account_already_deleted": "Account already deleted",
+    "cannot_delete_active_orders": "Cannot delete account with active orders",
+    "cannot_delete_unpaid_commissions": "Cannot delete account with unpaid commissions",
+    "cannot_delete_wallet_balance": "Cannot delete account with wallet balance",
+    "cannot_delete_escrow_funds": "Cannot delete account with escrow funds",
+    "cannot_delete_pending_refunds": "Cannot delete account with pending refunds"
+  },
+  "messages": {
+    "user_created": "User created",
+    "user_updated": "User updated",
+    "users_archived": "Users archived",
+    "users_deleted": "Users deleted",
+    "user_archived": "User archived",
+    "user_deleted": "User deleted"
+  }
+}

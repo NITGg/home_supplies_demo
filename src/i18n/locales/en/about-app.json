@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "updated": "About app updated successfully.",
+    "update": "About app updated successfully."
+  },
+  "errors": {
+    "not_found": "About app not found.",
+    "empty_payload": "No fields provided to update."
+  }
+}

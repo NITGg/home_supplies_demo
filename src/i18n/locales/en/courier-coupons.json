@@ -1,0 +1,25 @@
+{
+  "messages": {
+    "created": "Courier coupon created successfully",
+    "updated": "Courier coupon updated successfully",
+    "deleted": "Courier coupon deleted successfully"
+  },
+  "errors": {
+    "not_found": "Courier coupon not found",
+    "already_has_active_coupon": "You already have an active courier coupon"
+  },
+  "notifications": {
+    "created": {
+      "title": "New courier coupon",
+      "body": "A new courier coupon is now available: {{title}}"
+    },
+    "updated": {
+      "title": "Courier coupon updated",
+      "body": "A courier coupon has been updated: {{title}}"
+    },
+    "expiring_soon": {
+      "title": "Courier coupon is expiring soon",
+      "body": "Your courier coupon {{title}} will expire in {{days}} day(s)."
+    }
+  }
+}

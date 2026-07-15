@@ -1,0 +1,12 @@
+{
+  "messages": {
+    "reason_created_successfully": "Reason created successfully",
+    "reason_updated_successfully": "Reason updated successfully",
+    "reason_details_retrieved": "Reason details retrieved",
+    "all_reasons_retrieved": "All reasons retrieved",
+    "reason_deleted_successfully": "Reason deleted successfully"
+  },
+  "errors": {
+    "reason_not_found": "Reason not found"
+  }
+}

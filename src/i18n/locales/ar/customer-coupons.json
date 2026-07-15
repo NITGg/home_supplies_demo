@@ -1,0 +1,33 @@
+{
+  "messages": {
+    "created": "تم إنشاء كوبون العميل بنجاح",
+    "updated": "تم تحديث كوبون العميل بنجاح",
+    "deleted": "تم حذف كوبون العميل بنجاح"
+  },
+  "errors": {
+    "not_found": "كوبون العميل غير موجود",
+    "code_exists": "كود الكوبون مستخدم بالفعل",
+    "code_generation_failed": "فشل في إنشاء كود كوبون فريد",
+    "invalid_period": "يجب أن يكون تاريخ الانتهاء بعد تاريخ البداية",
+    "discount_type_required": "نوع الخصم مطلوب",
+    "discount_value_required": "قيمة الخصم مطلوبة",
+    "percent_out_of_range": "نسبة الخصم يجب أن تكون بين 1 و 100",
+    "wallet_reward_required": "يجب أن تكون قيمة المحفظة أو النقاط أكبر من صفر",
+    "not_started": "هذا الكوبون غير متاح بعد",
+    "expired": "انتهت صلاحية هذا الكوبون",
+    "not_eligible_orders_count": "أنت غير مؤهل لهذا الكوبون حتى الآن",
+    "max_total_uses_reached": "وصل هذا الكوبون إلى الحد الأقصى من الاستخدام",
+    "max_user_uses_reached": "لقد وصلت إلى الحد الأقصى لاستخدام هذا الكوبون",
+    "invalid_coupon_scope_for_order_type": "هذا الكوبون غير صالح لنوع الطلب المختار."
+  },
+  "notifications": {
+    "created": {
+      "title": "كوبون جديد متاح",
+      "body": "يوجد كوبون جديد متاح الآن: {{title}} ({{code}})"
+    },
+    "updated": {
+      "title": "تم تحديث الكوبون",
+      "body": "تم تحديث كوبون: {{title}} ({{code}})"
+    }
+  }
+}

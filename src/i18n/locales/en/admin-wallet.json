@@ -1,0 +1,23 @@
+{
+  "errors": {
+    "wallet_not_found": "Wallet not found",
+    "order_not_found": "Order not found",
+    "insufficient_balance": "Insufficient balance",
+    "platform_wallet_not_found": "Platform wallet not found",
+    "user_not_admin": "User is not an admin",
+    "user_already_has_wallet": "This user already has a wallet",
+    "user_not_found": "User not found",
+    "insufficient_platform_money": "Insufficient platform money",
+    "invalid_date_range": "Invalid date range"
+  },
+  "messages": {
+    "ok": "Success",
+    "balance_adjusted": "Wallet balance adjusted successfully",
+    "platform_wallet_created": "Platform wallet created successfully",
+    "platform_wallet_exists": "Platform wallet already exists",
+    "platform_wallet_topped_up": "Platform wallet topped up successfully",
+    "platform_wallet_updated": "Platform wallet updated successfully",
+    "balance_already_zero": "The balance has already been settled.",
+    "done": "Done"
+  }
+}

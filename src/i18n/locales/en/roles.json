@@ -1,0 +1,20 @@
+{
+  "errors": {
+    "role_id_invalid": "Invalid role id",
+    "role_not_found": "Role not found",
+    "name_min": "Name must be at least 2 characters",
+    "name_max": "Name must be at most 100 characters",
+    "name_ar_min": "Arabic name must be at least 2 characters",
+    "name_ar_max": "Arabic name must be at most 100 characters",
+    "desc_max": "Description must be at most 100 characters",
+    "desc_ar_max": "Arabic description must be at most 100 characters",
+    "name_exists": "Role name already exists",
+    "ids_min_1": "Please provide at least one role id"
+  },
+  "messages": {
+    "role_created": "Role created",
+    "role_updated": "Role updated",
+    "role_deleted": "Role deleted",
+    "roles_deleted": "Roles deleted"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "messages": {
+    "created": "Category created successfully",
+    "updated": "Category updated successfully",
+    "deleted": "Category deleted successfully",
+    "reordered": "Categories reordered successfully"
+  },
+  "errors": {
+    "not_found": "Category not found",
+    "invalid_id": "Invalid category ID"
+  }
+}

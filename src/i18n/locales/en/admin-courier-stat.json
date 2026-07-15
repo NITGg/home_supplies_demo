@@ -1,0 +1,13 @@
+{
+  "messages": {
+    "ok": "OK",
+    "courier_office_created": "Courier office created successfully",
+    "courier_added_to_office": "Courier added to office successfully",
+    "courier_stat_retrieved": "Courier statistics retrieved successfully"
+  },
+  "errors": {
+    "courier_office_not_found": "Courier office not found",
+    "courier_already_in_office": "Courier already in office",
+    "courier_not_found": "Courier not found"
+  }
+}

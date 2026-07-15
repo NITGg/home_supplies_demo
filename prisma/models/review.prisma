@@ -1,0 +1,101 @@
+model CourierReviewFromCustomer {
+  id          Int  @id @default(autoincrement())
+  courier_id  Int
+  customer_id Int
+  order_id    Int?
+
+  rating  Int
+  comment String? @db.Text
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  courier  Courier @relation(fields: [courier_id], references: [id], onDelete: Cascade)
+  customer User?   @relation(map: "courier_review_from_customer_customer_id_fkey", fields: [customer_id], references: [id], onDelete: Cascade)
+  order    Order?  @relation(fields: [order_id], references: [id])
+
+  @@index([courier_id])
+  @@index([customer_id])
+  @@map("courier_review_from_customer")
+}
+
+model CustomerReviewFromCourier {
+  id          Int  @id @default(autoincrement())
+  courier_id  Int
+  customer_id Int
+  order_id    Int?
+
+  rating  Int
+  comment String? @db.Text
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  courier  Courier @relation(fields: [courier_id], references: [id], onDelete: Cascade)
+  customer User    @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  order    Order?  @relation(fields: [order_id], references: [id])
+
+  @@index([courier_id])
+  @@index([customer_id])
+  @@map("customer_review_from_courier")
+}
+
+model CourierReviewFromSupplier {
+  id          Int       @id @default(autoincrement())
+  courier_id  Int
+  supplier_id Int
+  order_id    Int?
+  rating      Int
+  comment     String?   @db.Text
+  created_at  DateTime  @default(now())
+  updated_at  DateTime? @updatedAt
+
+  // relations
+  courier  Courier  @relation(fields: [courier_id], references: [id], onDelete: Cascade)
+  supplier Supplier @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+  order    Order?   @relation(fields: [order_id], references: [id])
+
+  @@index([courier_id])
+  @@index([supplier_id])
+  @@map("courier_review_from_supplier")
+}
+
+model SupplierReviewFromCourier {
+  id          Int       @id @default(autoincrement())
+  supplier_id Int
+  courier_id  Int
+  order_id    Int?
+  rating      Int
+  comment     String?   @db.Text
+  created_at  DateTime  @default(now())
+  updated_at  DateTime? @updatedAt
+
+  // relations
+  supplier Supplier @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+  courier  Courier  @relation(fields: [courier_id], references: [id], onDelete: Cascade)
+  order    Order?   @relation(fields: [order_id], references: [id])
+
+  @@index([courier_id])
+  @@index([supplier_id])
+  @@map("supplier_review_from_courier")
+}
+
+model SupplierReviewFromCustomer {
+  id          Int       @id @default(autoincrement())
+  supplier_id Int
+  user_id     Int
+  order_id    Int?
+  rating      Int
+  comment     String?   @db.Text
+  created_at  DateTime  @default(now())
+  updated_at  DateTime? @updatedAt
+
+  // relations
+  supplier Supplier @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  order    Order?   @relation(fields: [order_id], references: [id])
+
+  @@index([user_id])
+  @@index([supplier_id])
+  @@map("supplier_review_from_customer")
+}
