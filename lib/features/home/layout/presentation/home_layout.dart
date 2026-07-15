@@ -647,16 +647,24 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                             ],
                                             if (profileState is! ProfileLoaded ||
                                                 profileState.profile.roleId != 6) ...[
-                                              const Divider(),
-                                              ListTile(
-                                                onTap: () =>
-                                                    context.push('/cart'),
-                                                leading: const Icon(
-                                                  Icons.shopping_cart_rounded,
-                                                ),
-                                                title: Text(
-                                                  localizations.cart,
-                                                  style: AppTextStyles.bold16,
+                                              ValueListenableBuilder<bool>(
+                                                valueListenable: _categoriesEmpty,
+                                                builder: (context, isEmpty, child) {
+                                                  if (isEmpty) return const SizedBox.shrink();
+                                                  return child!;
+                                                },
+                                                child: Column(
+                                                  children: [
+                                                    const Divider(),
+                                                    ListTile(
+                                                      onTap: () => context.push('/cart'),
+                                                      leading: const Icon(Icons.shopping_cart_rounded),
+                                                      title: Text(
+                                                        localizations.cart,
+                                                        style: AppTextStyles.bold16,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ],
@@ -675,17 +683,24 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                                             ),
                                             if (profileState is! ProfileLoaded ||
                                                 profileState.profile.roleId != 6) ...[
-                                              const Divider(),
-                                              ListTile(
-                                                onTap: () =>
-                                                    context.push('/refunds'),
-                                                leading: const Icon(
-                                                  Icons
-                                                      .assignment_return_outlined,
-                                                ),
-                                                title: Text(
-                                                  localizations.myRefunds,
-                                                  style: AppTextStyles.bold16,
+                                              ValueListenableBuilder<bool>(
+                                                valueListenable: _categoriesEmpty,
+                                                builder: (context, isEmpty, child) {
+                                                  if (isEmpty) return const SizedBox.shrink();
+                                                  return child!;
+                                                },
+                                                child: Column(
+                                                  children: [
+                                                    const Divider(),
+                                                    ListTile(
+                                                      onTap: () => context.push('/refunds'),
+                                                      leading: const Icon(Icons.assignment_return_outlined),
+                                                      title: Text(
+                                                        localizations.myRefunds,
+                                                        style: AppTextStyles.bold16,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ],
