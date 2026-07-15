@@ -162,8 +162,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         final isSupplier = profileState is ProfileLoaded &&
                             profileState.profile.roleId == 6;
                         if (isSupplier) return const SizedBox.shrink();
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
+                        return Expanded(child: Row(
                           children: [
                             const SizedBox(width: 12),
                             Expanded(
@@ -193,7 +192,7 @@ class _WalletScreenState extends State<WalletScreen> {
                               ),
                             ),
                           ],
-                        );
+                        ));
                       },
                     ),
                   ],
