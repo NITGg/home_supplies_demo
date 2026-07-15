@@ -634,7 +634,7 @@ class KeepAliveService {
 
   /// The dedicated base URL for the supplier socket server.
   static const String supplierBaseUrl =
-      'https://tawreedatsupplierapis.nitg-eg.com';
+      'https://tawreedat.nitg-eg.com/home_supplies';
 
   static void initPort() {
     FlutterForegroundTask.initCommunicationPort();

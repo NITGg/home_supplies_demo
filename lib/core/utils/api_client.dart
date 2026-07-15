@@ -17,9 +17,9 @@ class ApiClient {
   final SecureStorageService _storage = SecureStorageService();
 
   static const String baseUrl =
-      'https://tawreedat.nitg-eg.com/courier_apis/api/v1/courier';
+      'https://tawreedat.nitg-eg.com/home_supplies/courier/api/v1/courier';
   static const String baseUrl2 =
-      'https://tawreedat.nitg-eg.com/admin_apis/api/v1';
+      'https://tawreedat.nitg-eg.com/home_supplies/admin/api/v1';
 
   // ── Refresh state ─────────────────────────────────────────────────────────
   // A single Completer acts as both the "in-flight" flag and the broadcast
@@ -82,6 +82,11 @@ class ApiClient {
       },
 
       onError: (error, handler) async {
+
+        if (error.response?.statusCode == 401){
+          _clearSession();
+        }
+
         // ── Clean up error messages ──────────────────────────────────────
         final friendlyError = _toFriendlyError(error);
 

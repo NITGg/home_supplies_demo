@@ -72,7 +72,7 @@ Future<void> main() async {
       buttonText: 'إعادة التشغيل',
       backgroundColor: Color(0xFFFAFAFA),
       textColor: Color(0xFF1A1A1A),
-      buttonColor: Colors.orange,
+      buttonColor: Colors.blue,
       buttonTextColor: Colors.white,
       assetPath: 'assets/images/loading.svg',
       assetType: ErrorAssetType.svg,
