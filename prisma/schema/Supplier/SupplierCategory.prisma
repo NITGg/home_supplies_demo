@@ -1,0 +1,14 @@
+model SupplierCategory {
+  supplier_id Int
+  category_id Int
+  created_at  DateTime  @default(now())
+  updated_at  DateTime? @updatedAt
+  deleted_at  DateTime?
+
+  // Relations
+  supplier Supplier @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@id([supplier_id, category_id]) // Composite primary key
+  @@map("supplier_category")
+}

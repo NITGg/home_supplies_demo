@@ -1,0 +1,112 @@
+model ApplicationSetting {
+  id                                       Int      @id @default(autoincrement())
+  vat                                      Float    @default(5)
+  last_attempt                             DateTime @default(now())
+  login_attempt_duration_minutes           Int      @default(30)
+  login_attempts                           Int      @default(5)
+  register_attempt_duration_minutes        Int      @default(30)
+  register_attempts                        Int      @default(5)
+  update_password_attempt_duration_minutes Int      @default(30)
+  update_password_attempts                 Int      @default(5)
+  forget_password_attempt_duration_minutes Int      @default(30)
+  forget_password_attempts                 Int      @default(5)
+  verify_account_attempt_duration_minutes  Int      @default(30)
+  verify_account_attempts                  Int      @default(5)
+  change_account_attempt_duration_minutes  Int      @default(30)
+  change_account_attempts                  Int      @default(5)
+  // Auto-freeze the wallet of a user who requests too many phone/email changes:
+  // `threshold` change requests within the last `window_days` days → freeze.
+  change_account_freeze_threshold          Int      @default(5)
+  change_account_freeze_window_days        Int      @default(2)
+  global_api_duration_minutes              Int      @default(30)
+  global_api_attempts                      Int      @default(200)
+  login_as_guest                           Boolean  @default(false)
+  permanent_delete                         Boolean  @default(false)
+  app_android_url                          String?
+  app_android_version                      String?
+  app_ios_url                              String?
+  app_ios_version                          String?
+  courier_app_url_android                  String?
+  courier_app_version_android              String?
+  courier_app_url_ios                      String?
+  courier_app_version_ios                  String?
+  skip_otp                                 Boolean  @default(false)
+  live_payment                             Boolean  @default(false)
+  cancellation_fee_ratio                   Int      @default(50) // charged to customer (%)
+  courier_cancellation_fee_ratio           Int      @default(0) // courier share (%)
+  min_delivery_distance                    String?  @db.VarChar(20)
+  min_delivery_fee                         Decimal? @default(30) @db.Decimal(10, 2)
+  delivery_price_for_each_1km              Decimal? @default(10) @db.Decimal(10, 2)
+  delivery_fee_ratio                       Decimal? @default(50) @db.Decimal(10, 2)
+
+  courier_number_of_points_required_per_1egp                   Decimal @default(10) @db.Decimal(10, 2)
+  courier_number_of_delivered_orders_required_per_reward_batch Decimal @default(5) @db.Decimal(10, 2)
+  courier_number_of_points_awarded_per_completed_order_batch   Decimal @default(50) @db.Decimal(10, 2)
+  courier_points_validity_days                                 Decimal @default(90) @db.Decimal(10, 2)
+  courier_points_minimum_rating_threshold                      Decimal @default(4) @db.Decimal(10, 2)
+  courier_points_expiration_notification_days                  Decimal @default(4) @db.Decimal(10, 2)
+
+  customer_number_of_points_required_per_1egp                   Decimal  @default(10) @db.Decimal(10, 2)
+  customer_number_of_delivered_orders_required_per_reward_batch Decimal  @default(5) @db.Decimal(10, 2)
+  customer_number_of_points_awarded_per_completed_order_batch   Decimal  @default(50) @db.Decimal(10, 2)
+  customer_points_validity_days                                 Decimal  @default(90) @db.Decimal(10, 2)
+  customer_points_minimum_rating_threshold                      Decimal  @default(4) @db.Decimal(10, 2)
+  customer_points_expiration_notification_days                  Decimal  @default(4) @db.Decimal(10, 2)
+  customer_points_cashback_percentage_per_orders_batch          Decimal  @default(4) @db.Decimal(10, 2)
+  customer_shopping_min_price_for_one_order                     Decimal? @default(5000) @db.Decimal(10, 2)
+  customer_shopping_max_price_for_one_order                     Decimal? @default(100000) @db.Decimal(10, 2)
+  min_platform_fee                                              Decimal  @default(10) @db.Decimal(10, 2)
+
+  max_orders_per_trip Int @default(10)
+
+  // ── Tiered delivery-fee split (computeEstimatedFeeSplit2) ──
+  fee_base_distance_km      Int @default(2) // threshold in km
+  fee_base_platform_cents   Int @default(2000) // platform fee for ≤ threshold
+  fee_base_courier_cents    Int @default(1000) // courier fee for ≤ threshold
+  fee_extra_platform_per_km Int @default(100) // extra platform per km beyond threshold
+  fee_extra_courier_per_km  Int @default(100) // extra courier per km beyond threshold
+  peak_time_fee_ratio       Int @default(20) // additional % added to totalFee during peak hours
+
+  courier_max_selected_areas                Int      @default(2)
+  courier_criminal_record_grace_period_days Int      @default(30) // days from courier creation before criminal record becomes required
+  seller_commission_per_order               Decimal? @default(0) @db.Decimal(12, 2)
+  seller_commission_per_courier_download    Decimal? @default(0) @db.Decimal(12, 2)
+  seller_commission_per_customer_download   Decimal? @default(0) @db.Decimal(12, 2)
+  proposal_waiting_time_minutes             Int      @default(5) // time to wait for proposals
+  order_expiration_time_minutes             Int      @default(15) // total lifetime of order
+  max_order_retry_count                     Int      @default(3) // max retry count for customers to retry failed orders
+  customer_budget_cash_on_delivery_limit    Decimal? @db.Decimal(10, 2)
+  customer_catalog_cod_limit                Decimal? @db.Decimal(10, 2)
+  platform_admin_id                         Int      @default(51)
+  platform_supplier_id                      Int      @default(9)
+  chat_enable_send_images                   Boolean  @default(false)
+
+  // ── Payment gateway toggles ──
+  paymob_enabled   Boolean @default(true)
+  kashier_enabled  Boolean @default(false)
+  easykash_enabled Boolean @default(false)
+
+  order_scheduled_min_notice_minutes_from_supplier Int @default(30)
+  scheduled_delivery_offset_minutes                Int @default(45)
+  min_scheduled_delivery_minutes                   Int @default(60)
+
+  courier_access_token_expires_in   String @default("1h")
+  courier_refresh_token_expires_in  String @default("7d")
+  supplier_access_token_expires_in  String @default("1h")
+  supplier_refresh_token_expires_in String @default("7d")
+
+  customer_home_products_radius_km            Decimal @default(500) @db.Decimal(10, 2)
+  customer_home_products_same_governorate     Boolean @default(true)
+  customer_home_products_cheapest_per_product Boolean @default(true)
+
+  otp_resend_duration_seconds   Int @default(60) // wait time before allowing resend
+  otp_length                    Int @default(6) // OTP digits count
+  otp_validity_duration_minutes Int @default(5) // OTP lifetime
+
+  home_categories_grid_limit Int @default(9)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  @@map("application_setting")
+}

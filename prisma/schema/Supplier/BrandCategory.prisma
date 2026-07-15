@@ -1,0 +1,12 @@
+model BrandCategory {
+  id          Int      @id @default(autoincrement())
+  brand_id    Int
+  category_id Int
+  created_at  DateTime @default(now())
+  brand       Brand    @relation(fields: [brand_id], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@unique([brand_id, category_id])
+  @@index([category_id], map: "brand_categories_categoryId_fkey")
+  @@map("brand_category")
+}

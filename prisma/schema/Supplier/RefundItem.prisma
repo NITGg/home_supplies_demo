@@ -1,0 +1,16 @@
+model RefundItem {
+  id            Int   @id @default(autoincrement())
+  refund_id     Int
+  order_item_id Int
+  product_id    Int?
+  quantity      Int
+  amount        Float
+
+  orderItem OrderItem @relation(fields: [order_item_id], references: [id])
+  refund    Refund    @relation(fields: [refund_id], references: [id], onDelete: Cascade)
+  product   Product?  @relation(fields: [product_id], references: [id])
+
+  @@unique([refund_id, order_item_id])
+  @@index([order_item_id])
+  @@map("refund_items")
+}

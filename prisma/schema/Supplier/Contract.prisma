@@ -1,0 +1,23 @@
+model Contract {
+  id                 Int             @id @default(autoincrement())
+  supplier_id        Int?
+  details            String?         @db.VarChar(191)
+  min_discount_ratio Decimal?
+  max_discount_ratio Decimal?
+  start_date         DateTime?       @db.Date
+  end_date           DateTime?       @db.Date
+  status             ContractStatus?
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @updatedAt
+  deleted_at         DateTime?
+  supplier           Supplier?       @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+
+  @@map("contract")
+}
+
+enum ContractStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}

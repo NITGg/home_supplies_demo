@@ -1,0 +1,12 @@
+model ProductAttribute {
+  id         Int     @id @default(autoincrement())
+  key        String
+  value      String
+  product_id Int
+  value_ar   String?
+  product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_id, key])
+  @@index([product_id])
+  @@map("product_attribute")
+}

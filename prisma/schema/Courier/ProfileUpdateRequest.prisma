@@ -1,0 +1,22 @@
+model ProfileUpdateRequest {
+  id            Int                 @id @default(autoincrement())
+  user_id       Int
+  data          Json // { courier_license, vehicle_license, Vehicle_plate, Vehicle_type, national_id_photo }
+  status        ProfileUpdateStatus @default(PENDING)
+  reject_reason String?             @db.VarChar(255)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("profile_update_request")
+}
+
+enum ProfileUpdateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}

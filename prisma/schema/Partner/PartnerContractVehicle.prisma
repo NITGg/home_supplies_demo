@@ -1,0 +1,21 @@
+model PartnerContractVehicle {
+  id          Int @id @default(autoincrement())
+  contract_id Int
+  vehicle_id  Int
+
+  // Distance & Base Pricing (Same for all badges)
+  min_fee       Decimal           @db.Decimal(10, 2)
+  m_min         Float             @default(0)
+  m_max         Float
+  fee_per_m     Decimal           @db.Decimal(10, 4)
+  extra_m_price Decimal           @db.Decimal(10, 4)
+  // Specific Split Ratios based on Badge
+  splits        PartnerFeeSplit[]
+
+  contract PartnerContract @relation(fields: [contract_id], references: [id])
+  vehicle  Vehicle         @relation(fields: [vehicle_id], references: [id])
+  orders   Order[]
+
+  @@unique([contract_id, vehicle_id])
+  @@map("partner_contract_vehicle")
+}

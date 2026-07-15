@@ -1,0 +1,23 @@
+model Chat {
+  id         Int       @id @default(autoincrement())
+  name       String?   @db.VarChar(100) // group name (null for private chats)
+  is_group   Boolean   @default(false)
+  created_by Int
+  // step: claude: "delete order user chat notifications" — link chat to the order it
+  // belongs to so we can find and delete the entire chat (messages + participants) when
+  // an order is deleted or when an admin explicitly clears order chat history.
+  order_id   Int?      @unique // null for non-order chats; unique = one chat per order
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  // relations
+  creator      User              @relation("ChatCreator", fields: [created_by], references: [id], onDelete: Cascade)
+  order        Order?            @relation(fields: [order_id], references: [id], onDelete: SetNull)
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+
+  @@index([created_by])
+  @@index([order_id])
+  @@map("chat")
+}

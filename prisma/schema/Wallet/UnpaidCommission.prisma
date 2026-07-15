@@ -1,0 +1,16 @@
+model UnpaidCommission {
+  id         Int       @id @default(autoincrement())
+  order_id   Int       @unique
+  user_id    Int?
+  amount     Decimal   @db.Decimal(10, 2)
+  is_paid    Boolean   @default(false)
+  created_at DateTime  @default(now())
+  paid_at    DateTime?
+
+  order         Order         @relation(fields: [order_id], references: [id])
+  courier       User?         @relation("UserUnpaidCommissions", fields: [user_id], references: [id], onDelete: SetNull)
+  walletEntries WalletEntry[]
+
+  @@index([user_id])
+  @@map("unpaid_commission")
+}

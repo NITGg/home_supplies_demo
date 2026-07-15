@@ -1,0 +1,47 @@
+model Refund {
+  id                 Int          @id @default(autoincrement())
+  order_id           Int
+  // payment_attempt_id Int?
+  amount             Float
+  currency           String       @default("EGP")
+  evidence_images    String?      @db.Text
+  reason             String?
+  status             RefundStatus @default(REQUESTED)
+  provider           String?
+  provider_refund_id String?
+  raw_response       String?      @db.LongText
+
+  is_full_refund Boolean @default(false)
+
+  requested_by_id Int?
+  reviewed_by_id  Int?
+  transaction_id  Int? @unique // Link to the wallet transaction
+
+  reviewed_at DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  items       RefundItem[]
+  order       Order        @relation(fields: [order_id], references: [id])
+  // PaymentAttempt   PaymentAttempt? @relation(fields: [payment_attempt_id], references: [id])
+  requestedBy User?        @relation("RefundRequestedBy", fields: [requested_by_id], references: [id], onDelete: SetNull)
+  reviewedBy  User?        @relation("RefundReviewedBy", fields: [reviewed_by_id], references: [id], onDelete: SetNull)
+  transaction Transaction? @relation(fields: [transaction_id], references: [id])
+
+  @@index([order_id])
+  // @@index([payment_attempt_id])
+  @@index([provider_refund_id])
+  @@index([requested_by_id])
+  @@index([reviewed_by_id])
+  @@map("refunds")
+}
+
+enum RefundStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}

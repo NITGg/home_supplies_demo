@@ -1,0 +1,28 @@
+model UserVerify {
+  id              Int        @id @default(autoincrement())
+  user_id         Int
+  code            String     @unique @db.VarChar(20)
+  type            VerifyType @default(VERIFY)
+  phone           String?    @db.VarChar(20)
+  email           String?    @db.VarChar(100)
+  target_phone    String?    @db.VarChar(20)
+  target_email    String?    @db.VarChar(100)
+  failed_attempts Int        @default(0) // brute-force guard: invalidated after too many wrong attempts
+  consumed_at     DateTime? // set once successfully used, kept until expiry to make retries idempotent
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("user_verify")
+}
+
+enum VerifyType {
+  VERIFY
+  RESET_PASSWORD
+  FORGET_PASSWORD
+  CHANGE_EMAIL
+  CHANGE_PHONE
+}

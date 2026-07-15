@@ -1,0 +1,16 @@
+model PartnerContract {
+  id              Int      @id @default(autoincrement())
+  external_app_id Int      @unique
+  start_date      DateTime
+  end_date        DateTime
+  is_active       Boolean  @default(true)
+
+  // Settings for this specific partner
+  can_receive_courier_offers Boolean @default(true) // "Yes/No" from your table
+
+  // Relations
+  external_app    ExternalApp              @relation(fields: [external_app_id], references: [id])
+  vehicle_configs PartnerContractVehicle[] // Config per vehicle
+
+  @@map("partner_contract")
+}

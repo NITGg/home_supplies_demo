@@ -1,0 +1,28 @@
+model UnavailableAreaRequest {
+  id Int @id @default(autoincrement())
+
+  // Who requested
+  customer_id Int?
+  customer    User? @relation(fields: [customer_id], references: [id], onDelete: SetNull)
+
+  // What they requested
+  request_type UnavailableAreaRequestType // pickup or delivery
+
+  // Raw location data from the user
+  lat         Decimal? @db.Decimal(10, 8)
+  long        Decimal? @db.Decimal(11, 8)
+  address     String?  @db.VarChar(255)
+  area        String   @db.VarChar(255)
+  governorate String   @db.VarChar(255)
+
+  created_at DateTime @default(now())
+
+  @@index([customer_id])
+  @@index([created_at])
+  @@map("unavailable_area_request")
+}
+
+enum UnavailableAreaRequestType {
+  PICKUP
+  DELIVERY
+}

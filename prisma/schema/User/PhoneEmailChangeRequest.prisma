@@ -1,0 +1,11 @@
+model PhoneEmailChangeRequest {
+  id         Int        @id @default(autoincrement())
+  user_id    Int
+  type       VerifyType // CHANGE_EMAIL | CHANGE_PHONE
+  created_at DateTime   @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, created_at])
+  @@map("phone_email_change_request")
+}

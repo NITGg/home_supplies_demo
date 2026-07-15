@@ -1,0 +1,37 @@
+model Product {
+  id                Int       @id @default(autoincrement())
+  name              String
+  name_ar           String?
+  description       String?   @db.LongText
+  description_ar    String?   @db.LongText
+  sku               String    @unique
+  barcode           String?   @unique
+  slug              String?   @unique
+  synonyms          String?
+  images            String?   @db.LongText
+  weight            Float?
+  dimensions        String?
+  category_id       Int
+  brand_id          Int?
+  sort_id           Int       @default(0)
+  color             String?
+  refund_policy     String?   @db.Text
+  refundable        Boolean?
+  refundable_period Decimal?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+
+  // Relations
+  suppliers   SupplierProduct[] // Link to the junction table
+  brand       Brand?             @relation(fields: [brand_id], references: [id])
+  category    Category           @relation(fields: [category_id], references: [id])
+  attributes  ProductAttribute[]
+  orderItems  OrderItem[]
+  refundItems RefundItem[]
+
+  // Note: We removed supplier_id and the index for it from here
+  @@index([brand_id])
+  @@index([category_id])
+  @@map("product")
+}

@@ -1,0 +1,23 @@
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  order_id   Int
+  product_id Int
+  sp_id      Int // snapshot of which supplier listing was purchased
+  quantity   Int
+  unit_price Float // price per unit at time of order (from sp or offer)
+  offer_id   Int? // offer that was active at time of order (nullable)
+  cost_price Float?
+  created_at DateTime @default(now())
+
+  order           Order           @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product         Product         @relation(fields: [product_id], references: [id])
+  supplierProduct SupplierProduct @relation(fields: [sp_id], references: [id])
+  offer           Offer?          @relation(fields: [offer_id], references: [id])
+  refundItems     RefundItem[]
+
+  @@index([order_id])
+  @@index([product_id])
+  @@index([sp_id])
+  @@index([offer_id])
+  @@map("order_items")
+}

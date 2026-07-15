@@ -1,0 +1,25 @@
+model CourierOffice {
+  id               Int     @id @default(autoincrement())
+  name             String  @db.VarChar(255)
+  address          String? @db.VarChar(255)
+  phone            String? @db.VarChar(20)
+  email            String? @db.VarChar(255)
+  website          String? @db.VarChar(255)
+  description      String? @db.Text
+  commission_value Decimal @default(0.00) @db.Decimal(10, 2) // قيمة العمولة (سواء جنيهات أو نسبة)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  // relations
+  couriers        Courier[]
+  commission_type CommissionType @default(FIXED_PER_ORDER) // نوع العمولة
+
+  @@map("courier_office")
+}
+
+enum CommissionType {
+  FIXED_PER_ORDER // مبلغ ثابت على كل أوردر (مثلاً 2 جنيه)
+  PERCENTAGE // نسبة مئوية من إجمالي الأوردرات (مثلاً 10%)
+}

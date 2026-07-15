@@ -1,0 +1,23 @@
+model CustomerAddress {
+  id          Int  @id @default(autoincrement())
+  customer_id Int? // docs: FK, NULL
+  area_id     Int?
+
+  address_lat  Decimal? @db.Decimal(10, 8)
+  address_long Decimal? @db.Decimal(11, 8)
+  name         String?  @db.VarChar(30)
+  is_default   Boolean  @default(false)
+
+  detailed_address String @db.VarChar(1000)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  customer User? @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  area     Area? @relation(fields: [area_id], references: [id], onDelete: SetNull)
+
+  @@index([customer_id])
+  @@index([area_id])
+  @@map("customer_address")
+}

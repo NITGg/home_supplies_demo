@@ -1,0 +1,19 @@
+model CourierCouponUsage {
+  id                         Int       @id @default(autoincrement())
+  user_id                    Int?
+  coupon_id                  Int
+  start_date                 DateTime
+  end_date                   DateTime
+  snapshot_price             Decimal   @db.Decimal(10, 2)
+  snapshot_bonus_courier_fee Decimal   @db.Decimal(10, 2)
+  expiry_reminder_3d_sent_at DateTime?
+  expiry_reminder_1d_sent_at DateTime?
+  created_at                 DateTime  @default(now())
+
+  coupon CourierCoupon @relation(fields: [coupon_id], references: [id])
+  user   User?         @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([coupon_id])
+  @@index([user_id])
+  @@map("courier_coupon_usage")
+}

@@ -1,0 +1,48 @@
+model SupplierProduct {
+  id             Int     @id @default(autoincrement())
+  supplier_id    Int
+  product_id     Int
+  // address_id  Int?
+  price          Float?
+  cost_price     Float?
+  stock          Int     @default(0)
+  min_stock      Int     @default(5)
+  is_active      Boolean @default(true)
+  is_featured    Boolean @default(false)
+  is_best_seller Boolean @default(false)
+  rating         Float?  @default(0)
+  total_reviews  Int     @default(0)
+
+  max_amount_for_one_order Decimal?
+  max_amount_for_one_user  Decimal?
+  min_amount_for_one_order Decimal?
+  min_amount_for_one_user  Decimal?
+  reserved_in_carts_amount Decimal?
+
+  // Duration in minutes
+  pickup_ready_duration Int?
+  estimated_time_from   Int?
+  estimated_time_to     Int?
+
+  // order type 3 (delivery windows)
+  requires_delivery_windows Boolean @default(false)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  // Relations
+  supplier        Supplier                        @relation(fields: [supplier_id], references: [id])
+  product         Product                         @relation(fields: [product_id], references: [id])
+  // address   SupplierStoreAddress? @relation(fields: [address_id], references: [id])
+  offers          Offer[]
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  deliveryWindows SupplierProductDeliveryWindow[]
+
+  // @@unique([supplier_id, product_id, address_id])
+  @@unique([supplier_id, product_id])
+  @@index([supplier_id])
+  @@index([product_id])
+  @@map("supplier_product")
+}

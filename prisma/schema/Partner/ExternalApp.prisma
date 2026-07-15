@@ -1,0 +1,28 @@
+model ExternalApp {
+  id            Int            @id @default(autoincrement())
+  name          String         @db.VarChar(100)
+  client_id     String         @unique @db.VarChar(64) // e.g., ca_live_...
+  client_secret String         @db.VarChar(255) // Hashed
+  environment   AppEnvironment @default(SANDBOX)
+
+  webhook_url         String? @db.VarChar(255)
+  webhook_secret      String? @db.VarChar(255) // Hashed
+  webhook_version     Int     @default(1)
+  webhook_retry_count Int     @default(3)
+
+  is_active  Boolean  @default(true)
+  partner_id Int? // Optional link to a Business/Partner table
+  created_at DateTime @default(now())
+
+  contracts     PartnerContract[]
+  orders        Order[]
+  wallet        Wallet? // ← back-relation
+  webhookEvents WebhookEvent[]
+
+  @@map("external_app")
+}
+
+enum AppEnvironment {
+  SANDBOX
+  PRODUCTION
+}

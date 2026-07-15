@@ -1,0 +1,27 @@
+model WalletEntry {
+  id                   Int       @id @default(autoincrement())
+  wallet_id            Int
+  amount               Int // signed delta: +credit, -debit (cents)
+  order_id             Int?
+  penalty_id           Int?
+  unpaid_commission_id Int?
+  customer_coupon_id   Int?
+  courier_coupon_id    Int?
+  points_to_money      Decimal?  @db.Decimal(10, 2)
+  notes                String?   @db.Text
+  is_settled           Boolean   @default(false)
+  settled_at           DateTime?
+  settlement_id        Int?
+  created_at           DateTime  @default(now())
+
+  wallet           Wallet            @relation(fields: [wallet_id], references: [id], onDelete: Cascade)
+  settlement       Settlement?       @relation(fields: [settlement_id], references: [id])
+  order            Order?            @relation(fields: [order_id], references: [id])
+  penalty          Penalty?          @relation(fields: [penalty_id], references: [id])
+  unpaidCommission UnpaidCommission? @relation(fields: [unpaid_commission_id], references: [id])
+  customerCoupon   CustomerCoupon?   @relation(fields: [customer_coupon_id], references: [id])
+  courierCoupon    CourierCoupon?    @relation(fields: [courier_coupon_id], references: [id])
+
+  @@index([wallet_id, is_settled, created_at])
+  @@map("wallet_entry")
+}

@@ -1,0 +1,19 @@
+model CourierCoupon {
+  id                Int       @id @default(autoincrement())
+  title             String    @db.VarChar(255)
+  title_ar          String?   @db.VarChar(255)
+  description       String?   @db.Text
+  description_ar    String?   @db.Text
+  price             Decimal   @db.Decimal(10, 2)
+  bonus_courier_fee Decimal   @db.Decimal(10, 2)
+  duration_days     Int
+  is_active         Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+
+  usages        CourierCouponUsage[]
+  walletEntries WalletEntry[]
+
+  @@map("courier_coupon")
+}

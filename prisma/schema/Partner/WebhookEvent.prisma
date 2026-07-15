@@ -1,0 +1,44 @@
+model WebhookEvent {
+  id String @id @default(cuid())
+
+  external_app_id Int
+  event_type      WebhookEventType
+
+  payload Json
+
+  delivery_status WebhookDeliveryStatus
+  attempts        Int                   @default(0)
+
+  last_attempt_at DateTime?
+  delivered_at    DateTime?
+  last_error      String?
+
+  response_status Int?
+  response_body   String? @db.Text
+
+  created_at DateTime @default(now())
+
+  externalApp ExternalApp @relation(fields: [external_app_id], references: [id])
+
+  @@map("webhook_event")
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
+enum WebhookEventType {
+  ORDER_CREATED
+  ORDER_OFFER_SUBMITTED
+  ORDER_OFFER_ACCEPTED
+  ORDER_OFFER_REJECTED
+  ORDER_COLLECTED
+  ORDER_PRICE_CHANGED
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  ORDER_EXPIRED
+  ORDER_PAYMENT_CONFIRMED
+  WALLET_RECHARGED
+}

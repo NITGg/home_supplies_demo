@@ -1,0 +1,24 @@
+model CustomerCouponUsage {
+  id        Int                        @id @default(autoincrement())
+  user_id   Int?
+  coupon_id Int
+  context   CustomerCouponUsageContext @default(ORDER)
+
+  order_id       Int?
+  discount_cents Int  @default(0)
+
+  created_at DateTime @default(now())
+
+  user   User?          @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  coupon CustomerCoupon @relation(fields: [coupon_id], references: [id])
+
+  @@index([user_id])
+  @@index([coupon_id])
+  @@index([order_id])
+  @@map("customer_coupon_usage")
+}
+
+enum CustomerCouponUsageContext {
+  ORDER
+  WALLET
+}

@@ -1,0 +1,83 @@
+model User {
+  id                    Int       @id @default(autoincrement())
+  role_id               Int
+  badge_id              Int?
+  full_name             String    @db.VarChar(100)
+  email                 String?   @unique @db.VarChar(150)
+  phone                 String?   @unique @db.VarChar(50)
+  extra_phones          Json?
+  password              String?   @db.VarChar(255)
+  personal_photo        String?   @db.VarChar(255)
+  is_email_verified     Boolean   @default(false)
+  is_phone_verified     Boolean   @default(false)
+  is_active             Boolean   @default(true)
+  fcm_token             String?   @db.VarChar(255)
+  lang                  Language  @default(AR)
+  google_id             String?   @db.VarChar(150)
+  apple_id              String?   @db.VarChar(150)
+  last_login_at         DateTime?
+  login_type            LoginType
+  password_last_updated DateTime?
+  gender                Gender    @default(MALE)
+  referral_code         String?   @db.VarChar(100)
+  created_at            DateTime  @default(now())
+  updated_at            DateTime? @updatedAt
+  deleted_at            DateTime?
+
+  // relations
+  role                       UserRole                    @relation(fields: [role_id], references: [id])
+  badge                      UserBadge?                  @relation(fields: [badge_id], references: [id])
+  userVerifies               UserVerify[]
+  phoneEmailChangeRequests   PhoneEmailChangeRequest[]
+  addresses                  CustomerAddress[]
+  courier                    Courier?
+  orders                     Order[]
+  notificationSetting        NotificationSetting?
+  courierReviewFromCustomers CourierReviewFromCustomer[]
+  customerReviewFromCouriers CustomerReviewFromCourier[]
+  seller                     Seller?                     @relation("UserSeller")
+
+  // Wallet & Payment Relations
+  wallet                      Wallet?                      @relation("UserWallet")
+  paymentMethods              PaymentMethod[]
+  unpaidCommissions           UnpaidCommission[]           @relation("UserUnpaidCommissions")
+  penalties                   Penalty[]                    @relation("UserPenalties")
+  createdPenalties            Penalty[]                    @relation("PenaltyCreatedBy")
+  waivedPenalties             Penalty[]                    @relation("PenaltyWaivedBy")
+  frozenWallets               Wallet[]                     @relation("WalletFrozenBy")
+  processedTransactions       Transaction[]                @relation("TransactionProcessedBy")
+  couponUsages                CourierCouponUsage[]
+  customerCoupons             CustomerCouponUsage[]
+  courierPointBatches         CourierPointBatch[]
+  customerPointBatches        CustomerPointBatch[]
+  unavailableAreaRequests     UnavailableAreaRequest[]
+  adminAssignedOrders         Order[]                      @relation("AdminAssignments")
+  reportedIssues              OrderIssue[]                 @relation("CustomerIssueReports")
+  resolvedIssues              OrderIssue[]                 @relation("AdminResolvedIssues")
+  cart                        Cart?
+  requestedRefunds            Refund[]                     @relation("RefundRequestedBy")
+  reviewedRefunds             Refund[]                     @relation("RefundReviewedBy")
+  supplierReviewFromCustomers SupplierReviewFromCustomer[]
+  supplier                    Supplier?
+  createdChats                Chat[]                       @relation("ChatCreator")
+  chatParticipations          ChatParticipant[]            @relation("ChatParticipant")
+  sentMessages                ChatMessage[]                @relation("MessageSender")
+  profileUpdateRequests       ProfileUpdateRequest[]
+  logs                        Log[]
+  processedSettlements        Settlement[]                 @relation("SettlementProcessedBy")
+
+  @@index([role_id])
+  @@index([badge_id])
+  @@map("user")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum LoginType {
+  LOCAL
+  GOOGLE
+  APPLE
+}

@@ -1,0 +1,24 @@
+model UserBadge {
+  id             Int       @id @default(autoincrement())
+  role_id        Int
+  name           String    @db.VarChar(100)
+  name_ar        String    @db.VarChar(100)
+  image          String    @db.VarChar(255)
+  description    String?   @db.VarChar(100)
+  description_ar String?   @db.VarChar(100)
+  min_count      Float
+  max_count      Float
+  ratio          Float
+  created_at     DateTime  @default(now())
+  updated_at     DateTime? @updatedAt
+
+  role               UserRole          @relation(fields: [role_id], references: [id])
+  users              User[] // users currently assigned this badge
+  ads                Ad[]
+  partner_fee_splits PartnerFeeSplit[]
+
+  @@unique([role_id, name])
+  @@unique([role_id, name_ar])
+  @@index([role_id])
+  @@map("user_badge")
+}

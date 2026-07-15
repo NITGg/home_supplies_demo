@@ -1,0 +1,20 @@
+model CustomerPointBatch {
+  id                      Int  @id @default(autoincrement())
+  user_id                 Int?
+  successful_orders_count Int? @default(0) // Number of successful orders in this batch
+
+  balance                      Int? // Available points
+  all_points_collected_at      DateTime? // When all points were collected to be available to use
+  last_order_id_collect_points Int?
+
+  is_expired Boolean   @default(false)
+  expired_at DateTime? // Expire date snap shot
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  user         User?         @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  transactions Transaction[]
+
+  @@map("customer_point_batch")
+}

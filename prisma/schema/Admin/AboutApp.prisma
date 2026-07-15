@@ -1,0 +1,41 @@
+model AboutApp {
+  id                        Int      @id @default(autoincrement())
+  terms                     String?  @db.Text
+  terms_ar                  String?  @db.Text
+  about                     String?  @db.Text
+  about_ar                  String?  @db.Text
+  privacy_policy            String?  @db.Text
+  privacy_policy_ar         String?  @db.Text
+  mission                   String?  @db.Text
+  mission_ar                String?  @db.Text
+  vision                    String?  @db.Text
+  vision_ar                 String?  @db.Text
+  digital_card              String?  @db.Text
+  digital_card_ar           String?  @db.Text
+  phone                     String?
+  email                     String?
+  facebook                  String?  @db.VarChar(200)
+  instagram                 String?  @db.VarChar(200)
+  linkedin                  String?  @db.VarChar(200)
+  pinterest                 String?  @db.VarChar(200)
+  reddit                    String?  @db.VarChar(200)
+  snapchat                  String?  @db.VarChar(200)
+  telegram                  String?  @db.VarChar(200)
+  tiktok                    String?  @db.VarChar(200)
+  twitter                   String?  @db.VarChar(200)
+  whatsapp                  String?  @db.VarChar(200)
+  youtube                   String?  @db.VarChar(200)
+  vodafon_cash_number       String?  @db.VarChar(200)
+  instapay_number           String?  @db.VarChar(200)
+  customer_support_number   String?  @db.VarChar(200)
+  courier_terms             String?  @db.Text
+  courier_terms_ar          String?  @db.Text
+  courier_privacy_policy    String?  @db.Text
+  courier_privacy_policy_ar String?  @db.Text
+  delete_account            String?  @db.Text
+  delete_account_ar         String?  @db.Text
+  created_at                DateTime @default(now())
+  updated_at                DateTime @updatedAt
+
+  @@map("about_app")
+}
