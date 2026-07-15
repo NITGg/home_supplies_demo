@@ -1,0 +1,12 @@
+model SupplierType {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique @db.VarChar(191)
+  description String?    @db.VarChar(191)
+  synonyms    String?    @db.VarChar(191)
+  created_at  DateTime   @default(now())
+  updated_at  DateTime?  @updatedAt
+  deleted_at  DateTime?
+  suppliers   Supplier[]
+
+  @@map("supplier_type")
+}

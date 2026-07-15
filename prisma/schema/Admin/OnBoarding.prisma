@@ -1,0 +1,18 @@
+model OnBoarding {
+  id          Int        @id @default(autoincrement())
+  title       String
+  title_ar    String?
+  content     String?
+  content_ar  String?
+  subtitle    String?
+  subtitle_ar String?
+  image_url   String?
+  sort_id     Int        @default(0)
+  target_user TargetUser @default(ALL)
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+  deleted_at  DateTime?
+
+  @@index([sort_id])
+  @@map("on_boarding")
+}

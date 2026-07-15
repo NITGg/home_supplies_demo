@@ -1,0 +1,27 @@
+model ChatMessage {
+  id         Int             @id @default(autoincrement())
+  chat_id    Int
+  sender_id  Int
+  content    String          @db.Text
+  type       ChatMessageType @default(TEXT)
+  is_read    Boolean         @default(false)
+  read_at    DateTime?
+  created_at DateTime        @default(now())
+  updated_at DateTime?       @updatedAt
+  deleted_at DateTime?
+
+  // relations
+  chat   Chat @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  sender User @relation("MessageSender", fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([chat_id])
+  @@index([sender_id])
+  @@map("chat_message")
+}
+
+enum ChatMessageType {
+  TEXT
+  IMAGE
+  FILE
+  VOICE
+}

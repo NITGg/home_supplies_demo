@@ -1,0 +1,14 @@
+model Cart {
+  id          Int       @id
+  total_price Decimal
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+
+  // relations
+  user      User       @relation(fields: [id], references: [id], onDelete: Cascade)
+  cart_item CartItem[]
+  orders    Order[]
+
+  @@map("cart")
+}

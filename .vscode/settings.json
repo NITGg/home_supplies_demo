@@ -1,0 +1,5 @@
+{
+  "prisma.pinToPrisma6": false,
+  "editor.inlineSuggest.suppressSuggestions": true,
+  "liveServer.settings.port": 5502
+}

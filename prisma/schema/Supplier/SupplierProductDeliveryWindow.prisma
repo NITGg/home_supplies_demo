@@ -1,0 +1,23 @@
+enum DeliveryWindowType {
+  ORDER
+  DELIVERY
+}
+
+model SupplierProductDeliveryWindow {
+  id                  Int                @id @default(autoincrement())
+  supplier_product_id Int
+  window_type         DeliveryWindowType
+  day_of_week         Int // 0 = Sunday … 6 = Saturday
+  time_from           String             @db.VarChar(5) // "HH:mm"
+  time_to             String             @db.VarChar(5) // "HH:mm"
+  max_orders          Int? // capacity; used for DELIVERY windows
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  supplierProduct SupplierProduct @relation(fields: [supplier_product_id], references: [id], onDelete: Cascade)
+
+  @@unique([supplier_product_id, window_type, day_of_week, time_from, time_to])
+  @@index([supplier_product_id, window_type, day_of_week])
+  @@map("supplier_product_delivery_window")
+}

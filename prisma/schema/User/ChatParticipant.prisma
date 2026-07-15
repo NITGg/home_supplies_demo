@@ -1,0 +1,16 @@
+model ChatParticipant {
+  id        Int       @id @default(autoincrement())
+  chat_id   Int
+  user_id   Int
+  joined_at DateTime  @default(now())
+  left_at   DateTime?
+
+  // relations
+  chat Chat @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  user User @relation("ChatParticipant", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([chat_id, user_id])
+  @@index([chat_id])
+  @@index([user_id])
+  @@map("chat_participant")
+}

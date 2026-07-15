@@ -1,0 +1,44 @@
+model Courier {
+  id                      Int       @id @default(autoincrement())
+  user_id                 Int       @unique // courier belongs to a user account
+  vehicle_id              Int?
+  courier_office_id       Int?
+  national_id_photo_front String?   @db.VarChar(255)
+  national_id_photo_back  String?   @db.VarChar(255)
+  national_id_number      String?   @db.VarChar(40)
+  vehicle_plate           String?   @db.VarChar(20)
+  vehicle_license_front   String?   @db.VarChar(255)
+  vehicle_license_back    String?   @db.VarChar(255)
+  courier_license_front   String?   @db.VarChar(255)
+  courier_license_back    String?   @db.VarChar(255)
+  courier_criminal_record String?   @db.VarChar(255)
+  is_approved             Boolean   @default(false)
+  reject_reason           String?   @db.VarChar(255)
+  lat                     Decimal?  @db.Decimal(11, 8) // current latitude
+  lng                     Decimal?  @db.Decimal(11, 8) // current longitude
+  last_location_update    DateTime?
+  min_order_price         Decimal?  @default(0) @db.Decimal(10, 2)
+  max_order_price         Decimal?  @default(100000) @db.Decimal(10, 2)
+  created_at              DateTime  @default(now())
+  updated_at              DateTime? @updatedAt
+  deleted_at              DateTime?
+
+  // relations
+  user             User                        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  vehicle          Vehicle?                    @relation(fields: [vehicle_id], references: [id])
+  courierOffice    CourierOffice?              @relation(fields: [courier_office_id], references: [id])
+  selectedAreas    CourierSelectedArea[]
+  stat             CourierStat?
+  //   dailyStats       CourierDailyStat[]
+  proposals        OrderProposal[]
+  //   receivedNotifications Notification[]
+  //   notificationSettings NotificationSetting?
+  orders           Order[]                     @relation("OrderCourier")
+  issues           OrderIssue[]                @relation("OrderIssues")
+  customerReviews  CourierReviewFromCustomer[]
+  customerReviewed CustomerReviewFromCourier[]
+  supplierReviews  CourierReviewFromSupplier[]
+  supplierReviewed SupplierReviewFromCourier[]
+
+  @@map("courier")
+}

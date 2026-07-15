@@ -1,0 +1,22 @@
+model Penalty {
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  created_by Int?
+  amount     Decimal   @db.Decimal(10, 2)
+  reason     String?   @db.VarChar(255)
+  is_paid    Boolean   @default(false)
+  paid_at    DateTime?
+  is_waived  Boolean   @default(false)
+  waived_at  DateTime?
+  waived_by  Int?
+  created_at DateTime  @default(now())
+
+  user          User?         @relation("UserPenalties", fields: [user_id], references: [id], onDelete: SetNull)
+  createdBy     User?         @relation("PenaltyCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
+  waivedBy      User?         @relation("PenaltyWaivedBy", fields: [waived_by], references: [id], onDelete: SetNull)
+  walletEntries WalletEntry[]
+
+  @@index([user_id])
+  @@index([created_by])
+  @@map("penalty")
+}

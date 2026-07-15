@@ -1,0 +1,32 @@
+model Vehicle {
+  id                  Int      @id @default(autoincrement())
+  name                String   @unique @db.VarChar(50)
+  name_ar             String   @unique @db.VarChar(50)
+  price_per_km        Decimal  @default(5) @db.Decimal(10, 2)
+  min_distance_per_km Decimal? @db.Decimal(10, 2)
+  max_distance_per_km Decimal? @db.Decimal(10, 2)
+  icon                String?  @db.VarChar(255)
+
+  // Delivery settings (can override application defaults)
+  min_delivery_fee           Decimal @default(0) @db.Decimal(10, 2)
+  delivery_price_for_each_1m Decimal @default(0.01) @db.Decimal(10, 2)
+  delivery_fee_ratio         Decimal @default(50) @db.Decimal(10, 2)
+  total_fines                Decimal @default(0) @db.Decimal(10, 2)
+
+  // new fields
+  fee_base_distance_km      Int @default(2) // after this base we calc with this new fields 
+  fee_extra_platform_per_km Int @default(100) // extra platform per km beyond threshold
+  fee_extra_courier_per_km  Int @default(100) // extra courier per km beyond threshold
+  peak_time_fee_ratio       Int @default(20) // additional % added to totalFee during peak hours
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  // relations
+  couriers                Courier[]
+  orderProposals          OrderProposal[]
+  orders                  Order[]
+  partnerContractVehicles PartnerContractVehicle[]
+
+  @@map("vehicle")
+}

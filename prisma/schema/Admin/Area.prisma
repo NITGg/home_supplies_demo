@@ -1,0 +1,21 @@
+model Area {
+  id             Int       @id @default(autoincrement())
+  governorate_id Int
+  name           String    @db.VarChar(100)
+  name_ar        String    @db.VarChar(100)
+  boundaries     Json // { Point1:"", point2:"" }
+  created_at     DateTime  @default(now())
+  updated_at     DateTime? @updatedAt
+  is_active      Boolean   @default(true)
+
+  // Relations
+  governorate            Governorate            @relation(fields: [governorate_id], references: [id])
+  courierAreas           CourierSelectedArea[]
+  customerAddresses      CustomerAddress[]
+  pickupOrders           Order[]                @relation("OrderPickupArea")
+  deliveryOrders         Order[]                @relation("OrderDeliveryArea")
+  supplierStoreAddresses SupplierStoreAddress[]
+
+  @@index([governorate_id])
+  @@map("area")
+}

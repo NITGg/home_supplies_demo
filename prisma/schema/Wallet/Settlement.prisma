@@ -1,0 +1,19 @@
+model Settlement {
+  id            Int              @id @default(autoincrement())
+  wallet_id     Int? // NULL for bulk (owner_type) settlements
+  processed_by  Int?
+  owner_type    WalletOwnerType?
+  period_from   DateTime?
+  period_to     DateTime?
+  total_amount  Int // net sum of settled entries (cents)
+  wallets_count Int              @default(1)
+  note          String?          @db.VarChar(500)
+  created_at    DateTime         @default(now())
+
+  wallet      Wallet?       @relation(fields: [wallet_id], references: [id], onDelete: SetNull)
+  processedBy User?         @relation("SettlementProcessedBy", fields: [processed_by], references: [id], onDelete: SetNull)
+  entries     WalletEntry[]
+
+  @@index([wallet_id])
+  @@map("settlement")
+}

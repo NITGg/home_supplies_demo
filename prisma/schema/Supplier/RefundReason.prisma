@@ -1,0 +1,11 @@
+model RefundReason {
+  id        Int    @id @default(autoincrement())
+  reason_en String @db.VarChar(255)
+  reason_ar String @db.VarChar(255)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  @@map("refund_reason")
+}

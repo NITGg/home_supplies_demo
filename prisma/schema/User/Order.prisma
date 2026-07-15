@@ -1,0 +1,182 @@
+model Order {
+  id          Int       @id @default(autoincrement())
+  type        OrderType @default(CUSTOM_PICKUP)
+  customer_id Int?
+  courier_id  Int?
+  supplier_id Int?
+
+  order_number String @unique @db.VarChar(20)
+
+  // ── CUSTOM_PICKUP only ──────────────────────────────────────────
+  product_description String?  @db.VarChar(255) // nullable for CATALOG
+  product_image       String?  @db.VarChar(255)
+  budget              Decimal? @db.Decimal(10, 2) // what customer expects to spend on goods
+
+  // ── CATALOG_PURCHASE only ───────────────────────────────────────
+  products_total   Decimal? @db.Decimal(10, 2)
+  total_cost_price Decimal? @db.Decimal(10, 2)
+
+  // ── Shared location ─────────────────────────────────────────────
+  pickup_area_id               Int?
+  pickup_address_description   String   @db.VarChar(200)
+  pickup_lat                   Decimal? @db.Decimal(10, 8)
+  pickup_long                  Decimal? @db.Decimal(11, 8)
+  delivery_area_id             Int?
+  delivery_address_description String   @db.VarChar(200)
+  delivery_lat                 Decimal? @db.Decimal(10, 8)
+  delivery_long                Decimal? @db.Decimal(11, 8)
+
+  // ── Pricing (shared, meaning varies by type) ────────────────────
+  coupon_id           Int?
+  actual_price        Decimal? @db.Decimal(10, 2) // CUSTOM: real spend; CATALOG: same as products_total
+  total_fee           Decimal? @db.Decimal(10, 2) // delivery fee
+  courier_fee         Decimal? @db.Decimal(10, 2)
+  platform_fee        Decimal? @db.Decimal(10, 2)
+  vat_amount          Decimal? @default(0) @db.Decimal(10, 2) // ← add this
+  discount_amount     Decimal? @db.Decimal(10, 2)
+  payable_amount      Decimal? @db.Decimal(10, 2)
+  // [REVIEW][SUPPLIER_BUDGET_FEE_FIX] Supplier shopping-budget service fee (in cents),
+  // split out of the gross budget at order creation and routed to the platform fee.
+  // Persisted so it survives the platform_fee recomputation at proposal-accept /
+  // price-adjustment (previously it was a local var and got refunded to the supplier).
+  supplier_budget_fee Decimal? @default(0) @db.Decimal(10, 2)
+
+  // ── Vehicle / distance (CUSTOM_PICKUP primary, CATALOG optional) ─
+  vehicle_id                 Int?
+  vehicle_price_per_km       Decimal? @db.Decimal(10, 2)
+  vehicle_delivery_fee_ratio Decimal? @db.Decimal(10, 2)
+  distance_m                 Decimal? @db.Decimal(10, 2)
+
+  price_adjustment_status PriceAdjustmentStatus @default(NONE)
+  proposed_at             DateTime?
+  price_adjusted_at       DateTime?
+  payment_method          PaymentMethodStatus
+  status                  OrderStatus
+  cancelled_reason        String?               @db.Text
+  cancellation_fee        Decimal?              @db.Decimal(10, 2)
+  cancelled_by            Int?
+  created_at              DateTime              @default(now())
+  updated_at              DateTime?             @updatedAt
+  offer_accepted_at       DateTime?
+  estemated_delivery_fee  Decimal?              @db.Decimal(10, 2)
+  order_collected_at      DateTime?
+  delivered_at            DateTime?
+  canceled_at             DateTime?
+
+  proposals_deadline_at DateTime?
+  expires_at            DateTime?
+  search_failed_at      DateTime?
+  escalated_to_admin_at DateTime?
+  failure_reason        String?
+  assigned_by_admin_id  Int?
+
+  confirmation_otp      String?
+  retry_count           Int       @default(0)
+  last_escalated_at     DateTime?
+  admin_notes           String?
+  original_delivery_fee Decimal?
+  is_fixed_fee          Boolean   @default(false)
+
+  // ── Order Scheduling ─
+  is_scheduled        Boolean @default(false) // is order has product take time to preparation
+  is_ready_for_pickup Boolean @default(false)
+
+  // order delivery date and time
+  is_order_scheduled        Boolean   @default(false) // is order scheduled
+  order_schedule_at         DateTime?
+  supplier_store_address_id Int?
+
+  // order direction
+  order_direction_depend_on_supplier Int? // 1: east 2: west 3: north 4: south 5: northeast 6: northwest 7: southeast 8: southwest
+
+  refund_status OrderRefundStatus @default(NONE)
+
+  // Relations
+  customer             User?                 @relation(fields: [customer_id], references: [id], onDelete: SetNull)
+  courier              Courier?              @relation("OrderCourier", fields: [courier_id], references: [id], onDelete: SetNull)
+  pickup_area          Area?                 @relation("OrderPickupArea", fields: [pickup_area_id], references: [id], onDelete: SetNull)
+  delivery_area        Area?                 @relation("OrderDeliveryArea", fields: [delivery_area_id], references: [id], onDelete: SetNull)
+  coupon               CustomerCoupon?       @relation(fields: [coupon_id], references: [id])
+  vehicle              Vehicle?              @relation(fields: [vehicle_id], references: [id], onDelete: SetNull)
+  assignedAdmin        User?                 @relation("AdminAssignments", fields: [assigned_by_admin_id], references: [id], onDelete: SetNull)
+  supplier             Supplier?             @relation(fields: [supplier_id], references: [id])
+  supplierStoreAddress SupplierStoreAddress? @relation(fields: [supplier_store_address_id], references: [id], onDelete: SetNull)
+  cart                 Cart?                 @relation(fields: [cart_id], references: [id])
+  cart_id              Int?
+
+  proposals                   OrderProposal[]
+  courierReviews              CourierReviewFromCustomer[]
+  customerReviews             CustomerReviewFromCourier[]
+  issues                      OrderIssue[]
+  orderItems                  OrderItem[]
+  refunds                     Refund[]
+  unpaidCommission            UnpaidCommission?
+  escrows                     Escrow[]
+  transactions                Transaction[]
+  // pointsTransactions          PointsTransaction[]
+  courierReviewFromSuppliers  CourierReviewFromSupplier[]
+  supplierReviewFromCouriers  SupplierReviewFromCourier[]
+  supplierReviewFromCustomers SupplierReviewFromCustomer[]
+  externalApp                 ExternalApp?                 @relation(fields: [external_app_id], references: [id])
+  external_app_id             Int?
+  partner_app_ratio           Float?
+  partner_courier_ratio       Float?
+  partner_ratio               Float?
+  contract_vehicle_id         Int?
+  partner_fee                 Decimal?                     @db.Decimal(10, 2) // partner's cut = totalFee * partner_ratio
+
+  contractVehicle PartnerContractVehicle? @relation(fields: [contract_vehicle_id], references: [id])
+  walletEntries   WalletEntry[]
+  chat            Chat? // one-to-one: the support/coordination chat for this order
+
+  @@index([coupon_id])
+  @@index([customer_id])
+  @@index([courier_id])
+  @@index([supplier_id])
+  @@index([pickup_area_id])
+  @@index([delivery_area_id])
+  @@index([vehicle_id])
+  @@index([supplier_store_address_id])
+  @@map("order")
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  SCHEDULED
+  PENDING
+  SEARCHING_FAILED
+  IN_PROGRESS
+  DELIVERED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentMethodStatus {
+  WALLET
+  CASH
+  CARD
+}
+
+enum PriceAdjustmentStatus {
+  NONE
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum OrderType {
+  CUSTOM_PICKUP
+  CATALOG_PURCHASE
+}
+
+enum OrderRefundStatus {
+  NONE
+  PARTIALLY_REFUNDED
+  FULLY_REFUNDED
+}
+
+/**
+ * actual supplier product price + platform bounce price = viewed customer price
+ * Order.total_cost_price => actual supplier product price
+ * SupplierProduct.cost_price & OrderItem.cost_price => platform bounce price
+ */

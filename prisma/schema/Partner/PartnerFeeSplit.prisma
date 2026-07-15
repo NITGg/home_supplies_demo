@@ -1,0 +1,15 @@
+model PartnerFeeSplit {
+  id                  Int @id @default(autoincrement())
+  contract_vehicle_id Int
+  badge_id            Int
+
+  // The 3-way split ratios
+  app_ratio     Float // e.g. 0.40
+  courier_ratio Float // e.g. 0.50
+  partner_ratio Float // e.g. 0.10
+
+  contract_vehicle PartnerContractVehicle @relation(fields: [contract_vehicle_id], references: [id])
+  badge            UserBadge              @relation(fields: [badge_id], references: [id])
+
+  @@map("partner_fee_split")
+}

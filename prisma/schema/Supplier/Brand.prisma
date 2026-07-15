@@ -1,0 +1,26 @@
+model Brand {
+  id             Int       @id @default(autoincrement())
+  name           String    @unique
+  slug           String    @unique
+  name_ar        String?
+  logo_url       String?
+  cover_url      String?
+  is_active      Boolean   @default(true)
+  is_popular     Boolean   @default(false)
+  description    String?   @db.LongText
+  description_ar String?   @db.LongText
+  up_to          Int?
+  sort_id        Int       @default(0)
+  synonyms       String?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime? @updatedAt
+  deleted_at     DateTime?
+
+  // Relations
+  categories BrandCategory[]
+  products   Product[]
+
+  @@index([sort_id])
+  @@fulltext([name, name_ar, synonyms, description, description_ar])
+  @@map("brand")
+}

@@ -1,0 +1,11 @@
+model Seller {
+  id                                      Int      @id @default(autoincrement())
+  user_id                                 Int      @unique
+  seller_commission_per_order             Decimal? @default(0) @db.Decimal(12, 2)
+  seller_commission_per_courier_download  Decimal? @default(0) @db.Decimal(12, 2)
+  seller_commission_per_customer_download Decimal? @default(0) @db.Decimal(12, 2)
+
+  user User @relation("UserSeller", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("seller")
+}

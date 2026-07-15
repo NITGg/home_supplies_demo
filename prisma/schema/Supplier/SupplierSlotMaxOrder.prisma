@@ -1,0 +1,17 @@
+model SupplierSlotMaxOrder {
+  id               Int      @id @default(autoincrement())
+  store_address_id Int
+  day_of_week      Int // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  time_from        String   @db.VarChar(5) // "HH:mm" format
+  time_to          String   @db.VarChar(5) // "HH:mm" format
+  max_orders       Int?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  // Relations
+  storeAddress SupplierStoreAddress @relation(fields: [store_address_id], references: [id], onDelete: Cascade)
+
+  @@unique([store_address_id, day_of_week, time_from, time_to])
+  @@index([store_address_id, day_of_week])
+  @@map("supplier_slot_max_order")
+}

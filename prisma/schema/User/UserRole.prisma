@@ -1,0 +1,16 @@
+model UserRole {
+  id             Int       @id @default(autoincrement())
+  name           String    @db.VarChar(100)
+  name_ar        String    @db.VarChar(100)
+  description    String?   @db.VarChar(100)
+  description_ar String?   @db.VarChar(100)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime? @updatedAt
+
+  users               User[]
+  badges              UserBadge[]
+  cancellationReasons CancellationReason[]
+
+  @@unique([name])
+  @@map("user_role")
+}

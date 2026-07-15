@@ -1,0 +1,31 @@
+model Category {
+  id                 Int       @id @default(autoincrement())
+  name               String    @unique
+  slug               String?   @unique
+  name_ar            String?
+  description        String?   @db.LongText
+  description_ar     String?   @db.LongText
+  image_url          String?
+  icon_url           String?
+  parent_id          Int?
+  is_active          Boolean
+  product_attributes Json?
+  synonyms           String?   @db.VarChar(191)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  deleted_at         DateTime?
+  sort_id            Int       @default(0)
+  has_window         Boolean   @default(false)
+
+  // relations
+  brands    BrandCategory[]
+  parent    Category?          @relation("CategoryHierarchy", fields: [parent_id], references: [id])
+  children  Category[]         @relation("CategoryHierarchy")
+  products  Product[]
+  suppliers SupplierCategory[]
+
+  @@index([sort_id], map: "categories_sortId_idx")
+  @@index([parent_id])
+  @@fulltext([name, name_ar, description, description_ar], map: "categories_name_nameAr_description_descriptionAr_idx")
+  @@map("category")
+}

@@ -1,0 +1,19 @@
+model SupplierReviewFromCourier {
+  id          Int       @id @default(autoincrement())
+  supplier_id Int
+  courier_id  Int
+  order_id    Int?
+  rating      Int
+  comment     String?   @db.Text
+  created_at  DateTime  @default(now())
+  updated_at  DateTime? @updatedAt
+
+  // relations
+  supplier Supplier @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+  courier  Courier  @relation(fields: [courier_id], references: [id], onDelete: Cascade)
+  order    Order?   @relation(fields: [order_id], references: [id])
+
+  @@index([courier_id])
+  @@index([supplier_id])
+  @@map("supplier_review_from_courier")
+}

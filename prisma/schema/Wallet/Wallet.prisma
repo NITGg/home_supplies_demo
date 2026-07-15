@@ -1,0 +1,46 @@
+model Wallet {
+  id                Int             @id @default(autoincrement())
+  user_id           Int?            @unique
+  external_app_id   Int?            @unique // ← partner wallet
+  owner_type        WalletOwnerType
+  balance           Int             @default(0)
+  platform_money    Int             @default(0)
+  platform_earnings Int             @default(0)
+  courier_cash      Int             @default(0)
+  courier_earnings  Int             @default(0)
+  supplier_cash     Int             @default(0)
+  supplier_earnings Int             @default(0)
+  points            Int             @default(0) // NEW
+  status            WalletStatus    @default(ACTIVE)
+  freeze_reason     String?         @db.VarChar(255)
+  frozen_at         DateTime?
+  frozen_by         Int?
+  created_at        DateTime        @default(now())
+  updated_at        DateTime?       @updatedAt
+  deleted_at        DateTime?
+
+  user          User?         @relation("UserWallet", fields: [user_id], references: [id], onDelete: SetNull)
+  externalApp   ExternalApp?  @relation(fields: [external_app_id], references: [id], onDelete: SetNull)
+  frozenBy      User?         @relation("WalletFrozenBy", fields: [frozen_by], references: [id], onDelete: SetNull)
+  escrows       Escrow[]
+  transactions  Transaction[] // Relation to Transaction
+  walletEntries WalletEntry[]
+  settlements   Settlement[]
+
+  // pointsTransactions PointsTransaction[]
+
+  @@map("wallet")
+}
+
+enum WalletOwnerType {
+  CUSTOMER
+  COURIER
+  SUPPLIER
+  PLATFORM
+  EXTERNAL_APP
+}
+
+enum WalletStatus {
+  ACTIVE
+  FROZEN
+}

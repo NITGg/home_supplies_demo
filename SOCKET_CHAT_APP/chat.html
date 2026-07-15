@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="./css/index.css" />
+    <title>ChatApp</title>
+  </head>
+
+  <body>
+    <div class="p-2 py-3">
+      <!-- Header with User Info -->
+      <div class="row p-2">
+        <div class="col-md-2 col-4 p-2 text-center">
+          <img
+            id="profileImage"
+            class="profileImage"
+            src="./avatar/Avatar-No-Background.png"
+            alt="User Profile"
+          />
+        </div>
+        <div class="col-md-10 col-8 p-2 d-flex align-items-center">
+          <div class="px-2">
+            <h1 id="userName" class="w-100 p-3 text-success"></h1>
+            <span id="onlineStatus" class="badge bg-secondary"
+              >Connecting...</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <audio id="notifyTone" src="./sounds/notify.wav"></audio>
+
+      <div class="container p-3 my-3">
+        <div class="row" id="parent-dev">
+          <!-- Chat Area -->
+          <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h2 id="chatTitle" class="text-success m-0">Select a chat</h2>
+              <div id="chatActions" class="d-none">
+                <button
+                  onclick="leaveCurrentChat()"
+                  class="btn btn-sm btn-outline-danger"
+                >
+                  Leave Chat
+                </button>
+              </div>
+            </div>
+            <div class="chatContainer border border-success">
+              <div
+                id="typingIndicator"
+                class="text-muted px-2"
+                style="display: none; font-size: 12px; height: 20px"
+              ></div>
+              <div id="messageList" class="messageList my-1"></div>
+              <div id="messageInputArea" class="messageForm p-2 d-none">
+                <div class="input-group">
+                  <input
+                    id="messageBody"
+                    class="form-control"
+                    type="text"
+                    placeholder="Type a message..."
+                  />
+                  <button
+                    id="sendMessage"
+                    class="btn btn-success"
+                    onclick="sendMessage()"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar -->
+          <div class="col-md-4">
+            <!-- Online Users -->
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="groupsHead m-0">Online Users</h5>
+                <button
+                  onclick="refreshOnlineUsers()"
+                  class="btn btn-sm btn-link"
+                >
+                  Refresh
+                </button>
+              </div>
+              <div
+                id="onlineUsers"
+                class="chatUsers border border-success my-2 p-2"
+                style="max-height: 150px; overflow-y: auto"
+              >
+                <div class="text-muted small">
+                  Click refresh to see online users
+                </div>
+              </div>
+            </div>
+
+            <!-- Create New Chat -->
+            <div class="mb-3">
+              <h5 class="groupsHead">Start New Chat</h5>
+              <div class="input-group mb-2">
+                <input
+                  type="number"
+                  id="newChatUserId"
+                  class="form-control form-control-sm"
+                  placeholder="User ID"
+                />
+                <button onclick="startNewChat()" class="btn btn-sm btn-primary">
+                  Chat
+                </button>
+              </div>
+            </div>
+
+            <!-- Create Group -->
+            <div class="mb-3">
+              <h5 class="groupsHead">Create Group</h5>
+              <input
+                type="text"
+                id="newGroupName"
+                class="form-control form-control-sm mb-2"
+                placeholder="Group Name"
+              />
+              <input
+                type="text"
+                id="newGroupUserIds"
+                class="form-control form-control-sm mb-2"
+                placeholder="User IDs (comma separated)"
+              />
+              <button
+                onclick="createGroup()"
+                class="btn btn-sm btn-success w-100"
+              >
+                Create Group
+              </button>
+            </div>
+
+            <!-- Add Participant (visible when group is selected) -->
+            <div id="addParticipantSection" class="mb-3 d-none">
+              <h5 class="groupsHead">Add Participant</h5>
+              <div class="input-group">
+                <input
+                  type="number"
+                  id="newParticipantId"
+                  class="form-control form-control-sm"
+                  placeholder="User ID"
+                />
+                <button onclick="addParticipant()" class="btn btn-sm btn-info">
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <!-- My Chats -->
+            <div>
+              <h5 class="groupsHead">My Chats</h5>
+              <div
+                id="chatUsers"
+                class="chatUsers border border-success my-2 p-2"
+                style="max-height: 300px; overflow-y: auto"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./node_modules/jwt-decode/build/jwt-decode.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="./node_modules/socket.io/client-dist/socket.io.min.js"></script>
+    <script src="./js/chat.js"></script>
+  </body>
+</html>

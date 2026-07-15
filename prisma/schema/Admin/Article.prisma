@@ -1,0 +1,18 @@
+model Article {
+  id           Int      @id @default(autoincrement())
+  title        String   @db.VarChar(255)
+  slug         String   @unique @db.VarChar(255)
+  summary      String?  @db.VarChar(500)
+  content      String   @db.Text
+  cover_image  String?
+  keywords     String?  @db.VarChar(255)
+  published_at DateTime
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  author       String   @db.VarChar(255)
+  is_active    Boolean  @default(true)
+  sort_id      Int      @default(0)
+
+  @@index([sort_id])
+  @@map("article")
+}

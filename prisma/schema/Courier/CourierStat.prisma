@@ -1,0 +1,17 @@
+model CourierStat {
+  id                     Int       @id @default(autoincrement())
+  courier_id             Int       @unique
+  total_completed_orders Int       @default(0)
+  total_cancelled_orders Int       @default(0)
+  total_earnings         Decimal   @default(0) @db.Decimal(12, 2)
+  average_rating         Decimal   @default(0) @db.Decimal(2, 1)
+  total_reviews          Int       @default(0)
+  acceptance_rate        Decimal   @default(0) @db.Decimal(5, 2)
+  completion_rate        Decimal   @default(0) @db.Decimal(5, 2)
+  avg_delivery_time      Int       @default(0)
+  updated_at             DateTime? @updatedAt
+
+  courier Courier @relation(fields: [courier_id], references: [id], onDelete: Cascade)
+
+  @@map("courier_stat")
+}

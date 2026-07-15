@@ -1,0 +1,26 @@
+model Faq {
+  id          Int        @id @default(autoincrement())
+  question    String
+  answer      String
+  language    Language   @default(EN)
+  created_at  DateTime   @default(now())
+  updated_at  DateTime?  @updatedAt
+  is_active   Boolean    @default(true)
+  sort_id     Int        @default(0)
+  target_user TargetUser @default(ALL)
+
+  @@index([sort_id])
+  @@map("faq")
+}
+
+enum Language {
+  AR
+  EN
+}
+
+enum TargetUser {
+  CUSTOMER
+  COURIER
+  SUPPLIER
+  ALL
+}

@@ -1,0 +1,11 @@
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  // url      = env("DATABASE_URL")
+  // Add "url=env("DATABASE_URL")" back for v5 compatibility to solve a known Prisma v7 bug when run"npx prisma studio"
+  // Now you can run "npx prisma@6.16.3 studio" to show db tables
+}

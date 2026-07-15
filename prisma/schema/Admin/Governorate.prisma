@@ -1,0 +1,13 @@
+model Governorate {
+  id         Int       @id @default(autoincrement())
+  name       String    @db.VarChar(100)
+  name_ar    String    @db.VarChar(100)
+  is_active  Boolean   @default(true)
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime?
+
+  areas Area[]
+
+  @@map("governorate")
+}

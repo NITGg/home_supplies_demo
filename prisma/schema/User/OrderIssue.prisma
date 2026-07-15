@@ -1,0 +1,47 @@
+model OrderIssue {
+  id Int @id @default(autoincrement())
+
+  order_id    Int
+  customer_id Int?
+  courier_id  Int?
+
+  reason      OrderIssueReason
+  description String?          @db.Text // optional free-text from customer
+
+  status OrderIssueStatus @default(OPEN)
+
+  // Admin resolution
+  resolved_by     Int? // admin user id who acted
+  resolved_at     DateTime?
+  resolution_note String?   @db.Text // what the admin did
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  // Relations
+  order      Order    @relation(fields: [order_id], references: [id])
+  customer   User?    @relation("CustomerIssueReports", fields: [customer_id], references: [id], onDelete: SetNull)
+  courier    Courier? @relation("OrderIssues", fields: [courier_id], references: [id], onDelete: SetNull)
+  resolvedBy User?    @relation("AdminResolvedIssues", fields: [resolved_by], references: [id], onDelete: SetNull)
+
+  @@index([order_id])
+  @@index([customer_id])
+  @@index([courier_id])
+  @@index([status])
+  @@map("order_issue")
+}
+
+enum OrderIssueReason {
+  NOT_RESPONDING // courier not picking up / not replying
+  LATE_PICKUP // courier hasn't arrived at pickup yet
+  LATE_DELIVERY // courier took too long after pickup
+  WRONG_LOCATION // courier appears to be in wrong area
+  OTHER
+}
+
+enum OrderIssueStatus {
+  OPEN // just submitted, awaiting admin review
+  UNDER_REVIEW // admin is looking at it
+  RESOLVED // admin took action, issue closed
+  DISMISSED // admin reviewed and dismissed (false report etc.)
+}

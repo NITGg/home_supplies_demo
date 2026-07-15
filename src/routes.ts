@@ -1,0 +1,31 @@
+import { Router } from "express";
+const router = Router();
+import authRouter from "./modules/1. Registration & Authentication/auth.controller";
+import profileRouter from "./modules/2. Profile Management/profile.controller";
+import orderRouter from "./modules/3. Order Management/order.controller";
+import statRouter from "./modules/4. Statistics & Earnings/stat.controller";
+import reviewRouter from "./modules/5. Reviews & Ratings/review.controller";
+import notificationRouter from "./modules/6. Notifications/notification.controller";
+import walletRouter from "./modules/7. Wallet Management/wallet.controller";
+import couponRouter from "./modules/8. Coupon Management/coupon.controller";
+import pointsRouter from "./modules/9. Points Management/points.controller";
+import aboutusRouter from "./modules/10. Aboutus/aboutus.controller";
+import chatRouter from "./modules/11. Chat/chat.controller";
+import internalRouter from "./modules/internal/internal.controller";
+import internalI18nRouter from "./modules/internal/internal.i18n.controller";
+
+router.use("/auth", authRouter);
+router.use("/profile", profileRouter);
+router.use("/order", orderRouter);
+router.use("/stat", statRouter);
+router.use("/review", reviewRouter);
+router.use("/notification", notificationRouter);
+router.use("/wallet", walletRouter);
+router.use("/coupon", couponRouter);
+router.use("/points", pointsRouter);
+router.use("/aboutus", aboutusRouter);
+router.use("/chat", chatRouter);
+router.use("/internal", internalRouter);
+router.use("/internal/i18n", internalI18nRouter);
+
+export default router;

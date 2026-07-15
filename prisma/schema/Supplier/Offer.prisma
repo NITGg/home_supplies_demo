@@ -1,0 +1,20 @@
+model Offer {
+  id                  Int           @id @default(autoincrement())
+  supplier_product_id Int?
+  offer_type          DiscountType? // Used the Enum here
+  offer_value         Decimal?
+  start_date          DateTime?     @db.Date
+  end_date            DateTime?     @db.Date
+  is_active           Boolean?      @default(true)
+  created_by_role     String?       @default("ADMIN") // "ADMIN" | "SUPPLIER"  created_at               DateTime  @default(now())
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  // Relations
+  supplierProduct SupplierProduct? @relation(fields: [supplier_product_id], references: [id])
+  orderItems      OrderItem[]
+
+  @@map("offer")
+}
