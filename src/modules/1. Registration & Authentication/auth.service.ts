@@ -1240,7 +1240,7 @@ export class AuthService implements IAuthServcie {
     // step: check credentials 2 - check if user has the correct role
     if (user.role_id !== 2) {
       throw new AppError(
-        HttpStatusCode.UNAUTHORIZED,
+        HttpStatusCode.NOT_FOUND,
         res.__("errors.invalid_credentials"),
       );
     }
@@ -1248,7 +1248,7 @@ export class AuthService implements IAuthServcie {
     // step: check credentials 3 - reject accounts without a local password (e.g. Google/Apple)
     if (!user.password) {
       throw new AppError(
-        HttpStatusCode.UNAUTHORIZED,
+        HttpStatusCode.NOT_FOUND,
         res.__("errors.invalid_credentials"),
       );
     }
@@ -1256,7 +1256,7 @@ export class AuthService implements IAuthServcie {
     // step: check credentials 4 - validate password
     if (!(await compare(password, user.password))) {
       throw new AppError(
-        HttpStatusCode.UNAUTHORIZED,
+        HttpStatusCode.NOT_FOUND,
         res.__("errors.invalid_credentials"),
       );
     }
