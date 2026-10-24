@@ -266,7 +266,11 @@ class NotificationsDialog extends StatelessWidget {
               child: BlocBuilder<NotificationsCubit, NotificationsState>(
                 builder: (context, state) {
                   if (state is NotificationsLoading) {
-                    return const Center(child: LoadingScreen(isOne: true));
+                    // Just the loader: the full-screen variant's Scaffold
+                    // paints square corners over the dialog's rounded ones.
+                    return const Center(
+                      child: LoadingScreen(asWidget: true, isOne: true),
+                    );
                   }
                   if (state is NotificationsError) {
                     return Center(
