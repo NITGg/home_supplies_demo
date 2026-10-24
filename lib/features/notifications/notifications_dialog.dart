@@ -236,8 +236,10 @@ class NotificationsDialog extends StatelessWidget {
         opaque: false,
         barrierDismissible: false,
         barrierColor: Colors.black45,
+        // Just the loader, over the dimmed barrier: the full-screen
+        // variant's Scaffold would hide the page behind it.
         pageBuilder: (_, __, ___) => const Center(
-          child: LoadingScreen(isOne: true),
+          child: LoadingScreen(asWidget: true, isOne: true),
         ),
       ),
     );
@@ -296,7 +298,11 @@ class NotificationsDialog extends StatelessWidget {
               child: BlocBuilder<NotificationsCubit, NotificationsState>(
                 builder: (context, state) {
                   if (state is NotificationsLoading) {
-                    return const Center(child: LoadingScreen(isOne: true));
+                    // Just the loader: the full-screen variant's Scaffold
+                    // paints square corners over the dialog's rounded ones.
+                    return const Center(
+                      child: LoadingScreen(asWidget: true, isOne: true),
+                    );
                   }
                   if (state is NotificationsError) {
                     return Center(
